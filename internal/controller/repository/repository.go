@@ -214,9 +214,7 @@ func (c *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 
 	meta.SetExternalName(cr, repository.Name)
 	
-	return managed.ExternalCreation{
-		ExternalNameAssigned: true,
-	}, nil
+	return managed.ExternalCreation{}, nil
 }
 
 func (c *external) Update(ctx context.Context, mg resource.Managed) (managed.ExternalUpdate, error) {
