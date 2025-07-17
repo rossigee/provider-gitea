@@ -15,7 +15,7 @@ COPY . .
 # Build a simple test binary that validates the client works
 RUN CGO_ENABLED=0 GOOS=linux go build -o gitea-client-test ./cmd/test-client
 
-FROM alpine:3.18
+FROM alpine:3.22
 
 RUN apk --no-cache add ca-certificates curl
 WORKDIR /root/
