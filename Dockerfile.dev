@@ -1,0 +1,31 @@
+# Development Dockerfile for provider-gitea
+FROM golang:1.21-alpine AS builder
+
+WORKDIR /workspace
+
+# Copy go mod and sum files
+COPY go.mod go.sum ./
+
+# Download dependencies
+RUN go mod download
+
+# Copy the source code
+COPY . .
+
+# Build a simple test binary that validates the client works
+RUN CGO_ENABLED=0 GOOS=linux go build -o gitea-client-test ./cmd/test-client
+
+FROM alpine:3.18
+
+RUN apk --no-cache add ca-certificates curl
+WORKDIR /root/
+
+# Copy the test binary
+COPY --from=builder /workspace/gitea-client-test .
+
+# Add a health check script
+RUN echo '#!/bin/sh\necho "Gitea provider client is ready"\nexit 0' > /health.sh && chmod +x /health.sh
+
+EXPOSE 8080
+
+CMD ["./gitea-client-test"]

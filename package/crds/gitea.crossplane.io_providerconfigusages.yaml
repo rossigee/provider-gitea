@@ -1,0 +1,68 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.18.0
+  name: providerconfigusages.gitea.crossplane.io
+spec:
+  group: gitea.crossplane.io
+  names:
+    kind: ProviderConfigUsage
+    listKind: ProviderConfigUsageList
+    plural: providerconfigusages
+    singular: providerconfigusage
+  scope: Namespaced
+  versions:
+  - name: v1beta1
+    schema:
+      openAPIV3Schema:
+        properties:
+          apiVersion:
+            type: string
+          kind:
+            type: string
+          metadata:
+            type: object
+          providerConfigRef:
+            properties:
+              name:
+                type: string
+              policy:
+                properties:
+                  resolution:
+                    default: Required
+                    enum:
+                    - Required
+                    - Optional
+                    type: string
+                  resolve:
+                    enum:
+                    - Always
+                    - IfNotPresent
+                    type: string
+                type: object
+            required:
+            - name
+            type: object
+          resourceRef:
+            properties:
+              apiVersion:
+                type: string
+              kind:
+                type: string
+              name:
+                type: string
+              uid:
+                type: string
+            required:
+            - apiVersion
+            - kind
+            - name
+            type: object
+        required:
+        - providerConfigRef
+        - resourceRef
+        type: object
+    served: true
+    storage: true

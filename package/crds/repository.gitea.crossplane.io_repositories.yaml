@@ -1,0 +1,281 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.18.0
+  name: repositories.repository.gitea.crossplane.io
+spec:
+  group: repository.gitea.crossplane.io
+  names:
+    categories:
+    - crossplane
+    - managed
+    - gitea
+    kind: Repository
+    listKind: RepositoryList
+    plural: repositories
+    singular: repository
+  scope: Cluster
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .status.conditions[?(@.type=='Ready')].status
+      name: READY
+      type: string
+    - jsonPath: .status.conditions[?(@.type=='Synced')].status
+      name: SYNCED
+      type: string
+    - jsonPath: .metadata.annotations.crossplane\.io/external-name
+      name: EXTERNAL-NAME
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: AGE
+      type: date
+    name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        properties:
+          apiVersion:
+            type: string
+          kind:
+            type: string
+          metadata:
+            type: object
+          spec:
+            properties:
+              deletionPolicy:
+                default: Delete
+                enum:
+                - Orphan
+                - Delete
+                type: string
+              forProvider:
+                properties:
+                  allowMergeCommits:
+                    type: boolean
+                  allowRebase:
+                    type: boolean
+                  allowRebaseExplicit:
+                    type: boolean
+                  allowRebaseUpdate:
+                    type: boolean
+                  allowSquashMerge:
+                    type: boolean
+                  archived:
+                    default: false
+                    type: boolean
+                  autoInit:
+                    default: false
+                    type: boolean
+                  defaultBranch:
+                    default: master
+                    type: string
+                  defaultDeleteBranchAfterMerge:
+                    type: boolean
+                  defaultMergeStyle:
+                    enum:
+                    - merge
+                    - rebase
+                    - squash
+                    - rebase-merge
+                    type: string
+                  description:
+                    type: string
+                  gitignores:
+                    type: string
+                  hasActions:
+                    type: boolean
+                  hasIssues:
+                    type: boolean
+                  hasPackages:
+                    type: boolean
+                  hasProjects:
+                    type: boolean
+                  hasPullRequests:
+                    type: boolean
+                  hasReleases:
+                    type: boolean
+                  hasWiki:
+                    type: boolean
+                  issueLabels:
+                    type: string
+                  license:
+                    type: string
+                  name:
+                    pattern: ^[a-zA-Z0-9]([a-zA-Z0-9._-]*[a-zA-Z0-9])?$
+                    type: string
+                  owner:
+                    type: string
+                  private:
+                    default: false
+                    type: boolean
+                  readme:
+                    type: string
+                  template:
+                    default: false
+                    type: boolean
+                  trustModel:
+                    default: default
+                    enum:
+                    - default
+                    - collaborator
+                    - committer
+                    - collaboratorcommitter
+                    type: string
+                  website:
+                    type: string
+                required:
+                - name
+                type: object
+              managementPolicies:
+                default:
+                - '*'
+                items:
+                  enum:
+                  - Observe
+                  - Create
+                  - Update
+                  - Delete
+                  - LateInitialize
+                  - '*'
+                  type: string
+                type: array
+              providerConfigRef:
+                default:
+                  name: default
+                properties:
+                  name:
+                    type: string
+                  policy:
+                    properties:
+                      resolution:
+                        default: Required
+                        enum:
+                        - Required
+                        - Optional
+                        type: string
+                      resolve:
+                        enum:
+                        - Always
+                        - IfNotPresent
+                        type: string
+                    type: object
+                required:
+                - name
+                type: object
+              publishConnectionDetailsTo:
+                properties:
+                  configRef:
+                    default:
+                      name: default
+                    properties:
+                      name:
+                        type: string
+                      policy:
+                        properties:
+                          resolution:
+                            default: Required
+                            enum:
+                            - Required
+                            - Optional
+                            type: string
+                          resolve:
+                            enum:
+                            - Always
+                            - IfNotPresent
+                            type: string
+                        type: object
+                    required:
+                    - name
+                    type: object
+                  metadata:
+                    properties:
+                      annotations:
+                        additionalProperties:
+                          type: string
+                        type: object
+                      labels:
+                        additionalProperties:
+                          type: string
+                        type: object
+                      type:
+                        type: string
+                    type: object
+                  name:
+                    type: string
+                required:
+                - name
+                type: object
+              writeConnectionSecretToRef:
+                properties:
+                  name:
+                    type: string
+                  namespace:
+                    type: string
+                required:
+                - name
+                - namespace
+                type: object
+            required:
+            - forProvider
+            type: object
+          status:
+            properties:
+              atProvider:
+                properties:
+                  cloneUrl:
+                    type: string
+                  createdAt:
+                    type: string
+                  empty:
+                    type: boolean
+                  fork:
+                    type: boolean
+                  fullName:
+                    type: string
+                  htmlUrl:
+                    type: string
+                  id:
+                    format: int64
+                    type: integer
+                  language:
+                    type: string
+                  size:
+                    type: integer
+                  sshUrl:
+                    type: string
+                  updatedAt:
+                    type: string
+                type: object
+              conditions:
+                items:
+                  properties:
+                    lastTransitionTime:
+                      format: date-time
+                      type: string
+                    message:
+                      type: string
+                    reason:
+                      type: string
+                    status:
+                      type: string
+                    type:
+                      type: string
+                  required:
+                  - lastTransitionTime
+                  - reason
+                  - status
+                  - type
+                  type: object
+                type: array
+                x-kubernetes-list-map-keys:
+                - type
+                x-kubernetes-list-type: map
+            type: object
+        required:
+        - spec
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}

@@ -1,0 +1,20 @@
+apiVersion: webhook.gitea.crossplane.io/v1alpha1
+kind: Webhook
+metadata:
+  name: example-webhook
+spec:
+  forProvider:
+    repository: my-example-repo
+    owner: myorganization
+    url: "https://example.com/webhook"
+    type: gitea
+    contentType: json
+    active: true
+    events:
+      - push
+      - pull_request
+      - issues
+    secret: "my-webhook-secret"
+    sslVerification: true
+  providerConfigRef:
+    name: default

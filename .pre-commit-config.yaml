@@ -1,0 +1,92 @@
+# Pre-commit hooks for provider-gitea
+# Install with: pre-commit install
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace
+        exclude: '.*\.md$'
+      - id: end-of-file-fixer
+        exclude: 'zz_generated\..*\.go$'
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: ['--maxkb=1024']
+      - id: check-yaml
+        exclude: '^(cluster/|examples/)'
+      - id: check-json
+      - id: check-toml
+      - id: check-xml
+      - id: mixed-line-ending
+        args: ['--fix=lf']
+
+  # Go formatting and imports
+  - repo: https://github.com/dnephin/pre-commit-golang
+    rev: v0.5.1
+    hooks:
+      - id: go-fmt
+      - id: go-imports
+      - id: go-mod-tidy
+      - id: go-unit-tests
+        args: ["-timeout=10m", "./internal/clients/..."]
+      - id: go-build
+        exclude: '^test/'
+      - id: go-vet-pkg
+
+  # Security scanning
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.4.0
+    hooks:
+      - id: detect-secrets
+        args: ['--baseline', '.secrets.baseline']
+        exclude: '.*_test\.go$|go\.sum$|.*\.md$'
+
+  # Dockerfile linting
+  - repo: https://github.com/hadolint/hadolint
+    rev: v2.12.0
+    hooks:
+      - id: hadolint-docker
+        files: 'Dockerfile.*'
+
+  # YAML formatting
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v4.0.0-alpha.8
+    hooks:
+      - id: prettier
+        files: '\.(yaml|yml)$'
+        exclude: '^(cluster/|package/crds/|zz_generated\.)'
+
+  # Markdown linting
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.39.0
+    hooks:
+      - id: markdownlint
+        args: ['--config', '.markdownlint.json']
+
+  # License headers
+  - repo: local
+    hooks:
+      - id: check-license-headers
+        name: Check license headers
+        entry: scripts/check-license.sh
+        language: script
+        files: '\.go$'
+        exclude: 'zz_generated\..*\.go$'
+
+  # Custom hooks for Crossplane
+  - repo: local
+    hooks:
+      - id: check-generate
+        name: Check generated code is up to date
+        entry: make
+        args: ['check-diff']
+        language: system
+        pass_filenames: false
+        files: '(apis/.*\.go|internal/controller/.*\.go)$'
+        exclude: 'zz_generated\..*\.go$|.*_test\.go$'
+
+      - id: crossplane-lint
+        name: Crossplane specific linting
+        entry: scripts/crossplane-lint.sh
+        language: script
+        files: '(apis/.*\.go|internal/controller/.*\.go)$'
+        exclude: 'zz_generated\..*\.go$|.*_test\.go$'
