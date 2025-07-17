@@ -1,0 +1,18 @@
+apiVersion: organization.gitea.crossplane.io/v1alpha1
+kind: Organization
+metadata:
+  name: example-org
+  annotations:
+    crossplane.io/external-name: my-example-org
+spec:
+  forProvider:
+    username: my-example-org
+    name: "My Example Organization"
+    fullName: "My Example Organization"
+    description: "An example organization managed by Crossplane"
+    website: "https://example.org"
+    location: "Global"
+    visibility: public
+    repoAdminChangeTeamAccess: false
+  providerConfigRef:
+    name: default

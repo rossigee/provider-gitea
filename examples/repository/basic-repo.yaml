@@ -1,0 +1,24 @@
+apiVersion: repository.gitea.crossplane.io/v1alpha1
+kind: Repository
+metadata:
+  name: example-repo
+  annotations:
+    crossplane.io/external-name: my-example-repo
+spec:
+  forProvider:
+    name: my-example-repo
+    owner: myorganization
+    description: "An example repository managed by Crossplane"
+    private: false
+    autoInit: true
+    defaultBranch: master
+    hasIssues: true
+    hasWiki: true
+    hasPullRequests: true
+    allowMergeCommits: true
+    allowRebase: true
+    allowSquashMerge: true
+    license: MIT
+    gitignores: Go
+  providerConfigRef:
+    name: default
