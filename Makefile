@@ -27,10 +27,14 @@ UPTEST_VERSION = v0.11.1
 IMAGES = provider-gitea
 -include build/makelib/imagelight.mk
 
-# Setup XPKG
-XPKG_REG_ORGS ?= xpkg.upbound.io/crossplane-contrib
-# NOTE: skip promoting on xpkg.upbound.io as channel tags are inferred.
-XPKG_REG_ORGS_NO_PROMOTE ?= xpkg.upbound.io/crossplane-contrib
+# Setup XPKG - Standardized registry configuration
+# Primary registry: GitHub Container Registry under rossigee
+XPKG_REG_ORGS ?= ghcr.io/rossigee
+XPKG_REG_ORGS_NO_PROMOTE ?= ghcr.io/rossigee
+
+# Optional registries (can be enabled via environment variables)
+# To enable Harbor: export ENABLE_HARBOR_PUBLISH=true make publish XPKG_REG_ORGS=harbor.golder.lan/library
+# To enable Upbound: export ENABLE_UPBOUND_PUBLISH=true make publish XPKG_REG_ORGS=xpkg.upbound.io/crossplane-contrib
 XPKGS = provider-gitea
 -include build/makelib/xpkg.mk
 

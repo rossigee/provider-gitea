@@ -18,8 +18,6 @@ package repository
 
 import (
 	"context"
-	"fmt"
-	"strconv"
 
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/types"
@@ -113,6 +111,11 @@ func (c *connector) Connect(ctx context.Context, mg resource.Managed) (managed.E
 // external resource to ensure it reflects the managed resource's desired state.
 type external struct {
 	client giteaclients.Client
+}
+
+func (c *external) Disconnect(ctx context.Context) error {
+	// No persistent connection to disconnect
+	return nil
 }
 
 func (c *external) Observe(ctx context.Context, mg resource.Managed) (managed.ExternalObservation, error) {
@@ -301,27 +304,27 @@ func (c *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 	return managed.ExternalUpdate{}, nil
 }
 
-func (c *external) Delete(ctx context.Context, mg resource.Managed) error {
+func (c *external) Delete(ctx context.Context, mg resource.Managed) (managed.ExternalDelete, error) {
 	cr, ok := mg.(*v1alpha1.Repository)
 	if !ok {
-		return errors.New(errNotRepository)
+		return managed.ExternalDelete{}, errors.New(errNotRepository)
 	}
 
 	cr.SetConditions(xpv1.Deleting())
 
 	owner := cr.Spec.ForProvider.Owner
 	if owner == nil {
-		return errors.New("owner is required")
+		return managed.ExternalDelete{}, errors.New("owner is required")
 	}
 
 	externalName := meta.GetExternalName(cr)
 	
 	err := c.client.DeleteRepository(ctx, *owner, externalName)
 	if err != nil {
-		return errors.Wrap(err, errDeleteRepository)
+		return managed.ExternalDelete{}, errors.Wrap(err, errDeleteRepository)
 	}
 
-	return nil
+	return managed.ExternalDelete{}, nil
 }
 
 // isUpToDate checks if the repository is up to date with the desired state

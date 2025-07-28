@@ -22,6 +22,7 @@ import (
 
 	giteav1alpha1 "github.com/crossplane-contrib/provider-gitea/apis/repository/v1alpha1"
 	orgv1alpha1 "github.com/crossplane-contrib/provider-gitea/apis/organization/v1alpha1"
+	orgsecretv1alpha1 "github.com/crossplane-contrib/provider-gitea/apis/organizationsecret/v1alpha1"
 	userv1alpha1 "github.com/crossplane-contrib/provider-gitea/apis/user/v1alpha1"
 	webhookv1alpha1 "github.com/crossplane-contrib/provider-gitea/apis/webhook/v1alpha1"
 	deploykeyv1alpha1 "github.com/crossplane-contrib/provider-gitea/apis/deploykey/v1alpha1"
@@ -36,6 +37,7 @@ func init() {
 		v1beta1.SchemeBuilder.AddToScheme,
 		giteav1alpha1.SchemeBuilder.AddToScheme,
 		orgv1alpha1.SchemeBuilder.AddToScheme,
+		orgsecretv1alpha1.SchemeBuilder.AddToScheme,
 		userv1alpha1.SchemeBuilder.AddToScheme,
 		webhookv1alpha1.SchemeBuilder.AddToScheme,
 		deploykeyv1alpha1.SchemeBuilder.AddToScheme,

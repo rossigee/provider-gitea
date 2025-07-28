@@ -74,6 +74,12 @@ type Client interface {
 	GetDeployKey(ctx context.Context, owner, repo string, id int64) (*DeployKey, error)
 	CreateDeployKey(ctx context.Context, owner, repo string, req *CreateDeployKeyRequest) (*DeployKey, error)
 	DeleteDeployKey(ctx context.Context, owner, repo string, id int64) error
+
+	// Organization Secret operations
+	GetOrganizationSecret(ctx context.Context, org, secretName string) (*OrganizationSecret, error)
+	CreateOrganizationSecret(ctx context.Context, org, secretName string, req *CreateOrganizationSecretRequest) error
+	UpdateOrganizationSecret(ctx context.Context, org, secretName string, req *CreateOrganizationSecretRequest) error
+	DeleteOrganizationSecret(ctx context.Context, org, secretName string) error
 }
 
 // giteaClient implements the Client interface
@@ -299,6 +305,63 @@ type UpdateWebhookRequest struct {
 	Active *bool              `json:"active,omitempty"`
 }
 
+// OrganizationSecret represents a Gitea organization action secret
+type OrganizationSecret struct {
+	Name      string `json:"name"`
+	CreatedAt string `json:"created_at"`
+	UpdatedAt string `json:"updated_at"`
+}
+
+// CreateOrganizationSecretRequest represents the request body for creating/updating an organization secret
+type CreateOrganizationSecretRequest struct {
+	Data string `json:"data"`
+}
+
+// Organization Secret API methods
+func (c *giteaClient) GetOrganizationSecret(ctx context.Context, org, secretName string) (*OrganizationSecret, error) {
+	path := "/orgs/" + org + "/actions/secrets/" + secretName
+	resp, err := c.doRequest(ctx, "GET", path, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.StatusCode == http.StatusNotFound {
+		return nil, errors.New("organization secret not found")
+	}
+
+	var secret OrganizationSecret
+	if err := handleResponse(resp, &secret); err != nil {
+		return nil, err
+	}
+
+	return &secret, nil
+}
+
+func (c *giteaClient) CreateOrganizationSecret(ctx context.Context, org, secretName string, req *CreateOrganizationSecretRequest) error {
+	path := "/orgs/" + org + "/actions/secrets/" + secretName
+	resp, err := c.doRequest(ctx, "PUT", path, req)
+	if err != nil {
+		return err
+	}
+
+	return handleResponse(resp, nil)
+}
+
+func (c *giteaClient) UpdateOrganizationSecret(ctx context.Context, org, secretName string, req *CreateOrganizationSecretRequest) error {
+	// For Gitea API, create and update use the same PUT endpoint
+	return c.CreateOrganizationSecret(ctx, org, secretName, req)
+}
+
+func (c *giteaClient) DeleteOrganizationSecret(ctx context.Context, org, secretName string) error {
+	path := "/orgs/" + org + "/actions/secrets/" + secretName
+	resp, err := c.doRequest(ctx, "DELETE", path, nil)
+	if err != nil {
+		return err
+	}
+
+	return handleResponse(resp, nil)
+}
+
 // getTokenFromSecret extracts the API token from the provider config's secret
 func getTokenFromSecret(ctx context.Context, cfg *v1beta1.ProviderConfig, kube client.Client) (string, error) {
 	if cfg.Spec.Credentials.Source != "Secret" {
@@ -376,4 +439,13 @@ func handleResponse(resp *http.Response, target interface{}) error {
 	}
 
 	return nil
+}
+
+// IsNotFound checks if an error represents a "not found" response
+func IsNotFound(err error) bool {
+	if err == nil {
+		return false
+	}
+	// Check if the error message contains status 404
+	return strings.Contains(err.Error(), "status 404")
 }
