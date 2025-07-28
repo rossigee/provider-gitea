@@ -17,10 +17,16 @@ vendor/
 
 # Build output
 _output/
+_build/
+bin/
 
 # Kubernetes/Crossplane
 *.xpkg
+*.tar.gz
 kubeconfig
+
+# Build tools and cache
+.cache/
 
 # IDE
 .vscode/
