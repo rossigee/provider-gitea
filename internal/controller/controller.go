@@ -21,22 +21,23 @@ import (
 
 	"github.com/crossplane/crossplane-runtime/pkg/controller"
 
-	// "github.com/crossplane-contrib/provider-gitea/internal/controller/organization"
-	// "github.com/crossplane-contrib/provider-gitea/internal/controller/repository"
+	// "github.com/crossplane-contrib/provider-gitea/internal/controller/deploykey"
+	"github.com/crossplane-contrib/provider-gitea/internal/controller/organization"
+	"github.com/crossplane-contrib/provider-gitea/internal/controller/organizationsecret"
+	"github.com/crossplane-contrib/provider-gitea/internal/controller/repository"
+	"github.com/crossplane-contrib/provider-gitea/internal/controller/user"
+	// "github.com/crossplane-contrib/provider-gitea/internal/controller/webhook"
 )
 
 // Setup creates all Gitea controllers with the supplied logger and adds them to
 // the supplied manager.
 func Setup(mgr ctrl.Manager, o controller.Options) error {
-	// TODO: Implement controllers once API types properly implement Crossplane interfaces
-	// For now, return nil to allow the provider to build and start
-	// Controllers can be added back once the managed resource interfaces are properly implemented
-	
-	/*
 	for _, setup := range []func(ctrl.Manager, controller.Options) error{
 		repository.Setup,
 		organization.Setup,
-		// user.Setup,
+		organizationsecret.Setup,
+		user.Setup,
+		// TODO: Fix these controllers and uncomment
 		// webhook.Setup,
 		// deploykey.Setup,
 	} {
@@ -44,6 +45,5 @@ func Setup(mgr ctrl.Manager, o controller.Options) error {
 			return err
 		}
 	}
-	*/
 	return nil
 }

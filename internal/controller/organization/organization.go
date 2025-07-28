@@ -113,6 +113,11 @@ type external struct {
 	client giteaclients.Client
 }
 
+func (c *external) Disconnect(ctx context.Context) error {
+	// No persistent connection to disconnect
+	return nil
+}
+
 func (c *external) Observe(ctx context.Context, mg resource.Managed) (managed.ExternalObservation, error) {
 	cr, ok := mg.(*v1alpha1.Organization)
 	if !ok {
@@ -229,10 +234,10 @@ func (c *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 	return managed.ExternalUpdate{}, nil
 }
 
-func (c *external) Delete(ctx context.Context, mg resource.Managed) error {
+func (c *external) Delete(ctx context.Context, mg resource.Managed) (managed.ExternalDelete, error) {
 	cr, ok := mg.(*v1alpha1.Organization)
 	if !ok {
-		return errors.New(errNotOrganization)
+		return managed.ExternalDelete{}, errors.New(errNotOrganization)
 	}
 
 	cr.SetConditions(xpv1.Deleting())
@@ -241,10 +246,10 @@ func (c *external) Delete(ctx context.Context, mg resource.Managed) error {
 	
 	err := c.client.DeleteOrganization(ctx, externalName)
 	if err != nil {
-		return errors.Wrap(err, errDeleteOrganization)
+		return managed.ExternalDelete{}, errors.Wrap(err, errDeleteOrganization)
 	}
 
-	return nil
+	return managed.ExternalDelete{}, nil
 }
 
 // isUpToDate checks if the organization is up to date with the desired state
