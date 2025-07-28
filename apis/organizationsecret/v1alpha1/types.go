@@ -100,7 +100,7 @@ type OrganizationSecretStatus struct {
 // +kubebuilder:printcolumn:name="SECRET-NAME",type="string",JSONPath=".spec.forProvider.secretName"
 // +kubebuilder:printcolumn:name="AGE",type="date",JSONPath=".metadata.creationTimestamp"
 // +kubebuilder:subresource:status
-// +kubebuilder:resource:scope=Cluster,categories={crossplane,managed,gitea}
+// +kubebuilder:resource:scope=Namespaced,categories={crossplane,managed,gitea}
 type OrganizationSecret struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
