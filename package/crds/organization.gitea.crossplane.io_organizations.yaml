@@ -16,7 +16,7 @@ spec:
     listKind: OrganizationList
     plural: organizations
     singular: organization
-  scope: Cluster
+  scope: Namespaced
   versions:
   - additionalPrinterColumns:
     - jsonPath: .status.conditions[?(@.type=='Ready')].status

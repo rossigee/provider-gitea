@@ -1,0 +1,1706 @@
+
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<title>clients: Go Coverage Report</title>
+		<style>
+			body {
+				background: black;
+				color: rgb(80, 80, 80);
+			}
+			body, pre, #legend span {
+				font-family: Menlo, monospace;
+				font-weight: bold;
+			}
+			#topbar {
+				background: black;
+				position: fixed;
+				top: 0; left: 0; right: 0;
+				height: 42px;
+				border-bottom: 1px solid rgb(80, 80, 80);
+			}
+			#content {
+				margin-top: 50px;
+			}
+			#nav, #legend {
+				float: left;
+				margin-left: 10px;
+			}
+			#legend {
+				margin-top: 12px;
+			}
+			#nav {
+				margin-top: 10px;
+			}
+			#legend span {
+				margin: 0 5px;
+			}
+			.cov0 { color: rgb(192, 0, 0) }
+.cov1 { color: rgb(128, 128, 128) }
+.cov2 { color: rgb(116, 140, 131) }
+.cov3 { color: rgb(104, 152, 134) }
+.cov4 { color: rgb(92, 164, 137) }
+.cov5 { color: rgb(80, 176, 140) }
+.cov6 { color: rgb(68, 188, 143) }
+.cov7 { color: rgb(56, 200, 146) }
+.cov8 { color: rgb(44, 212, 149) }
+.cov9 { color: rgb(32, 224, 152) }
+.cov10 { color: rgb(20, 236, 155) }
+
+		</style>
+	</head>
+	<body>
+		<div id="topbar">
+			<div id="nav">
+				<select id="files">
+				
+				<option value="file0">github.com/crossplane-contrib/provider-gitea/internal/clients/deploykey.go (76.2%)</option>
+				
+				<option value="file1">github.com/crossplane-contrib/provider-gitea/internal/clients/gitea.go (78.4%)</option>
+				
+				<option value="file2">github.com/crossplane-contrib/provider-gitea/internal/clients/organization.go (75.9%)</option>
+				
+				<option value="file3">github.com/crossplane-contrib/provider-gitea/internal/clients/repository.go (59.5%)</option>
+				
+				<option value="file4">github.com/crossplane-contrib/provider-gitea/internal/clients/user.go (75.9%)</option>
+				
+				<option value="file5">github.com/crossplane-contrib/provider-gitea/internal/clients/webhook.go (75.9%)</option>
+				
+				<option value="file6">github.com/crossplane-contrib/provider-gitea/internal/controller/organizationsecret/organizationsecret.go (65.8%)</option>
+				
+				<option value="file7">github.com/crossplane-contrib/provider-gitea/internal/controller/repository/repository.go (37.8%)</option>
+				
+				</select>
+			</div>
+			<div id="legend">
+				<span>not tracked</span>
+			
+				<span class="cov0">not covered</span>
+				<span class="cov8">covered</span>
+			
+			</div>
+		</div>
+		<div id="content">
+		
+		<pre class="file" id="file0" style="display: none">/*
+Copyright 2024 The Crossplane Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+package clients
+
+import (
+        "context"
+        "fmt"
+)
+
+// DeployKey represents a Gitea deploy key
+type DeployKey struct {
+        ID          int64  `json:"id"`
+        Title       string `json:"title"`
+        Key         string `json:"key"`
+        URL         string `json:"url"`
+        Fingerprint string `json:"fingerprint"`
+        CreatedAt   string `json:"created_at"`
+        ReadOnly    bool   `json:"read_only"`
+}
+
+// CreateDeployKeyRequest represents the request body for creating a deploy key
+type CreateDeployKeyRequest struct {
+        Title    string `json:"title"`
+        Key      string `json:"key"`
+        ReadOnly bool   `json:"read_only"`
+}
+
+// GetDeployKey retrieves a deploy key by repository and key ID
+func (c *giteaClient) GetDeployKey(ctx context.Context, owner, repo string, id int64) (*DeployKey, error) <span class="cov8" title="1">{
+        path := fmt.Sprintf("/repos/%s/%s/keys/%d", owner, repo, id)
+        
+        resp, err := c.doRequest(ctx, "GET", path, nil)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov8" title="1">var deployKey DeployKey
+        if err := handleResponse(resp, &amp;deployKey); err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov8" title="1">return &amp;deployKey, nil</span>
+}
+
+// CreateDeployKey creates a new deploy key for a repository
+func (c *giteaClient) CreateDeployKey(ctx context.Context, owner, repo string, req *CreateDeployKeyRequest) (*DeployKey, error) <span class="cov8" title="1">{
+        path := fmt.Sprintf("/repos/%s/%s/keys", owner, repo)
+        
+        resp, err := c.doRequest(ctx, "POST", path, req)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov8" title="1">var deployKey DeployKey
+        if err := handleResponse(resp, &amp;deployKey); err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov8" title="1">return &amp;deployKey, nil</span>
+}
+
+// DeleteDeployKey deletes a deploy key
+func (c *giteaClient) DeleteDeployKey(ctx context.Context, owner, repo string, id int64) error <span class="cov8" title="1">{
+        path := fmt.Sprintf("/repos/%s/%s/keys/%d", owner, repo, id)
+        
+        resp, err := c.doRequest(ctx, "DELETE", path, nil)
+        if err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+
+        <span class="cov8" title="1">return handleResponse(resp, nil)</span>
+}</pre>
+		
+		<pre class="file" id="file1" style="display: none">/*
+Copyright 2024 The Crossplane Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+package clients
+
+import (
+        "bytes"
+        "context"
+        "crypto/tls"
+        "encoding/json"
+        "io"
+        "net/http"
+        "strings"
+        "time"
+
+        "github.com/pkg/errors"
+        "k8s.io/apimachinery/pkg/types"
+        "sigs.k8s.io/controller-runtime/pkg/client"
+
+        corev1 "k8s.io/api/core/v1"
+
+        "github.com/crossplane-contrib/provider-gitea/apis/v1beta1"
+)
+
+const (
+        // HTTP timeout for API requests
+        defaultTimeout = 30 * time.Second
+        
+        // API paths
+        apiPath = "/api/v1"
+)
+
+// Client interface for Gitea API operations
+type Client interface {
+        // Repository operations
+        GetRepository(ctx context.Context, owner, name string) (*Repository, error)
+        CreateRepository(ctx context.Context, req *CreateRepositoryRequest) (*Repository, error)
+        CreateOrganizationRepository(ctx context.Context, org string, req *CreateRepositoryRequest) (*Repository, error)
+        UpdateRepository(ctx context.Context, owner, name string, req *UpdateRepositoryRequest) (*Repository, error)
+        DeleteRepository(ctx context.Context, owner, name string) error
+
+        // Organization operations
+        GetOrganization(ctx context.Context, name string) (*Organization, error)
+        CreateOrganization(ctx context.Context, req *CreateOrganizationRequest) (*Organization, error)
+        UpdateOrganization(ctx context.Context, name string, req *UpdateOrganizationRequest) (*Organization, error)
+        DeleteOrganization(ctx context.Context, name string) error
+
+        // User operations
+        GetUser(ctx context.Context, username string) (*User, error)
+        CreateUser(ctx context.Context, req *CreateUserRequest) (*User, error)
+        UpdateUser(ctx context.Context, username string, req *UpdateUserRequest) (*User, error)
+        DeleteUser(ctx context.Context, username string) error
+
+        // Webhook operations
+        GetRepositoryWebhook(ctx context.Context, owner, repo string, id int64) (*Webhook, error)
+        CreateRepositoryWebhook(ctx context.Context, owner, repo string, req *CreateWebhookRequest) (*Webhook, error)
+        UpdateRepositoryWebhook(ctx context.Context, owner, repo string, id int64, req *UpdateWebhookRequest) (*Webhook, error)
+        DeleteRepositoryWebhook(ctx context.Context, owner, repo string, id int64) error
+
+        // Deploy Key operations
+        GetDeployKey(ctx context.Context, owner, repo string, id int64) (*DeployKey, error)
+        CreateDeployKey(ctx context.Context, owner, repo string, req *CreateDeployKeyRequest) (*DeployKey, error)
+        DeleteDeployKey(ctx context.Context, owner, repo string, id int64) error
+
+        // Organization Secret operations
+        GetOrganizationSecret(ctx context.Context, org, secretName string) (*OrganizationSecret, error)
+        CreateOrganizationSecret(ctx context.Context, org, secretName string, req *CreateOrganizationSecretRequest) error
+        UpdateOrganizationSecret(ctx context.Context, org, secretName string, req *CreateOrganizationSecretRequest) error
+        DeleteOrganizationSecret(ctx context.Context, org, secretName string) error
+}
+
+// giteaClient implements the Client interface
+type giteaClient struct {
+        httpClient *http.Client
+        baseURL    string
+        token      string
+}
+
+// NewClient creates a new Gitea API client
+func NewClient(ctx context.Context, cfg *v1beta1.ProviderConfig, kube client.Client) (Client, error) <span class="cov8" title="1">{
+        if cfg.Spec.BaseURL == "" </span><span class="cov8" title="1">{
+                return nil, errors.New("baseURL is required")
+        }</span>
+
+        // Get authentication token from secret
+        <span class="cov8" title="1">token, err := getTokenFromSecret(ctx, cfg, kube)
+        if err != nil </span><span class="cov8" title="1">{
+                return nil, errors.Wrap(err, "failed to get authentication token")
+        }</span>
+
+        // Setup HTTP client
+        <span class="cov8" title="1">httpClient := &amp;http.Client{
+                Timeout: defaultTimeout,
+        }
+
+        // Handle insecure connections
+        if cfg.Spec.Insecure != nil &amp;&amp; *cfg.Spec.Insecure </span><span class="cov0" title="0">{
+                transport := &amp;http.Transport{
+                        TLSClientConfig: &amp;tls.Config{InsecureSkipVerify: true},
+                }
+                httpClient.Transport = transport
+        }</span>
+
+        <span class="cov8" title="1">baseURL := strings.TrimSuffix(cfg.Spec.BaseURL, "/") + apiPath
+
+        return &amp;giteaClient{
+                httpClient: httpClient,
+                baseURL:    baseURL,
+                token:      token,
+        }, nil</span>
+}
+
+// Repository represents a Gitea repository
+type Repository struct {
+        ID          int64  `json:"id"`
+        Name        string `json:"name"`
+        FullName    string `json:"full_name"`
+        Description string `json:"description"`
+        Private     bool   `json:"private"`
+        Fork        bool   `json:"fork"`
+        Template    bool   `json:"template"`
+        Empty       bool   `json:"empty"`
+        Archived    bool   `json:"archived"`
+        Size        int    `json:"size"`
+        HTMLURL     string `json:"html_url"`
+        SSHURL      string `json:"ssh_url"`
+        CloneURL    string `json:"clone_url"`
+        Website     string `json:"website"`
+        Language    string `json:"language"`
+        CreatedAt   string `json:"created_at"`
+        UpdatedAt   string `json:"updated_at"`
+        Owner       *User  `json:"owner"`
+}
+
+// CreateRepositoryRequest represents the request body for creating a repository
+type CreateRepositoryRequest struct {
+        Name         string `json:"name"`
+        Description  string `json:"description,omitempty"`
+        Private      bool   `json:"private,omitempty"`
+        AutoInit     bool   `json:"auto_init,omitempty"`
+        Template     bool   `json:"template,omitempty"`
+        Gitignores   string `json:"gitignores,omitempty"`
+        License      string `json:"license,omitempty"`
+        Readme       string `json:"readme,omitempty"`
+        IssueLabels  string `json:"issue_labels,omitempty"`
+        TrustModel   string `json:"trust_model,omitempty"`
+        DefaultBranch string `json:"default_branch,omitempty"`
+}
+
+// UpdateRepositoryRequest represents the request body for updating a repository
+type UpdateRepositoryRequest struct {
+        Name                      *string `json:"name,omitempty"`
+        Description               *string `json:"description,omitempty"`
+        Website                   *string `json:"website,omitempty"`
+        Private                   *bool   `json:"private,omitempty"`
+        Template                  *bool   `json:"template,omitempty"`
+        HasIssues                 *bool   `json:"has_issues,omitempty"`
+        HasWiki                   *bool   `json:"has_wiki,omitempty"`
+        HasPullRequests           *bool   `json:"has_pull_requests,omitempty"`
+        HasProjects               *bool   `json:"has_projects,omitempty"`
+        HasReleases               *bool   `json:"has_releases,omitempty"`
+        HasPackages               *bool   `json:"has_packages,omitempty"`
+        HasActions                *bool   `json:"has_actions,omitempty"`
+        AllowMergeCommits         *bool   `json:"allow_merge_commits,omitempty"`
+        AllowRebase               *bool   `json:"allow_rebase,omitempty"`
+        AllowRebaseExplicit       *bool   `json:"allow_rebase_explicit,omitempty"`
+        AllowSquashMerge          *bool   `json:"allow_squash_merge,omitempty"`
+        AllowRebaseUpdate         *bool   `json:"allow_rebase_update,omitempty"`
+        DefaultDeleteBranchAfterMerge *bool   `json:"default_delete_branch_after_merge,omitempty"`
+        DefaultMergeStyle         *string `json:"default_merge_style,omitempty"`
+        DefaultBranch             *string `json:"default_branch,omitempty"`
+        Archived                  *bool   `json:"archived,omitempty"`
+}
+
+// Organization represents a Gitea organization
+type Organization struct {
+        ID          int64  `json:"id"`
+        Username    string `json:"username"`
+        Name        string `json:"name"`
+        FullName    string `json:"full_name"`
+        Description string `json:"description"`
+        Website     string `json:"website"`
+        Location    string `json:"location"`
+        Visibility  string `json:"visibility"`
+        RepoAdminChangeTeamAccess bool   `json:"repo_admin_change_team_access"`
+        Email       string `json:"email"`
+        AvatarURL   string `json:"avatar_url"`
+}
+
+// CreateOrganizationRequest represents the request body for creating an organization
+type CreateOrganizationRequest struct {
+        Username    string `json:"username"`
+        Name        string `json:"name,omitempty"`
+        FullName    string `json:"full_name,omitempty"`
+        Description string `json:"description,omitempty"`
+        Website     string `json:"website,omitempty"`
+        Location    string `json:"location,omitempty"`
+        Visibility  string `json:"visibility,omitempty"`
+        RepoAdminChangeTeamAccess bool   `json:"repo_admin_change_team_access,omitempty"`
+}
+
+// UpdateOrganizationRequest represents the request body for updating an organization
+type UpdateOrganizationRequest struct {
+        Name        *string `json:"name,omitempty"`
+        FullName    *string `json:"full_name,omitempty"`
+        Description *string `json:"description,omitempty"`
+        Website     *string `json:"website,omitempty"`
+        Location    *string `json:"location,omitempty"`
+        Visibility  *string `json:"visibility,omitempty"`
+        RepoAdminChangeTeamAccess *bool   `json:"repo_admin_change_team_access,omitempty"`
+}
+
+// User represents a Gitea user
+type User struct {
+        ID                int64  `json:"id"`
+        Username          string `json:"username"`
+        Name              string `json:"name"`
+        FullName          string `json:"full_name"`
+        Email             string `json:"email"`
+        AvatarURL         string `json:"avatar_url"`
+        Website           string `json:"website"`
+        Location          string `json:"location"`
+        IsAdmin           bool   `json:"is_admin"`
+        LastLogin         string `json:"last_login"`
+        Created           string `json:"created"`
+        Restricted        bool   `json:"restricted"`
+        Active            bool   `json:"active"`
+        ProhibitLogin     bool   `json:"prohibit_login"`
+        LoginName         string `json:"login_name"`
+        SourceID          int64  `json:"source_id"`
+        Language          string `json:"language"`
+        Description       string `json:"description"`
+}
+
+// CreateUserRequest represents the request body for creating a user
+type CreateUserRequest struct {
+        Username          string `json:"username"`
+        Email             string `json:"email"`
+        FullName          string `json:"full_name,omitempty"`
+        Password          string `json:"password"`
+        LoginName         string `json:"login_name,omitempty"`
+        SendNotify        bool   `json:"send_notify,omitempty"`
+        SourceID          int64  `json:"source_id,omitempty"`
+        MustChangePassword bool   `json:"must_change_password,omitempty"`
+        Restricted        bool   `json:"restricted,omitempty"`
+        Visibility        string `json:"visibility,omitempty"`
+}
+
+// UpdateUserRequest represents the request body for updating a user
+type UpdateUserRequest struct {
+        Email             *string `json:"email,omitempty"`
+        FullName          *string `json:"full_name,omitempty"`
+        LoginName         *string `json:"login_name,omitempty"`
+        SourceID          *int64  `json:"source_id,omitempty"`
+        Active            *bool   `json:"active,omitempty"`
+        Admin             *bool   `json:"admin,omitempty"`
+        AllowGitHook      *bool   `json:"allow_git_hook,omitempty"`
+        AllowImportLocal  *bool   `json:"allow_import_local,omitempty"`
+        AllowCreateOrganization *bool   `json:"allow_create_organization,omitempty"`
+        ProhibitLogin     *bool   `json:"prohibit_login,omitempty"`
+        Restricted        *bool   `json:"restricted,omitempty"`
+        Website           *string `json:"website,omitempty"`
+        Location          *string `json:"location,omitempty"`
+        Description       *string `json:"description,omitempty"`
+        Visibility        *string `json:"visibility,omitempty"`
+}
+
+// Webhook represents a Gitea webhook
+type Webhook struct {
+        ID     int64             `json:"id"`
+        Type   string            `json:"type"`
+        URL    string            `json:"config.url"`
+        Active bool              `json:"active"`
+        Events []string          `json:"events"`
+        Config map[string]string `json:"config"`
+        CreatedAt string          `json:"created_at"`
+        UpdatedAt string          `json:"updated_at"`
+}
+
+// CreateWebhookRequest represents the request body for creating a webhook
+type CreateWebhookRequest struct {
+        Type   string            `json:"type"`
+        Config map[string]string `json:"config"`
+        Events []string          `json:"events"`
+        Active bool              `json:"active"`
+}
+
+// UpdateWebhookRequest represents the request body for updating a webhook
+type UpdateWebhookRequest struct {
+        Config *map[string]string `json:"config,omitempty"`
+        Events *[]string          `json:"events,omitempty"`
+        Active *bool              `json:"active,omitempty"`
+}
+
+// OrganizationSecret represents a Gitea organization action secret
+type OrganizationSecret struct {
+        Name      string `json:"name"`
+        CreatedAt string `json:"created_at"`
+        UpdatedAt string `json:"updated_at"`
+}
+
+// CreateOrganizationSecretRequest represents the request body for creating/updating an organization secret
+type CreateOrganizationSecretRequest struct {
+        Data string `json:"data"`
+}
+
+// Organization Secret API methods
+func (c *giteaClient) GetOrganizationSecret(ctx context.Context, org, secretName string) (*OrganizationSecret, error) <span class="cov8" title="1">{
+        path := "/orgs/" + org + "/actions/secrets/" + secretName
+        resp, err := c.doRequest(ctx, "GET", path, nil)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov8" title="1">if resp.StatusCode == http.StatusNotFound </span><span class="cov0" title="0">{
+                return nil, errors.New("organization secret not found")
+        }</span>
+
+        <span class="cov8" title="1">var secret OrganizationSecret
+        if err := handleResponse(resp, &amp;secret); err != nil </span><span class="cov8" title="1">{
+                return nil, err
+        }</span>
+
+        <span class="cov0" title="0">return &amp;secret, nil</span>
+}
+
+func (c *giteaClient) CreateOrganizationSecret(ctx context.Context, org, secretName string, req *CreateOrganizationSecretRequest) error <span class="cov8" title="1">{
+        path := "/orgs/" + org + "/actions/secrets/" + secretName
+        resp, err := c.doRequest(ctx, "PUT", path, req)
+        if err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+
+        <span class="cov8" title="1">return handleResponse(resp, nil)</span>
+}
+
+func (c *giteaClient) UpdateOrganizationSecret(ctx context.Context, org, secretName string, req *CreateOrganizationSecretRequest) error <span class="cov8" title="1">{
+        // For Gitea API, create and update use the same PUT endpoint
+        return c.CreateOrganizationSecret(ctx, org, secretName, req)
+}</span>
+
+func (c *giteaClient) DeleteOrganizationSecret(ctx context.Context, org, secretName string) error <span class="cov8" title="1">{
+        path := "/orgs/" + org + "/actions/secrets/" + secretName
+        resp, err := c.doRequest(ctx, "DELETE", path, nil)
+        if err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+
+        <span class="cov8" title="1">return handleResponse(resp, nil)</span>
+}
+
+// getTokenFromSecret extracts the API token from the provider config's secret
+func getTokenFromSecret(ctx context.Context, cfg *v1beta1.ProviderConfig, kube client.Client) (string, error) <span class="cov8" title="1">{
+        if cfg.Spec.Credentials.Source != "Secret" </span><span class="cov8" title="1">{
+                return "", errors.New("only Secret credential source is supported")
+        }</span>
+
+        <span class="cov8" title="1">if cfg.Spec.Credentials.SecretRef == nil </span><span class="cov0" title="0">{
+                return "", errors.New("secretRef is required when using Secret credential source")
+        }</span>
+
+        <span class="cov8" title="1">secret := &amp;corev1.Secret{}
+        key := types.NamespacedName{
+                Namespace: cfg.Spec.Credentials.SecretRef.Namespace,
+                Name:      cfg.Spec.Credentials.SecretRef.Name,
+        }
+
+        if err := kube.Get(ctx, key, secret); err != nil </span><span class="cov8" title="1">{
+                return "", errors.Wrap(err, "failed to get secret")
+        }</span>
+
+        <span class="cov8" title="1">keyName := "token"
+        if cfg.Spec.Credentials.SecretRef.Key != "" </span><span class="cov8" title="1">{
+                keyName = cfg.Spec.Credentials.SecretRef.Key
+        }</span>
+
+        <span class="cov8" title="1">token, ok := secret.Data[keyName]
+        if !ok </span><span class="cov0" title="0">{
+                return "", errors.Errorf("key %s not found in secret", keyName)
+        }</span>
+
+        <span class="cov8" title="1">return string(token), nil</span>
+}
+
+// doRequest performs an HTTP request with authentication
+func (c *giteaClient) doRequest(ctx context.Context, method, path string, body interface{}) (*http.Response, error) <span class="cov8" title="1">{
+        var bodyReader io.Reader
+        if body != nil </span><span class="cov8" title="1">{
+                jsonBody, err := json.Marshal(body)
+                if err != nil </span><span class="cov0" title="0">{
+                        return nil, errors.Wrap(err, "failed to marshal request body")
+                }</span>
+                <span class="cov8" title="1">bodyReader = bytes.NewReader(jsonBody)</span>
+        }
+
+        <span class="cov8" title="1">req, err := http.NewRequestWithContext(ctx, method, c.baseURL+path, bodyReader)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, errors.Wrap(err, "failed to create request")
+        }</span>
+
+        <span class="cov8" title="1">req.Header.Set("Authorization", "token "+c.token)
+        req.Header.Set("Content-Type", "application/json")
+        req.Header.Set("Accept", "application/json")
+
+        resp, err := c.httpClient.Do(req)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, errors.Wrap(err, "failed to perform request")
+        }</span>
+
+        <span class="cov8" title="1">return resp, nil</span>
+}
+
+// handleResponse handles the HTTP response and unmarshals JSON if needed
+func handleResponse(resp *http.Response, target interface{}) error <span class="cov8" title="1">{
+        defer resp.Body.Close()
+
+        if resp.StatusCode &gt;= 400 </span><span class="cov8" title="1">{
+                body, _ := io.ReadAll(resp.Body)
+                return errors.Errorf("API request failed with status %d: %s", resp.StatusCode, string(body))
+        }</span>
+
+        <span class="cov8" title="1">if target != nil &amp;&amp; resp.StatusCode != http.StatusNoContent </span><span class="cov8" title="1">{
+                if err := json.NewDecoder(resp.Body).Decode(target); err != nil </span><span class="cov0" title="0">{
+                        return errors.Wrap(err, "failed to decode response")
+                }</span>
+        }
+
+        <span class="cov8" title="1">return nil</span>
+}
+
+// IsNotFound checks if an error represents a "not found" response
+func IsNotFound(err error) bool <span class="cov0" title="0">{
+        if err == nil </span><span class="cov0" title="0">{
+                return false
+        }</span>
+        // Check if the error message contains status 404
+        <span class="cov0" title="0">return strings.Contains(err.Error(), "status 404")</span>
+}</pre>
+		
+		<pre class="file" id="file2" style="display: none">/*
+Copyright 2024 The Crossplane Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+package clients
+
+import (
+        "context"
+        "fmt"
+)
+
+// GetOrganization retrieves an organization by name
+func (c *giteaClient) GetOrganization(ctx context.Context, name string) (*Organization, error) <span class="cov8" title="1">{
+        path := fmt.Sprintf("/orgs/%s", name)
+        
+        resp, err := c.doRequest(ctx, "GET", path, nil)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov8" title="1">var organization Organization
+        if err := handleResponse(resp, &amp;organization); err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov8" title="1">return &amp;organization, nil</span>
+}
+
+// CreateOrganization creates a new organization
+func (c *giteaClient) CreateOrganization(ctx context.Context, req *CreateOrganizationRequest) (*Organization, error) <span class="cov8" title="1">{
+        path := "/orgs"
+        
+        resp, err := c.doRequest(ctx, "POST", path, req)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov8" title="1">var organization Organization
+        if err := handleResponse(resp, &amp;organization); err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov8" title="1">return &amp;organization, nil</span>
+}
+
+// UpdateOrganization updates an existing organization
+func (c *giteaClient) UpdateOrganization(ctx context.Context, name string, req *UpdateOrganizationRequest) (*Organization, error) <span class="cov8" title="1">{
+        path := fmt.Sprintf("/orgs/%s", name)
+        
+        resp, err := c.doRequest(ctx, "PATCH", path, req)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov8" title="1">var organization Organization
+        if err := handleResponse(resp, &amp;organization); err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov8" title="1">return &amp;organization, nil</span>
+}
+
+// DeleteOrganization deletes an organization
+func (c *giteaClient) DeleteOrganization(ctx context.Context, name string) error <span class="cov8" title="1">{
+        path := fmt.Sprintf("/orgs/%s", name)
+        
+        resp, err := c.doRequest(ctx, "DELETE", path, nil)
+        if err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+
+        <span class="cov8" title="1">return handleResponse(resp, nil)</span>
+}</pre>
+		
+		<pre class="file" id="file3" style="display: none">/*
+Copyright 2024 The Crossplane Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+package clients
+
+import (
+        "context"
+        "fmt"
+)
+
+// GetRepository retrieves a repository by owner and name
+func (c *giteaClient) GetRepository(ctx context.Context, owner, name string) (*Repository, error) <span class="cov8" title="1">{
+        path := fmt.Sprintf("/repos/%s/%s", owner, name)
+        
+        resp, err := c.doRequest(ctx, "GET", path, nil)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov8" title="1">var repository Repository
+        if err := handleResponse(resp, &amp;repository); err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov8" title="1">return &amp;repository, nil</span>
+}
+
+// CreateRepository creates a new repository
+func (c *giteaClient) CreateRepository(ctx context.Context, req *CreateRepositoryRequest) (*Repository, error) <span class="cov8" title="1">{
+        path := "/user/repos"
+        
+        resp, err := c.doRequest(ctx, "POST", path, req)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov8" title="1">var repository Repository
+        if err := handleResponse(resp, &amp;repository); err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov8" title="1">return &amp;repository, nil</span>
+}
+
+// CreateOrganizationRepository creates a new repository in an organization
+func (c *giteaClient) CreateOrganizationRepository(ctx context.Context, org string, req *CreateRepositoryRequest) (*Repository, error) <span class="cov0" title="0">{
+        path := fmt.Sprintf("/orgs/%s/repos", org)
+        
+        resp, err := c.doRequest(ctx, "POST", path, req)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov0" title="0">var repository Repository
+        if err := handleResponse(resp, &amp;repository); err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov0" title="0">return &amp;repository, nil</span>
+}
+
+// UpdateRepository updates an existing repository
+func (c *giteaClient) UpdateRepository(ctx context.Context, owner, name string, req *UpdateRepositoryRequest) (*Repository, error) <span class="cov8" title="1">{
+        path := fmt.Sprintf("/repos/%s/%s", owner, name)
+        
+        resp, err := c.doRequest(ctx, "PATCH", path, req)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov8" title="1">var repository Repository
+        if err := handleResponse(resp, &amp;repository); err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov8" title="1">return &amp;repository, nil</span>
+}
+
+// DeleteRepository deletes a repository
+func (c *giteaClient) DeleteRepository(ctx context.Context, owner, name string) error <span class="cov8" title="1">{
+        path := fmt.Sprintf("/repos/%s/%s", owner, name)
+        
+        resp, err := c.doRequest(ctx, "DELETE", path, nil)
+        if err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+
+        <span class="cov8" title="1">return handleResponse(resp, nil)</span>
+}</pre>
+		
+		<pre class="file" id="file4" style="display: none">/*
+Copyright 2024 The Crossplane Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+package clients
+
+import (
+        "context"
+        "fmt"
+)
+
+// GetUser retrieves a user by username
+func (c *giteaClient) GetUser(ctx context.Context, username string) (*User, error) <span class="cov8" title="1">{
+        path := fmt.Sprintf("/users/%s", username)
+        
+        resp, err := c.doRequest(ctx, "GET", path, nil)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov8" title="1">var user User
+        if err := handleResponse(resp, &amp;user); err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov8" title="1">return &amp;user, nil</span>
+}
+
+// CreateUser creates a new user (admin only)
+func (c *giteaClient) CreateUser(ctx context.Context, req *CreateUserRequest) (*User, error) <span class="cov8" title="1">{
+        path := "/admin/users"
+        
+        resp, err := c.doRequest(ctx, "POST", path, req)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov8" title="1">var user User
+        if err := handleResponse(resp, &amp;user); err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov8" title="1">return &amp;user, nil</span>
+}
+
+// UpdateUser updates an existing user (admin only)
+func (c *giteaClient) UpdateUser(ctx context.Context, username string, req *UpdateUserRequest) (*User, error) <span class="cov8" title="1">{
+        path := fmt.Sprintf("/admin/users/%s", username)
+        
+        resp, err := c.doRequest(ctx, "PATCH", path, req)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov8" title="1">var user User
+        if err := handleResponse(resp, &amp;user); err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov8" title="1">return &amp;user, nil</span>
+}
+
+// DeleteUser deletes a user (admin only)
+func (c *giteaClient) DeleteUser(ctx context.Context, username string) error <span class="cov8" title="1">{
+        path := fmt.Sprintf("/admin/users/%s", username)
+        
+        resp, err := c.doRequest(ctx, "DELETE", path, nil)
+        if err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+
+        <span class="cov8" title="1">return handleResponse(resp, nil)</span>
+}</pre>
+		
+		<pre class="file" id="file5" style="display: none">/*
+Copyright 2024 The Crossplane Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+package clients
+
+import (
+        "context"
+        "fmt"
+)
+
+// GetRepositoryWebhook retrieves a webhook by repository and webhook ID
+func (c *giteaClient) GetRepositoryWebhook(ctx context.Context, owner, repo string, id int64) (*Webhook, error) <span class="cov8" title="1">{
+        path := fmt.Sprintf("/repos/%s/%s/hooks/%d", owner, repo, id)
+        
+        resp, err := c.doRequest(ctx, "GET", path, nil)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov8" title="1">var webhook Webhook
+        if err := handleResponse(resp, &amp;webhook); err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov8" title="1">return &amp;webhook, nil</span>
+}
+
+// CreateRepositoryWebhook creates a new webhook for a repository
+func (c *giteaClient) CreateRepositoryWebhook(ctx context.Context, owner, repo string, req *CreateWebhookRequest) (*Webhook, error) <span class="cov8" title="1">{
+        path := fmt.Sprintf("/repos/%s/%s/hooks", owner, repo)
+        
+        resp, err := c.doRequest(ctx, "POST", path, req)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov8" title="1">var webhook Webhook
+        if err := handleResponse(resp, &amp;webhook); err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov8" title="1">return &amp;webhook, nil</span>
+}
+
+// UpdateRepositoryWebhook updates an existing webhook
+func (c *giteaClient) UpdateRepositoryWebhook(ctx context.Context, owner, repo string, id int64, req *UpdateWebhookRequest) (*Webhook, error) <span class="cov8" title="1">{
+        path := fmt.Sprintf("/repos/%s/%s/hooks/%d", owner, repo, id)
+        
+        resp, err := c.doRequest(ctx, "PATCH", path, req)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov8" title="1">var webhook Webhook
+        if err := handleResponse(resp, &amp;webhook); err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov8" title="1">return &amp;webhook, nil</span>
+}
+
+// DeleteRepositoryWebhook deletes a webhook
+func (c *giteaClient) DeleteRepositoryWebhook(ctx context.Context, owner, repo string, id int64) error <span class="cov8" title="1">{
+        path := fmt.Sprintf("/repos/%s/%s/hooks/%d", owner, repo, id)
+        
+        resp, err := c.doRequest(ctx, "DELETE", path, nil)
+        if err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+
+        <span class="cov8" title="1">return handleResponse(resp, nil)</span>
+}
+
+// GetOrganizationWebhook retrieves a webhook by organization and webhook ID
+func (c *giteaClient) GetOrganizationWebhook(ctx context.Context, org string, id int64) (*Webhook, error) <span class="cov8" title="1">{
+        path := fmt.Sprintf("/orgs/%s/hooks/%d", org, id)
+        
+        resp, err := c.doRequest(ctx, "GET", path, nil)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov8" title="1">var webhook Webhook
+        if err := handleResponse(resp, &amp;webhook); err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov8" title="1">return &amp;webhook, nil</span>
+}
+
+// CreateOrganizationWebhook creates a new webhook for an organization
+func (c *giteaClient) CreateOrganizationWebhook(ctx context.Context, org string, req *CreateWebhookRequest) (*Webhook, error) <span class="cov8" title="1">{
+        path := fmt.Sprintf("/orgs/%s/hooks", org)
+        
+        resp, err := c.doRequest(ctx, "POST", path, req)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov8" title="1">var webhook Webhook
+        if err := handleResponse(resp, &amp;webhook); err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov8" title="1">return &amp;webhook, nil</span>
+}
+
+// UpdateOrganizationWebhook updates an existing organization webhook
+func (c *giteaClient) UpdateOrganizationWebhook(ctx context.Context, org string, id int64, req *UpdateWebhookRequest) (*Webhook, error) <span class="cov8" title="1">{
+        path := fmt.Sprintf("/orgs/%s/hooks/%d", org, id)
+        
+        resp, err := c.doRequest(ctx, "PATCH", path, req)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov8" title="1">var webhook Webhook
+        if err := handleResponse(resp, &amp;webhook); err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov8" title="1">return &amp;webhook, nil</span>
+}
+
+// DeleteOrganizationWebhook deletes an organization webhook
+func (c *giteaClient) DeleteOrganizationWebhook(ctx context.Context, org string, id int64) error <span class="cov8" title="1">{
+        path := fmt.Sprintf("/orgs/%s/hooks/%d", org, id)
+        
+        resp, err := c.doRequest(ctx, "DELETE", path, nil)
+        if err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+
+        <span class="cov8" title="1">return handleResponse(resp, nil)</span>
+}</pre>
+		
+		<pre class="file" id="file6" style="display: none">/*
+Copyright 2024 The Crossplane Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+package organizationsecret
+
+import (
+        "context"
+
+        "github.com/pkg/errors"
+        "k8s.io/apimachinery/pkg/types"
+        ctrl "sigs.k8s.io/controller-runtime"
+        "sigs.k8s.io/controller-runtime/pkg/client"
+
+        xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
+        "github.com/crossplane/crossplane-runtime/pkg/controller"
+        "github.com/crossplane/crossplane-runtime/pkg/event"
+        "github.com/crossplane/crossplane-runtime/pkg/meta"
+        "github.com/crossplane/crossplane-runtime/pkg/reconciler/managed"
+        "github.com/crossplane/crossplane-runtime/pkg/resource"
+
+        "github.com/crossplane-contrib/provider-gitea/apis/organizationsecret/v1alpha1"
+        "github.com/crossplane-contrib/provider-gitea/apis/v1beta1"
+        giteaclients "github.com/crossplane-contrib/provider-gitea/internal/clients"
+        corev1 "k8s.io/api/core/v1"
+)
+
+const (
+        errNotOrganizationSecret    = "managed resource is not an OrganizationSecret custom resource"
+        errTrackPCUsage             = "cannot track ProviderConfig usage"
+        errGetPC                    = "cannot get ProviderConfig"
+        errGetCreds                 = "cannot get credentials"
+        errNewClient                = "cannot create new Service"
+        errCreateOrganizationSecret = "cannot create organization secret"
+        errUpdateOrganizationSecret = "cannot update organization secret"
+        errDeleteOrganizationSecret = "cannot delete organization secret"
+        errGetOrganizationSecret    = "cannot get organization secret"
+        errGetSecretData            = "cannot get secret data"
+)
+
+// Setup adds a controller that reconciles OrganizationSecret managed resources.
+func Setup(mgr ctrl.Manager, o controller.Options) error <span class="cov0" title="0">{
+        name := managed.ControllerName(v1alpha1.OrganizationSecretKind)
+
+        cps := []managed.ConnectionPublisher{managed.NewAPISecretPublisher(mgr.GetClient(), mgr.GetScheme())}
+
+        r := managed.NewReconciler(mgr,
+                resource.ManagedKind(v1alpha1.OrganizationSecretGroupVersionKind),
+                managed.WithExternalConnecter(&amp;connector{
+                        kube:  mgr.GetClient(),
+                        usage: resource.NewProviderConfigUsageTracker(mgr.GetClient(), &amp;v1beta1.ProviderConfigUsage{}),
+                }),
+                managed.WithLogger(o.Logger.WithValues("controller", name)),
+                managed.WithPollInterval(o.PollInterval),
+                managed.WithRecorder(event.NewAPIRecorder(mgr.GetEventRecorderFor(name))),
+                managed.WithConnectionPublishers(cps...))
+
+        return ctrl.NewControllerManagedBy(mgr).
+                Named(name).
+                WithOptions(o.ForControllerRuntime()).
+                For(&amp;v1alpha1.OrganizationSecret{}).
+                Complete(r)
+}</span>
+
+// A connector is expected to produce an ExternalClient when its Connect method
+// is called.
+type connector struct {
+        kube  client.Client
+        usage resource.Tracker
+}
+
+// Connect typically produces an ExternalClient by:
+// 1. Tracking that the managed resource is using a ProviderConfig.
+// 2. Getting the managed resource's ProviderConfig.
+// 3. Getting the credentials specified by the ProviderConfig.
+// 4. Using the credentials to form a client.
+func (c *connector) Connect(ctx context.Context, mg resource.Managed) (managed.ExternalClient, error) <span class="cov0" title="0">{
+        cr, ok := mg.(*v1alpha1.OrganizationSecret)
+        if !ok </span><span class="cov0" title="0">{
+                return nil, errors.New(errNotOrganizationSecret)
+        }</span>
+
+        <span class="cov0" title="0">if err := c.usage.Track(ctx, mg); err != nil </span><span class="cov0" title="0">{
+                return nil, errors.Wrap(err, errTrackPCUsage)
+        }</span>
+
+        <span class="cov0" title="0">pc := &amp;v1beta1.ProviderConfig{}
+        if err := c.kube.Get(ctx, types.NamespacedName{
+                Name:      cr.GetProviderConfigReference().Name,
+                Namespace: cr.GetNamespace(),
+        }, pc); err != nil </span><span class="cov0" title="0">{
+                return nil, errors.Wrap(err, errGetPC)
+        }</span>
+
+        <span class="cov0" title="0">client, err := giteaclients.NewClient(ctx, pc, c.kube)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, errors.Wrap(err, errNewClient)
+        }</span>
+
+        <span class="cov0" title="0">return &amp;external{client: client, kube: c.kube}, nil</span>
+}
+
+// An ExternalClient observes, then either creates, updates, or deletes an
+// external resource to ensure it reflects the managed resource's desired state.
+type external struct {
+        client giteaclients.Client
+        kube   client.Client
+}
+
+func (c *external) Observe(ctx context.Context, mg resource.Managed) (managed.ExternalObservation, error) <span class="cov8" title="1">{
+        cr, ok := mg.(*v1alpha1.OrganizationSecret)
+        if !ok </span><span class="cov0" title="0">{
+                return managed.ExternalObservation{}, errors.New(errNotOrganizationSecret)
+        }</span>
+
+        <span class="cov8" title="1">secretName := cr.Spec.ForProvider.SecretName
+
+        // Gitea organization secrets API doesn't support GET operations (returns 405)
+        // So we use a write-through approach: assume the secret needs to be created/updated
+        // since we can't verify its existence or current value
+        
+        // Check if we have an external name - this indicates we've created it before
+        resourceExists := meta.GetExternalName(cr) != ""
+        
+        // Use secretName as external name for this resource if not already set
+        if meta.GetExternalName(cr) == "" </span><span class="cov8" title="1">{
+                meta.SetExternalName(cr, secretName)
+        }</span>
+
+        // Always mark as needing update since we can't verify the current state
+        // This ensures secrets are always synchronized with the desired state
+        <span class="cov8" title="1">cr.SetConditions(xpv1.Available())
+
+        return managed.ExternalObservation{
+                ResourceExists:   resourceExists,
+                ResourceUpToDate: false, // Always update since we can't verify current state
+        }, nil</span>
+}
+
+func (c *external) Create(ctx context.Context, mg resource.Managed) (managed.ExternalCreation, error) <span class="cov8" title="1">{
+        cr, ok := mg.(*v1alpha1.OrganizationSecret)
+        if !ok </span><span class="cov0" title="0">{
+                return managed.ExternalCreation{}, errors.New(errNotOrganizationSecret)
+        }</span>
+
+        <span class="cov8" title="1">cr.SetConditions(xpv1.Creating())
+
+        org := cr.Spec.ForProvider.Organization
+        secretName := cr.Spec.ForProvider.SecretName
+
+        // Get secret data
+        secretData, err := c.getSecretData(ctx, cr)
+        if err != nil </span><span class="cov8" title="1">{
+                return managed.ExternalCreation{}, errors.Wrap(err, errGetSecretData)
+        }</span>
+
+        <span class="cov8" title="1">req := &amp;giteaclients.CreateOrganizationSecretRequest{
+                Data: secretData,
+        }
+
+        err = c.client.CreateOrganizationSecret(ctx, org, secretName, req)
+        if err != nil </span><span class="cov0" title="0">{
+                return managed.ExternalCreation{}, errors.Wrap(err, errCreateOrganizationSecret)
+        }</span>
+
+        <span class="cov8" title="1">meta.SetExternalName(cr, secretName)
+
+        // Publish the secret data as connection details for applications to use
+        connectionDetails := managed.ConnectionDetails{
+                "data": []byte(secretData),
+        }
+
+        return managed.ExternalCreation{
+                ConnectionDetails: connectionDetails,
+        }, nil</span>
+}
+
+func (c *external) Update(ctx context.Context, mg resource.Managed) (managed.ExternalUpdate, error) <span class="cov8" title="1">{
+        cr, ok := mg.(*v1alpha1.OrganizationSecret)
+        if !ok </span><span class="cov0" title="0">{
+                return managed.ExternalUpdate{}, errors.New(errNotOrganizationSecret)
+        }</span>
+
+        <span class="cov8" title="1">org := cr.Spec.ForProvider.Organization
+        secretName := cr.Spec.ForProvider.SecretName
+
+        // Get secret data
+        secretData, err := c.getSecretData(ctx, cr)
+        if err != nil </span><span class="cov0" title="0">{
+                return managed.ExternalUpdate{}, errors.Wrap(err, errGetSecretData)
+        }</span>
+
+        <span class="cov8" title="1">req := &amp;giteaclients.CreateOrganizationSecretRequest{
+                Data: secretData,
+        }
+
+        err = c.client.UpdateOrganizationSecret(ctx, org, secretName, req)
+        if err != nil </span><span class="cov0" title="0">{
+                return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateOrganizationSecret)
+        }</span>
+
+        // Publish the secret data as connection details for applications to use
+        <span class="cov8" title="1">connectionDetails := managed.ConnectionDetails{
+                "data": []byte(secretData),
+        }
+
+        return managed.ExternalUpdate{
+                ConnectionDetails: connectionDetails,
+        }, nil</span>
+}
+
+func (c *external) Delete(ctx context.Context, mg resource.Managed) (managed.ExternalDelete, error) <span class="cov8" title="1">{
+        cr, ok := mg.(*v1alpha1.OrganizationSecret)
+        if !ok </span><span class="cov0" title="0">{
+                return managed.ExternalDelete{}, errors.New(errNotOrganizationSecret)
+        }</span>
+
+        <span class="cov8" title="1">cr.SetConditions(xpv1.Deleting())
+
+        org := cr.Spec.ForProvider.Organization
+        secretName := cr.Spec.ForProvider.SecretName
+
+        err := c.client.DeleteOrganizationSecret(ctx, org, secretName)
+        if err != nil </span><span class="cov0" title="0">{
+                return managed.ExternalDelete{}, errors.Wrap(err, errDeleteOrganizationSecret)
+        }</span>
+
+        <span class="cov8" title="1">return managed.ExternalDelete{}, nil</span>
+}
+
+func (c *external) Disconnect(ctx context.Context) error <span class="cov0" title="0">{
+        // Nothing to disconnect as we're using HTTP client
+        return nil
+}</span>
+
+// getSecretData retrieves the secret data from either direct value or Kubernetes secret reference
+func (c *external) getSecretData(ctx context.Context, cr *v1alpha1.OrganizationSecret) (string, error) <span class="cov8" title="1">{
+        // Check if direct data is provided
+        if cr.Spec.ForProvider.Data != nil </span><span class="cov8" title="1">{
+                return *cr.Spec.ForProvider.Data, nil
+        }</span>
+
+        // Check if dataFrom is provided
+        <span class="cov8" title="1">if cr.Spec.ForProvider.DataFrom != nil </span><span class="cov8" title="1">{
+                secretRef := cr.Spec.ForProvider.DataFrom.SecretKeyRef
+                secret := &amp;corev1.Secret{}
+                key := types.NamespacedName{
+                        Namespace: secretRef.Namespace,
+                        Name:      secretRef.Name,
+                }
+
+                if err := c.kube.Get(ctx, key, secret); err != nil </span><span class="cov8" title="1">{
+                        return "", errors.Wrap(err, "failed to get secret")
+                }</span>
+
+                <span class="cov8" title="1">data, ok := secret.Data[secretRef.Key]
+                if !ok </span><span class="cov0" title="0">{
+                        return "", errors.Errorf("key %s not found in secret", secretRef.Key)
+                }</span>
+
+                <span class="cov8" title="1">return string(data), nil</span>
+        }
+
+        <span class="cov0" title="0">return "", errors.New("either data or dataFrom must be specified")</span>
+}</pre>
+		
+		<pre class="file" id="file7" style="display: none">/*
+Copyright 2024 The Crossplane Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+package repository
+
+import (
+        "context"
+
+        "github.com/pkg/errors"
+        "k8s.io/apimachinery/pkg/types"
+        ctrl "sigs.k8s.io/controller-runtime"
+        "sigs.k8s.io/controller-runtime/pkg/client"
+
+        xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
+        "github.com/crossplane/crossplane-runtime/pkg/controller"
+        "github.com/crossplane/crossplane-runtime/pkg/event"
+        "github.com/crossplane/crossplane-runtime/pkg/meta"
+        "github.com/crossplane/crossplane-runtime/pkg/reconciler/managed"
+        "github.com/crossplane/crossplane-runtime/pkg/resource"
+
+        "github.com/crossplane-contrib/provider-gitea/apis/repository/v1alpha1"
+        "github.com/crossplane-contrib/provider-gitea/apis/v1beta1"
+        giteaclients "github.com/crossplane-contrib/provider-gitea/internal/clients"
+)
+
+const (
+        errNotRepository    = "managed resource is not a Repository custom resource"
+        errTrackPCUsage     = "cannot track ProviderConfig usage"
+        errGetPC            = "cannot get ProviderConfig"
+        errGetCreds         = "cannot get credentials"
+        errNewClient        = "cannot create new Service"
+        errCreateRepository = "cannot create repository"
+        errUpdateRepository = "cannot update repository"
+        errDeleteRepository = "cannot delete repository"
+        errGetRepository    = "cannot get repository"
+)
+
+// Setup adds a controller that reconciles Repository managed resources.
+func Setup(mgr ctrl.Manager, o controller.Options) error <span class="cov0" title="0">{
+        name := managed.ControllerName(v1alpha1.RepositoryKind)
+
+        cps := []managed.ConnectionPublisher{managed.NewAPISecretPublisher(mgr.GetClient(), mgr.GetScheme())}
+
+        r := managed.NewReconciler(mgr,
+                resource.ManagedKind(v1alpha1.RepositoryGroupVersionKind),
+                managed.WithExternalConnecter(&amp;connector{
+                        kube:  mgr.GetClient(),
+                        usage: resource.NewProviderConfigUsageTracker(mgr.GetClient(), &amp;v1beta1.ProviderConfigUsage{}),
+                }),
+                managed.WithLogger(o.Logger.WithValues("controller", name)),
+                managed.WithPollInterval(o.PollInterval),
+                managed.WithRecorder(event.NewAPIRecorder(mgr.GetEventRecorderFor(name))),
+                managed.WithConnectionPublishers(cps...))
+
+        return ctrl.NewControllerManagedBy(mgr).
+                Named(name).
+                WithOptions(o.ForControllerRuntime()).
+                For(&amp;v1alpha1.Repository{}).
+                Complete(r)
+}</span>
+
+// A connector is expected to produce an ExternalClient when its Connect method
+// is called.
+type connector struct {
+        kube  client.Client
+        usage resource.Tracker
+}
+
+// Connect typically produces an ExternalClient by:
+// 1. Tracking that the managed resource is using a ProviderConfig.
+// 2. Getting the managed resource's ProviderConfig.
+// 3. Getting the credentials specified by the ProviderConfig.
+// 4. Using the credentials to form a client.
+func (c *connector) Connect(ctx context.Context, mg resource.Managed) (managed.ExternalClient, error) <span class="cov0" title="0">{
+        cr, ok := mg.(*v1alpha1.Repository)
+        if !ok </span><span class="cov0" title="0">{
+                return nil, errors.New(errNotRepository)
+        }</span>
+
+        <span class="cov0" title="0">if err := c.usage.Track(ctx, mg); err != nil </span><span class="cov0" title="0">{
+                return nil, errors.Wrap(err, errTrackPCUsage)
+        }</span>
+
+        <span class="cov0" title="0">pc := &amp;v1beta1.ProviderConfig{}
+        if err := c.kube.Get(ctx, types.NamespacedName{Name: cr.GetProviderConfigReference().Name}, pc); err != nil </span><span class="cov0" title="0">{
+                return nil, errors.Wrap(err, errGetPC)
+        }</span>
+
+        <span class="cov0" title="0">client, err := giteaclients.NewClient(ctx, pc, c.kube)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, errors.Wrap(err, errNewClient)
+        }</span>
+
+        <span class="cov0" title="0">return &amp;external{client: client}, nil</span>
+}
+
+// An ExternalClient observes, then either creates, updates, or deletes an
+// external resource to ensure it reflects the managed resource's desired state.
+type external struct {
+        client giteaclients.Client
+}
+
+func (c *external) Disconnect(ctx context.Context) error <span class="cov0" title="0">{
+        // No persistent connection to disconnect
+        return nil
+}</span>
+
+func (c *external) Observe(ctx context.Context, mg resource.Managed) (managed.ExternalObservation, error) <span class="cov8" title="1">{
+        cr, ok := mg.(*v1alpha1.Repository)
+        if !ok </span><span class="cov0" title="0">{
+                return managed.ExternalObservation{}, errors.New(errNotRepository)
+        }</span>
+
+        <span class="cov8" title="1">externalName := meta.GetExternalName(cr)
+        if externalName == "" </span><span class="cov8" title="1">{
+                return managed.ExternalObservation{ResourceExists: false}, nil
+        }</span>
+
+        <span class="cov8" title="1">owner := cr.Spec.ForProvider.Owner
+        if owner == nil </span><span class="cov0" title="0">{
+                return managed.ExternalObservation{}, errors.New("owner is required")
+        }</span>
+
+        <span class="cov8" title="1">repository, err := c.client.GetRepository(ctx, *owner, externalName)
+        if err != nil </span><span class="cov8" title="1">{
+                // If repository doesn't exist, return that it needs to be created
+                return managed.ExternalObservation{ResourceExists: false}, nil
+        }</span>
+
+        // Update observed state
+        <span class="cov8" title="1">cr.Status.AtProvider = v1alpha1.RepositoryObservation{
+                ID:        &amp;repository.ID,
+                FullName:  &amp;repository.FullName,
+                Fork:      &amp;repository.Fork,
+                Empty:     &amp;repository.Empty,
+                Size:      &amp;repository.Size,
+                HTMLURL:   &amp;repository.HTMLURL,
+                SSHURL:    &amp;repository.SSHURL,
+                CloneURL:  &amp;repository.CloneURL,
+                Language:  &amp;repository.Language,
+                CreatedAt: &amp;repository.CreatedAt,
+                UpdatedAt: &amp;repository.UpdatedAt,
+        }
+
+        cr.SetConditions(xpv1.Available())
+
+        return managed.ExternalObservation{
+                ResourceExists:   true,
+                ResourceUpToDate: c.isUpToDate(cr, repository),
+        }, nil</span>
+}
+
+func (c *external) Create(ctx context.Context, mg resource.Managed) (managed.ExternalCreation, error) <span class="cov8" title="1">{
+        cr, ok := mg.(*v1alpha1.Repository)
+        if !ok </span><span class="cov0" title="0">{
+                return managed.ExternalCreation{}, errors.New(errNotRepository)
+        }</span>
+
+        <span class="cov8" title="1">cr.SetConditions(xpv1.Creating())
+
+        req := &amp;giteaclients.CreateRepositoryRequest{
+                Name:         cr.Spec.ForProvider.Name,
+                AutoInit:     cr.Spec.ForProvider.AutoInit != nil &amp;&amp; *cr.Spec.ForProvider.AutoInit,
+                Private:      cr.Spec.ForProvider.Private != nil &amp;&amp; *cr.Spec.ForProvider.Private,
+                Template:     cr.Spec.ForProvider.Template != nil &amp;&amp; *cr.Spec.ForProvider.Template,
+        }
+
+        if cr.Spec.ForProvider.Description != nil </span><span class="cov8" title="1">{
+                req.Description = *cr.Spec.ForProvider.Description
+        }</span>
+        <span class="cov8" title="1">if cr.Spec.ForProvider.Gitignores != nil </span><span class="cov0" title="0">{
+                req.Gitignores = *cr.Spec.ForProvider.Gitignores
+        }</span>
+        <span class="cov8" title="1">if cr.Spec.ForProvider.License != nil </span><span class="cov0" title="0">{
+                req.License = *cr.Spec.ForProvider.License
+        }</span>
+        <span class="cov8" title="1">if cr.Spec.ForProvider.Readme != nil </span><span class="cov0" title="0">{
+                req.Readme = *cr.Spec.ForProvider.Readme
+        }</span>
+        <span class="cov8" title="1">if cr.Spec.ForProvider.IssueLabels != nil </span><span class="cov0" title="0">{
+                req.IssueLabels = *cr.Spec.ForProvider.IssueLabels
+        }</span>
+        <span class="cov8" title="1">if cr.Spec.ForProvider.TrustModel != nil </span><span class="cov0" title="0">{
+                req.TrustModel = *cr.Spec.ForProvider.TrustModel
+        }</span>
+        <span class="cov8" title="1">if cr.Spec.ForProvider.DefaultBranch != nil </span><span class="cov0" title="0">{
+                req.DefaultBranch = *cr.Spec.ForProvider.DefaultBranch
+        }</span>
+
+        <span class="cov8" title="1">var repository *giteaclients.Repository
+        var err error
+
+        if cr.Spec.ForProvider.Owner != nil </span><span class="cov8" title="1">{
+                // Create repository in organization
+                repository, err = c.client.CreateOrganizationRepository(ctx, *cr.Spec.ForProvider.Owner, req)
+        }</span> else<span class="cov8" title="1"> {
+                // Create repository for authenticated user
+                repository, err = c.client.CreateRepository(ctx, req)
+        }</span>
+
+        <span class="cov8" title="1">if err != nil </span><span class="cov8" title="1">{
+                return managed.ExternalCreation{}, errors.Wrap(err, errCreateRepository)
+        }</span>
+
+        <span class="cov8" title="1">meta.SetExternalName(cr, repository.Name)
+        
+        return managed.ExternalCreation{}, nil</span>
+}
+
+func (c *external) Update(ctx context.Context, mg resource.Managed) (managed.ExternalUpdate, error) <span class="cov0" title="0">{
+        cr, ok := mg.(*v1alpha1.Repository)
+        if !ok </span><span class="cov0" title="0">{
+                return managed.ExternalUpdate{}, errors.New(errNotRepository)
+        }</span>
+
+        <span class="cov0" title="0">owner := cr.Spec.ForProvider.Owner
+        if owner == nil </span><span class="cov0" title="0">{
+                return managed.ExternalUpdate{}, errors.New("owner is required")
+        }</span>
+
+        <span class="cov0" title="0">externalName := meta.GetExternalName(cr)
+        
+        req := &amp;giteaclients.UpdateRepositoryRequest{}
+
+        if cr.Spec.ForProvider.Description != nil </span><span class="cov0" title="0">{
+                req.Description = cr.Spec.ForProvider.Description
+        }</span>
+        <span class="cov0" title="0">if cr.Spec.ForProvider.Website != nil </span><span class="cov0" title="0">{
+                req.Website = cr.Spec.ForProvider.Website
+        }</span>
+        <span class="cov0" title="0">if cr.Spec.ForProvider.Private != nil </span><span class="cov0" title="0">{
+                req.Private = cr.Spec.ForProvider.Private
+        }</span>
+        <span class="cov0" title="0">if cr.Spec.ForProvider.Template != nil </span><span class="cov0" title="0">{
+                req.Template = cr.Spec.ForProvider.Template
+        }</span>
+        <span class="cov0" title="0">if cr.Spec.ForProvider.HasIssues != nil </span><span class="cov0" title="0">{
+                req.HasIssues = cr.Spec.ForProvider.HasIssues
+        }</span>
+        <span class="cov0" title="0">if cr.Spec.ForProvider.HasWiki != nil </span><span class="cov0" title="0">{
+                req.HasWiki = cr.Spec.ForProvider.HasWiki
+        }</span>
+        <span class="cov0" title="0">if cr.Spec.ForProvider.HasPullRequests != nil </span><span class="cov0" title="0">{
+                req.HasPullRequests = cr.Spec.ForProvider.HasPullRequests
+        }</span>
+        <span class="cov0" title="0">if cr.Spec.ForProvider.HasProjects != nil </span><span class="cov0" title="0">{
+                req.HasProjects = cr.Spec.ForProvider.HasProjects
+        }</span>
+        <span class="cov0" title="0">if cr.Spec.ForProvider.HasReleases != nil </span><span class="cov0" title="0">{
+                req.HasReleases = cr.Spec.ForProvider.HasReleases
+        }</span>
+        <span class="cov0" title="0">if cr.Spec.ForProvider.HasPackages != nil </span><span class="cov0" title="0">{
+                req.HasPackages = cr.Spec.ForProvider.HasPackages
+        }</span>
+        <span class="cov0" title="0">if cr.Spec.ForProvider.HasActions != nil </span><span class="cov0" title="0">{
+                req.HasActions = cr.Spec.ForProvider.HasActions
+        }</span>
+        <span class="cov0" title="0">if cr.Spec.ForProvider.AllowMergeCommits != nil </span><span class="cov0" title="0">{
+                req.AllowMergeCommits = cr.Spec.ForProvider.AllowMergeCommits
+        }</span>
+        <span class="cov0" title="0">if cr.Spec.ForProvider.AllowRebase != nil </span><span class="cov0" title="0">{
+                req.AllowRebase = cr.Spec.ForProvider.AllowRebase
+        }</span>
+        <span class="cov0" title="0">if cr.Spec.ForProvider.AllowRebaseExplicit != nil </span><span class="cov0" title="0">{
+                req.AllowRebaseExplicit = cr.Spec.ForProvider.AllowRebaseExplicit
+        }</span>
+        <span class="cov0" title="0">if cr.Spec.ForProvider.AllowSquashMerge != nil </span><span class="cov0" title="0">{
+                req.AllowSquashMerge = cr.Spec.ForProvider.AllowSquashMerge
+        }</span>
+        <span class="cov0" title="0">if cr.Spec.ForProvider.AllowRebaseUpdate != nil </span><span class="cov0" title="0">{
+                req.AllowRebaseUpdate = cr.Spec.ForProvider.AllowRebaseUpdate
+        }</span>
+        <span class="cov0" title="0">if cr.Spec.ForProvider.DefaultDeleteBranchAfterMerge != nil </span><span class="cov0" title="0">{
+                req.DefaultDeleteBranchAfterMerge = cr.Spec.ForProvider.DefaultDeleteBranchAfterMerge
+        }</span>
+        <span class="cov0" title="0">if cr.Spec.ForProvider.DefaultMergeStyle != nil </span><span class="cov0" title="0">{
+                req.DefaultMergeStyle = cr.Spec.ForProvider.DefaultMergeStyle
+        }</span>
+        <span class="cov0" title="0">if cr.Spec.ForProvider.DefaultBranch != nil </span><span class="cov0" title="0">{
+                req.DefaultBranch = cr.Spec.ForProvider.DefaultBranch
+        }</span>
+        <span class="cov0" title="0">if cr.Spec.ForProvider.Archived != nil </span><span class="cov0" title="0">{
+                req.Archived = cr.Spec.ForProvider.Archived
+        }</span>
+
+        <span class="cov0" title="0">_, err := c.client.UpdateRepository(ctx, *owner, externalName, req)
+        if err != nil </span><span class="cov0" title="0">{
+                return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateRepository)
+        }</span>
+
+        <span class="cov0" title="0">return managed.ExternalUpdate{}, nil</span>
+}
+
+func (c *external) Delete(ctx context.Context, mg resource.Managed) (managed.ExternalDelete, error) <span class="cov8" title="1">{
+        cr, ok := mg.(*v1alpha1.Repository)
+        if !ok </span><span class="cov0" title="0">{
+                return managed.ExternalDelete{}, errors.New(errNotRepository)
+        }</span>
+
+        <span class="cov8" title="1">cr.SetConditions(xpv1.Deleting())
+
+        owner := cr.Spec.ForProvider.Owner
+        if owner == nil </span><span class="cov8" title="1">{
+                return managed.ExternalDelete{}, errors.New("owner is required")
+        }</span>
+
+        <span class="cov8" title="1">externalName := meta.GetExternalName(cr)
+        
+        err := c.client.DeleteRepository(ctx, *owner, externalName)
+        if err != nil </span><span class="cov8" title="1">{
+                return managed.ExternalDelete{}, errors.Wrap(err, errDeleteRepository)
+        }</span>
+
+        <span class="cov8" title="1">return managed.ExternalDelete{}, nil</span>
+}
+
+// isUpToDate checks if the repository is up to date with the desired state
+func (c *external) isUpToDate(cr *v1alpha1.Repository, repository *giteaclients.Repository) bool <span class="cov8" title="1">{
+        if cr.Spec.ForProvider.Description != nil &amp;&amp; *cr.Spec.ForProvider.Description != repository.Description </span><span class="cov0" title="0">{
+                return false
+        }</span>
+        <span class="cov8" title="1">if cr.Spec.ForProvider.Website != nil &amp;&amp; *cr.Spec.ForProvider.Website != repository.Website </span><span class="cov0" title="0">{
+                return false
+        }</span>
+        <span class="cov8" title="1">if cr.Spec.ForProvider.Private != nil &amp;&amp; *cr.Spec.ForProvider.Private != repository.Private </span><span class="cov0" title="0">{
+                return false
+        }</span>
+        <span class="cov8" title="1">if cr.Spec.ForProvider.Template != nil &amp;&amp; *cr.Spec.ForProvider.Template != repository.Template </span><span class="cov0" title="0">{
+                return false
+        }</span>
+        <span class="cov8" title="1">if cr.Spec.ForProvider.Archived != nil &amp;&amp; *cr.Spec.ForProvider.Archived != repository.Archived </span><span class="cov0" title="0">{
+                return false
+        }</span>
+        
+        <span class="cov8" title="1">return true</span>
+}</pre>
+		
+		</div>
+	</body>
+	<script>
+	(function() {
+		var files = document.getElementById('files');
+		var visible;
+		files.addEventListener('change', onChange, false);
+		function select(part) {
+			if (visible)
+				visible.style.display = 'none';
+			visible = document.getElementById(part);
+			if (!visible)
+				return;
+			files.value = part;
+			visible.style.display = 'block';
+			location.hash = part;
+		}
+		function onChange() {
+			select(files.value);
+			window.scrollTo(0, 0);
+		}
+		if (location.hash != "") {
+			select(location.hash.substr(1));
+		}
+		if (!visible) {
+			select("file0");
+		}
+	})();
+	</script>
+</html>

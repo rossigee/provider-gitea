@@ -68,6 +68,7 @@ type ProviderConfigStatus struct {
 
 // A ProviderConfig configures a Gitea provider.
 // +kubebuilder:subresource:status
+// +kubebuilder:resource:scope=Cluster
 // +kubebuilder:printcolumn:name="AGE",type="date",JSONPath=".metadata.creationTimestamp"
 // +kubebuilder:printcolumn:name="SECRET-NAME",type="string",JSONPath=".spec.credentials.secretRef.name",priority=1
 // +kubebuilder:printcolumn:name="BASE-URL",type="string",JSONPath=".spec.baseURL",priority=1
@@ -91,6 +92,7 @@ type ProviderConfigList struct {
 // +kubebuilder:object:root=true
 
 // A ProviderConfigUsage indicates that a resource is using a ProviderConfig.
+// +kubebuilder:resource:scope=Cluster
 type ProviderConfigUsage struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
