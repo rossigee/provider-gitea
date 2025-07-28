@@ -24,6 +24,19 @@ This provider enables declarative management of Gitea instances through Kubernet
 - **API Client**: Comprehensive Gitea API integration
 - **Controller Status**: In development (API types need Crossplane integration)
 
+## Development Setup
+
+**Important**: After cloning this repository, install the git hooks to prevent large file commits:
+
+```bash
+./scripts/install-hooks.sh
+```
+
+This installs a pre-commit hook that prevents:
+- Files larger than 10MB
+- Binary artifacts (*.xpkg, *.tar.gz, etc.)
+- Build artifacts (provider binaries, cache files)
+
 ## Quick Start
 
 1. Install the provider from GitHub Container Registry:
