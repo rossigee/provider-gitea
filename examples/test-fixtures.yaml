@@ -1,0 +1,38 @@
+# Safe test fixtures for non-destructive validation
+# These create test resources that can be easily cleaned up
+
+# 1. Create a test organization first
+apiVersion: organization.gitea.crossplane.io/v1alpha1
+kind: Organization
+metadata:
+  name: test-org-fixtures
+  annotations:
+    crossplane.io/external-name: crossplane-test
+spec:
+  forProvider:
+    username: crossplane-test
+    name: "Crossplane Test Organization"
+    fullName: "Crossplane Provider Testing Organization"
+    description: "Test organization for validating Crossplane Gitea provider fixtures"
+    website: "https://crossplane.io"
+    location: "Global"
+    visibility: public
+    repoAdminChangeTeamAccess: false
+  providerConfigRef:
+    name: default
+
+---
+# 2. Test OrganizationSecret with direct data
+apiVersion: organizationsecret.gitea.crossplane.io/v1alpha1
+kind: OrganizationSecret
+metadata:
+  name: test-secret-direct
+  annotations:
+    crossplane.io/external-name: TEST_SECRET_DIRECT
+spec:
+  forProvider:
+    organization: crossplane-test
+    secretName: TEST_SECRET_DIRECT
+    data: "test-secret-value-direct"
+  providerConfigRef:
+    name: default
