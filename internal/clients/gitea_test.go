@@ -18,8 +18,11 @@ package clients
 
 import (
 	"context"
+	"encoding/json"
+	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -681,6 +684,78 @@ func TestOrganizationWebhookOperations(t *testing.T) {
 
 	t.Run("DeleteOrganizationWebhook", func(t *testing.T) {
 		err := c.DeleteOrganizationWebhook(ctx, "testorg", 1)
+		require.NoError(t, err)
+	})
+}
+
+func TestOrganizationSecretOperations(t *testing.T) {
+	// Create test server
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch {
+		case r.Method == "GET" && strings.Contains(r.URL.Path, "/orgs/testorg/actions/secrets/testsecret"):
+			// Gitea returns 405 for GET operations on organization secrets
+			w.Header().Set("Allow", "PUT, DELETE")
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			
+		case r.Method == "PUT" && strings.Contains(r.URL.Path, "/orgs/testorg/actions/secrets/testsecret"):
+			// Verify request body
+			body, err := io.ReadAll(r.Body)
+			require.NoError(t, err)
+			var req map[string]interface{}
+			err = json.Unmarshal(body, &req)
+			require.NoError(t, err)
+			assert.Equal(t, "test-secret-value", req["data"])
+			
+			w.WriteHeader(http.StatusCreated)
+			
+		case r.Method == "PUT" && strings.Contains(r.URL.Path, "/orgs/testorg/actions/secrets/newsecret"):
+			w.WriteHeader(http.StatusCreated)
+			
+		case r.Method == "DELETE" && strings.Contains(r.URL.Path, "/orgs/testorg/actions/secrets/testsecret"):
+			w.WriteHeader(http.StatusNoContent)
+			
+		default:
+			t.Logf("Unexpected request: %s %s", r.Method, r.URL.Path)
+			w.WriteHeader(http.StatusNotFound)
+		}
+	}))
+	defer server.Close()
+
+	// Create test client
+	c := &giteaClient{
+		httpClient: &http.Client{},
+		baseURL:    server.URL + "/api/v1",
+		token:      "test-token",
+	}
+
+	ctx := context.Background()
+
+	t.Run("GetOrganizationSecret_Returns405", func(t *testing.T) {
+		// Test that Gitea API returns 405 for GET operations
+		secret, err := c.GetOrganizationSecret(ctx, "testorg", "testsecret")
+		assert.Error(t, err)
+		assert.Nil(t, secret)
+		assert.Contains(t, err.Error(), "405")
+	})
+
+	t.Run("CreateOrganizationSecret", func(t *testing.T) {
+		req := &CreateOrganizationSecretRequest{
+			Data: "test-secret-value",
+		}
+		err := c.CreateOrganizationSecret(ctx, "testorg", "testsecret", req)
+		require.NoError(t, err)
+	})
+
+	t.Run("UpdateOrganizationSecret", func(t *testing.T) {
+		req := &CreateOrganizationSecretRequest{
+			Data: "updated-secret-value",
+		}
+		err := c.UpdateOrganizationSecret(ctx, "testorg", "newsecret", req)
+		require.NoError(t, err)
+	})
+
+	t.Run("DeleteOrganizationSecret", func(t *testing.T) {
+		err := c.DeleteOrganizationSecret(ctx, "testorg", "testsecret")
 		require.NoError(t, err)
 	})
 }

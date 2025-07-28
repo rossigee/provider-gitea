@@ -1,0 +1,15 @@
+apiVersion: deploykey.gitea.crossplane.io/v1alpha1
+kind: DeployKey
+metadata:
+  name: example-deploy-key
+  annotations:
+    crossplane.io/external-name: "ci-deploy-key"
+spec:
+  forProvider:
+    repository: my-example-repo
+    owner: my-example-org
+    title: "CI/CD Deploy Key"
+    key: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC7yn3bGHST... ci-deploy@example.com"
+    readOnly: true
+  providerConfigRef:
+    name: default

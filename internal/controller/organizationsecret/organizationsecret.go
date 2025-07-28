@@ -97,7 +97,10 @@ func (c *connector) Connect(ctx context.Context, mg resource.Managed) (managed.E
 	}
 
 	pc := &v1beta1.ProviderConfig{}
-	if err := c.kube.Get(ctx, types.NamespacedName{Name: cr.GetProviderConfigReference().Name}, pc); err != nil {
+	if err := c.kube.Get(ctx, types.NamespacedName{
+		Name:      cr.GetProviderConfigReference().Name,
+		Namespace: cr.GetNamespace(),
+	}, pc); err != nil {
 		return nil, errors.Wrap(err, errGetPC)
 	}
 
@@ -122,34 +125,27 @@ func (c *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		return managed.ExternalObservation{}, errors.New(errNotOrganizationSecret)
 	}
 
-	org := cr.Spec.ForProvider.Organization
 	secretName := cr.Spec.ForProvider.SecretName
 
-	// Use secretName as external name for this resource
+	// Gitea organization secrets API doesn't support GET operations (returns 405)
+	// So we use a write-through approach: assume the secret needs to be created/updated
+	// since we can't verify its existence or current value
+	
+	// Check if we have an external name - this indicates we've created it before
+	resourceExists := meta.GetExternalName(cr) != ""
+	
+	// Use secretName as external name for this resource if not already set
 	if meta.GetExternalName(cr) == "" {
 		meta.SetExternalName(cr, secretName)
 	}
 
-	secret, err := c.client.GetOrganizationSecret(ctx, org, secretName)
-	if err != nil {
-		// If secret doesn't exist, return that it needs to be created
-		if err.Error() == "organization secret not found" {
-			return managed.ExternalObservation{ResourceExists: false}, nil
-		}
-		return managed.ExternalObservation{}, errors.Wrap(err, errGetOrganizationSecret)
-	}
-
-	// Update observed state
-	cr.Status.AtProvider = v1alpha1.OrganizationSecretObservation{
-		CreatedAt: &secret.CreatedAt,
-		UpdatedAt: &secret.UpdatedAt,
-	}
-
+	// Always mark as needing update since we can't verify the current state
+	// This ensures secrets are always synchronized with the desired state
 	cr.SetConditions(xpv1.Available())
 
 	return managed.ExternalObservation{
-		ResourceExists:   true,
-		ResourceUpToDate: true, // Secrets are always considered up to date since we can't compare values
+		ResourceExists:   resourceExists,
+		ResourceUpToDate: false, // Always update since we can't verify current state
 	}, nil
 }
 
@@ -181,7 +177,14 @@ func (c *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 
 	meta.SetExternalName(cr, secretName)
 
-	return managed.ExternalCreation{}, nil
+	// Publish the secret data as connection details for applications to use
+	connectionDetails := managed.ConnectionDetails{
+		"data": []byte(secretData),
+	}
+
+	return managed.ExternalCreation{
+		ConnectionDetails: connectionDetails,
+	}, nil
 }
 
 func (c *external) Update(ctx context.Context, mg resource.Managed) (managed.ExternalUpdate, error) {
@@ -208,7 +211,14 @@ func (c *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateOrganizationSecret)
 	}
 
-	return managed.ExternalUpdate{}, nil
+	// Publish the secret data as connection details for applications to use
+	connectionDetails := managed.ConnectionDetails{
+		"data": []byte(secretData),
+	}
+
+	return managed.ExternalUpdate{
+		ConnectionDetails: connectionDetails,
+	}, nil
 }
 
 func (c *external) Delete(ctx context.Context, mg resource.Managed) (managed.ExternalDelete, error) {

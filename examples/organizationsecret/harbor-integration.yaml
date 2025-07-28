@@ -1,0 +1,48 @@
+apiVersion: organizationsecret.gitea.crossplane.io/v1alpha1
+kind: OrganizationSecret
+metadata:
+  name: harbor-registry-secret
+  annotations:
+    crossplane.io/external-name: HARBOR_REGISTRY_URL
+    description: "Harbor container registry URL for CI/CD pipelines"
+spec:
+  forProvider:
+    organization: infrastructure
+    secretName: HARBOR_REGISTRY_URL
+    data: "harbor.infra.golder.lan"
+  providerConfigRef:
+    name: default
+---
+apiVersion: organizationsecret.gitea.crossplane.io/v1alpha1
+kind: OrganizationSecret
+metadata:
+  name: harbor-robot-credentials
+  annotations:
+    crossplane.io/external-name: HARBOR_ROBOT_TOKEN
+    description: "Harbor robot account credentials for automated pushes"
+spec:
+  forProvider:
+    organization: infrastructure
+    secretName: HARBOR_ROBOT_TOKEN
+    dataFrom:
+      secretKeyRef:
+        name: harbor-robot-credentials
+        namespace: gitea-secrets
+        key: robot-token
+  providerConfigRef:
+    name: default
+---
+apiVersion: organizationsecret.gitea.crossplane.io/v1alpha1
+kind: OrganizationSecret
+metadata:
+  name: harbor-project-name
+  annotations:
+    crossplane.io/external-name: HARBOR_PROJECT
+    description: "Harbor project name for container images"
+spec:
+  forProvider:
+    organization: infrastructure
+    secretName: HARBOR_PROJECT
+    data: "crossplane-providers"
+  providerConfigRef:
+    name: default

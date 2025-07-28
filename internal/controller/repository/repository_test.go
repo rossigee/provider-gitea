@@ -23,10 +23,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"k8s.io/apimachinery/pkg/runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
 	"github.com/crossplane/crossplane-runtime/pkg/meta"
 	"github.com/crossplane/crossplane-runtime/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/pkg/resource"
@@ -138,6 +135,40 @@ func (m *MockClient) DeleteDeployKey(ctx context.Context, owner, repo string, id
 	return nil
 }
 
+// Organization webhook operations
+func (m *MockClient) CreateOrganizationWebhook(ctx context.Context, org string, req *giteaclients.CreateWebhookRequest) (*giteaclients.Webhook, error) {
+	return nil, nil
+}
+
+func (m *MockClient) GetOrganizationWebhook(ctx context.Context, org string, id int64) (*giteaclients.Webhook, error) {
+	return nil, nil
+}
+
+func (m *MockClient) UpdateOrganizationWebhook(ctx context.Context, org string, id int64, req *giteaclients.UpdateWebhookRequest) (*giteaclients.Webhook, error) {
+	return nil, nil
+}
+
+func (m *MockClient) DeleteOrganizationWebhook(ctx context.Context, org string, id int64) error {
+	return nil
+}
+
+// Organization secret operations
+func (m *MockClient) GetOrganizationSecret(ctx context.Context, org, secretName string) (*giteaclients.OrganizationSecret, error) {
+	return nil, nil
+}
+
+func (m *MockClient) CreateOrganizationSecret(ctx context.Context, org, secretName string, req *giteaclients.CreateOrganizationSecretRequest) error {
+	return nil
+}
+
+func (m *MockClient) UpdateOrganizationSecret(ctx context.Context, org, secretName string, req *giteaclients.CreateOrganizationSecretRequest) error {
+	return nil
+}
+
+func (m *MockClient) DeleteOrganizationSecret(ctx context.Context, org, secretName string) error {
+	return nil
+}
+
 func TestObserve(t *testing.T) {
 	tests := []struct {
 		name    string
@@ -148,16 +179,19 @@ func TestObserve(t *testing.T) {
 	}{
 		{
 			name: "repository exists",
-			mg: &v1alpha1.Repository{
-				Spec: v1alpha1.RepositorySpec{
-					ForProvider: v1alpha1.RepositoryParameters{
-						Name:  "test-repo",
-						Owner: stringPtr("test-owner"),
+			mg: func() resource.Managed {
+				repo := &v1alpha1.Repository{
+					Spec: v1alpha1.RepositorySpec{
+						ForProvider: v1alpha1.RepositoryParameters{
+							Name:  "test-repo",
+							Owner: stringPtr("test-owner"),
+						},
 					},
-				},
-			},
+				}
+				meta.SetExternalName(repo, "test-repo")
+				return repo
+			}(),
 			setup: func(mc *MockClient) {
-				meta.SetExternalName(&v1alpha1.Repository{}, "test-repo")
 				mc.On("GetRepository", mock.Anything, "test-owner", "test-repo").
 					Return(&giteaclients.Repository{
 						ID:          123,
@@ -183,16 +217,19 @@ func TestObserve(t *testing.T) {
 		},
 		{
 			name: "repository does not exist",
-			mg: &v1alpha1.Repository{
-				Spec: v1alpha1.RepositorySpec{
-					ForProvider: v1alpha1.RepositoryParameters{
-						Name:  "test-repo",
-						Owner: stringPtr("test-owner"),
+			mg: func() resource.Managed {
+				repo := &v1alpha1.Repository{
+					Spec: v1alpha1.RepositorySpec{
+						ForProvider: v1alpha1.RepositoryParameters{
+							Name:  "test-repo",
+							Owner: stringPtr("test-owner"),
+						},
 					},
-				},
-			},
+				}
+				meta.SetExternalName(repo, "test-repo")
+				return repo
+			}(),
 			setup: func(mc *MockClient) {
-				meta.SetExternalName(&v1alpha1.Repository{}, "test-repo")
 				mc.On("GetRepository", mock.Anything, "test-owner", "test-repo").
 					Return(nil, errors.New("not found"))
 			},
@@ -271,9 +308,7 @@ func TestCreate(t *testing.T) {
 						Name: "test-repo",
 					}, nil)
 			},
-			want: managed.ExternalCreation{
-				ExternalNameAssigned: true,
-			},
+			want: managed.ExternalCreation{},
 			wantErr: false,
 		},
 		{
@@ -294,9 +329,7 @@ func TestCreate(t *testing.T) {
 						Name: "test-repo",
 					}, nil)
 			},
-			want: managed.ExternalCreation{
-				ExternalNameAssigned: true,
-			},
+			want: managed.ExternalCreation{},
 			wantErr: false,
 		},
 		{
@@ -325,13 +358,14 @@ func TestCreate(t *testing.T) {
 			}
 
 			e := &external{client: mc}
-			got, err := e.Create(context.Background(), tt.mg)
+			_, err := e.Create(context.Background(), tt.mg)
 
 			if tt.wantErr {
 				assert.Error(t, err)
 			} else {
 				assert.NoError(t, err)
-				assert.Equal(t, tt.want.ExternalNameAssigned, got.ExternalNameAssigned)
+				// Verify external name was set
+				assert.NotEmpty(t, meta.GetExternalName(tt.mg))
 			}
 
 			mc.AssertExpectations(t)
@@ -348,16 +382,19 @@ func TestDelete(t *testing.T) {
 	}{
 		{
 			name: "delete repository",
-			mg: &v1alpha1.Repository{
-				Spec: v1alpha1.RepositorySpec{
-					ForProvider: v1alpha1.RepositoryParameters{
-						Name:  "test-repo",
-						Owner: stringPtr("test-owner"),
+			mg: func() resource.Managed {
+				repo := &v1alpha1.Repository{
+					Spec: v1alpha1.RepositorySpec{
+						ForProvider: v1alpha1.RepositoryParameters{
+							Name:  "test-repo",
+							Owner: stringPtr("test-owner"),
+						},
 					},
-				},
-			},
+				}
+				meta.SetExternalName(repo, "test-repo")
+				return repo
+			}(),
 			setup: func(mc *MockClient) {
-				meta.SetExternalName(&v1alpha1.Repository{}, "test-repo")
 				mc.On("DeleteRepository", mock.Anything, "test-owner", "test-repo").
 					Return(nil)
 			},
@@ -365,16 +402,19 @@ func TestDelete(t *testing.T) {
 		},
 		{
 			name: "delete fails",
-			mg: &v1alpha1.Repository{
-				Spec: v1alpha1.RepositorySpec{
-					ForProvider: v1alpha1.RepositoryParameters{
-						Name:  "test-repo",
-						Owner: stringPtr("test-owner"),
+			mg: func() resource.Managed {
+				repo := &v1alpha1.Repository{
+					Spec: v1alpha1.RepositorySpec{
+						ForProvider: v1alpha1.RepositoryParameters{
+							Name:  "test-repo",
+							Owner: stringPtr("test-owner"),
+						},
 					},
-				},
-			},
+				}
+				meta.SetExternalName(repo, "test-repo")
+				return repo
+			}(),
 			setup: func(mc *MockClient) {
-				meta.SetExternalName(&v1alpha1.Repository{}, "test-repo")
 				mc.On("DeleteRepository", mock.Anything, "test-owner", "test-repo").
 					Return(errors.New("deletion failed"))
 			},
@@ -402,7 +442,7 @@ func TestDelete(t *testing.T) {
 			}
 
 			e := &external{client: mc}
-			err := e.Delete(context.Background(), tt.mg)
+			_, err := e.Delete(context.Background(), tt.mg)
 
 			if tt.wantErr {
 				assert.Error(t, err)
