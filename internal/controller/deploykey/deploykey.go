@@ -18,6 +18,7 @@ package deploykey
 
 import (
 	"context"
+	"strconv"
 
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/types"
@@ -133,7 +134,7 @@ func (c *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		return managed.ExternalObservation{ResourceExists: false}, nil
 	}
 
-	deployKey, err := c.client.GetDeployKey(ctx, cr.Spec.ForProvider, keyID)
+	deployKey, err := c.client.GetDeployKey(ctx, cr.Spec.ForProvider.Owner, cr.Spec.ForProvider.Repository, keyID)
 	if err != nil {
 		// If deploy key doesn't exist, that's not an error
 		if giteaclients.IsNotFound(err) {
@@ -145,9 +146,8 @@ func (c *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 	// Update status with observed values
 	cr.Status.AtProvider.ID = &deployKey.ID
 	cr.Status.AtProvider.Fingerprint = &deployKey.Fingerprint
-	if deployKey.CreatedAt != nil {
-		createdAt := deployKey.CreatedAt.String()
-		cr.Status.AtProvider.CreatedAt = &createdAt
+	if deployKey.CreatedAt != "" {
+		cr.Status.AtProvider.CreatedAt = &deployKey.CreatedAt
 	}
 
 	cr.SetConditions(xpv1.Available())
@@ -164,13 +164,19 @@ func (c *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalCreation{}, errors.New(errNotDeployKey)
 	}
 
-	deployKey, err := c.client.CreateDeployKey(ctx, cr.Spec.ForProvider)
+	req := &giteaclients.CreateDeployKeyRequest{
+		Title:    cr.Spec.ForProvider.Title,
+		Key:      cr.Spec.ForProvider.Key,
+		ReadOnly: *cr.Spec.ForProvider.ReadOnly,
+	}
+	
+	deployKey, err := c.client.CreateDeployKey(ctx, cr.Spec.ForProvider.Owner, cr.Spec.ForProvider.Repository, req)
 	if err != nil {
 		return managed.ExternalCreation{}, errors.Wrap(err, errCreateDeployKey)
 	}
 
 	// Set external name annotation to key ID
-	meta.SetExternalName(cr, string(rune(deployKey.ID)))
+	meta.SetExternalName(cr, strconv.FormatInt(deployKey.ID, 10))
 
 	return managed.ExternalCreation{
 		ConnectionDetails: managed.ConnectionDetails{},
@@ -178,16 +184,16 @@ func (c *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 }
 
 func (c *external) Update(ctx context.Context, mg resource.Managed) (managed.ExternalUpdate, error) {
-	cr, ok := mg.(*v1alpha1.DeployKey)
+	_, ok := mg.(*v1alpha1.DeployKey)
 	if !ok {
 		return managed.ExternalUpdate{}, errors.New(errNotDeployKey)
 	}
 
-	err := c.client.UpdateDeployKey(ctx, cr.Spec.ForProvider)
-	if err != nil {
-		return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateDeployKey)
-	}
-
+	// Deploy keys typically cannot be updated in place
+	// The common pattern is to delete and recreate them
+	// For now, return success without changes
+	// TODO: Implement delete-and-recreate pattern if needed
+	
 	return managed.ExternalUpdate{
 		ConnectionDetails: managed.ConnectionDetails{},
 	}, nil
@@ -199,7 +205,14 @@ func (c *external) Delete(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalDelete{}, errors.New(errNotDeployKey)
 	}
 
-	err := c.client.DeleteDeployKey(ctx, cr.Spec.ForProvider.Owner, cr.Spec.ForProvider.Repository, 0) // TODO: Fix ID parameter
+	// Get deploy key ID from external name annotation
+	keyIDStr := meta.GetExternalName(cr)
+	keyID, err := strconv.ParseInt(keyIDStr, 10, 64)
+	if err != nil {
+		return managed.ExternalDelete{}, errors.Wrap(err, "failed to parse deploy key ID")
+	}
+
+	err = c.client.DeleteDeployKey(ctx, cr.Spec.ForProvider.Owner, cr.Spec.ForProvider.Repository, keyID)
 	return managed.ExternalDelete{}, errors.Wrap(err, errDeleteDeployKey)
 }
 

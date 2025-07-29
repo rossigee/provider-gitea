@@ -69,6 +69,8 @@ type Client interface {
 	CreateRepositoryWebhook(ctx context.Context, owner, repo string, req *CreateWebhookRequest) (*Webhook, error)
 	UpdateRepositoryWebhook(ctx context.Context, owner, repo string, id int64, req *UpdateWebhookRequest) (*Webhook, error)
 	DeleteRepositoryWebhook(ctx context.Context, owner, repo string, id int64) error
+	CreateOrganizationWebhook(ctx context.Context, org string, req *CreateWebhookRequest) (*Webhook, error)
+	UpdateOrganizationWebhook(ctx context.Context, org string, id int64, req *UpdateWebhookRequest) (*Webhook, error)
 
 	// Deploy Key operations
 	GetDeployKey(ctx context.Context, owner, repo string, id int64) (*DeployKey, error)
