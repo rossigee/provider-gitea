@@ -59,13 +59,15 @@ func TestOrganizationSecretIntegration(t *testing.T) {
 		{
 			name: "DirectDataSecret",
 			secretSpec: v1alpha1.OrganizationSecretSpec{
+				ResourceSpec: xpv1.ResourceSpec{
+					ProviderConfigReference: &xpv1.Reference{
+						Name: "default",
+					},
+				},
 				ForProvider: v1alpha1.OrganizationSecretParameters{
 					Organization: "integration-test-org",
 					SecretName:   "INTEGRATION_TEST_DIRECT",
 					Data:         stringPtr("direct-secret-value-integration"),
-				},
-				ProviderConfigReference: &xpv1.Reference{
-					Name: "default",
 				},
 			},
 			expectReady:  true,
@@ -76,17 +78,20 @@ func TestOrganizationSecretIntegration(t *testing.T) {
 				
 				// Validate conditions
 				readyCondition := secret.GetCondition(xpv1.TypeReady)
-				assert.NotNil(t, readyCondition)
 				assert.Equal(t, corev1.ConditionTrue, readyCondition.Status)
 				
 				syncedCondition := secret.GetCondition(xpv1.TypeSynced)
-				assert.NotNil(t, syncedCondition)
 				assert.Equal(t, corev1.ConditionTrue, syncedCondition.Status)
 			},
 		},
 		{
 			name: "SecretReferenceSecret",
 			secretSpec: v1alpha1.OrganizationSecretSpec{
+				ResourceSpec: xpv1.ResourceSpec{
+					ProviderConfigReference: &xpv1.Reference{
+						Name: "default",
+					},
+				},
 				ForProvider: v1alpha1.OrganizationSecretParameters{
 					Organization: "integration-test-org",
 					SecretName:   "INTEGRATION_TEST_REF",
@@ -97,9 +102,6 @@ func TestOrganizationSecretIntegration(t *testing.T) {
 							Key:       "secret-data",
 						},
 					},
-				},
-				ProviderConfigReference: &xpv1.Reference{
-					Name: "default",
 				},
 			},
 			secretData: &corev1.Secret{
@@ -126,13 +128,15 @@ func TestOrganizationSecretIntegration(t *testing.T) {
 		{
 			name: "InvalidOrganization",
 			secretSpec: v1alpha1.OrganizationSecretSpec{
+				ResourceSpec: xpv1.ResourceSpec{
+					ProviderConfigReference: &xpv1.Reference{
+						Name: "default",
+					},
+				},
 				ForProvider: v1alpha1.OrganizationSecretParameters{
 					Organization: "non-existent-org",
 					SecretName:   "INTEGRATION_TEST_INVALID",
 					Data:         stringPtr("test-value"),
-				},
-				ProviderConfigReference: &xpv1.Reference{
-					Name: "default",
 				},
 			},
 			expectReady:  false,
@@ -140,7 +144,7 @@ func TestOrganizationSecretIntegration(t *testing.T) {
 			validateFunc: func(t *testing.T, secret *v1alpha1.OrganizationSecret) {
 				// Should have error conditions
 				syncedCondition := secret.GetCondition(xpv1.TypeSynced)
-				if syncedCondition != nil && syncedCondition.Status == corev1.ConditionFalse {
+				if syncedCondition.Status == corev1.ConditionFalse {
 					assert.Contains(t, syncedCondition.Reason, "ReconcileError")
 				}
 			},
@@ -189,13 +193,13 @@ func TestOrganizationSecretIntegration(t *testing.T) {
 				syncedCondition := orgSecret.GetCondition(xpv1.TypeSynced)
 
 				if tt.expectReady && tt.expectSynced {
-					return readyCondition != nil && readyCondition.Status == corev1.ConditionTrue &&
-						syncedCondition != nil && syncedCondition.Status == corev1.ConditionTrue, nil
+					return readyCondition.Status == corev1.ConditionTrue &&
+						syncedCondition.Status == corev1.ConditionTrue, nil
 				}
 
 				// For error cases, wait for error conditions
 				if !tt.expectReady && !tt.expectSynced {
-					return syncedCondition != nil && syncedCondition.Status == corev1.ConditionFalse, nil
+					return syncedCondition.Status == corev1.ConditionFalse, nil
 				}
 
 				return false, nil
@@ -234,13 +238,15 @@ func TestOrganizationSecretWriteThroughPattern(t *testing.T) {
 			Namespace: "default",
 		},
 		Spec: v1alpha1.OrganizationSecretSpec{
+			ResourceSpec: xpv1.ResourceSpec{
+				ProviderConfigReference: &xpv1.Reference{
+					Name: "default",
+				},
+			},
 			ForProvider: v1alpha1.OrganizationSecretParameters{
 				Organization: "integration-test-org",
 				SecretName:   "WRITE_THROUGH_TEST",
 				Data:         stringPtr("initial-value"),
-			},
-			ProviderConfigReference: &xpv1.Reference{
-				Name: "default",
 			},
 		},
 	}
@@ -331,7 +337,4 @@ func setupTestClient(t *testing.T) client.Client {
 	return nil
 }
 
-// Helper function
-func stringPtr(s string) *string {
-	return &s
-}
+// stringPtr helper function is defined in provider_test.go
