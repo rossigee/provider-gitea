@@ -21,12 +21,12 @@ import (
 
 	"github.com/crossplane/crossplane-runtime/pkg/controller"
 
-	// "github.com/crossplane-contrib/provider-gitea/internal/controller/deploykey"
+	"github.com/crossplane-contrib/provider-gitea/internal/controller/deploykey"
 	"github.com/crossplane-contrib/provider-gitea/internal/controller/organization"
 	"github.com/crossplane-contrib/provider-gitea/internal/controller/organizationsecret"
 	"github.com/crossplane-contrib/provider-gitea/internal/controller/repository"
 	"github.com/crossplane-contrib/provider-gitea/internal/controller/user"
-	// "github.com/crossplane-contrib/provider-gitea/internal/controller/webhook"
+	"github.com/crossplane-contrib/provider-gitea/internal/controller/webhook"
 )
 
 // Setup creates all Gitea controllers with the supplied logger and adds them to
@@ -37,9 +37,8 @@ func Setup(mgr ctrl.Manager, o controller.Options) error {
 		organization.Setup,
 		organizationsecret.Setup,
 		user.Setup,
-		// TODO: Fix these controllers and uncomment
-		// webhook.Setup,
-		// deploykey.Setup,
+		webhook.Setup,
+		deploykey.Setup,
 	} {
 		if err := setup(mgr, o); err != nil {
 			return err

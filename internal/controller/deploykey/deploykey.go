@@ -98,13 +98,7 @@ func (c *connector) Connect(ctx context.Context, mg resource.Managed) (managed.E
 		return nil, errors.Wrap(err, errGetPC)
 	}
 
-	cd := pc.Spec.Credentials
-	data, err := resource.CommonCredentialExtractor(ctx, cd.Source, c.kube, cd.CommonCredentialSelectors)
-	if err != nil {
-		return nil, errors.Wrap(err, errGetCreds)
-	}
-
-	giteaClient, err := giteaclients.NewGiteaClient(string(data), pc.Spec.BaseURL)
+	giteaClient, err := giteaclients.NewClient(ctx, pc, c.kube)
 	if err != nil {
 		return nil, errors.Wrap(err, errNewClient)
 	}
@@ -115,7 +109,11 @@ func (c *connector) Connect(ctx context.Context, mg resource.Managed) (managed.E
 // An ExternalClient observes, then either creates, updates, or deletes an
 // external resource to ensure it reflects the managed resource's desired state.
 type external struct {
-	client *giteaclients.GiteaClient
+	client giteaclients.Client
+}
+
+func (c *external) Disconnect(_ context.Context) error {
+	return nil
 }
 
 func (c *external) Observe(ctx context.Context, mg resource.Managed) (managed.ExternalObservation, error) {
@@ -195,13 +193,14 @@ func (c *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 	}, nil
 }
 
-func (c *external) Delete(ctx context.Context, mg resource.Managed) error {
+func (c *external) Delete(ctx context.Context, mg resource.Managed) (managed.ExternalDelete, error) {
 	cr, ok := mg.(*v1alpha1.DeployKey)
 	if !ok {
-		return errors.New(errNotDeployKey)
+		return managed.ExternalDelete{}, errors.New(errNotDeployKey)
 	}
 
-	return errors.Wrap(c.client.DeleteDeployKey(ctx, cr.Spec.ForProvider), errDeleteDeployKey)
+	err := c.client.DeleteDeployKey(ctx, cr.Spec.ForProvider.Owner, cr.Spec.ForProvider.Repository, 0) // TODO: Fix ID parameter
+	return managed.ExternalDelete{}, errors.Wrap(err, errDeleteDeployKey)
 }
 
 // isUpToDate checks if the observed deploy key matches the desired state
