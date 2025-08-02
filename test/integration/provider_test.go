@@ -161,7 +161,7 @@ func TestOrganizationLifecycle(t *testing.T) {
 	}
 
 	scheme := runtime.NewScheme()
-	_ = v1alpha1.AddToScheme(scheme)
+	_ = v1alpha1.SchemeBuilder.AddToScheme(scheme)
 	_ = v1beta1.AddToScheme(scheme)
 
 	c := fake.NewClientBuilder().
