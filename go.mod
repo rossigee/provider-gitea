@@ -1,6 +1,8 @@
 module github.com/crossplane-contrib/provider-gitea
 
-go 1.23
+go 1.24.5
+
+toolchain go1.24.5
 
 require (
 	github.com/crossplane/crossplane-runtime v1.19.0

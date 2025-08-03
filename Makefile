@@ -15,6 +15,8 @@ GO_STATIC_PACKAGES = $(GO_PROJECT)/cmd/provider
 GO_LDFLAGS += -X $(GO_PROJECT)/internal/version.Version=$(VERSION)
 GO_SUBDIRS += cmd internal apis
 GO111MODULE = on
+# Override golangci-lint version for modern Go support
+GOLANGCILINT_VERSION ?= 2.3.1
 -include build/makelib/golang.mk
 
 # Setup Kubernetes tools
@@ -25,12 +27,14 @@ UPTEST_VERSION = v0.11.1
 
 # Setup Images
 IMAGES = provider-gitea
+# Force registry override (can be overridden by make command arguments)
+REGISTRY_ORGS = ghcr.io/rossigee
 -include build/makelib/imagelight.mk
 
 # Setup XPKG - Standardized registry configuration
-# Primary registry: GitHub Container Registry under rossigee
-XPKG_REG_ORGS ?= ghcr.io/rossigee
-XPKG_REG_ORGS_NO_PROMOTE ?= ghcr.io/rossigee
+# Force registry override (can be overridden by make command arguments)
+XPKG_REG_ORGS = ghcr.io/rossigee
+XPKG_REG_ORGS_NO_PROMOTE = ghcr.io/rossigee
 
 # Optional registries (can be enabled via environment variables)
 # To enable Harbor: export ENABLE_HARBOR_PUBLISH=true make publish XPKG_REG_ORGS=harbor.golder.lan/library
