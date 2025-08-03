@@ -10,10 +10,20 @@ on:
       - master
       - release-*
 
+permissions:
+  contents: read
+  packages: write
+  id-token: write
+
 env:
-  GO_VERSION: '1.23'
-  GOLANGCI_VERSION: 'v1.62.2'
+  GO_VERSION: '1.24.5'
+  GOLANGCI_VERSION: 'latest'
+  GOLANGCILINT_VERSION: '2.3.1'
   DOCKER_BUILDX_VERSION: 'v0.11.2'
+  # Registry configuration
+  PRIMARY_REGISTRY: ghcr.io/rossigee
+  ENABLE_HARBOR_PUBLISH: false
+  ENABLE_UPBOUND_PUBLISH: false
 
 jobs:
   detect-noop:
@@ -52,14 +62,17 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-go-
 
-      - name: Download Go Dependencies
-        run: go mod download
+      - name: Vendor Dependencies
+        run: go mod vendor
 
-      - name: Run golangci-lint
-        uses: golangci/golangci-lint-action@v3
-        with:
-          version: ${{ env.GOLANGCI_VERSION }}
-          args: --timeout 10m
+      - name: Install Crossplane CLI
+        run: |
+          mkdir -p .cache/tools/linux_x86_64
+          curl -fsSLo .cache/tools/linux_x86_64/crossplane-cli-v1.20.0 --create-dirs https://releases.crossplane.io/stable/v1.20.0/bin/linux_amd64/crank?source=build
+          chmod +x .cache/tools/linux_x86_64/crossplane-cli-v1.20.0
+
+      - name: Lint
+        run: make lint
 
   check-diff:
     runs-on: ubuntu-latest
@@ -184,8 +197,14 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pkg-
 
-      - name: Download Dependencies
-        run: go mod download
+      - name: Vendor Dependencies
+        run: go mod vendor
+
+      - name: Install Crossplane CLI
+        run: |
+          mkdir -p .cache/tools/linux_x86_64
+          curl -fsSLo .cache/tools/linux_x86_64/crossplane-cli-v1.20.0 --create-dirs https://releases.crossplane.io/stable/v1.20.0/bin/linux_amd64/crank?source=build
+          chmod +x .cache/tools/linux_x86_64/crossplane-cli-v1.20.0
 
       - name: Build
         run: make build
@@ -256,6 +275,11 @@ jobs:
     runs-on: ubuntu-latest
     needs: [detect-noop, lint, check-diff, unit-tests, build]
     if: needs.detect-noop.outputs.noop != 'true' && github.event_name == 'push'
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -285,8 +309,11 @@ jobs:
         with:
           version: ${{ env.DOCKER_BUILDX_VERSION }}
 
-      - name: Build and Push Docker Image
+      - name: Build and Push to Primary Registry
         run: |
+          # Build and push to GitHub Container Registry (primary)
+          echo "Repository: ${{ github.repository }}"
+          echo "Repository owner: ${{ github.repository_owner }}"
           make docker-build
           docker tag crossplane/provider-gitea:latest ghcr.io/${{ github.repository }}:latest
           docker push ghcr.io/${{ github.repository }}:latest
