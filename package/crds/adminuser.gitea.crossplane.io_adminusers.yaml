@@ -1,0 +1,315 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.16.0
+  name: adminusers.adminuser.gitea.crossplane.io
+spec:
+  group: adminuser.gitea.crossplane.io
+  names:
+    categories:
+    - crossplane
+    - managed
+    - gitea
+    kind: AdminUser
+    listKind: AdminUserList
+    plural: adminusers
+    singular: adminuser
+  scope: Cluster
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .status.conditions[?(@.type=='Ready')].status
+      name: READY
+      type: string
+    - jsonPath: .status.conditions[?(@.type=='Synced')].status
+      name: SYNCED
+      type: string
+    - jsonPath: .metadata.annotations.crossplane\.io/external-name
+      name: EXTERNAL-NAME
+      type: string
+    - jsonPath: .spec.forProvider.username
+      name: USERNAME
+      type: string
+    - jsonPath: .spec.forProvider.email
+      name: EMAIL
+      type: string
+    - jsonPath: .spec.forProvider.isAdmin
+      name: IS-ADMIN
+      type: boolean
+    - jsonPath: .status.atProvider.isActive
+      name: IS-ACTIVE
+      type: boolean
+    - jsonPath: .metadata.creationTimestamp
+      name: AGE
+      type: date
+    name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        properties:
+          apiVersion:
+            type: string
+          kind:
+            type: string
+          metadata:
+            type: object
+          spec:
+            properties:
+              deletionPolicy:
+                default: Delete
+                enum:
+                - Orphan
+                - Delete
+                type: string
+              forProvider:
+                properties:
+                  description:
+                    maxLength: 255
+                    type: string
+                  email:
+                    format: email
+                    type: string
+                  fullName:
+                    maxLength: 100
+                    type: string
+                  isActive:
+                    default: true
+                    type: boolean
+                  isAdmin:
+                    default: false
+                    type: boolean
+                  isRestricted:
+                    default: false
+                    type: boolean
+                  location:
+                    maxLength: 50
+                    type: string
+                  maxRepoCreation:
+                    default: -1
+                    minimum: -1
+                    type: integer
+                  mustChangePassword:
+                    default: false
+                    type: boolean
+                  passwordSecretRef:
+                    properties:
+                      key:
+                        type: string
+                      name:
+                        type: string
+                      namespace:
+                        type: string
+                    required:
+                    - key
+                    - name
+                    - namespace
+                    type: object
+                  prohibitLogin:
+                    default: false
+                    type: boolean
+                  sendNotify:
+                    default: false
+                    type: boolean
+                  username:
+                    maxLength: 40
+                    minLength: 1
+                    pattern: ^[a-zA-Z0-9]([a-zA-Z0-9._-]*[a-zA-Z0-9])?$
+                    type: string
+                  visibility:
+                    default: public
+                    enum:
+                    - public
+                    - private
+                    - limited
+                    type: string
+                  website:
+                    format: uri
+                    type: string
+                required:
+                - email
+                - passwordSecretRef
+                - username
+                type: object
+              managementPolicies:
+                default:
+                - '*'
+                items:
+                  enum:
+                  - Observe
+                  - Create
+                  - Update
+                  - Delete
+                  - LateInitialize
+                  - '*'
+                  type: string
+                type: array
+              providerConfigRef:
+                default:
+                  name: default
+                properties:
+                  name:
+                    type: string
+                  policy:
+                    properties:
+                      resolution:
+                        default: Required
+                        enum:
+                        - Required
+                        - Optional
+                        type: string
+                      resolve:
+                        enum:
+                        - Always
+                        - IfNotPresent
+                        type: string
+                    type: object
+                required:
+                - name
+                type: object
+              publishConnectionDetailsTo:
+                properties:
+                  configRef:
+                    default:
+                      name: default
+                    properties:
+                      name:
+                        type: string
+                      policy:
+                        properties:
+                          resolution:
+                            default: Required
+                            enum:
+                            - Required
+                            - Optional
+                            type: string
+                          resolve:
+                            enum:
+                            - Always
+                            - IfNotPresent
+                            type: string
+                        type: object
+                    required:
+                    - name
+                    type: object
+                  metadata:
+                    properties:
+                      annotations:
+                        additionalProperties:
+                          type: string
+                        type: object
+                      labels:
+                        additionalProperties:
+                          type: string
+                        type: object
+                      type:
+                        type: string
+                    type: object
+                  name:
+                    type: string
+                required:
+                - name
+                type: object
+              writeConnectionSecretToRef:
+                properties:
+                  name:
+                    type: string
+                  namespace:
+                    type: string
+                required:
+                - name
+                - namespace
+                type: object
+            required:
+            - forProvider
+            type: object
+          status:
+            properties:
+              atProvider:
+                properties:
+                  avatarUrl:
+                    type: string
+                  createdAt:
+                    type: string
+                  description:
+                    type: string
+                  email:
+                    type: string
+                  fullName:
+                    type: string
+                  id:
+                    format: int64
+                    type: integer
+                  isActive:
+                    type: boolean
+                  isAdmin:
+                    type: boolean
+                  isRestricted:
+                    type: boolean
+                  language:
+                    type: string
+                  lastLogin:
+                    type: string
+                  location:
+                    type: string
+                  maxRepoCreation:
+                    type: integer
+                  prohibitLogin:
+                    type: boolean
+                  userStats:
+                    properties:
+                      followers:
+                        type: integer
+                      following:
+                        type: integer
+                      publicRepos:
+                        type: integer
+                      repositories:
+                        type: integer
+                      starredRepos:
+                        type: integer
+                    type: object
+                  username:
+                    type: string
+                  visibility:
+                    type: string
+                  website:
+                    type: string
+                type: object
+              conditions:
+                items:
+                  properties:
+                    lastTransitionTime:
+                      format: date-time
+                      type: string
+                    message:
+                      type: string
+                    observedGeneration:
+                      format: int64
+                      type: integer
+                    reason:
+                      type: string
+                    status:
+                      type: string
+                    type:
+                      type: string
+                  required:
+                  - lastTransitionTime
+                  - reason
+                  - status
+                  - type
+                  type: object
+                type: array
+                x-kubernetes-list-map-keys:
+                - type
+                x-kubernetes-list-type: map
+              observedGeneration:
+                format: int64
+                type: integer
+            type: object
+        required:
+        - spec
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}

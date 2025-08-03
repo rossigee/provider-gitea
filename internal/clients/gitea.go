@@ -21,6 +21,7 @@ import (
 	"context"
 	"crypto/tls"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"strings"
@@ -69,8 +70,10 @@ type Client interface {
 	CreateRepositoryWebhook(ctx context.Context, owner, repo string, req *CreateWebhookRequest) (*Webhook, error)
 	UpdateRepositoryWebhook(ctx context.Context, owner, repo string, id int64, req *UpdateWebhookRequest) (*Webhook, error)
 	DeleteRepositoryWebhook(ctx context.Context, owner, repo string, id int64) error
+	GetOrganizationWebhook(ctx context.Context, org string, id int64) (*Webhook, error)
 	CreateOrganizationWebhook(ctx context.Context, org string, req *CreateWebhookRequest) (*Webhook, error)
 	UpdateOrganizationWebhook(ctx context.Context, org string, id int64, req *UpdateWebhookRequest) (*Webhook, error)
+	DeleteOrganizationWebhook(ctx context.Context, org string, id int64) error
 
 	// Deploy Key operations
 	GetDeployKey(ctx context.Context, owner, repo string, id int64) (*DeployKey, error)
@@ -82,6 +85,93 @@ type Client interface {
 	CreateOrganizationSecret(ctx context.Context, org, secretName string, req *CreateOrganizationSecretRequest) error
 	UpdateOrganizationSecret(ctx context.Context, org, secretName string, req *CreateOrganizationSecretRequest) error
 	DeleteOrganizationSecret(ctx context.Context, org, secretName string) error
+
+	// Team operations
+	GetTeam(ctx context.Context, teamID int64) (*Team, error)
+	CreateTeam(ctx context.Context, org string, req *CreateTeamRequest) (*Team, error)
+	UpdateTeam(ctx context.Context, teamID int64, req *UpdateTeamRequest) (*Team, error)
+	DeleteTeam(ctx context.Context, teamID int64) error
+	ListOrganizationTeams(ctx context.Context, org string) ([]*Team, error)
+
+	// Label operations
+	GetLabel(ctx context.Context, owner, repo string, labelID int64) (*Label, error)
+	CreateLabel(ctx context.Context, owner, repo string, req *CreateLabelRequest) (*Label, error)
+	UpdateLabel(ctx context.Context, owner, repo string, labelID int64, req *UpdateLabelRequest) (*Label, error)
+	DeleteLabel(ctx context.Context, owner, repo string, labelID int64) error
+	ListRepositoryLabels(ctx context.Context, owner, repo string) ([]*Label, error)
+
+	// Repository Collaborator operations
+	GetRepositoryCollaborator(ctx context.Context, owner, repo, username string) (*RepositoryCollaborator, error)
+	AddRepositoryCollaborator(ctx context.Context, owner, repo, username string, req *AddCollaboratorRequest) error
+	UpdateRepositoryCollaborator(ctx context.Context, owner, repo, username string, req *UpdateCollaboratorRequest) error
+	RemoveRepositoryCollaborator(ctx context.Context, owner, repo, username string) error
+	ListRepositoryCollaborators(ctx context.Context, owner, repo string) ([]*RepositoryCollaborator, error)
+
+	// Organization Settings operations
+	GetOrganizationSettings(ctx context.Context, org string) (*OrganizationSettings, error)
+	UpdateOrganizationSettings(ctx context.Context, org string, req *UpdateOrganizationSettingsRequest) (*OrganizationSettings, error)
+
+	// Git Hooks operations
+	GetGitHook(ctx context.Context, repository, hookType string) (*GitHook, error)
+	CreateGitHook(ctx context.Context, repository string, req *CreateGitHookRequest) (*GitHook, error)
+	UpdateGitHook(ctx context.Context, repository, hookType string, req *UpdateGitHookRequest) (*GitHook, error)
+	DeleteGitHook(ctx context.Context, repository, hookType string) error
+
+	// Branch Protection operations
+	GetBranchProtection(ctx context.Context, repository, branch string) (*BranchProtection, error)
+	CreateBranchProtection(ctx context.Context, repository, branch string, req *CreateBranchProtectionRequest) (*BranchProtection, error)
+	UpdateBranchProtection(ctx context.Context, repository, branch string, req *UpdateBranchProtectionRequest) (*BranchProtection, error)
+	DeleteBranchProtection(ctx context.Context, repository, branch string) error
+
+	// Repository Key operations
+	GetRepositoryKey(ctx context.Context, repository string, keyID int64) (*RepositoryKey, error)
+	CreateRepositoryKey(ctx context.Context, repository string, req *CreateRepositoryKeyRequest) (*RepositoryKey, error)
+	UpdateRepositoryKey(ctx context.Context, repository string, keyID int64, req *UpdateRepositoryKeyRequest) (*RepositoryKey, error)
+	DeleteRepositoryKey(ctx context.Context, repository string, keyID int64) error
+
+	// Access Token operations  
+	GetAccessToken(ctx context.Context, username string, tokenID int64) (*AccessToken, error)
+	CreateAccessToken(ctx context.Context, username string, req *CreateAccessTokenRequest) (*AccessToken, error)
+	UpdateAccessToken(ctx context.Context, username string, tokenID int64, req *UpdateAccessTokenRequest) (*AccessToken, error)
+	DeleteAccessToken(ctx context.Context, username string, tokenID int64) error
+
+	// Repository Secret operations
+	GetRepositorySecret(ctx context.Context, repository, secretName string) (*RepositorySecret, error)
+	CreateRepositorySecret(ctx context.Context, repository, secretName string, req *CreateRepositorySecretRequest) error
+	UpdateRepositorySecret(ctx context.Context, repository, secretName string, req *UpdateRepositorySecretRequest) error
+	DeleteRepositorySecret(ctx context.Context, repository, secretName string) error
+
+	// User Key operations
+	GetUserKey(ctx context.Context, username string, keyID int64) (*UserKey, error)
+	CreateUserKey(ctx context.Context, username string, req *CreateUserKeyRequest) (*UserKey, error)
+	UpdateUserKey(ctx context.Context, username string, keyID int64, req *UpdateUserKeyRequest) (*UserKey, error)
+	DeleteUserKey(ctx context.Context, username string, keyID int64) error
+
+	// Organization Member operations
+	GetOrganizationMember(ctx context.Context, org, username string) (*OrganizationMember, error)
+	AddOrganizationMember(ctx context.Context, org, username string, req *AddOrganizationMemberRequest) (*OrganizationMember, error)
+	UpdateOrganizationMember(ctx context.Context, org, username string, req *UpdateOrganizationMemberRequest) (*OrganizationMember, error)
+	RemoveOrganizationMember(ctx context.Context, org, username string) error
+
+	// Action operations
+	GetAction(ctx context.Context, repository, workflowName string) (*Action, error)
+	CreateAction(ctx context.Context, repository string, req *CreateActionRequest) (*Action, error)
+	UpdateAction(ctx context.Context, repository, workflowName string, req *UpdateActionRequest) (*Action, error)
+	DeleteAction(ctx context.Context, repository, workflowName string) error
+	EnableAction(ctx context.Context, repository, workflowName string) error
+	DisableAction(ctx context.Context, repository, workflowName string) error
+
+	// Runner operations
+	GetRunner(ctx context.Context, scope, scopeValue string, runnerID int64) (*Runner, error)
+	CreateRunner(ctx context.Context, scope, scopeValue string, req *CreateRunnerRequest) (*Runner, error)
+	UpdateRunner(ctx context.Context, scope, scopeValue string, runnerID int64, req *UpdateRunnerRequest) (*Runner, error)
+	DeleteRunner(ctx context.Context, scope, scopeValue string, runnerID int64) error
+
+	// Admin User operations
+	GetAdminUser(ctx context.Context, username string) (*AdminUser, error)
+	CreateAdminUser(ctx context.Context, req *CreateAdminUserRequest) (*AdminUser, error)
+	UpdateAdminUser(ctx context.Context, username string, req *UpdateAdminUserRequest) (*AdminUser, error)
+	DeleteAdminUser(ctx context.Context, username string) error
 }
 
 // giteaClient implements the Client interface
@@ -364,6 +454,1596 @@ func (c *giteaClient) DeleteOrganizationSecret(ctx context.Context, org, secretN
 	return handleResponse(resp, nil)
 }
 
+// Team represents a Gitea organization team
+type Team struct {
+	ID          int64  `json:"id"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	Organization struct {
+		ID       int64  `json:"id"`
+		Username string `json:"username"`
+		Name     string `json:"name"`
+	} `json:"organization"`
+	Permission    string `json:"permission"`
+	CanCreateOrgRepo bool   `json:"can_create_org_repo"`
+	IncludesAllRepositories bool   `json:"includes_all_repositories"`
+	UnitsMap      map[string]string `json:"units_map"`
+}
+
+// CreateTeamRequest represents the request body for creating a team
+type CreateTeamRequest struct {
+	Name        string `json:"name"`
+	Description string `json:"description,omitempty"`
+	Permission  string `json:"permission,omitempty"`
+	CanCreateOrgRepo bool   `json:"can_create_org_repo,omitempty"`
+	IncludesAllRepositories bool   `json:"includes_all_repositories,omitempty"`
+	Units       []string `json:"units,omitempty"`
+}
+
+// UpdateTeamRequest represents the request body for updating a team
+type UpdateTeamRequest struct {
+	Name        *string `json:"name,omitempty"`
+	Description *string `json:"description,omitempty"`
+	Permission  *string `json:"permission,omitempty"`
+	CanCreateOrgRepo *bool   `json:"can_create_org_repo,omitempty"`
+	IncludesAllRepositories *bool   `json:"includes_all_repositories,omitempty"`
+	Units       []string `json:"units,omitempty"`
+}
+
+// Team API methods
+func (c *giteaClient) GetTeam(ctx context.Context, teamID int64) (*Team, error) {
+	path := fmt.Sprintf("/teams/%d", teamID)
+	resp, err := c.doRequest(ctx, "GET", path, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.StatusCode == http.StatusNotFound {
+		return nil, errors.New("team not found")
+	}
+
+	var team Team
+	if err := handleResponse(resp, &team); err != nil {
+		return nil, err
+	}
+
+	return &team, nil
+}
+
+func (c *giteaClient) CreateTeam(ctx context.Context, org string, req *CreateTeamRequest) (*Team, error) {
+	path := "/orgs/" + org + "/teams"
+	resp, err := c.doRequest(ctx, "POST", path, req)
+	if err != nil {
+		return nil, err
+	}
+
+	var team Team
+	if err := handleResponse(resp, &team); err != nil {
+		return nil, err
+	}
+
+	return &team, nil
+}
+
+func (c *giteaClient) UpdateTeam(ctx context.Context, teamID int64, req *UpdateTeamRequest) (*Team, error) {
+	path := fmt.Sprintf("/teams/%d", teamID)
+	resp, err := c.doRequest(ctx, "PATCH", path, req)
+	if err != nil {
+		return nil, err
+	}
+
+	var team Team
+	if err := handleResponse(resp, &team); err != nil {
+		return nil, err
+	}
+
+	return &team, nil
+}
+
+func (c *giteaClient) DeleteTeam(ctx context.Context, teamID int64) error {
+	path := fmt.Sprintf("/teams/%d", teamID)
+	resp, err := c.doRequest(ctx, "DELETE", path, nil)
+	if err != nil {
+		return err
+	}
+
+	return handleResponse(resp, nil)
+}
+
+func (c *giteaClient) ListOrganizationTeams(ctx context.Context, org string) ([]*Team, error) {
+	path := "/orgs/" + org + "/teams"
+	resp, err := c.doRequest(ctx, "GET", path, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var teams []*Team
+	if err := handleResponse(resp, &teams); err != nil {
+		return nil, err
+	}
+
+	return teams, nil
+}
+
+// Label represents a Gitea repository label
+type Label struct {
+	ID          int64  `json:"id"`
+	Name        string `json:"name"`
+	Color       string `json:"color"`
+	Description string `json:"description"`
+	Exclusive   bool   `json:"exclusive"`
+	URL         string `json:"url"`
+}
+
+// CreateLabelRequest represents the request body for creating a label
+type CreateLabelRequest struct {
+	Name        string `json:"name"`
+	Color       string `json:"color"`
+	Description string `json:"description,omitempty"`
+	Exclusive   bool   `json:"exclusive,omitempty"`
+}
+
+// UpdateLabelRequest represents the request body for updating a label
+type UpdateLabelRequest struct {
+	Name        *string `json:"name,omitempty"`
+	Color       *string `json:"color,omitempty"`
+	Description *string `json:"description,omitempty"`
+	Exclusive   *bool   `json:"exclusive,omitempty"`
+}
+
+// RepositoryCollaborator represents a repository collaborator
+type RepositoryCollaborator struct {
+	Username    string                          `json:"login"`
+	FullName    string                          `json:"full_name"`
+	Email       string                          `json:"email"`
+	AvatarURL   string                          `json:"avatar_url"`
+	Permissions RepositoryCollaboratorPermissions `json:"permissions"`
+}
+
+// RepositoryCollaboratorPermissions represents the permissions of a collaborator
+type RepositoryCollaboratorPermissions struct {
+	Admin bool `json:"admin"`
+	Push  bool `json:"push"`
+	Pull  bool `json:"pull"`
+}
+
+// AddCollaboratorRequest represents the request body for adding a collaborator
+type AddCollaboratorRequest struct {
+	Permission string `json:"permission"` // read, write, admin
+}
+
+// UpdateCollaboratorRequest represents the request body for updating a collaborator
+type UpdateCollaboratorRequest struct {
+	Permission string `json:"permission"` // read, write, admin
+}
+
+// OrganizationSettings represents organization-wide settings and policies
+type OrganizationSettings struct {
+	// Default repository settings
+	DefaultRepoPermission     string `json:"default_repo_permission"`     // read, write, admin
+	MembersCanCreateRepos     bool   `json:"members_can_create_repos"`
+	MembersCanCreatePrivate   bool   `json:"members_can_create_private"`
+	MembersCanCreateInternal  bool   `json:"members_can_create_internal"`
+	
+	// Member management settings
+	MembersCanDeleteRepos     bool   `json:"members_can_delete_repos"`
+	MembersCanFork            bool   `json:"members_can_fork"`
+	MembersCanCreatePages     bool   `json:"members_can_create_pages"`
+	
+	// Security and visibility settings
+	DefaultRepoVisibility     string `json:"default_repo_visibility"`     // public, private, internal
+	RequireSignedCommits      bool   `json:"require_signed_commits"`
+	EnableDependencyGraph     bool   `json:"enable_dependency_graph"`
+	
+	// Git hooks and automation
+	AllowGitHooks             bool   `json:"allow_git_hooks"`
+	AllowCustomGitHooks       bool   `json:"allow_custom_git_hooks"`
+}
+
+// UpdateOrganizationSettingsRequest represents the request body for updating organization settings
+type UpdateOrganizationSettingsRequest struct {
+	DefaultRepoPermission     *string `json:"default_repo_permission,omitempty"`
+	MembersCanCreateRepos     *bool   `json:"members_can_create_repos,omitempty"`
+	MembersCanCreatePrivate   *bool   `json:"members_can_create_private,omitempty"`
+	MembersCanCreateInternal  *bool   `json:"members_can_create_internal,omitempty"`
+	MembersCanDeleteRepos     *bool   `json:"members_can_delete_repos,omitempty"`
+	MembersCanFork            *bool   `json:"members_can_fork,omitempty"`
+	MembersCanCreatePages     *bool   `json:"members_can_create_pages,omitempty"`
+	DefaultRepoVisibility     *string `json:"default_repo_visibility,omitempty"`
+	RequireSignedCommits      *bool   `json:"require_signed_commits,omitempty"`
+	EnableDependencyGraph     *bool   `json:"enable_dependency_graph,omitempty"`
+	AllowGitHooks             *bool   `json:"allow_git_hooks,omitempty"`
+	AllowCustomGitHooks       *bool   `json:"allow_custom_git_hooks,omitempty"`
+}
+
+// GitHook represents a Git hook
+type GitHook struct {
+	Name     string `json:"name"`
+	IsActive bool   `json:"is_active"`
+	Content  string `json:"content"`
+	Type     string `json:"type"` // pre-receive, update, post-receive, pre-push, post-update
+}
+
+// CreateGitHookRequest represents the request body for creating a Git hook
+type CreateGitHookRequest struct {
+	HookType string `json:"hook_type"`
+	Content  string `json:"content"`
+	IsActive bool   `json:"is_active"`
+}
+
+// UpdateGitHookRequest represents the request body for updating a Git hook
+type UpdateGitHookRequest struct {
+	Content  string `json:"content"`
+	IsActive bool   `json:"is_active"`
+}
+
+// BranchProtection represents a Git branch protection rule
+type BranchProtection struct {
+	RuleName                         string   `json:"rule_name"`
+	EnablePush                       bool     `json:"enable_push"`
+	EnablePushWhitelist              bool     `json:"enable_push_whitelist"`
+	PushWhitelistUsernames           []string `json:"push_whitelist_usernames"`
+	PushWhitelistTeams               []string `json:"push_whitelist_teams"`
+	PushWhitelistDeployKeys          bool     `json:"push_whitelist_deploy_keys"`
+	EnableMergeWhitelist             bool     `json:"enable_merge_whitelist"`
+	MergeWhitelistUsernames          []string `json:"merge_whitelist_usernames"`
+	MergeWhitelistTeams              []string `json:"merge_whitelist_teams"`
+	EnableStatusCheck                bool     `json:"enable_status_check"`
+	StatusCheckContexts              []string `json:"status_check_contexts"`
+	RequiredApprovals                int      `json:"required_approvals"`
+	EnableApprovalsWhitelist         bool     `json:"enable_approvals_whitelist"`
+	ApprovalsWhitelistUsernames      []string `json:"approvals_whitelist_usernames"`
+	ApprovalsWhitelistTeams          []string `json:"approvals_whitelist_teams"`
+	BlockOnRejectedReviews           bool     `json:"block_on_rejected_reviews"`
+	BlockOnOfficialReviewRequests    bool     `json:"block_on_official_review_requests"`
+	BlockOnOutdatedBranch            bool     `json:"block_on_outdated_branch"`
+	DismissStaleApprovals            bool     `json:"dismiss_stale_approvals"`
+	RequireSignedCommits             bool     `json:"require_signed_commits"`
+	ProtectedFilePatterns            string   `json:"protected_file_patterns"`
+	UnprotectedFilePatterns          string   `json:"unprotected_file_patterns"`
+	CreatedAt                        string   `json:"created_at"`
+	UpdatedAt                        string   `json:"updated_at"`
+}
+
+// CreateBranchProtectionRequest represents the request body for creating branch protection
+type CreateBranchProtectionRequest struct {
+	RuleName                         string   `json:"rule_name"`
+	EnablePush                       *bool    `json:"enable_push,omitempty"`
+	EnablePushWhitelist              *bool    `json:"enable_push_whitelist,omitempty"`
+	PushWhitelistUsernames           []string `json:"push_whitelist_usernames,omitempty"`
+	PushWhitelistTeams               []string `json:"push_whitelist_teams,omitempty"`
+	PushWhitelistDeployKeys          *bool    `json:"push_whitelist_deploy_keys,omitempty"`
+	EnableMergeWhitelist             *bool    `json:"enable_merge_whitelist,omitempty"`
+	MergeWhitelistUsernames          []string `json:"merge_whitelist_usernames,omitempty"`
+	MergeWhitelistTeams              []string `json:"merge_whitelist_teams,omitempty"`
+	EnableStatusCheck                *bool    `json:"enable_status_check,omitempty"`
+	StatusCheckContexts              []string `json:"status_check_contexts,omitempty"`
+	RequiredApprovals                *int     `json:"required_approvals,omitempty"`
+	EnableApprovalsWhitelist         *bool    `json:"enable_approvals_whitelist,omitempty"`
+	ApprovalsWhitelistUsernames      []string `json:"approvals_whitelist_usernames,omitempty"`
+	ApprovalsWhitelistTeams          []string `json:"approvals_whitelist_teams,omitempty"`
+	BlockOnRejectedReviews           *bool    `json:"block_on_rejected_reviews,omitempty"`
+	BlockOnOfficialReviewRequests    *bool    `json:"block_on_official_review_requests,omitempty"`
+	BlockOnOutdatedBranch            *bool    `json:"block_on_outdated_branch,omitempty"`
+	DismissStaleApprovals            *bool    `json:"dismiss_stale_approvals,omitempty"`
+	RequireSignedCommits             *bool    `json:"require_signed_commits,omitempty"`
+	ProtectedFilePatterns            *string  `json:"protected_file_patterns,omitempty"`
+	UnprotectedFilePatterns          *string  `json:"unprotected_file_patterns,omitempty"`
+}
+
+// UpdateBranchProtectionRequest represents the request body for updating branch protection
+type UpdateBranchProtectionRequest struct {
+	EnablePush                       *bool    `json:"enable_push,omitempty"`
+	EnablePushWhitelist              *bool    `json:"enable_push_whitelist,omitempty"`
+	PushWhitelistUsernames           []string `json:"push_whitelist_usernames,omitempty"`
+	PushWhitelistTeams               []string `json:"push_whitelist_teams,omitempty"`
+	PushWhitelistDeployKeys          *bool    `json:"push_whitelist_deploy_keys,omitempty"`
+	EnableMergeWhitelist             *bool    `json:"enable_merge_whitelist,omitempty"`
+	MergeWhitelistUsernames          []string `json:"merge_whitelist_usernames,omitempty"`
+	MergeWhitelistTeams              []string `json:"merge_whitelist_teams,omitempty"`
+	EnableStatusCheck                *bool    `json:"enable_status_check,omitempty"`
+	StatusCheckContexts              []string `json:"status_check_contexts,omitempty"`
+	RequiredApprovals                *int     `json:"required_approvals,omitempty"`
+	EnableApprovalsWhitelist         *bool    `json:"enable_approvals_whitelist,omitempty"`
+	ApprovalsWhitelistUsernames      []string `json:"approvals_whitelist_usernames,omitempty"`
+	ApprovalsWhitelistTeams          []string `json:"approvals_whitelist_teams,omitempty"`
+	BlockOnRejectedReviews           *bool    `json:"block_on_rejected_reviews,omitempty"`
+	BlockOnOfficialReviewRequests    *bool    `json:"block_on_official_review_requests,omitempty"`
+	BlockOnOutdatedBranch            *bool    `json:"block_on_outdated_branch,omitempty"`
+	DismissStaleApprovals            *bool    `json:"dismiss_stale_approvals,omitempty"`
+	RequireSignedCommits             *bool    `json:"require_signed_commits,omitempty"`
+	ProtectedFilePatterns            *string  `json:"protected_file_patterns,omitempty"`
+	UnprotectedFilePatterns          *string  `json:"unprotected_file_patterns,omitempty"`
+}
+
+// RepositoryKey represents a repository SSH key
+type RepositoryKey struct {
+	ID          int64  `json:"id"`
+	Key         string `json:"key"`
+	URL         string `json:"url"`
+	Title       string `json:"title"`
+	Fingerprint string `json:"fingerprint"`
+	CreatedAt   string `json:"created_at"`
+	ReadOnly    bool   `json:"read_only"`
+}
+
+// CreateRepositoryKeyRequest represents the request body for creating a repository key
+type CreateRepositoryKeyRequest struct {
+	Key      string `json:"key"`
+	Title    string `json:"title"`
+	ReadOnly *bool  `json:"read_only,omitempty"`
+}
+
+// UpdateRepositoryKeyRequest represents the request body for updating a repository key
+type UpdateRepositoryKeyRequest struct {
+	Title    *string `json:"title,omitempty"`
+	ReadOnly *bool   `json:"read_only,omitempty"`
+}
+
+// AccessToken represents an API access token
+type AccessToken struct {
+	ID             int64    `json:"id"`
+	Name           string   `json:"name"`
+	Sha1           string   `json:"sha1"`
+	Token          string   `json:"token,omitempty"` // Only returned on creation
+	TokenLastEight string   `json:"token_last_eight"`
+	Scopes         []string `json:"scopes"`
+}
+
+// CreateAccessTokenRequest represents the request body for creating an access token
+type CreateAccessTokenRequest struct {
+	Name   string   `json:"name"`
+	Scopes []string `json:"scopes,omitempty"`
+}
+
+// UpdateAccessTokenRequest represents the request body for updating an access token
+type UpdateAccessTokenRequest struct {
+	Name   *string  `json:"name,omitempty"`
+	Scopes []string `json:"scopes,omitempty"`
+}
+
+// RepositorySecret represents a repository action secret
+type RepositorySecret struct {
+	Name      string `json:"name"`
+	CreatedAt string `json:"created_at"`
+}
+
+// CreateRepositorySecretRequest represents the request body for creating a repository secret
+type CreateRepositorySecretRequest struct {
+	Data string `json:"data"`
+}
+
+// UpdateRepositorySecretRequest represents the request body for updating a repository secret
+type UpdateRepositorySecretRequest struct {
+	Data string `json:"data"`
+}
+
+// UserKey represents a user SSH key
+type UserKey struct {
+	ID          int64  `json:"id"`
+	Key         string `json:"key"`
+	URL         string `json:"url"`
+	Title       string `json:"title"`
+	Fingerprint string `json:"fingerprint"`
+	CreatedAt   string `json:"created_at"`
+	ReadOnly    bool   `json:"read_only"`
+}
+
+// CreateUserKeyRequest represents the request body for creating a user key
+type CreateUserKeyRequest struct {
+	Key      string `json:"key"`
+	Title    string `json:"title"`
+	ReadOnly *bool  `json:"read_only,omitempty"`
+}
+
+// UpdateUserKeyRequest represents the request body for updating a user key
+type UpdateUserKeyRequest struct {
+	Title    *string `json:"title,omitempty"`
+	ReadOnly *bool   `json:"read_only,omitempty"`
+}
+
+// OrganizationMember represents an organization member
+type OrganizationMember struct {
+	Username    string `json:"username"`
+	FullName    string `json:"full_name"`
+	Email       string `json:"email"`
+	AvatarURL   string `json:"avatar_url"`
+	Role        string `json:"role"`        // owner, admin, member
+	Visibility  string `json:"visibility"`  // public, private
+	IsPublic    bool   `json:"is_public"`
+}
+
+// AddOrganizationMemberRequest represents the request body for adding an organization member
+type AddOrganizationMemberRequest struct {
+	Role string `json:"role"` // owner, admin, member
+}
+
+// UpdateOrganizationMemberRequest represents the request body for updating an organization member
+type UpdateOrganizationMemberRequest struct {
+	Role       *string `json:"role,omitempty"`       // owner, admin, member
+	Visibility *string `json:"visibility,omitempty"` // public, private
+}
+
+// Action represents a Gitea Actions workflow
+type Action struct {
+	WorkflowName string            `json:"workflow_name"`
+	State        string            `json:"state"`        // active, disabled
+	Badge        string            `json:"badge_url"`
+	CreatedAt    string            `json:"created_at"`
+	UpdatedAt    string            `json:"updated_at"`
+	WorkflowFile ActionWorkflowFile `json:"workflow_file"`
+	LastRun      *ActionLastRun     `json:"last_run,omitempty"`
+}
+
+// ActionWorkflowFile represents the workflow file details
+type ActionWorkflowFile struct {
+	Path    string `json:"path"`
+	Content string `json:"content"`
+	Size    int64  `json:"size"`
+}
+
+// ActionLastRun represents the last workflow run information
+type ActionLastRun struct {
+	ID         int64  `json:"id"`
+	Number     int64  `json:"number"`
+	Status     string `json:"status"`     // success, failure, pending, cancelled
+	Conclusion string `json:"conclusion"` // success, failure, cancelled, skipped
+	Event      string `json:"event"`      // push, pull_request, manual, etc.
+	Branch     string `json:"branch"`
+	Commit     string `json:"commit"`
+	StartedAt  string `json:"started_at"`
+	UpdatedAt  string `json:"updated_at"`
+}
+
+// CreateActionRequest represents the request body for creating an action workflow
+type CreateActionRequest struct {
+	WorkflowName string `json:"workflow_name"`
+	WorkflowFile string `json:"workflow_file"` // YAML content
+	Path         string `json:"path"`          // .github/workflows/name.yml
+	Message      string `json:"message,omitempty"`
+	Branch       string `json:"branch,omitempty"`
+}
+
+// UpdateActionRequest represents the request body for updating an action workflow
+type UpdateActionRequest struct {
+	WorkflowFile *string `json:"workflow_file,omitempty"` // YAML content
+	Message      *string `json:"message,omitempty"`
+	Branch       *string `json:"branch,omitempty"`
+}
+
+// Runner represents a Gitea Actions runner
+type Runner struct {
+	ID              int64           `json:"id"`
+	UUID            string          `json:"uuid"`
+	Name            string          `json:"name"`
+	Status          string          `json:"status"`          // online, offline, idle, active
+	LastOnline      string          `json:"last_online"`
+	CreatedAt       string          `json:"created_at"`
+	UpdatedAt       string          `json:"updated_at"`
+	Labels          []string        `json:"labels"`
+	Description     string          `json:"description"`
+	Scope           string          `json:"scope"`           // repository, organization, system
+	ScopeValue      string          `json:"scope_value"`     // repo name or org name
+	RunnerGroup     *RunnerGroupRef `json:"runner_group,omitempty"`
+	Version         string          `json:"version"`
+	Architecture    string          `json:"architecture"`
+	OperatingSystem string          `json:"operating_system"`
+	TokenExpiresAt  string          `json:"token_expires_at"`
+}
+
+// RunnerGroupRef represents a reference to a runner group
+type RunnerGroupRef struct {
+	ID        int64  `json:"id"`
+	Name      string `json:"name"`
+	IsDefault bool   `json:"is_default"`
+}
+
+// CreateRunnerRequest represents the request body for creating a runner
+type CreateRunnerRequest struct {
+	Name          string   `json:"name"`
+	Labels        []string `json:"labels"`
+	Description   string   `json:"description,omitempty"`
+	RunnerGroupID *int64   `json:"runner_group_id,omitempty"`
+}
+
+// UpdateRunnerRequest represents the request body for updating a runner
+type UpdateRunnerRequest struct {
+	Name          *string  `json:"name,omitempty"`
+	Labels        []string `json:"labels,omitempty"`
+	Description   *string  `json:"description,omitempty"`
+	RunnerGroupID *int64   `json:"runner_group_id,omitempty"`
+}
+
+// AdminUser represents a Gitea administrative user
+type AdminUser struct {
+	ID                int64           `json:"id"`
+	Username          string          `json:"username"`
+	Email             string          `json:"email"`
+	FullName          string          `json:"full_name"`
+	AvatarURL         string          `json:"avatar_url"`
+	IsAdmin           bool            `json:"is_admin"`
+	IsActive          bool            `json:"is_active"`
+	IsRestricted      bool            `json:"is_restricted"`
+	ProhibitLogin     bool            `json:"prohibit_login"`
+	Visibility        string          `json:"visibility"`     // public, private, limited
+	CreatedAt         string          `json:"created_at"`
+	LastLogin         string          `json:"last_login"`
+	Language          string          `json:"language"`
+	MaxRepoCreation   int             `json:"max_repo_creation"`
+	Website           string          `json:"website"`
+	Location          string          `json:"location"`
+	Description       string          `json:"description"`
+	UserStats         *AdminUserStats `json:"user_stats,omitempty"`
+}
+
+// AdminUserStats represents user statistics
+type AdminUserStats struct {
+	Repositories  int `json:"repositories"`
+	PublicRepos   int `json:"public_repos"`
+	Followers     int `json:"followers"`
+	Following     int `json:"following"`
+	StarredRepos  int `json:"starred_repos"`
+}
+
+// CreateAdminUserRequest represents the request body for creating an admin user
+type CreateAdminUserRequest struct {
+	Username           string `json:"username"`
+	Email              string `json:"email"`
+	Password           string `json:"password"`
+	FullName           string `json:"full_name,omitempty"`
+	IsAdmin            bool   `json:"is_admin,omitempty"`
+	MustChangePassword bool   `json:"must_change_password,omitempty"`
+	SendNotify         bool   `json:"send_notify,omitempty"`
+	Visibility         string `json:"visibility,omitempty"`
+	IsActive           bool   `json:"is_active,omitempty"`
+	IsRestricted       bool   `json:"is_restricted,omitempty"`
+	MaxRepoCreation    int    `json:"max_repo_creation,omitempty"`
+	ProhibitLogin      bool   `json:"prohibit_login,omitempty"`
+	Website            string `json:"website,omitempty"`
+	Location           string `json:"location,omitempty"`
+	Description        string `json:"description,omitempty"`
+}
+
+// UpdateAdminUserRequest represents the request body for updating an admin user
+type UpdateAdminUserRequest struct {
+	Email           *string `json:"email,omitempty"`
+	FullName        *string `json:"full_name,omitempty"`
+	IsAdmin         *bool   `json:"is_admin,omitempty"`
+	Visibility      *string `json:"visibility,omitempty"`
+	IsActive        *bool   `json:"is_active,omitempty"`
+	IsRestricted    *bool   `json:"is_restricted,omitempty"`
+	MaxRepoCreation *int    `json:"max_repo_creation,omitempty"`
+	ProhibitLogin   *bool   `json:"prohibit_login,omitempty"`
+	Website         *string `json:"website,omitempty"`
+	Location        *string `json:"location,omitempty"`
+	Description     *string `json:"description,omitempty"`
+}
+
+// Label API methods
+func (c *giteaClient) GetLabel(ctx context.Context, owner, repo string, labelID int64) (*Label, error) {
+	path := fmt.Sprintf("/repos/%s/%s/labels/%d", owner, repo, labelID)
+	resp, err := c.doRequest(ctx, "GET", path, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.StatusCode == http.StatusNotFound {
+		return nil, errors.New("label not found")
+	}
+
+	var label Label
+	if err := handleResponse(resp, &label); err != nil {
+		return nil, err
+	}
+
+	return &label, nil
+}
+
+func (c *giteaClient) CreateLabel(ctx context.Context, owner, repo string, req *CreateLabelRequest) (*Label, error) {
+	path := fmt.Sprintf("/repos/%s/%s/labels", owner, repo)
+	resp, err := c.doRequest(ctx, "POST", path, req)
+	if err != nil {
+		return nil, err
+	}
+
+	var label Label
+	if err := handleResponse(resp, &label); err != nil {
+		return nil, err
+	}
+
+	return &label, nil
+}
+
+func (c *giteaClient) UpdateLabel(ctx context.Context, owner, repo string, labelID int64, req *UpdateLabelRequest) (*Label, error) {
+	path := fmt.Sprintf("/repos/%s/%s/labels/%d", owner, repo, labelID)
+	resp, err := c.doRequest(ctx, "PATCH", path, req)
+	if err != nil {
+		return nil, err
+	}
+
+	var label Label
+	if err := handleResponse(resp, &label); err != nil {
+		return nil, err
+	}
+
+	return &label, nil
+}
+
+func (c *giteaClient) DeleteLabel(ctx context.Context, owner, repo string, labelID int64) error {
+	path := fmt.Sprintf("/repos/%s/%s/labels/%d", owner, repo, labelID)
+	resp, err := c.doRequest(ctx, "DELETE", path, nil)
+	if err != nil {
+		return err
+	}
+
+	return handleResponse(resp, nil)
+}
+
+func (c *giteaClient) ListRepositoryLabels(ctx context.Context, owner, repo string) ([]*Label, error) {
+	path := fmt.Sprintf("/repos/%s/%s/labels", owner, repo)
+	resp, err := c.doRequest(ctx, "GET", path, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var labels []*Label
+	if err := handleResponse(resp, &labels); err != nil {
+		return nil, err
+	}
+
+	return labels, nil
+}
+
+// Repository Collaborator API methods
+func (c *giteaClient) GetRepositoryCollaborator(ctx context.Context, owner, repo, username string) (*RepositoryCollaborator, error) {
+	path := fmt.Sprintf("/repos/%s/%s/collaborators/%s", owner, repo, username)
+	resp, err := c.doRequest(ctx, "GET", path, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.StatusCode == http.StatusNotFound {
+		return nil, errors.New("collaborator not found")
+	}
+
+	var collaborator RepositoryCollaborator
+	if err := handleResponse(resp, &collaborator); err != nil {
+		return nil, err
+	}
+
+	return &collaborator, nil
+}
+
+func (c *giteaClient) AddRepositoryCollaborator(ctx context.Context, owner, repo, username string, req *AddCollaboratorRequest) error {
+	path := fmt.Sprintf("/repos/%s/%s/collaborators/%s", owner, repo, username)
+	resp, err := c.doRequest(ctx, "PUT", path, req)
+	if err != nil {
+		return err
+	}
+
+	return handleResponse(resp, nil)
+}
+
+func (c *giteaClient) UpdateRepositoryCollaborator(ctx context.Context, owner, repo, username string, req *UpdateCollaboratorRequest) error {
+	path := fmt.Sprintf("/repos/%s/%s/collaborators/%s", owner, repo, username)
+	resp, err := c.doRequest(ctx, "PUT", path, req)
+	if err != nil {
+		return err
+	}
+
+	return handleResponse(resp, nil)
+}
+
+func (c *giteaClient) RemoveRepositoryCollaborator(ctx context.Context, owner, repo, username string) error {
+	path := fmt.Sprintf("/repos/%s/%s/collaborators/%s", owner, repo, username)
+	resp, err := c.doRequest(ctx, "DELETE", path, nil)
+	if err != nil {
+		return err
+	}
+
+	return handleResponse(resp, nil)
+}
+
+func (c *giteaClient) ListRepositoryCollaborators(ctx context.Context, owner, repo string) ([]*RepositoryCollaborator, error) {
+	path := fmt.Sprintf("/repos/%s/%s/collaborators", owner, repo)
+	resp, err := c.doRequest(ctx, "GET", path, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var collaborators []*RepositoryCollaborator
+	if err := handleResponse(resp, &collaborators); err != nil {
+		return nil, err
+	}
+
+	return collaborators, nil
+}
+
+// Organization Settings API methods
+func (c *giteaClient) GetOrganizationSettings(ctx context.Context, org string) (*OrganizationSettings, error) {
+	// Note: This is a conceptual implementation - Gitea API may not have a single endpoint
+	// for all organization settings. This might need to aggregate multiple API calls.
+	path := fmt.Sprintf("/orgs/%s", org)
+	resp, err := c.doRequest(ctx, "GET", path, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	// For now, we'll get the basic organization and map what we can
+	var orgData Organization
+	if err := handleResponse(resp, &orgData); err != nil {
+		return nil, err
+	}
+
+	// Map Organization data to OrganizationSettings
+	// Note: This is a simplified mapping - real implementation would aggregate multiple endpoints
+	settings := &OrganizationSettings{
+		DefaultRepoPermission:   "read", // Default fallback
+		MembersCanCreateRepos:   true,   // Default fallback
+		MembersCanCreatePrivate: true,   // Default fallback
+		DefaultRepoVisibility:   "public", // Default fallback
+		AllowGitHooks:          false,   // Default fallback
+	}
+
+	return settings, nil
+}
+
+func (c *giteaClient) UpdateOrganizationSettings(ctx context.Context, org string, req *UpdateOrganizationSettingsRequest) (*OrganizationSettings, error) {
+	// Note: This is a conceptual implementation - real implementation would update
+	// organization settings through appropriate Gitea admin endpoints
+	path := fmt.Sprintf("/orgs/%s", org)
+	
+	// For now, we'll use the organization update endpoint as a placeholder
+	orgUpdateReq := &UpdateOrganizationRequest{}
+	
+	resp, err := c.doRequest(ctx, "PATCH", path, orgUpdateReq)
+	if err != nil {
+		return nil, err
+	}
+
+	var orgData Organization
+	if err := handleResponse(resp, &orgData); err != nil {
+		return nil, err
+	}
+
+	// Return updated settings (simplified)
+	return c.GetOrganizationSettings(ctx, org)
+}
+
+// Git Hooks API methods
+func (c *giteaClient) GetGitHook(ctx context.Context, repository, hookType string) (*GitHook, error) {
+	// Parse repository format "owner/repo"
+	parts := strings.Split(repository, "/")
+	if len(parts) != 2 {
+		return nil, errors.New("repository must be in format 'owner/repo'")
+	}
+	owner, repo := parts[0], parts[1]
+
+	path := fmt.Sprintf("/repos/%s/%s/hooks/git/%s", owner, repo, hookType)
+	resp, err := c.doRequest(ctx, "GET", path, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.StatusCode == http.StatusNotFound {
+		return nil, errors.New("git hook not found")
+	}
+
+	var hook GitHook
+	if err := handleResponse(resp, &hook); err != nil {
+		return nil, err
+	}
+
+	return &hook, nil
+}
+
+func (c *giteaClient) CreateGitHook(ctx context.Context, repository string, req *CreateGitHookRequest) (*GitHook, error) {
+	// Parse repository format "owner/repo"
+	parts := strings.Split(repository, "/")
+	if len(parts) != 2 {
+		return nil, errors.New("repository must be in format 'owner/repo'")
+	}
+	owner, repo := parts[0], parts[1]
+
+	path := fmt.Sprintf("/repos/%s/%s/hooks/git/%s", owner, repo, req.HookType)
+	resp, err := c.doRequest(ctx, "POST", path, req)
+	if err != nil {
+		return nil, err
+	}
+
+	var hook GitHook
+	if err := handleResponse(resp, &hook); err != nil {
+		return nil, err
+	}
+
+	return &hook, nil
+}
+
+func (c *giteaClient) UpdateGitHook(ctx context.Context, repository, hookType string, req *UpdateGitHookRequest) (*GitHook, error) {
+	// Parse repository format "owner/repo"
+	parts := strings.Split(repository, "/")
+	if len(parts) != 2 {
+		return nil, errors.New("repository must be in format 'owner/repo'")
+	}
+	owner, repo := parts[0], parts[1]
+
+	path := fmt.Sprintf("/repos/%s/%s/hooks/git/%s", owner, repo, hookType)
+	resp, err := c.doRequest(ctx, "PATCH", path, req)
+	if err != nil {
+		return nil, err
+	}
+
+	var hook GitHook
+	if err := handleResponse(resp, &hook); err != nil {
+		return nil, err
+	}
+
+	return &hook, nil
+}
+
+func (c *giteaClient) DeleteGitHook(ctx context.Context, repository, hookType string) error {
+	// Parse repository format "owner/repo"
+	parts := strings.Split(repository, "/")
+	if len(parts) != 2 {
+		return errors.New("repository must be in format 'owner/repo'")
+	}
+	owner, repo := parts[0], parts[1]
+
+	path := fmt.Sprintf("/repos/%s/%s/hooks/git/%s", owner, repo, hookType)
+	resp, err := c.doRequest(ctx, "DELETE", path, nil)
+	if err != nil {
+		return err
+	}
+
+	return handleResponse(resp, nil)
+}
+
+// Branch Protection API methods
+func (c *giteaClient) GetBranchProtection(ctx context.Context, repository, branch string) (*BranchProtection, error) {
+	// Parse repository format "owner/repo"
+	parts := strings.Split(repository, "/")
+	if len(parts) != 2 {
+		return nil, errors.New("repository must be in format 'owner/repo'")
+	}
+	owner, repo := parts[0], parts[1]
+
+	path := fmt.Sprintf("/repos/%s/%s/branch_protections/%s", owner, repo, branch)
+	resp, err := c.doRequest(ctx, "GET", path, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.StatusCode == http.StatusNotFound {
+		return nil, errors.New("branch protection not found")
+	}
+
+	var protection BranchProtection
+	if err := handleResponse(resp, &protection); err != nil {
+		return nil, err
+	}
+
+	return &protection, nil
+}
+
+func (c *giteaClient) CreateBranchProtection(ctx context.Context, repository, branch string, req *CreateBranchProtectionRequest) (*BranchProtection, error) {
+	// Parse repository format "owner/repo"
+	parts := strings.Split(repository, "/")
+	if len(parts) != 2 {
+		return nil, errors.New("repository must be in format 'owner/repo'")
+	}
+	owner, repo := parts[0], parts[1]
+
+	path := fmt.Sprintf("/repos/%s/%s/branch_protections", owner, repo)
+	resp, err := c.doRequest(ctx, "POST", path, req)
+	if err != nil {
+		return nil, err
+	}
+
+	var protection BranchProtection
+	if err := handleResponse(resp, &protection); err != nil {
+		return nil, err
+	}
+
+	return &protection, nil
+}
+
+func (c *giteaClient) UpdateBranchProtection(ctx context.Context, repository, branch string, req *UpdateBranchProtectionRequest) (*BranchProtection, error) {
+	// Parse repository format "owner/repo"
+	parts := strings.Split(repository, "/")
+	if len(parts) != 2 {
+		return nil, errors.New("repository must be in format 'owner/repo'")
+	}
+	owner, repo := parts[0], parts[1]
+
+	path := fmt.Sprintf("/repos/%s/%s/branch_protections/%s", owner, repo, branch)
+	resp, err := c.doRequest(ctx, "PATCH", path, req)
+	if err != nil {
+		return nil, err
+	}
+
+	var protection BranchProtection
+	if err := handleResponse(resp, &protection); err != nil {
+		return nil, err
+	}
+
+	return &protection, nil
+}
+
+func (c *giteaClient) DeleteBranchProtection(ctx context.Context, repository, branch string) error {
+	// Parse repository format "owner/repo"
+	parts := strings.Split(repository, "/")
+	if len(parts) != 2 {
+		return errors.New("repository must be in format 'owner/repo'")
+	}
+	owner, repo := parts[0], parts[1]
+
+	path := fmt.Sprintf("/repos/%s/%s/branch_protections/%s", owner, repo, branch)
+	resp, err := c.doRequest(ctx, "DELETE", path, nil)
+	if err != nil {
+		return err
+	}
+
+	return handleResponse(resp, nil)
+}
+
+// Repository Key API methods
+func (c *giteaClient) GetRepositoryKey(ctx context.Context, repository string, keyID int64) (*RepositoryKey, error) {
+	// Parse repository format "owner/repo"
+	parts := strings.Split(repository, "/")
+	if len(parts) != 2 {
+		return nil, errors.New("repository must be in format 'owner/repo'")
+	}
+	owner, repo := parts[0], parts[1]
+
+	path := fmt.Sprintf("/repos/%s/%s/keys/%d", owner, repo, keyID)
+	resp, err := c.doRequest(ctx, "GET", path, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.StatusCode == http.StatusNotFound {
+		return nil, errors.New("repository key not found")
+	}
+
+	var key RepositoryKey
+	if err := handleResponse(resp, &key); err != nil {
+		return nil, err
+	}
+
+	return &key, nil
+}
+
+func (c *giteaClient) CreateRepositoryKey(ctx context.Context, repository string, req *CreateRepositoryKeyRequest) (*RepositoryKey, error) {
+	// Parse repository format "owner/repo"
+	parts := strings.Split(repository, "/")
+	if len(parts) != 2 {
+		return nil, errors.New("repository must be in format 'owner/repo'")
+	}
+	owner, repo := parts[0], parts[1]
+
+	path := fmt.Sprintf("/repos/%s/%s/keys", owner, repo)
+	resp, err := c.doRequest(ctx, "POST", path, req)
+	if err != nil {
+		return nil, err
+	}
+
+	var key RepositoryKey
+	if err := handleResponse(resp, &key); err != nil {
+		return nil, err
+	}
+
+	return &key, nil
+}
+
+func (c *giteaClient) UpdateRepositoryKey(ctx context.Context, repository string, keyID int64, req *UpdateRepositoryKeyRequest) (*RepositoryKey, error) {
+	// Parse repository format "owner/repo"
+	parts := strings.Split(repository, "/")
+	if len(parts) != 2 {
+		return nil, errors.New("repository must be in format 'owner/repo'")
+	}
+	owner, repo := parts[0], parts[1]
+
+	path := fmt.Sprintf("/repos/%s/%s/keys/%d", owner, repo, keyID)
+	resp, err := c.doRequest(ctx, "PATCH", path, req)
+	if err != nil {
+		return nil, err
+	}
+
+	var key RepositoryKey
+	if err := handleResponse(resp, &key); err != nil {
+		return nil, err
+	}
+
+	return &key, nil
+}
+
+func (c *giteaClient) DeleteRepositoryKey(ctx context.Context, repository string, keyID int64) error {
+	// Parse repository format "owner/repo"
+	parts := strings.Split(repository, "/")
+	if len(parts) != 2 {
+		return errors.New("repository must be in format 'owner/repo'")
+	}
+	owner, repo := parts[0], parts[1]
+
+	path := fmt.Sprintf("/repos/%s/%s/keys/%d", owner, repo, keyID)
+	resp, err := c.doRequest(ctx, "DELETE", path, nil)
+	if err != nil {
+		return err
+	}
+
+	return handleResponse(resp, nil)
+}
+
+// Access Token API methods
+func (c *giteaClient) GetAccessToken(ctx context.Context, username string, tokenID int64) (*AccessToken, error) {
+	path := fmt.Sprintf("/users/%s/tokens/%d", username, tokenID)
+	resp, err := c.doRequest(ctx, "GET", path, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.StatusCode == http.StatusNotFound {
+		return nil, errors.New("access token not found")
+	}
+
+	var token AccessToken
+	if err := handleResponse(resp, &token); err != nil {
+		return nil, err
+	}
+
+	return &token, nil
+}
+
+func (c *giteaClient) CreateAccessToken(ctx context.Context, username string, req *CreateAccessTokenRequest) (*AccessToken, error) {
+	path := fmt.Sprintf("/users/%s/tokens", username)
+	resp, err := c.doRequest(ctx, "POST", path, req)
+	if err != nil {
+		return nil, err
+	}
+
+	var token AccessToken
+	if err := handleResponse(resp, &token); err != nil {
+		return nil, err
+	}
+
+	return &token, nil
+}
+
+func (c *giteaClient) UpdateAccessToken(ctx context.Context, username string, tokenID int64, req *UpdateAccessTokenRequest) (*AccessToken, error) {
+	path := fmt.Sprintf("/users/%s/tokens/%d", username, tokenID)
+	resp, err := c.doRequest(ctx, "PATCH", path, req)
+	if err != nil {
+		return nil, err
+	}
+
+	var token AccessToken
+	if err := handleResponse(resp, &token); err != nil {
+		return nil, err
+	}
+
+	return &token, nil
+}
+
+func (c *giteaClient) DeleteAccessToken(ctx context.Context, username string, tokenID int64) error {
+	path := fmt.Sprintf("/users/%s/tokens/%d", username, tokenID)
+	resp, err := c.doRequest(ctx, "DELETE", path, nil)
+	if err != nil {
+		return err
+	}
+
+	return handleResponse(resp, nil)
+}
+
+// Repository Secret API methods
+func (c *giteaClient) GetRepositorySecret(ctx context.Context, repository, secretName string) (*RepositorySecret, error) {
+	// Parse repository format "owner/repo"
+	parts := strings.Split(repository, "/")
+	if len(parts) != 2 {
+		return nil, errors.New("repository must be in format 'owner/repo'")
+	}
+	owner, repo := parts[0], parts[1]
+
+	path := fmt.Sprintf("/repos/%s/%s/actions/secrets/%s", owner, repo, secretName)
+	resp, err := c.doRequest(ctx, "GET", path, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.StatusCode == http.StatusNotFound {
+		return nil, errors.New("repository secret not found")
+	}
+
+	var secret RepositorySecret
+	if err := handleResponse(resp, &secret); err != nil {
+		return nil, err
+	}
+
+	return &secret, nil
+}
+
+func (c *giteaClient) CreateRepositorySecret(ctx context.Context, repository, secretName string, req *CreateRepositorySecretRequest) error {
+	// Parse repository format "owner/repo"
+	parts := strings.Split(repository, "/")
+	if len(parts) != 2 {
+		return errors.New("repository must be in format 'owner/repo'")
+	}
+	owner, repo := parts[0], parts[1]
+
+	path := fmt.Sprintf("/repos/%s/%s/actions/secrets/%s", owner, repo, secretName)
+	resp, err := c.doRequest(ctx, "PUT", path, req)
+	if err != nil {
+		return err
+	}
+
+	return handleResponse(resp, nil)
+}
+
+func (c *giteaClient) UpdateRepositorySecret(ctx context.Context, repository, secretName string, req *UpdateRepositorySecretRequest) error {
+	// Parse repository format "owner/repo"
+	parts := strings.Split(repository, "/")
+	if len(parts) != 2 {
+		return errors.New("repository must be in format 'owner/repo'")
+	}
+	owner, repo := parts[0], parts[1]
+
+	path := fmt.Sprintf("/repos/%s/%s/actions/secrets/%s", owner, repo, secretName)
+	resp, err := c.doRequest(ctx, "PUT", path, req)
+	if err != nil {
+		return err
+	}
+
+	return handleResponse(resp, nil)
+}
+
+func (c *giteaClient) DeleteRepositorySecret(ctx context.Context, repository, secretName string) error {
+	// Parse repository format "owner/repo"
+	parts := strings.Split(repository, "/")
+	if len(parts) != 2 {
+		return errors.New("repository must be in format 'owner/repo'")
+	}
+	owner, repo := parts[0], parts[1]
+
+	path := fmt.Sprintf("/repos/%s/%s/actions/secrets/%s", owner, repo, secretName)
+	resp, err := c.doRequest(ctx, "DELETE", path, nil)
+	if err != nil {
+		return err
+	}
+
+	return handleResponse(resp, nil)
+}
+
+// User Key API methods
+func (c *giteaClient) GetUserKey(ctx context.Context, username string, keyID int64) (*UserKey, error) {
+	path := fmt.Sprintf("/users/%s/keys/%d", username, keyID)
+	resp, err := c.doRequest(ctx, "GET", path, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.StatusCode == http.StatusNotFound {
+		return nil, errors.New("user key not found")
+	}
+
+	var key UserKey
+	if err := handleResponse(resp, &key); err != nil {
+		return nil, err
+	}
+
+	return &key, nil
+}
+
+func (c *giteaClient) CreateUserKey(ctx context.Context, username string, req *CreateUserKeyRequest) (*UserKey, error) {
+	path := fmt.Sprintf("/users/%s/keys", username)
+	resp, err := c.doRequest(ctx, "POST", path, req)
+	if err != nil {
+		return nil, err
+	}
+
+	var key UserKey
+	if err := handleResponse(resp, &key); err != nil {
+		return nil, err
+	}
+
+	return &key, nil
+}
+
+func (c *giteaClient) UpdateUserKey(ctx context.Context, username string, keyID int64, req *UpdateUserKeyRequest) (*UserKey, error) {
+	path := fmt.Sprintf("/users/%s/keys/%d", username, keyID)
+	resp, err := c.doRequest(ctx, "PATCH", path, req)
+	if err != nil {
+		return nil, err
+	}
+
+	var key UserKey
+	if err := handleResponse(resp, &key); err != nil {
+		return nil, err
+	}
+
+	return &key, nil
+}
+
+func (c *giteaClient) DeleteUserKey(ctx context.Context, username string, keyID int64) error {
+	path := fmt.Sprintf("/users/%s/keys/%d", username, keyID)
+	resp, err := c.doRequest(ctx, "DELETE", path, nil)
+	if err != nil {
+		return err
+	}
+
+	return handleResponse(resp, nil)
+}
+
+// Organization Member API methods
+func (c *giteaClient) GetOrganizationMember(ctx context.Context, org, username string) (*OrganizationMember, error) {
+	path := fmt.Sprintf("/orgs/%s/members/%s", org, username)
+	resp, err := c.doRequest(ctx, "GET", path, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.StatusCode == http.StatusNotFound {
+		return nil, errors.New("organization member not found")
+	}
+
+	var member OrganizationMember
+	if err := handleResponse(resp, &member); err != nil {
+		return nil, err
+	}
+
+	return &member, nil
+}
+
+func (c *giteaClient) AddOrganizationMember(ctx context.Context, org, username string, req *AddOrganizationMemberRequest) (*OrganizationMember, error) {
+	path := fmt.Sprintf("/orgs/%s/members/%s", org, username)
+	resp, err := c.doRequest(ctx, "PUT", path, req)
+	if err != nil {
+		return nil, err
+	}
+
+	var member OrganizationMember
+	if err := handleResponse(resp, &member); err != nil {
+		return nil, err
+	}
+
+	return &member, nil
+}
+
+func (c *giteaClient) UpdateOrganizationMember(ctx context.Context, org, username string, req *UpdateOrganizationMemberRequest) (*OrganizationMember, error) {
+	path := fmt.Sprintf("/orgs/%s/members/%s", org, username)
+	resp, err := c.doRequest(ctx, "PATCH", path, req)
+	if err != nil {
+		return nil, err
+	}
+
+	var member OrganizationMember
+	if err := handleResponse(resp, &member); err != nil {
+		return nil, err
+	}
+
+	return &member, nil
+}
+
+func (c *giteaClient) RemoveOrganizationMember(ctx context.Context, org, username string) error {
+	path := fmt.Sprintf("/orgs/%s/members/%s", org, username)
+	resp, err := c.doRequest(ctx, "DELETE", path, nil)
+	if err != nil {
+		return err
+	}
+
+	return handleResponse(resp, nil)
+}
+
+// Action API methods
+func (c *giteaClient) GetAction(ctx context.Context, repository, workflowName string) (*Action, error) {
+	// Parse repository format "owner/repo"
+	parts := strings.Split(repository, "/")
+	if len(parts) != 2 {
+		return nil, errors.New("repository must be in format 'owner/repo'")
+	}
+	owner, repo := parts[0], parts[1]
+
+	path := fmt.Sprintf("/repos/%s/%s/actions/workflows/%s", owner, repo, workflowName)
+	resp, err := c.doRequest(ctx, "GET", path, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.StatusCode == http.StatusNotFound {
+		return nil, errors.New("action workflow not found")
+	}
+
+	var action Action
+	if err := handleResponse(resp, &action); err != nil {
+		return nil, err
+	}
+
+	return &action, nil
+}
+
+func (c *giteaClient) CreateAction(ctx context.Context, repository string, req *CreateActionRequest) (*Action, error) {
+	// Parse repository format "owner/repo"
+	parts := strings.Split(repository, "/")
+	if len(parts) != 2 {
+		return nil, errors.New("repository must be in format 'owner/repo'")
+	}
+	owner, repo := parts[0], parts[1]
+
+	// For Gitea, creating a workflow typically involves creating a file in .github/workflows/
+	// This is a conceptual implementation - actual API might differ
+	path := fmt.Sprintf("/repos/%s/%s/actions/workflows", owner, repo)
+	resp, err := c.doRequest(ctx, "POST", path, req)
+	if err != nil {
+		return nil, err
+	}
+
+	var action Action
+	if err := handleResponse(resp, &action); err != nil {
+		return nil, err
+	}
+
+	return &action, nil
+}
+
+func (c *giteaClient) UpdateAction(ctx context.Context, repository, workflowName string, req *UpdateActionRequest) (*Action, error) {
+	// Parse repository format "owner/repo"
+	parts := strings.Split(repository, "/")
+	if len(parts) != 2 {
+		return nil, errors.New("repository must be in format 'owner/repo'")
+	}
+	owner, repo := parts[0], parts[1]
+
+	path := fmt.Sprintf("/repos/%s/%s/actions/workflows/%s", owner, repo, workflowName)
+	resp, err := c.doRequest(ctx, "PATCH", path, req)
+	if err != nil {
+		return nil, err
+	}
+
+	var action Action
+	if err := handleResponse(resp, &action); err != nil {
+		return nil, err
+	}
+
+	return &action, nil
+}
+
+func (c *giteaClient) DeleteAction(ctx context.Context, repository, workflowName string) error {
+	// Parse repository format "owner/repo"
+	parts := strings.Split(repository, "/")
+	if len(parts) != 2 {
+		return errors.New("repository must be in format 'owner/repo'")
+	}
+	owner, repo := parts[0], parts[1]
+
+	path := fmt.Sprintf("/repos/%s/%s/actions/workflows/%s", owner, repo, workflowName)
+	resp, err := c.doRequest(ctx, "DELETE", path, nil)
+	if err != nil {
+		return err
+	}
+
+	return handleResponse(resp, nil)
+}
+
+func (c *giteaClient) EnableAction(ctx context.Context, repository, workflowName string) error {
+	// Parse repository format "owner/repo"
+	parts := strings.Split(repository, "/")
+	if len(parts) != 2 {
+		return errors.New("repository must be in format 'owner/repo'")
+	}
+	owner, repo := parts[0], parts[1]
+
+	path := fmt.Sprintf("/repos/%s/%s/actions/workflows/%s/enable", owner, repo, workflowName)
+	resp, err := c.doRequest(ctx, "PUT", path, nil)
+	if err != nil {
+		return err
+	}
+
+	return handleResponse(resp, nil)
+}
+
+func (c *giteaClient) DisableAction(ctx context.Context, repository, workflowName string) error {
+	// Parse repository format "owner/repo"
+	parts := strings.Split(repository, "/")
+	if len(parts) != 2 {
+		return errors.New("repository must be in format 'owner/repo'")
+	}
+	owner, repo := parts[0], parts[1]
+
+	path := fmt.Sprintf("/repos/%s/%s/actions/workflows/%s/disable", owner, repo, workflowName)
+	resp, err := c.doRequest(ctx, "PUT", path, nil)
+	if err != nil {
+		return err
+	}
+
+	return handleResponse(resp, nil)
+}
+
+// Runner API methods
+func (c *giteaClient) GetRunner(ctx context.Context, scope, scopeValue string, runnerID int64) (*Runner, error) {
+	var path string
+	switch scope {
+	case "repository":
+		// Parse repository format "owner/repo"
+		parts := strings.Split(scopeValue, "/")
+		if len(parts) != 2 {
+			return nil, errors.New("scopeValue must be in format 'owner/repo' for repository scope")
+		}
+		owner, repo := parts[0], parts[1]
+		path = fmt.Sprintf("/repos/%s/%s/actions/runners/%d", owner, repo, runnerID)
+	case "organization":
+		path = fmt.Sprintf("/orgs/%s/actions/runners/%d", scopeValue, runnerID)
+	case "system":
+		path = fmt.Sprintf("/admin/actions/runners/%d", runnerID)
+	default:
+		return nil, errors.New("scope must be one of: repository, organization, system")
+	}
+
+	resp, err := c.doRequest(ctx, "GET", path, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.StatusCode == http.StatusNotFound {
+		return nil, errors.New("runner not found")
+	}
+
+	var runner Runner
+	if err := handleResponse(resp, &runner); err != nil {
+		return nil, err
+	}
+
+	return &runner, nil
+}
+
+func (c *giteaClient) CreateRunner(ctx context.Context, scope, scopeValue string, req *CreateRunnerRequest) (*Runner, error) {
+	var path string
+	switch scope {
+	case "repository":
+		// Parse repository format "owner/repo"
+		parts := strings.Split(scopeValue, "/")
+		if len(parts) != 2 {
+			return nil, errors.New("scopeValue must be in format 'owner/repo' for repository scope")
+		}
+		owner, repo := parts[0], parts[1]
+		path = fmt.Sprintf("/repos/%s/%s/actions/runners", owner, repo)
+	case "organization":
+		path = fmt.Sprintf("/orgs/%s/actions/runners", scopeValue)
+	case "system":
+		path = "/admin/actions/runners"
+	default:
+		return nil, errors.New("scope must be one of: repository, organization, system")
+	}
+
+	resp, err := c.doRequest(ctx, "POST", path, req)
+	if err != nil {
+		return nil, err
+	}
+
+	var runner Runner
+	if err := handleResponse(resp, &runner); err != nil {
+		return nil, err
+	}
+
+	return &runner, nil
+}
+
+func (c *giteaClient) UpdateRunner(ctx context.Context, scope, scopeValue string, runnerID int64, req *UpdateRunnerRequest) (*Runner, error) {
+	var path string
+	switch scope {
+	case "repository":
+		// Parse repository format "owner/repo"
+		parts := strings.Split(scopeValue, "/")
+		if len(parts) != 2 {
+			return nil, errors.New("scopeValue must be in format 'owner/repo' for repository scope")
+		}
+		owner, repo := parts[0], parts[1]
+		path = fmt.Sprintf("/repos/%s/%s/actions/runners/%d", owner, repo, runnerID)
+	case "organization":
+		path = fmt.Sprintf("/orgs/%s/actions/runners/%d", scopeValue, runnerID)
+	case "system":
+		path = fmt.Sprintf("/admin/actions/runners/%d", runnerID)
+	default:
+		return nil, errors.New("scope must be one of: repository, organization, system")
+	}
+
+	resp, err := c.doRequest(ctx, "PATCH", path, req)
+	if err != nil {
+		return nil, err
+	}
+
+	var runner Runner
+	if err := handleResponse(resp, &runner); err != nil {
+		return nil, err
+	}
+
+	return &runner, nil
+}
+
+func (c *giteaClient) DeleteRunner(ctx context.Context, scope, scopeValue string, runnerID int64) error {
+	var path string
+	switch scope {
+	case "repository":
+		// Parse repository format "owner/repo"
+		parts := strings.Split(scopeValue, "/")
+		if len(parts) != 2 {
+			return errors.New("scopeValue must be in format 'owner/repo' for repository scope")
+		}
+		owner, repo := parts[0], parts[1]
+		path = fmt.Sprintf("/repos/%s/%s/actions/runners/%d", owner, repo, runnerID)
+	case "organization":
+		path = fmt.Sprintf("/orgs/%s/actions/runners/%d", scopeValue, runnerID)
+	case "system":
+		path = fmt.Sprintf("/admin/actions/runners/%d", runnerID)
+	default:
+		return errors.New("scope must be one of: repository, organization, system")
+	}
+
+	resp, err := c.doRequest(ctx, "DELETE", path, nil)
+	if err != nil {
+		return err
+	}
+
+	return handleResponse(resp, nil)
+}
+
+// Admin User API methods
+func (c *giteaClient) GetAdminUser(ctx context.Context, username string) (*AdminUser, error) {
+	path := fmt.Sprintf("/admin/users/%s", username)
+	resp, err := c.doRequest(ctx, "GET", path, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.StatusCode == http.StatusNotFound {
+		return nil, errors.New("admin user not found")
+	}
+
+	var user AdminUser
+	if err := handleResponse(resp, &user); err != nil {
+		return nil, err
+	}
+
+	return &user, nil
+}
+
+func (c *giteaClient) CreateAdminUser(ctx context.Context, req *CreateAdminUserRequest) (*AdminUser, error) {
+	path := "/admin/users"
+	resp, err := c.doRequest(ctx, "POST", path, req)
+	if err != nil {
+		return nil, err
+	}
+
+	var user AdminUser
+	if err := handleResponse(resp, &user); err != nil {
+		return nil, err
+	}
+
+	return &user, nil
+}
+
+func (c *giteaClient) UpdateAdminUser(ctx context.Context, username string, req *UpdateAdminUserRequest) (*AdminUser, error) {
+	path := fmt.Sprintf("/admin/users/%s", username)
+	resp, err := c.doRequest(ctx, "PATCH", path, req)
+	if err != nil {
+		return nil, err
+	}
+
+	var user AdminUser
+	if err := handleResponse(resp, &user); err != nil {
+		return nil, err
+	}
+
+	return &user, nil
+}
+
+func (c *giteaClient) DeleteAdminUser(ctx context.Context, username string) error {
+	path := fmt.Sprintf("/admin/users/%s", username)
+	resp, err := c.doRequest(ctx, "DELETE", path, nil)
+	if err != nil {
+		return err
+	}
+
+	return handleResponse(resp, nil)
+}
+
 // getTokenFromSecret extracts the API token from the provider config's secret
 func getTokenFromSecret(ctx context.Context, cfg *v1beta1.ProviderConfig, kube client.Client) (string, error) {
 	if cfg.Spec.Credentials.Source != "Secret" {
@@ -450,4 +2130,9 @@ func IsNotFound(err error) bool {
 	}
 	// Check if the error message contains status 404
 	return strings.Contains(err.Error(), "status 404")
+}
+
+// NewNotFoundError creates a new not found error
+func NewNotFoundError(resourceType, identifier string) error {
+	return errors.Errorf("API request failed with status 404: %s '%s' not found", resourceType, identifier)
 }

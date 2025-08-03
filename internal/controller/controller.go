@@ -21,11 +21,25 @@ import (
 
 	"github.com/crossplane/crossplane-runtime/pkg/controller"
 
+	"github.com/crossplane-contrib/provider-gitea/internal/controller/accesstoken"
+	"github.com/crossplane-contrib/provider-gitea/internal/controller/action"
+	"github.com/crossplane-contrib/provider-gitea/internal/controller/adminuser"
+	"github.com/crossplane-contrib/provider-gitea/internal/controller/branchprotection"
 	"github.com/crossplane-contrib/provider-gitea/internal/controller/deploykey"
+	"github.com/crossplane-contrib/provider-gitea/internal/controller/githook"
+	"github.com/crossplane-contrib/provider-gitea/internal/controller/label"
 	"github.com/crossplane-contrib/provider-gitea/internal/controller/organization"
+	"github.com/crossplane-contrib/provider-gitea/internal/controller/organizationmember"
 	"github.com/crossplane-contrib/provider-gitea/internal/controller/organizationsecret"
+	"github.com/crossplane-contrib/provider-gitea/internal/controller/organizationsettings"
 	"github.com/crossplane-contrib/provider-gitea/internal/controller/repository"
+	"github.com/crossplane-contrib/provider-gitea/internal/controller/repositorycollaborator"
+	"github.com/crossplane-contrib/provider-gitea/internal/controller/repositorykey"
+	"github.com/crossplane-contrib/provider-gitea/internal/controller/repositorysecret"
+	"github.com/crossplane-contrib/provider-gitea/internal/controller/runner"
+	"github.com/crossplane-contrib/provider-gitea/internal/controller/team"
 	"github.com/crossplane-contrib/provider-gitea/internal/controller/user"
+	"github.com/crossplane-contrib/provider-gitea/internal/controller/userkey"
 	"github.com/crossplane-contrib/provider-gitea/internal/controller/webhook"
 )
 
@@ -39,6 +53,20 @@ func Setup(mgr ctrl.Manager, o controller.Options) error {
 		user.Setup,
 		webhook.Setup,
 		deploykey.Setup,
+		team.Setup,
+		label.Setup,
+		repositorycollaborator.Setup,
+		organizationsettings.Setup,
+		githook.Setup,
+		branchprotection.Setup,
+		repositorykey.Setup,
+		accesstoken.Setup,
+		repositorysecret.Setup,
+		userkey.Setup,
+		organizationmember.Setup,
+		action.Setup,
+		runner.Setup,
+		adminuser.Setup,
 	} {
 		if err := setup(mgr, o); err != nil {
 			return err

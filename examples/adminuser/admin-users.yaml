@@ -1,0 +1,101 @@
+# Administrative users for platform management
+# This example creates human admin accounts with proper security settings
+apiVersion: adminuser.gitea.crossplane.io/v1alpha1
+kind: AdminUser
+metadata:
+  name: platform-admin
+  annotations:
+    crossplane.io/external-name: "platform-admin"
+spec:
+  forProvider:
+    username: "platform-admin"
+    email: "platform-admin@company.com"
+    
+    passwordSecretRef:
+      name: "platform-admin-credentials"
+      namespace: "crossplane-system"
+      key: "password"
+    
+    fullName: "Platform Administrator"
+    
+    # Full admin privileges
+    isAdmin: true
+    
+    # Security settings
+    mustChangePassword: true  # Force password change on first login
+    sendNotify: true         # Send welcome email
+    
+    # Account status
+    isActive: true
+    isRestricted: false
+    prohibitLogin: false
+    
+    # User preferences
+    visibility: "public"
+    maxRepoCreation: -1  # Unlimited repository creation
+    
+    # Contact information
+    website: "https://company.com/team/platform"
+    location: "San Francisco, CA"
+    description: "Platform team administrator responsible for Gitea instance management"
+    
+  providerConfigRef:
+    name: default
+
+---
+apiVersion: adminuser.gitea.crossplane.io/v1alpha1
+kind: AdminUser
+metadata:
+  name: security-admin
+  annotations:
+    crossplane.io/external-name: "security-admin"
+spec:
+  forProvider:
+    username: "security-admin"
+    email: "security-admin@company.com"
+    
+    passwordSecretRef:
+      name: "security-admin-credentials"
+      namespace: "crossplane-system"
+      key: "password"
+    
+    fullName: "Security Administrator"
+    isAdmin: true
+    
+    # Enhanced security settings for security admin
+    mustChangePassword: true
+    sendNotify: true
+    
+    isActive: true
+    isRestricted: false
+    prohibitLogin: false
+    
+    visibility: "limited"  # Limited visibility for security
+    maxRepoCreation: 20
+    
+    location: "Remote"
+    description: "Security team administrator for compliance and security management"
+    
+  providerConfigRef:
+    name: default
+
+---
+# Supporting Kubernetes secrets
+apiVersion: v1
+kind: Secret
+metadata:
+  name: platform-admin-credentials
+  namespace: crossplane-system
+type: Opaque
+data:
+  password: "UGxhdGZvcm0tQWRtaW4tU2VjdXJlLVBhc3N3b3JkLTIwMjQ="
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: security-admin-credentials
+  namespace: crossplane-system
+type: Opaque
+data:
+  password: "U2VjdXJpdHktQWRtaW4tU2VjdXJlLVBhc3N3b3JkLTIwMjQ="

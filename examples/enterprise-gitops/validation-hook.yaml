@@ -1,0 +1,87 @@
+apiVersion: githook.gitea.crossplane.io/v1alpha1
+kind: GitHook
+metadata:
+  name: enterprise-validation-hook
+  annotations:
+    crossplane.io/external-name: acme-corp/platform-services/pre-receive
+spec:
+  forProvider:
+    repository: acme-corp/platform-services
+    hookType: pre-receive
+    isActive: true
+    content: |
+      #!/bin/bash
+      # Enterprise Git Pre-receive Hook
+      # Implements security and compliance validation
+      
+      set -e
+      
+      # Configuration
+      PROTECTED_BRANCHES="main|master|release/*"
+      REQUIRED_COMMIT_FORMAT="^(feat|fix|docs|style|refactor|test|chore|security)(\(.+\))?: .{1,50}"
+      
+      while read oldrev newrev refname; do
+          echo "=== Validating push to $refname ==="
+          
+          # Extract branch name
+          branch_name=$(echo $refname | sed 's/refs\/heads\///')
+          
+          # 1. Validate commit message format (conventional commits)
+          echo "Checking commit message format..."
+          while read commit; do
+              msg=$(git log -1 --format=%s $commit)
+              if ! echo "$msg" | grep -qE "$REQUIRED_COMMIT_FORMAT"; then
+                  echo "❌ Invalid commit message format: $msg"
+                  echo "Must follow: type(scope): description"
+                  echo "Types: feat, fix, docs, style, refactor, test, chore, security"
+                  exit 1
+              fi
+              echo "✅ Valid commit message: $msg"
+          done < <(git rev-list $oldrev..$newrev)
+          
+          # 2. Check for protected branch push restrictions
+          if echo "$branch_name" | grep -qE "$PROTECTED_BRANCHES"; then
+              echo "Validating push to protected branch: $branch_name"
+              
+              # Check if commits are signed (GPG)
+              while read commit; do
+                  if ! git verify-commit $commit 2>/dev/null; then
+                      echo "❌ Unsigned commit detected: $commit"
+                      echo "All commits to protected branches must be GPG signed"
+                      exit 1
+                  fi
+                  echo "✅ Signed commit: $commit"
+              done < <(git rev-list $oldrev..$newrev)
+          fi
+          
+          # 3. Security checks
+          echo "Running security scans..."
+          
+          # Check for sensitive data patterns
+          if git diff $oldrev..$newrev | grep -qiE "(password|secret|token|key|api_key)" --; then
+              echo "⚠️  Potential sensitive data detected"
+              echo "Please review changes for hardcoded secrets"
+              # In production, you might want to fail here
+          fi
+          
+          # 4. Code quality checks
+          echo "Checking file size limits..."
+          while read commit; do
+              # Check for large files (>10MB)
+              if git diff-tree --no-commit-id --name-only -r $commit | \
+                 xargs -I {} sh -c 'test -f "{}" && test $(stat -f%z "{}" 2>/dev/null || stat -c%s "{}") -gt 10485760' 2>/dev/null; then
+                  echo "❌ Large file detected in commit $commit"
+                  echo "Files larger than 10MB are not allowed"
+                  exit 1
+              fi
+          done < <(git rev-list $oldrev..$newrev)
+          
+          echo "✅ All validations passed for $refname"
+      done
+      
+      echo "🎉 Pre-receive validation completed successfully"
+      exit 0
+      
+  providerConfigRef:
+    name: default
+  managementPolicies: ["Observe", "Create", "Update", "Delete"]

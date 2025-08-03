@@ -167,6 +167,236 @@ func (m *MockGiteaClient) DeleteDeployKey(ctx context.Context, owner, repo strin
 	return nil
 }
 
+// Team operations - mock implementations
+func (m *MockGiteaClient) GetTeam(ctx context.Context, teamID int64) (*giteaclients.Team, error) {
+	return nil, nil
+}
+
+func (m *MockGiteaClient) CreateTeam(ctx context.Context, org string, req *giteaclients.CreateTeamRequest) (*giteaclients.Team, error) {
+	return nil, nil
+}
+
+func (m *MockGiteaClient) UpdateTeam(ctx context.Context, teamID int64, req *giteaclients.UpdateTeamRequest) (*giteaclients.Team, error) {
+	return nil, nil
+}
+
+func (m *MockGiteaClient) DeleteTeam(ctx context.Context, teamID int64) error {
+	return nil
+}
+
+func (m *MockGiteaClient) ListOrganizationTeams(ctx context.Context, org string) ([]*giteaclients.Team, error) {
+	return nil, nil
+}
+
+// Label operations - mock implementations  
+func (m *MockGiteaClient) GetLabel(ctx context.Context, owner, repo string, id int64) (*giteaclients.Label, error) {
+	return nil, nil
+}
+
+func (m *MockGiteaClient) CreateLabel(ctx context.Context, owner, repo string, req *giteaclients.CreateLabelRequest) (*giteaclients.Label, error) {
+	return nil, nil
+}
+
+func (m *MockGiteaClient) UpdateLabel(ctx context.Context, owner, repo string, id int64, req *giteaclients.UpdateLabelRequest) (*giteaclients.Label, error) {
+	return nil, nil
+}
+
+func (m *MockGiteaClient) DeleteLabel(ctx context.Context, owner, repo string, id int64) error {
+	return nil
+}
+
+func (m *MockGiteaClient) ListRepositoryLabels(ctx context.Context, owner, repo string) ([]*giteaclients.Label, error) {
+	return nil, nil
+}
+
+// Repository Collaborator operations - mock implementations
+func (m *MockGiteaClient) GetRepositoryCollaborator(ctx context.Context, owner, repo, username string) (*giteaclients.RepositoryCollaborator, error) {
+	return nil, nil
+}
+
+func (m *MockGiteaClient) AddRepositoryCollaborator(ctx context.Context, owner, repo, username string, req *giteaclients.AddCollaboratorRequest) error {
+	return nil
+}
+
+func (m *MockGiteaClient) UpdateRepositoryCollaborator(ctx context.Context, owner, repo, username string, req *giteaclients.UpdateCollaboratorRequest) error {
+	return nil
+}
+
+func (m *MockGiteaClient) RemoveRepositoryCollaborator(ctx context.Context, owner, repo, username string) error {
+	return nil
+}
+
+func (m *MockGiteaClient) ListRepositoryCollaborators(ctx context.Context, owner, repo string) ([]*giteaclients.RepositoryCollaborator, error) {
+	return nil, nil
+}
+
+// Organization member methods
+func (m *MockGiteaClient) GetOrganizationMember(ctx context.Context, org, username string) (*giteaclients.OrganizationMember, error) {
+	return nil, nil
+}
+
+func (m *MockGiteaClient) AddOrganizationMember(ctx context.Context, org, username string, req *giteaclients.AddOrganizationMemberRequest) (*giteaclients.OrganizationMember, error) {
+	return nil, nil
+}
+
+func (m *MockGiteaClient) UpdateOrganizationMember(ctx context.Context, org, username string, req *giteaclients.UpdateOrganizationMemberRequest) (*giteaclients.OrganizationMember, error) {
+	return nil, nil
+}
+
+func (m *MockGiteaClient) RemoveOrganizationMember(ctx context.Context, org, username string) error {
+	return nil
+}
+
+// Branch protection methods
+func (m *MockGiteaClient) GetBranchProtection(ctx context.Context, repo, branch string) (*giteaclients.BranchProtection, error) {
+	return nil, nil
+}
+
+func (m *MockGiteaClient) CreateBranchProtection(ctx context.Context, repo, branch string, req *giteaclients.CreateBranchProtectionRequest) (*giteaclients.BranchProtection, error) {
+	return nil, nil
+}
+
+func (m *MockGiteaClient) UpdateBranchProtection(ctx context.Context, repo, branch string, req *giteaclients.UpdateBranchProtectionRequest) (*giteaclients.BranchProtection, error) {
+	return nil, nil
+}
+
+func (m *MockGiteaClient) DeleteBranchProtection(ctx context.Context, repo, branch string) error {
+	return nil
+}
+
+// Repository key methods
+func (m *MockGiteaClient) GetRepositoryKey(ctx context.Context, repo string, keyID int64) (*giteaclients.RepositoryKey, error) {
+	return nil, nil
+}
+
+func (m *MockGiteaClient) CreateRepositoryKey(ctx context.Context, repo string, req *giteaclients.CreateRepositoryKeyRequest) (*giteaclients.RepositoryKey, error) {
+	return nil, nil
+}
+
+func (m *MockGiteaClient) UpdateRepositoryKey(ctx context.Context, repo string, keyID int64, req *giteaclients.UpdateRepositoryKeyRequest) (*giteaclients.RepositoryKey, error) {
+	return nil, nil
+}
+
+func (m *MockGiteaClient) DeleteRepositoryKey(ctx context.Context, repo string, keyID int64) error {
+	return nil
+}
+
+// Access token methods
+func (m *MockGiteaClient) GetAccessToken(ctx context.Context, tokenName string, tokenID int64) (*giteaclients.AccessToken, error) {
+	return nil, nil
+}
+
+func (m *MockGiteaClient) CreateAccessToken(ctx context.Context, username string, req *giteaclients.CreateAccessTokenRequest) (*giteaclients.AccessToken, error) {
+	return nil, nil
+}
+
+func (m *MockGiteaClient) UpdateAccessToken(ctx context.Context, tokenName string, tokenID int64, req *giteaclients.UpdateAccessTokenRequest) (*giteaclients.AccessToken, error) {
+	return nil, nil
+}
+
+func (m *MockGiteaClient) DeleteAccessToken(ctx context.Context, tokenName string, tokenID int64) error {
+	return nil
+}
+
+// Repository secret methods
+func (m *MockGiteaClient) GetRepositorySecret(ctx context.Context, repo, secretName string) (*giteaclients.RepositorySecret, error) {
+	return nil, nil
+}
+
+func (m *MockGiteaClient) CreateRepositorySecret(ctx context.Context, repo, secretName string, req *giteaclients.CreateRepositorySecretRequest) error {
+	return nil
+}
+
+func (m *MockGiteaClient) UpdateRepositorySecret(ctx context.Context, repo, secretName string, req *giteaclients.UpdateRepositorySecretRequest) error {
+	return nil
+}
+
+func (m *MockGiteaClient) DeleteRepositorySecret(ctx context.Context, repo, secretName string) error {
+	return nil
+}
+
+// User key methods
+func (m *MockGiteaClient) GetUserKey(ctx context.Context, username string, keyID int64) (*giteaclients.UserKey, error) {
+	return nil, nil
+}
+
+func (m *MockGiteaClient) CreateUserKey(ctx context.Context, username string, req *giteaclients.CreateUserKeyRequest) (*giteaclients.UserKey, error) {
+	return nil, nil
+}
+
+func (m *MockGiteaClient) UpdateUserKey(ctx context.Context, username string, keyID int64, req *giteaclients.UpdateUserKeyRequest) (*giteaclients.UserKey, error) {
+	return nil, nil
+}
+
+func (m *MockGiteaClient) DeleteUserKey(ctx context.Context, username string, keyID int64) error {
+	return nil
+}
+
+// Action methods
+func (m *MockGiteaClient) GetAction(ctx context.Context, repo, workflow string) (*giteaclients.Action, error) {
+	return nil, nil
+}
+
+func (m *MockGiteaClient) CreateAction(ctx context.Context, repo string, req *giteaclients.CreateActionRequest) (*giteaclients.Action, error) {
+	return nil, nil
+}
+
+func (m *MockGiteaClient) UpdateAction(ctx context.Context, repo, workflow string, req *giteaclients.UpdateActionRequest) (*giteaclients.Action, error) {
+	return nil, nil
+}
+
+func (m *MockGiteaClient) DeleteAction(ctx context.Context, repo, workflow string) error {
+	return nil
+}
+
+// Runner methods
+func (m *MockGiteaClient) GetRunner(ctx context.Context, scope, scopeValue string, runnerID int64) (*giteaclients.Runner, error) {
+	return nil, nil
+}
+
+func (m *MockGiteaClient) CreateRunner(ctx context.Context, scope, scopeValue string, req *giteaclients.CreateRunnerRequest) (*giteaclients.Runner, error) {
+	return nil, nil
+}
+
+func (m *MockGiteaClient) UpdateRunner(ctx context.Context, scope, scopeValue string, runnerID int64, req *giteaclients.UpdateRunnerRequest) (*giteaclients.Runner, error) {
+	return nil, nil
+}
+
+func (m *MockGiteaClient) DeleteRunner(ctx context.Context, scope, scopeValue string, runnerID int64) error {
+	return nil
+}
+
+// Admin user methods
+func (m *MockGiteaClient) GetAdminUser(ctx context.Context, username string) (*giteaclients.AdminUser, error) {
+	return nil, nil
+}
+
+func (m *MockGiteaClient) CreateAdminUser(ctx context.Context, req *giteaclients.CreateAdminUserRequest) (*giteaclients.AdminUser, error) {
+	return nil, nil
+}
+
+func (m *MockGiteaClient) UpdateAdminUser(ctx context.Context, username string, req *giteaclients.UpdateAdminUserRequest) (*giteaclients.AdminUser, error) {
+	return nil, nil
+}
+
+func (m *MockGiteaClient) DeleteAdminUser(ctx context.Context, username string) error {
+	return nil
+}
+
+// GitHook methods
+func (m *MockGiteaClient) GetGitHook(ctx context.Context, repository, hookType string) (*giteaclients.GitHook, error) { return nil, nil }
+func (m *MockGiteaClient) CreateGitHook(ctx context.Context, repository string, req *giteaclients.CreateGitHookRequest) (*giteaclients.GitHook, error) { return nil, nil }
+func (m *MockGiteaClient) UpdateGitHook(ctx context.Context, repository, hookType string, req *giteaclients.UpdateGitHookRequest) (*giteaclients.GitHook, error) { return nil, nil }
+func (m *MockGiteaClient) DeleteGitHook(ctx context.Context, repository, hookType string) error { return nil }
+
+// Action methods  
+func (m *MockGiteaClient) EnableAction(ctx context.Context, repository, workflowName string) error { return nil }
+func (m *MockGiteaClient) DisableAction(ctx context.Context, repository, workflowName string) error { return nil }
+
+// OrganizationSettings methods
+func (m *MockGiteaClient) GetOrganizationSettings(ctx context.Context, org string) (*giteaclients.OrganizationSettings, error) { return nil, nil }
+func (m *MockGiteaClient) UpdateOrganizationSettings(ctx context.Context, org string, req *giteaclients.UpdateOrganizationSettingsRequest) (*giteaclients.OrganizationSettings, error) { return nil, nil }
+
 func TestOrganizationSecretObserve(t *testing.T) {
 	tests := []struct {
 		name     string

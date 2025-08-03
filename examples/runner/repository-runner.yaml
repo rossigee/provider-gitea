@@ -1,0 +1,29 @@
+# Self-hosted runner for repository-specific workloads
+# This example creates a runner dedicated to a single repository
+apiVersion: runner.gitea.crossplane.io/v1alpha1
+kind: Runner
+metadata:
+  name: webapp-dedicated-runner
+  annotations:
+    crossplane.io/external-name: "repository:example-org/webapp:webapp-runner"
+spec:
+  forProvider:
+    # Runner scope: repository, organization, or system
+    scope: "repository"
+    
+    # Repository in owner/name format for repository scope
+    scopeValue: "example-org/webapp"
+    
+    # Runner name and description
+    name: "WebApp Dedicated Runner"
+    description: "Dedicated runner for webapp builds and deployments"
+    
+    # Labels for job targeting
+    labels:
+      - "ubuntu-latest"
+      - "nodejs"
+      - "docker"
+      - "webapp-specific"
+    
+  providerConfigRef:
+    name: default

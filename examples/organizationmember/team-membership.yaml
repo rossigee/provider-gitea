@@ -1,0 +1,56 @@
+# Organization membership management
+# This example demonstrates adding users to an organization with different roles
+apiVersion: organizationmember.gitea.crossplane.io/v1alpha1
+kind: OrganizationMember
+metadata:
+  name: tech-lead-membership
+  annotations:
+    crossplane.io/external-name: "acme-corp/tech-lead"
+spec:
+  forProvider:
+    # Organization name
+    organization: "acme-corp"
+    
+    # Username to add as member
+    username: "tech-lead"
+    
+    # Role within the organization
+    role: "admin"
+    
+    # Membership visibility
+    visibility: "public"
+    
+  providerConfigRef:
+    name: default
+
+---
+apiVersion: organizationmember.gitea.crossplane.io/v1alpha1
+kind: OrganizationMember
+metadata:
+  name: developer-membership
+  annotations:
+    crossplane.io/external-name: "acme-corp/jane.developer"
+spec:
+  forProvider:
+    organization: "acme-corp"
+    username: "jane.developer"
+    role: "member"
+    visibility: "public"
+  providerConfigRef:
+    name: default
+
+---
+apiVersion: organizationmember.gitea.crossplane.io/v1alpha1
+kind: OrganizationMember
+metadata:
+  name: contractor-membership
+  annotations:
+    crossplane.io/external-name: "acme-corp/external.contractor"
+spec:
+  forProvider:
+    organization: "acme-corp"
+    username: "external.contractor"
+    role: "member"
+    visibility: "private"  # Private membership for contractors
+  providerConfigRef:
+    name: default

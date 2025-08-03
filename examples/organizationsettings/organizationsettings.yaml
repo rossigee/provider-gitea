@@ -1,0 +1,27 @@
+apiVersion: organizationsettings.gitea.crossplane.io/v1alpha1
+kind: OrganizationSettings
+metadata:
+  name: example-org-settings
+spec:
+  forProvider:
+    organization: example-org
+    # Default permission for new repositories
+    defaultRepoPermission: read
+    # Member repository creation permissions
+    membersCanCreateRepos: true
+    membersCanCreatePrivate: false
+    membersCanCreateInternal: true
+    membersCanDeleteRepos: false
+    # Member collaboration permissions  
+    membersCanFork: true
+    membersCanCreatePages: false
+    # Default settings for new repositories
+    defaultRepoVisibility: private
+    # Security and compliance settings
+    requireSignedCommits: true
+    enableDependencyGraph: true
+    # Git hooks permissions (enterprise feature)
+    allowGitHooks: true
+    allowCustomGitHooks: false
+  providerConfigRef:
+    name: default

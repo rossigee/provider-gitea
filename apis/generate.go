@@ -24,4 +24,7 @@ limitations under the License.
 // Generate CRD manifests
 //go:generate go run -tags generate sigs.k8s.io/controller-tools/cmd/controller-gen crd:maxDescLen=0 paths=./... output:crd:artifacts:config=../package/crds
 
+// Generate managed resource interface methods
+//go:generate go run -tags generate github.com/crossplane/crossplane-tools/cmd/angryjet generate-methodsets --header-file=../hack/boilerplate.go.txt ./...
+
 package apis

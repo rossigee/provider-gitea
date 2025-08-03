@@ -86,11 +86,24 @@ run: go.build
 	@# To see other arguments that can be provided, run the command with --help instead
 	$(GO_OUT_DIR)/provider --debug
 
+# Run unit tests (excludes integration tests which require kubebuilder test environment)
+.PHONY: test.unit
+test.unit:
+	@$(INFO) Running provider-gitea unit tests
+	@go test -v $$(go list ./... | grep -v '/test/integration' | grep -v '/test/e2e')
+	@$(OK) provider-gitea unit tests
+
+# Run integration tests (requires kubebuilder test tools: etcd, kube-apiserver)
+# To set up kubebuilder test environment, see: https://book.kubebuilder.io/reference/envtest.html
+.PHONY: test.integration
+test.integration:
+	@$(INFO) Running provider-gitea integration tests (requires kubebuilder test tools)
+	@go test -v ./test/integration/...
+	@$(OK) provider-gitea integration tests
+
+# Override common.mk test target to run our unit tests
 .PHONY: test
-test:
-	@$(INFO) Running provider-gitea tests
-	@go test -v ./...
-	@$(OK) provider-gitea tests
+test: test.unit
 
 # ====================================================================================
 # Local Utilities
@@ -102,7 +115,9 @@ local-dev: $(KIND) $(KUBECTL) $(CROSSPLANE_CLI) $(KUSTOMIZE) $(HELM3)
 	@$(INFO) Make sure Docker is running...
 	@echo "Use 'make run' to start the provider out-of-cluster for local testing"
 
-.PHONY: e2e
-e2e:
-	@$(INFO) Running e2e tests...
+# Run end-to-end tests (requires Kubernetes cluster)
+.PHONY: test.e2e
+test.e2e:
+	@$(INFO) Running provider-gitea e2e tests (requires Kubernetes cluster)
 	@go test -v ./test/e2e/... -timeout 1h
+	@$(OK) provider-gitea e2e tests

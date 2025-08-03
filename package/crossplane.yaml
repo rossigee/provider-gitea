@@ -7,26 +7,48 @@ metadata:
     meta.crossplane.io/source: github.com/crossplane-contrib/provider-gitea
     meta.crossplane.io/license: Apache-2.0
     meta.crossplane.io/description: |
-      A Crossplane provider for managing Gitea repositories, organizations, users, and related resources.
+      A comprehensive Crossplane provider for managing Gitea with enterprise security, CI/CD integration, and administrative capabilities.
     meta.crossplane.io/readme: |
-      This provider enables declarative management of Gitea instances through Kubernetes custom resources. 
-      It supports managing repositories, organizations, users, webhooks, deploy keys, and access tokens 
-      using Crossplane's managed resource lifecycle.
+      This provider enables declarative management of Gitea instances through Kubernetes custom resources with enterprise-grade features. 
+      It supports repository management, organization control, user administration, security enforcement, CI/CD integration, and complete automation workflows.
 
-      ## Features
-      - Repository Management: Create and manage Git repositories
-      - Organization Management: Manage organizations and their settings  
-      - User Management: User account management and configuration
-      - Webhook Management: Configure repository and organization webhooks
-      - Deploy Key Management: Manage SSH deploy keys for repositories
-      - Access Token Management: Handle personal and organization access tokens
+      ## Core Features
+      - **Repository Management**: Full lifecycle management of Git repositories
+      - **Organization Management**: Organizations, settings, and membership control
+      - **User Administration**: Administrative user management with privilege controls
+      - **Webhook Management**: Repository and organization webhook configurations
+      
+      ## Security Features (NEW)
+      - **Branch Protection**: Enterprise-grade branch protection with approval workflows
+      - **SSH Key Management**: User and repository SSH key lifecycle management
+      - **Access Token Management**: Scoped API token management with security controls
+      - **Repository Secrets**: Secure CI/CD secret management with Kubernetes integration
+      - **Organization Membership**: Team membership with role-based access control
+      
+      ## CI/CD Integration (NEW)
+      - **Actions Workflows**: Declarative CI/CD pipeline management
+      - **Self-hosted Runners**: Multi-scope runner management (repository, organization, system)
+      - **Complete CI/CD Automation**: End-to-end DevOps workflow orchestration
+      
+      ## Administrative Features (NEW)
+      - **Administrative Users**: Service account and admin user lifecycle management
+      - **Enterprise Security**: Comprehensive security policy enforcement
+      - **Multi-tenant Support**: Organization and user isolation with proper access controls
 
       ## Getting Started
-      1. Install the provider
-      2. Create a ProviderConfig with your Gitea instance details
-      3. Create managed resources for repositories, organizations, etc.
+      1. Install the provider: `kubectl apply -f package/`
+      2. Create a ProviderConfig with your Gitea credentials
+      3. Apply example manifests for complete enterprise setup
+      4. Use CI/CD integration for automated DevOps workflows
 
-      See the documentation for detailed usage examples.
+      ## Example Enterprise Setup
+      See `examples/enterprise-complete-setup.yaml` for a comprehensive enterprise configuration including:
+      - Administrative users and service accounts
+      - Branch protection and security policies  
+      - CI/CD runners and workflow automation
+      - Complete security and compliance setup
+
+      Perfect for organizations requiring enterprise-grade Git management with integrated DevOps automation.
 spec:
   crossplane:
     version: ">=v1.20.0-0"

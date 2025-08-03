@@ -1,0 +1,26 @@
+# Repository SSH deploy key for automated deployments
+# This example creates a read-only SSH key for CI/CD deployments
+apiVersion: repositorykey.gitea.crossplane.io/v1alpha1
+kind: RepositoryKey
+metadata:
+  name: ci-deployment-key
+  annotations:
+    crossplane.io/external-name: "example-org/webapp"
+spec:
+  forProvider:
+    # Repository in owner/name format  
+    repository: "example-org/webapp"
+    
+    # SSH public key (replace with your actual public key)
+    key: |
+      ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC7vbqajDhA+17FiQDlnT5hoKHDTkPAo6pN5aOtVw==
+      ci-deploy@example.com
+    
+    # Descriptive title
+    title: "CI/CD Deployment Key"
+    
+    # Read-only access for security
+    readOnly: true
+    
+  providerConfigRef:
+    name: default

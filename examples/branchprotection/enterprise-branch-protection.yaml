@@ -1,0 +1,71 @@
+# Enterprise-grade branch protection configuration
+# This example demonstrates comprehensive branch protection rules for a production repository
+apiVersion: branchprotection.gitea.crossplane.io/v1alpha1
+kind: BranchProtection
+metadata:
+  name: main-branch-protection
+  annotations:
+    crossplane.io/external-name: "example-org/critical-app/main"
+spec:
+  forProvider:
+    # Repository in owner/name format
+    repository: "example-org/critical-app"
+    
+    # Branch to protect
+    branch: "main"
+    
+    # Rule name for identification
+    ruleName: "Protect main branch"
+    
+    # Push restrictions
+    enablePush: false
+    enablePushWhitelist: true
+    pushWhitelistUsernames:
+      - "release-manager"
+      - "senior-dev"
+    pushWhitelistTeams:
+      - "maintainers"
+      - "release-team"
+    pushWhitelistDeployKeys: true
+    
+    # Merge restrictions
+    enableMergeWhitelist: true
+    mergeWhitelistUsernames:
+      - "tech-lead"
+      - "senior-dev"
+    mergeWhitelistTeams:
+      - "maintainers"
+      - "code-reviewers"
+    
+    # Status checks
+    enableStatusCheck: true
+    statusCheckContexts:
+      - "ci/build"
+      - "ci/test"
+      - "security/scan"
+      - "quality/sonar"
+    
+    # Code review requirements
+    requiredApprovals: 2
+    enableApprovalsWhitelist: true
+    approvalsWhitelistUsernames:
+      - "tech-lead"
+      - "architect"
+    approvalsWhitelistTeams:
+      - "senior-engineers"
+    
+    # Review policies
+    blockOnRejectedReviews: true
+    blockOnOfficialReviewRequests: true
+    blockOnOutdatedBranch: true
+    dismissStaleApprovals: true
+    
+    # Security requirements
+    requireSignedCommits: true
+    
+    # File-based protections
+    protectedFilePatterns: "*.config,Dockerfile,*.env,secrets/*"
+    unprotectedFilePatterns: "docs/*,*.md,*.txt"
+    
+  providerConfigRef:
+    name: default

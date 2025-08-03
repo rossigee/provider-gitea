@@ -1,0 +1,344 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.16.0
+  name: branchprotections.branchprotection.gitea.crossplane.io
+spec:
+  group: branchprotection.gitea.crossplane.io
+  names:
+    categories:
+    - crossplane
+    - managed
+    - gitea
+    kind: BranchProtection
+    listKind: BranchProtectionList
+    plural: branchprotections
+    singular: branchprotection
+  scope: Cluster
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .status.conditions[?(@.type=='Ready')].status
+      name: READY
+      type: string
+    - jsonPath: .status.conditions[?(@.type=='Synced')].status
+      name: SYNCED
+      type: string
+    - jsonPath: .metadata.annotations.crossplane\.io/external-name
+      name: EXTERNAL-NAME
+      type: string
+    - jsonPath: .spec.forProvider.repository
+      name: REPOSITORY
+      type: string
+    - jsonPath: .spec.forProvider.branch
+      name: BRANCH
+      type: string
+    - jsonPath: .spec.forProvider.ruleName
+      name: RULE-NAME
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: AGE
+      type: date
+    name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        properties:
+          apiVersion:
+            type: string
+          kind:
+            type: string
+          metadata:
+            type: object
+          spec:
+            properties:
+              deletionPolicy:
+                default: Delete
+                enum:
+                - Orphan
+                - Delete
+                type: string
+              forProvider:
+                properties:
+                  approvalsWhitelistTeams:
+                    items:
+                      type: string
+                    type: array
+                  approvalsWhitelistUsernames:
+                    items:
+                      type: string
+                    type: array
+                  blockOnOfficialReviewRequests:
+                    default: false
+                    type: boolean
+                  blockOnOutdatedBranch:
+                    default: false
+                    type: boolean
+                  blockOnRejectedReviews:
+                    default: false
+                    type: boolean
+                  branch:
+                    type: string
+                  dismissStaleApprovals:
+                    default: false
+                    type: boolean
+                  enableApprovalsWhitelist:
+                    default: false
+                    type: boolean
+                  enableMergeWhitelist:
+                    default: false
+                    type: boolean
+                  enablePush:
+                    default: true
+                    type: boolean
+                  enablePushWhitelist:
+                    default: false
+                    type: boolean
+                  enableStatusCheck:
+                    default: false
+                    type: boolean
+                  mergeWhitelistTeams:
+                    items:
+                      type: string
+                    type: array
+                  mergeWhitelistUsernames:
+                    items:
+                      type: string
+                    type: array
+                  protectedFilePatterns:
+                    type: string
+                  pushWhitelistDeployKeys:
+                    default: false
+                    type: boolean
+                  pushWhitelistTeams:
+                    items:
+                      type: string
+                    type: array
+                  pushWhitelistUsernames:
+                    items:
+                      type: string
+                    type: array
+                  repository:
+                    pattern: ^[a-zA-Z0-9]([a-zA-Z0-9._-]*[a-zA-Z0-9])?/[a-zA-Z0-9]([a-zA-Z0-9._-]*[a-zA-Z0-9])?$
+                    type: string
+                  requireSignedCommits:
+                    default: false
+                    type: boolean
+                  requiredApprovals:
+                    default: 0
+                    maximum: 100
+                    minimum: 0
+                    type: integer
+                  ruleName:
+                    type: string
+                  statusCheckContexts:
+                    items:
+                      type: string
+                    type: array
+                  unprotectedFilePatterns:
+                    type: string
+                required:
+                - branch
+                - repository
+                - ruleName
+                type: object
+              managementPolicies:
+                default:
+                - '*'
+                items:
+                  enum:
+                  - Observe
+                  - Create
+                  - Update
+                  - Delete
+                  - LateInitialize
+                  - '*'
+                  type: string
+                type: array
+              providerConfigRef:
+                default:
+                  name: default
+                properties:
+                  name:
+                    type: string
+                  policy:
+                    properties:
+                      resolution:
+                        default: Required
+                        enum:
+                        - Required
+                        - Optional
+                        type: string
+                      resolve:
+                        enum:
+                        - Always
+                        - IfNotPresent
+                        type: string
+                    type: object
+                required:
+                - name
+                type: object
+              publishConnectionDetailsTo:
+                properties:
+                  configRef:
+                    default:
+                      name: default
+                    properties:
+                      name:
+                        type: string
+                      policy:
+                        properties:
+                          resolution:
+                            default: Required
+                            enum:
+                            - Required
+                            - Optional
+                            type: string
+                          resolve:
+                            enum:
+                            - Always
+                            - IfNotPresent
+                            type: string
+                        type: object
+                    required:
+                    - name
+                    type: object
+                  metadata:
+                    properties:
+                      annotations:
+                        additionalProperties:
+                          type: string
+                        type: object
+                      labels:
+                        additionalProperties:
+                          type: string
+                        type: object
+                      type:
+                        type: string
+                    type: object
+                  name:
+                    type: string
+                required:
+                - name
+                type: object
+              writeConnectionSecretToRef:
+                properties:
+                  name:
+                    type: string
+                  namespace:
+                    type: string
+                required:
+                - name
+                - namespace
+                type: object
+            required:
+            - forProvider
+            type: object
+          status:
+            properties:
+              atProvider:
+                properties:
+                  appliedSettings:
+                    properties:
+                      approvalsWhitelistTeams:
+                        items:
+                          type: string
+                        type: array
+                      approvalsWhitelistUsernames:
+                        items:
+                          type: string
+                        type: array
+                      blockOnOfficialReviewRequests:
+                        type: boolean
+                      blockOnOutdatedBranch:
+                        type: boolean
+                      blockOnRejectedReviews:
+                        type: boolean
+                      dismissStaleApprovals:
+                        type: boolean
+                      enableApprovalsWhitelist:
+                        type: boolean
+                      enableMergeWhitelist:
+                        type: boolean
+                      enablePush:
+                        type: boolean
+                      enablePushWhitelist:
+                        type: boolean
+                      enableStatusCheck:
+                        type: boolean
+                      mergeWhitelistTeams:
+                        items:
+                          type: string
+                        type: array
+                      mergeWhitelistUsernames:
+                        items:
+                          type: string
+                        type: array
+                      protectedFilePatterns:
+                        type: string
+                      pushWhitelistDeployKeys:
+                        type: boolean
+                      pushWhitelistTeams:
+                        items:
+                          type: string
+                        type: array
+                      pushWhitelistUsernames:
+                        items:
+                          type: string
+                        type: array
+                      requireSignedCommits:
+                        type: boolean
+                      requiredApprovals:
+                        type: integer
+                      statusCheckContexts:
+                        items:
+                          type: string
+                        type: array
+                      unprotectedFilePatterns:
+                        type: string
+                    type: object
+                  createdAt:
+                    type: string
+                  ruleName:
+                    type: string
+                  updatedAt:
+                    type: string
+                type: object
+              conditions:
+                items:
+                  properties:
+                    lastTransitionTime:
+                      format: date-time
+                      type: string
+                    message:
+                      type: string
+                    observedGeneration:
+                      format: int64
+                      type: integer
+                    reason:
+                      type: string
+                    status:
+                      type: string
+                    type:
+                      type: string
+                  required:
+                  - lastTransitionTime
+                  - reason
+                  - status
+                  - type
+                  type: object
+                type: array
+                x-kubernetes-list-map-keys:
+                - type
+                x-kubernetes-list-type: map
+              observedGeneration:
+                format: int64
+                type: integer
+            type: object
+        required:
+        - spec
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}

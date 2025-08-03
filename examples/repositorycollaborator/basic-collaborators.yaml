@@ -1,0 +1,52 @@
+---
+# Read-only collaborator
+apiVersion: repositorycollaborator.gitea.crossplane.io/v1alpha1
+kind: RepositoryCollaborator
+metadata:
+  name: readonly-collaborator
+spec:
+  forProvider:
+    username: john-doe
+    repository: my-example-org/my-repo
+    permission: read
+  providerConfigRef:
+    name: default
+---
+# Write access collaborator
+apiVersion: repositorycollaborator.gitea.crossplane.io/v1alpha1
+kind: RepositoryCollaborator
+metadata:
+  name: write-collaborator
+spec:
+  forProvider:
+    username: jane-smith
+    repository: my-example-org/my-repo
+    permission: write
+  providerConfigRef:
+    name: default
+---
+# Admin collaborator
+apiVersion: repositorycollaborator.gitea.crossplane.io/v1alpha1
+kind: RepositoryCollaborator
+metadata:
+  name: admin-collaborator
+spec:
+  forProvider:
+    username: admin-user
+    repository: my-example-org/my-repo
+    permission: admin
+  providerConfigRef:
+    name: default
+---
+# Personal repository collaborator
+apiVersion: repositorycollaborator.gitea.crossplane.io/v1alpha1
+kind: RepositoryCollaborator
+metadata:
+  name: personal-repo-collaborator
+spec:
+  forProvider:
+    username: contributor
+    repository: user123/personal-project
+    permission: write
+  providerConfigRef:
+    name: default

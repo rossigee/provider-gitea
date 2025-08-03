@@ -1,0 +1,26 @@
+# System-wide runner for global workloads
+# This example creates a runner available system-wide
+apiVersion: runner.gitea.crossplane.io/v1alpha1
+kind: Runner
+metadata:
+  name: system-maintenance-runner
+  annotations:
+    crossplane.io/external-name: "system::maintenance-runner"
+spec:
+  forProvider:
+    scope: "system"
+    # No scopeValue needed for system scope
+    
+    name: "System Maintenance Runner"
+    description: "System-wide runner for maintenance and administrative tasks"
+    
+    labels:
+      - "ubuntu-latest"
+      - "maintenance"
+      - "admin"
+      - "system-tasks"
+      - "backup"
+      - "cleanup"
+    
+  providerConfigRef:
+    name: default

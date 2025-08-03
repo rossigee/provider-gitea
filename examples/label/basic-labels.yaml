@@ -1,0 +1,73 @@
+---
+# Bug label with red color
+apiVersion: label.gitea.crossplane.io/v1alpha1
+kind: Label
+metadata:
+  name: bug-label
+spec:
+  forProvider:
+    name: bug
+    repository: my-example-org/my-repo
+    color: "ff0000"
+    description: "Something isn't working"
+    exclusive: false
+  providerConfigRef:
+    name: default
+---
+# Enhancement label with green color
+apiVersion: label.gitea.crossplane.io/v1alpha1
+kind: Label
+metadata:
+  name: enhancement-label
+spec:
+  forProvider:
+    name: enhancement
+    repository: my-example-org/my-repo
+    color: "00ff00"
+    description: "New feature or request"
+    exclusive: false
+  providerConfigRef:
+    name: default
+---
+# Priority scoped labels (exclusive)
+apiVersion: label.gitea.crossplane.io/v1alpha1
+kind: Label
+metadata:
+  name: priority-high-label
+spec:
+  forProvider:
+    name: "priority/high"
+    repository: my-example-org/my-repo
+    color: "ff6b6b"
+    description: "High priority issue"
+    exclusive: true
+  providerConfigRef:
+    name: default
+---
+apiVersion: label.gitea.crossplane.io/v1alpha1
+kind: Label
+metadata:
+  name: priority-medium-label
+spec:
+  forProvider:
+    name: "priority/medium"
+    repository: my-example-org/my-repo
+    color: "ffa726"
+    description: "Medium priority issue"
+    exclusive: true
+  providerConfigRef:
+    name: default
+---
+apiVersion: label.gitea.crossplane.io/v1alpha1
+kind: Label
+metadata:
+  name: priority-low-label
+spec:
+  forProvider:
+    name: "priority/low"
+    repository: my-example-org/my-repo
+    color: "66bb6a"
+    description: "Low priority issue"
+    exclusive: true
+  providerConfigRef:
+    name: default

@@ -1,0 +1,29 @@
+# API access token for CI/CD automation
+# This example creates a scoped token for automated workflows
+apiVersion: accesstoken.gitea.crossplane.io/v1alpha1
+kind: AccessToken
+metadata:
+  name: ci-automation-token
+  annotations:
+    crossplane.io/external-name: "ci-user"
+spec:
+  forProvider:
+    # Username that owns this token
+    username: "ci-user"
+    
+    # Descriptive name for the token
+    name: "CI/CD Automation Token"
+    
+    # Scoped permissions for CI/CD operations
+    scopes:
+      - "read:repository"
+      - "write:repository" 
+      - "read:issue"
+      - "write:issue"
+      - "read:pull_request"
+      - "write:pull_request"
+      - "read:release"
+      - "write:release"
+    
+  providerConfigRef:
+    name: default

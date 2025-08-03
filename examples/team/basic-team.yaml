@@ -1,0 +1,18 @@
+apiVersion: team.gitea.crossplane.io/v1alpha1
+kind: Team
+metadata:
+  name: example-team
+spec:
+  forProvider:
+    name: developers
+    organization: my-example-org
+    description: "Development team with read and write access"
+    permission: write
+    canCreateOrgRepo: false
+    includesAllRepositories: false
+    units:
+      - repo.code
+      - repo.issues
+      - repo.pulls
+  providerConfigRef:
+    name: default

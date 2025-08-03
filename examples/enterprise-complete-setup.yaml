@@ -1,0 +1,360 @@
+# Complete Enterprise Gitea Setup with Security, CI/CD, and Administration
+# This example demonstrates all new features working together in an enterprise environment
+
+---
+# 1. Administrative Users
+apiVersion: adminuser.gitea.crossplane.io/v1alpha1
+kind: AdminUser
+metadata:
+  name: gitea-admin
+spec:
+  forProvider:
+    username: "gitea-admin"
+    email: "gitea-admin@enterprise.com"
+    passwordSecretRef:
+      name: "admin-credentials"
+      namespace: "crossplane-system"
+      key: "password"
+    fullName: "Gitea Administrator"
+    isAdmin: true
+    mustChangePassword: true
+    visibility: "public"
+    maxRepoCreation: -1
+    description: "Primary Gitea administrator"
+  providerConfigRef:
+    name: default
+
+---
+# 2. CI/CD Service Account
+apiVersion: adminuser.gitea.crossplane.io/v1alpha1
+kind: AdminUser
+metadata:
+  name: ci-automation
+spec:
+  forProvider:
+    username: "ci-automation"
+    email: "ci@enterprise.com"
+    passwordSecretRef:
+      name: "ci-credentials"
+      namespace: "crossplane-system"
+      key: "password"
+    fullName: "CI/CD Automation"
+    isAdmin: true
+    isRestricted: true
+    prohibitLogin: true
+    visibility: "private"
+    maxRepoCreation: 0
+    description: "Automated CI/CD service account"
+  providerConfigRef:
+    name: default
+
+---
+# 3. Organization Membership
+apiVersion: organizationmember.gitea.crossplane.io/v1alpha1
+kind: OrganizationMember
+metadata:
+  name: admin-org-membership
+spec:
+  forProvider:
+    organization: "enterprise-org"
+    username: "gitea-admin"
+    role: "owner"
+    visibility: "public"
+  providerConfigRef:
+    name: default
+
+---
+# 4. API Access Token for CI/CD
+apiVersion: accesstoken.gitea.crossplane.io/v1alpha1
+kind: AccessToken
+metadata:
+  name: ci-automation-token
+spec:
+  forProvider:
+    username: "ci-automation"
+    name: "CI/CD Automation Token"
+    scopes:
+      - "read:repository"
+      - "write:repository"
+      - "read:issue"
+      - "write:issue"
+      - "read:pull_request"
+      - "write:pull_request"
+      - "read:release"
+      - "write:release"
+  providerConfigRef:
+    name: default
+
+---
+# 5. SSH Key for Admin
+apiVersion: userkey.gitea.crossplane.io/v1alpha1
+kind: UserKey
+metadata:
+  name: admin-ssh-key
+spec:
+  forProvider:
+    username: "gitea-admin"
+    key: |
+      ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC7vbqajDhA+17FiQDlnT5hoKHDTkPAo6pN5aOtVw==
+      gitea-admin@enterprise.com
+    title: "Admin SSH Key"
+    readOnly: false
+  providerConfigRef:
+    name: default
+
+---
+# 6. Repository SSH Deploy Key
+apiVersion: repositorykey.gitea.crossplane.io/v1alpha1
+kind: RepositoryKey
+metadata:
+  name: production-deploy-key
+spec:
+  forProvider:
+    repository: "enterprise-org/production-app"
+    key: |
+      ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDH5vF2mN8xYzLkPo1qV3wJ9Kt7XnRp2C==
+      deploy@enterprise.com
+    title: "Production Deployment Key"
+    readOnly: true
+  providerConfigRef:
+    name: default
+
+---
+# 7. Branch Protection for Main Branch
+apiVersion: branchprotection.gitea.crossplane.io/v1alpha1
+kind: BranchProtection
+metadata:
+  name: production-main-protection
+spec:
+  forProvider:
+    repository: "enterprise-org/production-app"
+    branch: "main"
+    ruleName: "Production Main Branch Protection"
+    
+    # Strict protection settings
+    enablePush: false
+    enablePushWhitelist: true
+    pushWhitelistUsernames: ["gitea-admin"]
+    pushWhitelistDeployKeys: true
+    
+    enableMergeWhitelist: true
+    mergeWhitelistUsernames: ["gitea-admin"]
+    
+    enableStatusCheck: true
+    statusCheckContexts:
+      - "ci/build"
+      - "ci/test"
+      - "security/scan"
+      - "quality/sonar"
+    
+    requiredApprovals: 2
+    enableApprovalsWhitelist: true
+    approvalsWhitelistUsernames: ["gitea-admin"]
+    
+    blockOnRejectedReviews: true
+    blockOnOfficialReviewRequests: true
+    blockOnOutdatedBranch: true
+    dismissStaleApprovals: true
+    requireSignedCommits: true
+    
+    protectedFilePatterns: "*.config,Dockerfile,*.env,secrets/*"
+  providerConfigRef:
+    name: default
+
+---
+# 8. Repository Secrets for CI/CD
+apiVersion: repositorysecret.gitea.crossplane.io/v1alpha1
+kind: RepositorySecret
+metadata:
+  name: docker-registry-password
+spec:
+  forProvider:
+    repository: "enterprise-org/production-app"
+    secretName: "DOCKER_PASSWORD"
+    dataSecretRef:
+      name: "docker-credentials"
+      namespace: "crossplane-system"
+      key: "password"
+  providerConfigRef:
+    name: default
+
+---
+apiVersion: repositorysecret.gitea.crossplane.io/v1alpha1
+kind: RepositorySecret
+metadata:
+  name: deploy-token
+spec:
+  forProvider:
+    repository: "enterprise-org/production-app"
+    secretName: "DEPLOY_TOKEN"
+    dataSecretRef:
+      name: "deploy-credentials"
+      namespace: "crossplane-system"
+      key: "token"
+  providerConfigRef:
+    name: default
+
+---
+# 9. Organization Runners for CI/CD
+apiVersion: runner.gitea.crossplane.io/v1alpha1
+kind: Runner
+metadata:
+  name: enterprise-build-runner
+spec:
+  forProvider:
+    scope: "organization"
+    scopeValue: "enterprise-org"
+    name: "Enterprise Build Runner"
+    description: "High-performance runner for enterprise builds"
+    labels:
+      - "ubuntu-20.04"
+      - "build"
+      - "docker"
+      - "enterprise"
+  providerConfigRef:
+    name: default
+
+---
+apiVersion: runner.gitea.crossplane.io/v1alpha1
+kind: Runner
+metadata:
+  name: enterprise-security-runner
+spec:
+  forProvider:
+    scope: "organization"
+    scopeValue: "enterprise-org"
+    name: "Security Scanning Runner"
+    description: "Dedicated runner for security scans"
+    labels:
+      - "ubuntu-latest"
+      - "security"
+      - "scanning"
+      - "compliance"
+  providerConfigRef:
+    name: default
+
+---
+# 10. CI/CD Pipeline Action
+apiVersion: action.gitea.crossplane.io/v1alpha1
+kind: Action
+metadata:
+  name: enterprise-ci-pipeline
+spec:
+  forProvider:
+    repository: "enterprise-org/production-app"
+    workflowName: "enterprise-ci.yml"
+    branch: "main"
+    commitMessage: "Add enterprise CI/CD pipeline"
+    content: |
+      name: Enterprise CI/CD Pipeline
+      
+      on:
+        push:
+          branches: [ main, develop ]
+        pull_request:
+          branches: [ main ]
+      
+      jobs:
+        security-scan:
+          runs-on: [self-hosted, security, scanning]
+          steps:
+            - uses: actions/checkout@v3
+            
+            - name: Dependency Audit
+              run: npm audit --audit-level high
+            
+            - name: Security Scan
+              run: npm run security:scan
+            
+            - name: Secrets Detection
+              run: docker run --rm -v "$PWD:/pwd" trufflesecurity/trufflehog:latest filesystem /pwd
+        
+        build-and-test:
+          runs-on: [self-hosted, build, docker, enterprise]
+          needs: security-scan
+          steps:
+            - uses: actions/checkout@v3
+            
+            - name: Setup Node.js
+              uses: actions/setup-node@v3
+              with:
+                node-version: '18'
+                cache: 'npm'
+            
+            - name: Install dependencies
+              run: npm ci
+            
+            - name: Run tests with coverage
+              run: npm run test:coverage
+            
+            - name: Build application
+              run: npm run build
+            
+            - name: Build Docker image
+              run: |
+                docker build -t production-app:${{ github.sha }} .
+                docker tag production-app:${{ github.sha }} registry.enterprise.com/production-app:latest
+        
+        deploy:
+          runs-on: [self-hosted, enterprise]
+          needs: [security-scan, build-and-test]
+          if: github.ref == 'refs/heads/main'
+          steps:
+            - name: Deploy to registry
+              env:
+                DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+              run: |
+                echo $DOCKER_PASSWORD | docker login registry.enterprise.com -u deploy --password-stdin
+                docker push registry.enterprise.com/production-app:${{ github.sha }}
+                docker push registry.enterprise.com/production-app:latest
+            
+            - name: Deploy to production
+              env:
+                DEPLOY_TOKEN: ${{ secrets.DEPLOY_TOKEN }}
+              run: |
+                curl -X POST https://deploy.enterprise.com/webhook \
+                  -H "Authorization: Bearer $DEPLOY_TOKEN" \
+                  -d '{"image": "registry.enterprise.com/production-app:${{ github.sha }}", "environment": "production"}'
+  providerConfigRef:
+    name: default
+
+---
+# Supporting Kubernetes Secrets
+apiVersion: v1
+kind: Secret
+metadata:
+  name: admin-credentials
+  namespace: crossplane-system
+type: Opaque
+data:
+  password: "QWRtaW4tU2VjdXJlLVBhc3N3b3JkLTIwMjQ="
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: ci-credentials
+  namespace: crossplane-system
+type: Opaque
+data:
+  password: "Q0ktQXV0b21hdGlvbi1QYXNzd29yZC0yMDI0"
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: docker-credentials
+  namespace: crossplane-system
+type: Opaque
+data:
+  password: "ZG9ja2VyLXJlZ2lzdHJ5LXBhc3N3b3Jk"
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: deploy-credentials
+  namespace: crossplane-system
+type: Opaque
+data:
+  token: "ZGVwbG95LXRva2VuLWZvci1wcm9kdWN0aW9u"

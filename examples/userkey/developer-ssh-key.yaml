@@ -1,0 +1,26 @@
+# User SSH key for developer access
+# This example adds an SSH key to a user's account
+apiVersion: userkey.gitea.crossplane.io/v1alpha1
+kind: UserKey
+metadata:
+  name: developer-laptop-key
+  annotations:
+    crossplane.io/external-name: "john.doe"
+spec:
+  forProvider:
+    # Username to add the key to
+    username: "john.doe"
+    
+    # SSH public key
+    key: |
+      ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC9xIcQR1F8VkWz4oP3mN5dOeJr7== 
+      john.doe@company-laptop
+    
+    # Descriptive title
+    title: "John's Company Laptop"
+    
+    # Read-only access (user can clone but not push directly)
+    readOnly: false
+    
+  providerConfigRef:
+    name: default
