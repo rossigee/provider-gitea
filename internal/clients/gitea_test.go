@@ -154,7 +154,7 @@ func TestRepositoryOperations(t *testing.T) {
 		case r.Method == "GET" && r.URL.Path == "/api/v1/repos/testorg/testrepo":
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusOK)
-			w.Write([]byte(`{
+			_, _ = w.Write([]byte(`{
 				"id": 123,
 				"name": "testrepo",
 				"full_name": "testorg/testrepo",
@@ -174,7 +174,7 @@ func TestRepositoryOperations(t *testing.T) {
 		case r.Method == "POST" && r.URL.Path == "/api/v1/user/repos":
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusCreated)
-			w.Write([]byte(`{
+			_, _ = w.Write([]byte(`{
 				"id": 124,
 				"name": "newrepo",
 				"full_name": "testuser/newrepo",
@@ -184,7 +184,7 @@ func TestRepositoryOperations(t *testing.T) {
 		case r.Method == "PATCH" && r.URL.Path == "/api/v1/repos/testorg/testrepo":
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusOK)
-			w.Write([]byte(`{
+			_, _ = w.Write([]byte(`{
 				"id": 123,
 				"name": "testrepo",
 				"description": "Updated description"
@@ -250,7 +250,7 @@ func TestWebhookOperations(t *testing.T) {
 		case r.Method == "GET" && r.URL.Path == "/api/v1/repos/testorg/testrepo/hooks/1":
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusOK)
-			w.Write([]byte(`{
+			_, _ = w.Write([]byte(`{
 				"id": 1,
 				"type": "gitea",
 				"config": {
@@ -265,7 +265,7 @@ func TestWebhookOperations(t *testing.T) {
 		case r.Method == "POST" && r.URL.Path == "/api/v1/repos/testorg/testrepo/hooks":
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusCreated)
-			w.Write([]byte(`{
+			_, _ = w.Write([]byte(`{
 				"id": 2,
 				"type": "gitea",
 				"config": {
@@ -278,7 +278,7 @@ func TestWebhookOperations(t *testing.T) {
 		case r.Method == "PATCH" && r.URL.Path == "/api/v1/repos/testorg/testrepo/hooks/1":
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusOK)
-			w.Write([]byte(`{
+			_, _ = w.Write([]byte(`{
 				"id": 1,
 				"type": "gitea",
 				"active": false
@@ -347,7 +347,7 @@ func TestOrganizationOperations(t *testing.T) {
 		case r.Method == "GET" && r.URL.Path == "/api/v1/orgs/testorg":
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusOK)
-			w.Write([]byte(`{
+			_, _ = w.Write([]byte(`{
 				"id": 1,
 				"username": "testorg",
 				"name": "Test Organization",
@@ -362,7 +362,7 @@ func TestOrganizationOperations(t *testing.T) {
 		case r.Method == "POST" && r.URL.Path == "/api/v1/orgs":
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusCreated)
-			w.Write([]byte(`{
+			_, _ = w.Write([]byte(`{
 				"id": 2,
 				"username": "neworg",
 				"name": "New Organization",
@@ -372,7 +372,7 @@ func TestOrganizationOperations(t *testing.T) {
 		case r.Method == "PATCH" && r.URL.Path == "/api/v1/orgs/testorg":
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusOK)
-			w.Write([]byte(`{
+			_, _ = w.Write([]byte(`{
 				"id": 1,
 				"username": "testorg",
 				"description": "Updated description"
@@ -440,7 +440,7 @@ func TestUserOperations(t *testing.T) {
 		case r.Method == "GET" && r.URL.Path == "/api/v1/users/testuser":
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusOK)
-			w.Write([]byte(`{
+			_, _ = w.Write([]byte(`{
 				"id": 1,
 				"username": "testuser",
 				"name": "Test User",
@@ -455,7 +455,7 @@ func TestUserOperations(t *testing.T) {
 		case r.Method == "POST" && r.URL.Path == "/api/v1/admin/users":
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusCreated)
-			w.Write([]byte(`{
+			_, _ = w.Write([]byte(`{
 				"id": 2,
 				"username": "newuser",
 				"email": "newuser@example.com",
@@ -464,7 +464,7 @@ func TestUserOperations(t *testing.T) {
 		case r.Method == "PATCH" && r.URL.Path == "/api/v1/admin/users/testuser":
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusOK)
-			w.Write([]byte(`{
+			_, _ = w.Write([]byte(`{
 				"id": 1,
 				"username": "testuser",
 				"full_name": "Updated Full Name"
@@ -533,7 +533,7 @@ func TestDeployKeyOperations(t *testing.T) {
 		case r.Method == "GET" && r.URL.Path == "/api/v1/repos/testorg/testrepo/keys/1":
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusOK)
-			w.Write([]byte(`{
+			_, _ = w.Write([]byte(`{
 				"id": 1,
 				"key": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC...",
 				"title": "test-key",
@@ -543,7 +543,7 @@ func TestDeployKeyOperations(t *testing.T) {
 		case r.Method == "POST" && r.URL.Path == "/api/v1/repos/testorg/testrepo/keys":
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusCreated)
-			w.Write([]byte(`{
+			_, _ = w.Write([]byte(`{
 				"id": 2,
 				"key": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQD...",
 				"title": "new-key",
@@ -601,7 +601,7 @@ func TestOrganizationWebhookOperations(t *testing.T) {
 		case r.Method == "GET" && r.URL.Path == "/api/v1/orgs/testorg/hooks/1":
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusOK)
-			w.Write([]byte(`{
+			_, _ = w.Write([]byte(`{
 				"id": 1,
 				"type": "gitea",
 				"config": {
@@ -614,7 +614,7 @@ func TestOrganizationWebhookOperations(t *testing.T) {
 		case r.Method == "POST" && r.URL.Path == "/api/v1/orgs/testorg/hooks":
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusCreated)
-			w.Write([]byte(`{
+			_, _ = w.Write([]byte(`{
 				"id": 2,
 				"type": "gitea",
 				"config": {
@@ -626,7 +626,7 @@ func TestOrganizationWebhookOperations(t *testing.T) {
 		case r.Method == "PATCH" && r.URL.Path == "/api/v1/orgs/testorg/hooks/1":
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusOK)
-			w.Write([]byte(`{
+			_, _ = w.Write([]byte(`{
 				"id": 1,
 				"type": "gitea",
 				"active": false

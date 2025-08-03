@@ -32,7 +32,7 @@ import (
 )
 
 var (
-	errBoom = errors.New("boom")
+	_ = errors.New("boom") // errBoom - unused test error
 )
 
 type MockClient struct {

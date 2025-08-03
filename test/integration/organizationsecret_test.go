@@ -42,11 +42,10 @@ func TestOrganizationSecretIntegration(t *testing.T) {
 		t.Skip("Skipping integration test in short mode")
 	}
 
-	ctx := context.Background()
-	
 	// This would normally be set up by the test framework
 	// For now, we'll focus on the test structure
 	k8sClient := setupTestClient(t)
+	ctx := context.Background() // will be used once k8sClient is properly implemented
 	
 	tests := []struct {
 		name          string
@@ -180,7 +179,7 @@ func TestOrganizationSecretIntegration(t *testing.T) {
 			}()
 
 			// Wait for reconciliation
-			err = wait.PollImmediate(5*time.Second, 2*time.Minute, func() (bool, error) {
+			err = wait.PollUntilContextTimeout(ctx, 5*time.Second, 2*time.Minute, true, func(ctx context.Context) (bool, error) {
 				err := k8sClient.Get(ctx, types.NamespacedName{
 					Name:      orgSecret.Name,
 					Namespace: orgSecret.Namespace,
@@ -228,8 +227,8 @@ func TestOrganizationSecretWriteThroughPattern(t *testing.T) {
 		t.Skip("Skipping integration test in short mode")
 	}
 
-	ctx := context.Background()
 	k8sClient := setupTestClient(t)
+	ctx := context.Background() // will be used once k8sClient is properly implemented
 
 	// Create an OrganizationSecret
 	orgSecret := &v1alpha1.OrganizationSecret{
@@ -299,7 +298,7 @@ func validateConnectionDetails(t *testing.T, k8sClient client.Client, orgSecret 
 
 // waitForReady waits for an OrganizationSecret to become ready
 func waitForReady(ctx context.Context, k8sClient client.Client, orgSecret *v1alpha1.OrganizationSecret, timeout time.Duration) error {
-	return wait.PollImmediate(5*time.Second, timeout, func() (bool, error) {
+	return wait.PollUntilContextTimeout(ctx, 5*time.Second, timeout, true, func(ctx context.Context) (bool, error) {
 		err := k8sClient.Get(ctx, types.NamespacedName{
 			Name:      orgSecret.Name,
 			Namespace: orgSecret.Namespace,

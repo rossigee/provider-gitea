@@ -38,11 +38,11 @@ func main() {
 	// Create a simple HTTP server for health checks
 	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("OK"))
+		_, _ = w.Write([]byte("OK"))
 	})
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, `
+		_, _ = fmt.Fprintf(w, `
 <!DOCTYPE html>
 <html>
 <head>
@@ -94,8 +94,8 @@ func main() {
 		
 		// Create a fake Kubernetes client for testing
 		scheme := runtime.NewScheme()
-		corev1.AddToScheme(scheme)
-		v1beta1.AddToScheme(scheme)
+		_ = corev1.AddToScheme(scheme)
+		_ = v1beta1.AddToScheme(scheme)
 		
 		secret := &corev1.Secret{
 			ObjectMeta: metav1.ObjectMeta{
@@ -130,16 +130,16 @@ func main() {
 		// Test client creation
 		giteaClient, err := clients.NewClient(context.Background(), providerConfig, kubeClient)
 		if err != nil {
-			fmt.Fprintf(w, "❌ Client test failed: %v\n", err)
+			_, _ = fmt.Fprintf(w, "❌ Client test failed: %v\n", err)
 			return
 		}
 		
-		fmt.Fprintf(w, "✅ Client test passed!\n")
-		fmt.Fprintf(w, "✅ Gitea client created successfully\n")
-		fmt.Fprintf(w, "✅ Authentication configured\n")
-		fmt.Fprintf(w, "✅ HTTP client ready\n")
-		fmt.Fprintf(w, "\nThe Gitea provider client library is working correctly.\n")
-		fmt.Fprintf(w, "Next steps: Complete Crossplane controller integration.\n")
+		_, _ = fmt.Fprintf(w, "✅ Client test passed!\n")
+		_, _ = fmt.Fprintf(w, "✅ Gitea client created successfully\n")
+		_, _ = fmt.Fprintf(w, "✅ Authentication configured\n")
+		_, _ = fmt.Fprintf(w, "✅ HTTP client ready\n")
+		_, _ = fmt.Fprintf(w, "\nThe Gitea provider client library is working correctly.\n")
+		_, _ = fmt.Fprintf(w, "Next steps: Complete Crossplane controller integration.\n")
 		
 		log.Println("Client test completed successfully")
 		_ = giteaClient // Use the client to avoid unused variable
