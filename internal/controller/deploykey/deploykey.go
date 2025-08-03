@@ -128,6 +128,8 @@ func (c *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 	if externalName := meta.GetExternalName(cr); externalName != "" {
 		// Parse key ID from external name if it exists
 		// Implementation depends on how we store the ID
+		// TODO: implement external name parsing
+		_ = externalName
 	}
 
 	if keyID == 0 {

@@ -17,25 +17,18 @@ limitations under the License.
 package integration
 
 import (
-	"context"
-	"crypto/rsa"
-	"crypto/x509"
 	"encoding/base64"
-	"encoding/pem"
 	"strings"
 	"testing"
 
-	"github.com/crossplane/crossplane-runtime/pkg/logging"
-	"github.com/crossplane/crossplane-runtime/pkg/test"
-	"k8s.io/apimachinery/pkg/runtime"
-
 	branchprotectionv1alpha1 "github.com/crossplane-contrib/provider-gitea/apis/branchprotection/v1alpha1"
-	repositorykeyv1alpha1 "github.com/crossplane-contrib/provider-gitea/apis/repositorykey/v1alpha1"
-	accesstokenv1alpha1 "github.com/crossplane-contrib/provider-gitea/apis/accesstoken/v1alpha1"
-	repositorysecretv1alpha1 "github.com/crossplane-contrib/provider-gitea/apis/repositorysecret/v1alpha1"
-	userkeyv1alpha1 "github.com/crossplane-contrib/provider-gitea/apis/userkey/v1alpha1"
 	organizationmemberv1alpha1 "github.com/crossplane-contrib/provider-gitea/apis/organizationmember/v1alpha1"
 )
+
+// intPtr helper function for pointer types
+func intPtr(i int) *int {
+	return &i
+}
 
 // TestBranchProtectionSecurity validates security configurations for branch protection
 func TestBranchProtectionSecurity(t *testing.T) {
@@ -52,14 +45,14 @@ func TestBranchProtectionSecurity(t *testing.T) {
 					ForProvider: branchprotectionv1alpha1.BranchProtectionParameters{
 						Repository:                    "org/repo",
 						Branch:                        "main",
-						EnablePush:                    false,
-						EnableStatusCheck:             true,
-						RequiredApprovals:             2,
-						BlockOnRejectedReviews:        true,
-						RequireSignedCommits:          true,
-						BlockOnOutdatedBranch:         true,
-						DismissStaleApprovals:         true,
-						ProtectedFilePatterns:         "*.config,Dockerfile,secrets/*",
+						EnablePush:                    boolPtr(false),
+						EnableStatusCheck:             boolPtr(true),
+						RequiredApprovals:             intPtr(2),
+						BlockOnRejectedReviews:        boolPtr(true),
+						RequireSignedCommits:          boolPtr(true),
+						BlockOnOutdatedBranch:         boolPtr(true),
+						DismissStaleApprovals:         boolPtr(true),
+						ProtectedFilePatterns:         stringPtr("*.config,Dockerfile,secrets/*"),
 						StatusCheckContexts:           []string{"ci/build", "security/scan"},
 					},
 				},
@@ -74,8 +67,8 @@ func TestBranchProtectionSecurity(t *testing.T) {
 					ForProvider: branchprotectionv1alpha1.BranchProtectionParameters{
 						Repository:        "org/repo",
 						Branch:            "main",
-						EnablePush:        true,
-						RequiredApprovals: 0,
+						EnablePush:        boolPtr(true),
+						RequiredApprovals: intPtr(0),
 					},
 				},
 			},
@@ -89,8 +82,8 @@ func TestBranchProtectionSecurity(t *testing.T) {
 					ForProvider: branchprotectionv1alpha1.BranchProtectionParameters{
 						Repository:        "org/repo",
 						Branch:            "main",
-						EnableStatusCheck: false,
-						RequiredApprovals: 1,
+						EnableStatusCheck: boolPtr(false),
+						RequiredApprovals: intPtr(1),
 					},
 				},
 			},
@@ -113,27 +106,28 @@ func evaluateBranchProtectionSecurity(bp *branchprotectionv1alpha1.BranchProtect
 	params := bp.Spec.ForProvider
 	
 	// Check critical security settings
-	if params.EnablePush && !params.EnablePushWhitelist {
+	if (params.EnablePush != nil && *params.EnablePush) && 
+	   (params.EnablePushWhitelist == nil || !*params.EnablePushWhitelist) {
 		return false // Direct push allowed without restrictions
 	}
 	
-	if params.RequiredApprovals < 1 {
+	if params.RequiredApprovals == nil || *params.RequiredApprovals < 1 {
 		return false // No required approvals
 	}
 	
-	if !params.EnableStatusCheck {
+	if params.EnableStatusCheck == nil || !*params.EnableStatusCheck {
 		return false // No status checks
 	}
 	
 	// Recommended security settings
 	score := 0
-	if params.RequiredApprovals >= 2 { score++ }
-	if params.BlockOnRejectedReviews { score++ }
-	if params.RequireSignedCommits { score++ }
-	if params.BlockOnOutdatedBranch { score++ }
-	if params.DismissStaleApprovals { score++ }
+	if params.RequiredApprovals != nil && *params.RequiredApprovals >= 2 { score++ }
+	if params.BlockOnRejectedReviews != nil && *params.BlockOnRejectedReviews { score++ }
+	if params.RequireSignedCommits != nil && *params.RequireSignedCommits { score++ }
+	if params.BlockOnOutdatedBranch != nil && *params.BlockOnOutdatedBranch { score++ }
+	if params.DismissStaleApprovals != nil && *params.DismissStaleApprovals { score++ }
 	if len(params.StatusCheckContexts) > 0 { score++ }
-	if params.ProtectedFilePatterns != "" { score++ }
+	if params.ProtectedFilePatterns != nil && *params.ProtectedFilePatterns != "" { score++ }
 	
 	// Consider secure if it has at least 4 out of 7 recommended settings
 	return score >= 4
@@ -313,7 +307,7 @@ func TestOrganizationMemberSecurity(t *testing.T) {
 						Organization: "secure-org",
 						Username:     "developer",
 						Role:         "member",
-						Visibility:   "private",
+						Visibility:   stringPtr("private"),
 					},
 				},
 			},
@@ -328,7 +322,7 @@ func TestOrganizationMemberSecurity(t *testing.T) {
 						Organization: "secure-org",
 						Username:     "admin-user",
 						Role:         "admin",
-						Visibility:   "public",
+						Visibility:   stringPtr("public"),
 					},
 				},
 			},
@@ -343,7 +337,7 @@ func TestOrganizationMemberSecurity(t *testing.T) {
 						Organization: "secure-org",
 						Username:     "owner",
 						Role:         "owner",
-						Visibility:   "private",
+						Visibility:   stringPtr("private"),
 					},
 				},
 			},
@@ -366,7 +360,7 @@ func evaluateOrganizationMemberSecurity(member *organizationmemberv1alpha1.Organ
 	params := member.Spec.ForProvider
 	
 	// Admin with public visibility is concerning
-	if params.Role == "admin" && params.Visibility == "public" {
+	if params.Role == "admin" && params.Visibility != nil && *params.Visibility == "public" {
 		return false
 	}
 	

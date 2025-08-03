@@ -2107,7 +2107,9 @@ func (c *giteaClient) doRequest(ctx context.Context, method, path string, body i
 
 // handleResponse handles the HTTP response and unmarshals JSON if needed
 func handleResponse(resp *http.Response, target interface{}) error {
-	defer resp.Body.Close()
+	defer func() {
+		_ = resp.Body.Close()
+	}()
 
 	if resp.StatusCode >= 400 {
 		body, _ := io.ReadAll(resp.Body)

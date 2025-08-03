@@ -22,11 +22,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 	"testing"
 	"time"
-
-	"github.com/crossplane/crossplane-runtime/pkg/logging"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/yaml"
@@ -44,6 +41,19 @@ import (
 	userkeyv1alpha1 "github.com/crossplane-contrib/provider-gitea/apis/userkey/v1alpha1"
 	organizationmemberv1alpha1 "github.com/crossplane-contrib/provider-gitea/apis/organizationmember/v1alpha1"
 )
+
+// Utility functions for pointer types
+func stringPtr(s string) *string {
+	return &s
+}
+
+func boolPtr(b bool) *bool {
+	return &b
+}
+
+func intPtr(i int) *int {
+	return &i
+}
 
 // TestCompleteEnterpriseWorkflow tests the complete enterprise setup workflow
 func TestCompleteEnterpriseWorkflow(t *testing.T) {
@@ -100,22 +110,33 @@ func TestCompleteEnterpriseWorkflow(t *testing.T) {
 }
 
 func addSchemesToTestEnv(scheme *runtime.Scheme) error {
-	builders := []runtime.SchemeBuilder{
-		actionv1alpha1.SchemeBuilder,
-		adminuserv1alpha1.SchemeBuilder,
-		runnerv1alpha1.SchemeBuilder,
-		branchprotectionv1alpha1.SchemeBuilder,
-		repositorykeyv1alpha1.SchemeBuilder,
-		accesstokenv1alpha1.SchemeBuilder,
-		repositorysecretv1alpha1.SchemeBuilder,
-		userkeyv1alpha1.SchemeBuilder,
-		organizationmemberv1alpha1.SchemeBuilder,
+	// Add each scheme builder to the scheme
+	if err := actionv1alpha1.SchemeBuilder.AddToScheme(scheme); err != nil {
+		return err
 	}
-
-	for _, builder := range builders {
-		if err := builder.AddToScheme(scheme); err != nil {
-			return err
-		}
+	if err := adminuserv1alpha1.SchemeBuilder.AddToScheme(scheme); err != nil {
+		return err
+	}
+	if err := runnerv1alpha1.SchemeBuilder.AddToScheme(scheme); err != nil {
+		return err
+	}
+	if err := branchprotectionv1alpha1.SchemeBuilder.AddToScheme(scheme); err != nil {
+		return err
+	}
+	if err := repositorykeyv1alpha1.SchemeBuilder.AddToScheme(scheme); err != nil {
+		return err
+	}
+	if err := accesstokenv1alpha1.SchemeBuilder.AddToScheme(scheme); err != nil {
+		return err
+	}
+	if err := repositorysecretv1alpha1.SchemeBuilder.AddToScheme(scheme); err != nil {
+		return err
+	}
+	if err := userkeyv1alpha1.SchemeBuilder.AddToScheme(scheme); err != nil {
+		return err
+	}
+	if err := organizationmemberv1alpha1.SchemeBuilder.AddToScheme(scheme); err != nil {
+		return err
 	}
 	return nil
 }
@@ -128,11 +149,11 @@ func testCreateAdminUsers(t *testing.T, ctx context.Context, k8sClient client.Cl
 	adminUser.Spec.ForProvider = adminuserv1alpha1.AdminUserParameters{
 		Username: "test-admin",
 		Email:    "admin@test.com",
-		FullName: "Test Administrator",
-		IsAdmin:  true,
-		IsActive: true,
-		Visibility: "private",
-		Description: "Test admin user for E2E testing",
+		FullName: stringPtr("Test Administrator"),
+		IsAdmin:  boolPtr(true),
+		IsActive: boolPtr(true),
+		Visibility: stringPtr("private"),
+		Description: stringPtr("Test admin user for E2E testing"),
 	}
 
 	if err := k8sClient.Create(ctx, adminUser); err != nil {
@@ -159,11 +180,11 @@ func testSetupSecurity(t *testing.T, ctx context.Context, k8sClient client.Clien
 		Repository:                    "test-org/test-repo",
 		Branch:                        "main",
 		RuleName:                      "Main Branch Protection",
-		EnablePush:                    false,
-		EnableStatusCheck:             true,
-		RequiredApprovals:             2,
-		BlockOnRejectedReviews:        true,
-		RequireSignedCommits:          true,
+		EnablePush:                    boolPtr(false),
+		EnableStatusCheck:             boolPtr(true),
+		RequiredApprovals:             intPtr(2),
+		BlockOnRejectedReviews:        boolPtr(true),
+		RequireSignedCommits:          boolPtr(true),
 		StatusCheckContexts:           []string{"ci/build", "security/scan"},
 	}
 
@@ -193,7 +214,6 @@ func testSetupSecurity(t *testing.T, ctx context.Context, k8sClient client.Clien
 		Username: "test-admin",
 		Key:      "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC7vbqajDhA+17FiQDlnT5hoKHDTkPAo6pN5aOtVw== admin@test.com",
 		Title:    "Admin SSH Key",
-		ReadOnly: false,
 	}
 
 	if err := k8sClient.Create(ctx, userKey); err != nil {
@@ -208,9 +228,9 @@ func testConfigureCI(t *testing.T, ctx context.Context, k8sClient client.Client)
 	runner.SetNamespace("default")
 	runner.Spec.ForProvider = runnerv1alpha1.RunnerParameters{
 		Scope:       "organization",
-		ScopeValue:  "test-org",
+		ScopeValue:  stringPtr("test-org"),
 		Name:        "Test Runner",
-		Description: "Runner for E2E testing",
+		Description: stringPtr("Runner for E2E testing"),
 		Labels:      []string{"ubuntu-latest", "test", "e2e"},
 	}
 
@@ -225,8 +245,8 @@ func testConfigureCI(t *testing.T, ctx context.Context, k8sClient client.Client)
 	action.Spec.ForProvider = actionv1alpha1.ActionParameters{
 		Repository:    "test-org/test-repo",
 		WorkflowName:  "test.yml",
-		Branch:        "main",
-		CommitMessage: "Add test workflow",
+		Branch:        stringPtr("main"),
+		CommitMessage: stringPtr("Add test workflow"),
 		Content: `name: Test Workflow
 on:
   push:
