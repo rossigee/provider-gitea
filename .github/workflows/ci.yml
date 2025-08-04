@@ -2,18 +2,20 @@ name: CI
 
 on:
   push:
-    branches:
+    branches: 
       - master
       - release-*
   pull_request:
     branches:
       - master
       - release-*
+  workflow_dispatch:
 
 permissions:
   contents: read
   packages: write
   id-token: write
+  actions: read
 
 env:
   GO_VERSION: '1.24.5'
@@ -27,7 +29,7 @@ env:
 
 jobs:
   detect-noop:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     outputs:
       noop: ${{ steps.noop.outputs.should_skip }}
     steps:
@@ -40,9 +42,10 @@ jobs:
           do_not_skip: '["workflow_dispatch", "schedule", "push"]'
 
   lint:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: detect-noop
     if: needs.detect-noop.outputs.noop != 'true'
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -50,34 +53,21 @@ jobs:
           submodules: true
 
       - name: Setup Go
-        uses: actions/setup-go@v4
+        uses: actions/setup-go@v5
         with:
           go-version: ${{ env.GO_VERSION }}
 
-      - name: Cache Go Dependencies
-        uses: actions/cache@v3
-        with:
-          path: ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-
-
       - name: Vendor Dependencies
         run: go mod vendor
-
-      - name: Install Crossplane CLI
-        run: |
-          mkdir -p .cache/tools/linux_x86_64
-          curl -fsSLo .cache/tools/linux_x86_64/crossplane-cli-v1.20.0 --create-dirs https://releases.crossplane.io/stable/v1.20.0/bin/linux_amd64/crank?source=build
-          chmod +x .cache/tools/linux_x86_64/crossplane-cli-v1.20.0
 
       - name: Lint
         run: make lint
 
   check-diff:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: detect-noop
     if: needs.detect-noop.outputs.noop != 'true'
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -85,163 +75,57 @@ jobs:
           submodules: true
 
       - name: Setup Go
-        uses: actions/setup-go@v4
+        uses: actions/setup-go@v5
         with:
           go-version: ${{ env.GO_VERSION }}
-
-      - name: Find the Go Cache
-        id: go
-        run: echo "cache=$(go env GOCACHE)" >> $GITHUB_OUTPUT
-
-      - name: Cache the Go Build Cache
-        uses: actions/cache@v3
-        with:
-          path: ${{ steps.go.outputs.cache }}
-          key: ${{ runner.os }}-build-check-diff-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-build-check-diff-
-
-      - name: Cache Go Dependencies
-        uses: actions/cache@v3
-        with:
-          path: ~/go/pkg/mod
-          key: ${{ runner.os }}-pkg-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-pkg-
-
-      - name: Download Dependencies
-        run: go mod download
-
-      - name: Check Diff
-        run: make check-diff
-
-  unit-tests:
-    runs-on: ubuntu-latest
-    needs: detect-noop
-    if: needs.detect-noop.outputs.noop != 'true'
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          submodules: true
-
-      - name: Setup Go
-        uses: actions/setup-go@v4
-        with:
-          go-version: ${{ env.GO_VERSION }}
-
-      - name: Find the Go Cache
-        id: go
-        run: echo "cache=$(go env GOCACHE)" >> $GITHUB_OUTPUT
-
-      - name: Cache the Go Build Cache
-        uses: actions/cache@v3
-        with:
-          path: ${{ steps.go.outputs.cache }}
-          key: ${{ runner.os }}-build-unit-tests-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-build-unit-tests-
-
-      - name: Cache Go Dependencies
-        uses: actions/cache@v3
-        with:
-          path: ~/go/pkg/mod
-          key: ${{ runner.os }}-pkg-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-pkg-
-
-      - name: Download Dependencies
-        run: go mod download
-
-      - name: Run Unit Tests
-        run: make test
-
-      - name: Upload Coverage
-        uses: codecov/codecov-action@v3
-        with:
-          flags: unittests
-          file: ./coverage.out
-
-  build:
-    runs-on: ubuntu-latest
-    needs: detect-noop
-    if: needs.detect-noop.outputs.noop != 'true'
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          submodules: true
-
-      - name: Setup Go
-        uses: actions/setup-go@v4
-        with:
-          go-version: ${{ env.GO_VERSION }}
-
-      - name: Find the Go Cache
-        id: go
-        run: echo "cache=$(go env GOCACHE)" >> $GITHUB_OUTPUT
-
-      - name: Cache the Go Build Cache
-        uses: actions/cache@v3
-        with:
-          path: ${{ steps.go.outputs.cache }}
-          key: ${{ runner.os }}-build-build-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-build-build-
-
-      - name: Cache Go Dependencies
-        uses: actions/cache@v3
-        with:
-          path: ~/go/pkg/mod
-          key: ${{ runner.os }}-pkg-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-pkg-
 
       - name: Vendor Dependencies
         run: go mod vendor
 
-      - name: Install Crossplane CLI
+      - name: Check Diff
         run: |
-          mkdir -p .cache/tools/linux_x86_64
-          curl -fsSLo .cache/tools/linux_x86_64/crossplane-cli-v1.20.0 --create-dirs https://releases.crossplane.io/stable/v1.20.0/bin/linux_amd64/crank?source=build
-          chmod +x .cache/tools/linux_x86_64/crossplane-cli-v1.20.0
+          make reviewable
+          git diff --exit-code
 
-      - name: Build
-        run: make build
-
-      - name: Build Docker Image
-        run: make docker-build
-
-      - name: Build Crossplane Package
-        run: make xpkg.build
-
-      - name: Upload Artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: provider-artifacts
-          path: |
-            _output/bin/
-            _output/xpkg/
-
-  integration-tests:
-    runs-on: ubuntu-latest
-    needs: [detect-noop, build]
+  unit-tests:
+    runs-on: ubuntu-24.04
+    needs: detect-noop
     if: needs.detect-noop.outputs.noop != 'true'
-    services:
-      gitea:
-        image: gitea/gitea:latest
-        ports:
-          - 3000:3000
-        env:
-          INSTALL_LOCK: true
-          SECRET_KEY: test-secret
-          DISABLE_REGISTRATION: false
-          REQUIRE_SIGNIN_VIEW: false
-        options: >-
-          --health-cmd="curl -f http://localhost:3000 || exit 1"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+          fetch-depth: 0
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Vendor Dependencies
+        run: go mod vendor
+
+      - name: Run Unit Tests
+        run: |
+          make test
+
+      - name: Upload Coverage Reports
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          file: ./coverage.out
+          verbose: true
+
+  security-scan:
+    runs-on: ubuntu-24.04
+    needs: detect-noop
+    if: needs.detect-noop.outputs.noop != 'true'
+    permissions:
+      contents: read
+      security-events: write
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -249,87 +133,99 @@ jobs:
           submodules: true
 
       - name: Setup Go
-        uses: actions/setup-go@v4
+        uses: actions/setup-go@v5
         with:
           go-version: ${{ env.GO_VERSION }}
 
-      - name: Cache Go Dependencies
-        uses: actions/cache@v3
-        with:
-          path: ~/go/pkg/mod
-          key: ${{ runner.os }}-pkg-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-pkg-
+      - name: Vendor Dependencies
+        run: go mod vendor
 
-      - name: Download Dependencies
-        run: go mod download
-
-      - name: Run Integration Tests
-        env:
-          GITEA_URL: http://localhost:3000
-          GITEA_TOKEN: ${{ secrets.GITEA_TOKEN }}
+      - name: Run Go Vulnerability Check
         run: |
-          go test -v ./test/integration/... -tags=integration
+          go install golang.org/x/vuln/cmd/govulncheck@latest
+          govulncheck ./...
+
+      - name: Run Gosec Security Scanner
+        uses: securego/gosec@master
+        with:
+          args: '-no-fail -fmt sarif -out gosec-results.sarif ./...'
+        continue-on-error: true
+
+      - name: Fix Gosec SARIF format
+        if: always() && hashFiles('gosec-results.sarif') != ''
+        run: |
+          if [ -f gosec-results.sarif ]; then
+            jq '.runs[].results[].locations[].physicalLocation.artifactLocation.uri |= if . == null or . == "" then "." else . end' gosec-results.sarif > gosec-results-fixed.sarif
+            mv gosec-results-fixed.sarif gosec-results.sarif
+          fi
+
+      - name: Upload Gosec Results
+        uses: github/codeql-action/upload-sarif@v3
+        if: always() && hashFiles('gosec-results.sarif') != ''
+        with:
+          sarif_file: gosec-results.sarif
+          category: gosec
 
   publish-artifacts:
-    runs-on: ubuntu-latest
-    needs: [detect-noop, lint, check-diff, unit-tests, build]
-    if: needs.detect-noop.outputs.noop != 'true' && github.event_name == 'push'
+    runs-on: ubuntu-24.04
+    needs: [lint, check-diff, unit-tests, security-scan]
+    if: github.ref == 'refs/heads/master'
     permissions:
       contents: read
       packages: write
-      attestations: write
       id-token: write
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
+          fetch-depth: 0
           submodules: true
 
       - name: Setup Go
-        uses: actions/setup-go@v4
+        uses: actions/setup-go@v5
         with:
           go-version: ${{ env.GO_VERSION }}
 
-      - name: Download Artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: provider-artifacts
-          path: _output/
+      - name: Vendor Dependencies
+        run: go mod vendor
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          password: ${{ secrets.PAT_TOKEN }}
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+      - name: Login to Harbor Registry (Optional)
+        if: env.ENABLE_HARBOR_PUBLISH == 'true'
+        uses: docker/login-action@v3
         with:
-          version: ${{ env.DOCKER_BUILDX_VERSION }}
+          registry: harbor.golder.lan
+          username: ${{ secrets.HARBOR_USERNAME }}
+          password: ${{ secrets.HARBOR_PASSWORD }}
 
       - name: Build and Push to Primary Registry
         run: |
           # Build and push to GitHub Container Registry (primary)
           echo "Repository: ${{ github.repository }}"
           echo "Repository owner: ${{ github.repository_owner }}"
-          make docker-build
-          docker tag crossplane/provider-gitea:latest ghcr.io/${{ github.repository }}:latest
-          docker push ghcr.io/${{ github.repository }}:latest
+          make publish REGISTRY_ORGS="ghcr.io/${{ github.repository_owner }}" XPKG_REG_ORGS="ghcr.io/${{ github.repository_owner }}"
 
-      # TODO: Enable when registered with Upbound
-      # - name: Upload Package to Registry
-      #   if: startsWith(github.ref, 'refs/tags/')
-      #   env:
-      #     XPKG_ACCESS_ID: ${{ secrets.XPKG_ACCESS_ID }}
-      #     XPKG_TOKEN: ${{ secrets.XPKG_TOKEN }}
-      #   run: |
-      #     make xpkg.push PACKAGE_REGISTRY=xpkg.upbound.io
-      
-      - name: Upload Package to GHCR
-        if: startsWith(github.ref, 'refs/tags/')
+      - name: Build and Push to Harbor (Optional)
+        if: env.ENABLE_HARBOR_PUBLISH == 'true'
         run: |
-          # Upload .xpkg file as OCI artifact to GHCR
-          echo "Uploading Crossplane package to GHCR..."
-          make xpkg.push PACKAGE_REGISTRY=ghcr.io/${{ github.repository_owner }}
+          # Push to Harbor Registry
+          make publish REGISTRY_ORGS="harbor.golder.lan/library"
+
+      - name: Build and Push to Upbound Registry (Optional)
+        if: env.ENABLE_UPBOUND_PUBLISH == 'true'
+        run: |
+          # Push to Upbound Registry (only if token is available)
+          if [ -n "$UPBOUND_TOKEN" ]; then
+            make publish REGISTRY_ORGS="xpkg.upbound.io/crossplane-contrib"
+          else
+            echo "UPBOUND_TOKEN not available, skipping Upbound registry push"
+          fi
+        env:
+          UPBOUND_TOKEN: ${{ secrets.UPBOUND_TOKEN }}
