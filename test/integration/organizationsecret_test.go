@@ -32,7 +32,7 @@ import (
 	xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
 	"github.com/crossplane/crossplane-runtime/pkg/meta"
 
-	"github.com/crossplane-contrib/provider-gitea/apis/organizationsecret/v1alpha1"
+	"github.com/rossigee/provider-gitea/apis/organizationsecret/v1alpha1"
 )
 
 // TestOrganizationSecretIntegration tests the complete end-to-end workflow

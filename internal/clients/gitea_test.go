@@ -32,7 +32,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
-	"github.com/crossplane-contrib/provider-gitea/apis/v1beta1"
+	"github.com/rossigee/provider-gitea/apis/v1beta1"
 )
 
 func TestNewClient(t *testing.T) {

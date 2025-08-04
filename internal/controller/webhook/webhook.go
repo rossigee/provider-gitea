@@ -32,9 +32,9 @@ import (
 	"github.com/crossplane/crossplane-runtime/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/pkg/resource"
 
-	"github.com/crossplane-contrib/provider-gitea/apis/v1beta1"
-	"github.com/crossplane-contrib/provider-gitea/apis/webhook/v1alpha1"
-	giteaclients "github.com/crossplane-contrib/provider-gitea/internal/clients"
+	"github.com/rossigee/provider-gitea/apis/v1beta1"
+	"github.com/rossigee/provider-gitea/apis/webhook/v1alpha1"
+	giteaclients "github.com/rossigee/provider-gitea/internal/clients"
 )
 
 const (

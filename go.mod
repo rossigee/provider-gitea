@@ -1,4 +1,4 @@
-module github.com/crossplane-contrib/provider-gitea
+module github.com/rossigee/provider-gitea
 
 go 1.24.5
 

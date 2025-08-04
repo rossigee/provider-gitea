@@ -27,7 +27,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 
-	"github.com/crossplane-contrib/provider-gitea/apis"
+	"github.com/rossigee/provider-gitea/apis"
 )
 
 var (

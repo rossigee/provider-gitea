@@ -28,8 +28,8 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/pkg/errors"
 
-	v1alpha1 "github.com/crossplane-contrib/provider-gitea/apis/adminuser/v1alpha1"
-	"github.com/crossplane-contrib/provider-gitea/internal/clients"
+	v1alpha1 "github.com/rossigee/provider-gitea/apis/adminuser/v1alpha1"
+	"github.com/rossigee/provider-gitea/internal/clients"
 )
 
 var (

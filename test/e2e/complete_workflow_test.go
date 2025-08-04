@@ -32,15 +32,15 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 
-	accesstokenv1alpha1 "github.com/crossplane-contrib/provider-gitea/apis/accesstoken/v1alpha1"
-	actionv1alpha1 "github.com/crossplane-contrib/provider-gitea/apis/action/v1alpha1"
-	adminuserv1alpha1 "github.com/crossplane-contrib/provider-gitea/apis/adminuser/v1alpha1"
-	branchprotectionv1alpha1 "github.com/crossplane-contrib/provider-gitea/apis/branchprotection/v1alpha1"
-	organizationmemberv1alpha1 "github.com/crossplane-contrib/provider-gitea/apis/organizationmember/v1alpha1"
-	repositorykeyv1alpha1 "github.com/crossplane-contrib/provider-gitea/apis/repositorykey/v1alpha1"
-	repositorysecretv1alpha1 "github.com/crossplane-contrib/provider-gitea/apis/repositorysecret/v1alpha1"
-	runnerv1alpha1 "github.com/crossplane-contrib/provider-gitea/apis/runner/v1alpha1"
-	userkeyv1alpha1 "github.com/crossplane-contrib/provider-gitea/apis/userkey/v1alpha1"
+	accesstokenv1alpha1 "github.com/rossigee/provider-gitea/apis/accesstoken/v1alpha1"
+	actionv1alpha1 "github.com/rossigee/provider-gitea/apis/action/v1alpha1"
+	adminuserv1alpha1 "github.com/rossigee/provider-gitea/apis/adminuser/v1alpha1"
+	branchprotectionv1alpha1 "github.com/rossigee/provider-gitea/apis/branchprotection/v1alpha1"
+	organizationmemberv1alpha1 "github.com/rossigee/provider-gitea/apis/organizationmember/v1alpha1"
+	repositorykeyv1alpha1 "github.com/rossigee/provider-gitea/apis/repositorykey/v1alpha1"
+	repositorysecretv1alpha1 "github.com/rossigee/provider-gitea/apis/repositorysecret/v1alpha1"
+	runnerv1alpha1 "github.com/rossigee/provider-gitea/apis/runner/v1alpha1"
+	userkeyv1alpha1 "github.com/rossigee/provider-gitea/apis/userkey/v1alpha1"
 )
 
 // Utility functions for pointer types

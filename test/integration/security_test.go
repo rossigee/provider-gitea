@@ -21,8 +21,8 @@ import (
 	"strings"
 	"testing"
 
-	branchprotectionv1alpha1 "github.com/crossplane-contrib/provider-gitea/apis/branchprotection/v1alpha1"
-	organizationmemberv1alpha1 "github.com/crossplane-contrib/provider-gitea/apis/organizationmember/v1alpha1"
+	branchprotectionv1alpha1 "github.com/rossigee/provider-gitea/apis/branchprotection/v1alpha1"
+	organizationmemberv1alpha1 "github.com/rossigee/provider-gitea/apis/organizationmember/v1alpha1"
 )
 
 // intPtr helper function for pointer types

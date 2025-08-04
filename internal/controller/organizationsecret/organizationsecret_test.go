@@ -30,8 +30,8 @@ import (
 	"github.com/crossplane/crossplane-runtime/pkg/meta"
 	"github.com/crossplane/crossplane-runtime/pkg/reconciler/managed"
 
-	"github.com/crossplane-contrib/provider-gitea/apis/organizationsecret/v1alpha1"
-	giteaclients "github.com/crossplane-contrib/provider-gitea/internal/clients"
+	"github.com/rossigee/provider-gitea/apis/organizationsecret/v1alpha1"
+	giteaclients "github.com/rossigee/provider-gitea/internal/clients"
 )
 
 // MockGiteaClient implements the Gitea client interface for testing

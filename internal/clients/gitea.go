@@ -33,7 +33,7 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 
-	"github.com/crossplane-contrib/provider-gitea/apis/v1beta1"
+	"github.com/rossigee/provider-gitea/apis/v1beta1"
 )
 
 const (

@@ -31,9 +31,9 @@ import (
 	"github.com/crossplane/crossplane-runtime/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/pkg/resource"
 
-	"github.com/crossplane-contrib/provider-gitea/apis/organizationsecret/v1alpha1"
-	"github.com/crossplane-contrib/provider-gitea/apis/v1beta1"
-	giteaclients "github.com/crossplane-contrib/provider-gitea/internal/clients"
+	"github.com/rossigee/provider-gitea/apis/organizationsecret/v1alpha1"
+	"github.com/rossigee/provider-gitea/apis/v1beta1"
+	giteaclients "github.com/rossigee/provider-gitea/internal/clients"
 	corev1 "k8s.io/api/core/v1"
 )
 

@@ -33,9 +33,9 @@ import (
 	xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
 	"github.com/crossplane/crossplane-runtime/pkg/meta"
 
-	"github.com/crossplane-contrib/provider-gitea/apis/organization/v1alpha1"
-	repov1alpha1 "github.com/crossplane-contrib/provider-gitea/apis/repository/v1alpha1"
-	"github.com/crossplane-contrib/provider-gitea/apis/v1beta1"
+	"github.com/rossigee/provider-gitea/apis/organization/v1alpha1"
+	repov1alpha1 "github.com/rossigee/provider-gitea/apis/repository/v1alpha1"
+	"github.com/rossigee/provider-gitea/apis/v1beta1"
 )
 
 // TestProviderConfig tests the provider configuration
