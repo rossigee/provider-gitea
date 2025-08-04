@@ -10,16 +10,16 @@ spec:
   forProvider:
     # Organization name
     organization: "acme-corp"
-    
+
     # Username to add as member
     username: "tech-lead"
-    
+
     # Role within the organization
     role: "admin"
-    
+
     # Membership visibility
     visibility: "public"
-    
+
   providerConfigRef:
     name: default
 

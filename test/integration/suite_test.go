@@ -37,8 +37,8 @@ import (
 )
 
 var (
-	testEnv *envtest.Environment
-	cfg     *rest.Config
+	testEnv   *envtest.Environment
+	cfg       *rest.Config
 	k8sClient client.Client
 	scheme    *runtime.Scheme
 )
@@ -85,20 +85,20 @@ func TestMain(m *testing.M) {
 func SetupTestNamespace(t *testing.T) string {
 	ctx := context.Background()
 	namespace := "integration-test-" + time.Now().Format("20060102-150405")
-	
+
 	ns := &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: namespace,
 		},
 	}
-	
+
 	err := k8sClient.Create(ctx, ns)
 	require.NoError(t, err)
-	
+
 	t.Cleanup(func() {
 		_ = k8sClient.Delete(context.Background(), ns)
 	})
-	
+
 	return namespace
 }
 

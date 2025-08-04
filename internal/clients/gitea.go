@@ -39,7 +39,7 @@ import (
 const (
 	// HTTP timeout for API requests
 	defaultTimeout = 30 * time.Second
-	
+
 	// API paths
 	apiPath = "/api/v1"
 )
@@ -129,7 +129,7 @@ type Client interface {
 	UpdateRepositoryKey(ctx context.Context, repository string, keyID int64, req *UpdateRepositoryKeyRequest) (*RepositoryKey, error)
 	DeleteRepositoryKey(ctx context.Context, repository string, keyID int64) error
 
-	// Access Token operations  
+	// Access Token operations
 	GetAccessToken(ctx context.Context, username string, tokenID int64) (*AccessToken, error)
 	CreateAccessToken(ctx context.Context, username string, req *CreateAccessTokenRequest) (*AccessToken, error)
 	UpdateAccessToken(ctx context.Context, username string, tokenID int64, req *UpdateAccessTokenRequest) (*AccessToken, error)
@@ -239,147 +239,147 @@ type Repository struct {
 
 // CreateRepositoryRequest represents the request body for creating a repository
 type CreateRepositoryRequest struct {
-	Name         string `json:"name"`
-	Description  string `json:"description,omitempty"`
-	Private      bool   `json:"private,omitempty"`
-	AutoInit     bool   `json:"auto_init,omitempty"`
-	Template     bool   `json:"template,omitempty"`
-	Gitignores   string `json:"gitignores,omitempty"`
-	License      string `json:"license,omitempty"`
-	Readme       string `json:"readme,omitempty"`
-	IssueLabels  string `json:"issue_labels,omitempty"`
-	TrustModel   string `json:"trust_model,omitempty"`
+	Name          string `json:"name"`
+	Description   string `json:"description,omitempty"`
+	Private       bool   `json:"private,omitempty"`
+	AutoInit      bool   `json:"auto_init,omitempty"`
+	Template      bool   `json:"template,omitempty"`
+	Gitignores    string `json:"gitignores,omitempty"`
+	License       string `json:"license,omitempty"`
+	Readme        string `json:"readme,omitempty"`
+	IssueLabels   string `json:"issue_labels,omitempty"`
+	TrustModel    string `json:"trust_model,omitempty"`
 	DefaultBranch string `json:"default_branch,omitempty"`
 }
 
 // UpdateRepositoryRequest represents the request body for updating a repository
 type UpdateRepositoryRequest struct {
-	Name                      *string `json:"name,omitempty"`
-	Description               *string `json:"description,omitempty"`
-	Website                   *string `json:"website,omitempty"`
-	Private                   *bool   `json:"private,omitempty"`
-	Template                  *bool   `json:"template,omitempty"`
-	HasIssues                 *bool   `json:"has_issues,omitempty"`
-	HasWiki                   *bool   `json:"has_wiki,omitempty"`
-	HasPullRequests           *bool   `json:"has_pull_requests,omitempty"`
-	HasProjects               *bool   `json:"has_projects,omitempty"`
-	HasReleases               *bool   `json:"has_releases,omitempty"`
-	HasPackages               *bool   `json:"has_packages,omitempty"`
-	HasActions                *bool   `json:"has_actions,omitempty"`
-	AllowMergeCommits         *bool   `json:"allow_merge_commits,omitempty"`
-	AllowRebase               *bool   `json:"allow_rebase,omitempty"`
-	AllowRebaseExplicit       *bool   `json:"allow_rebase_explicit,omitempty"`
-	AllowSquashMerge          *bool   `json:"allow_squash_merge,omitempty"`
-	AllowRebaseUpdate         *bool   `json:"allow_rebase_update,omitempty"`
+	Name                          *string `json:"name,omitempty"`
+	Description                   *string `json:"description,omitempty"`
+	Website                       *string `json:"website,omitempty"`
+	Private                       *bool   `json:"private,omitempty"`
+	Template                      *bool   `json:"template,omitempty"`
+	HasIssues                     *bool   `json:"has_issues,omitempty"`
+	HasWiki                       *bool   `json:"has_wiki,omitempty"`
+	HasPullRequests               *bool   `json:"has_pull_requests,omitempty"`
+	HasProjects                   *bool   `json:"has_projects,omitempty"`
+	HasReleases                   *bool   `json:"has_releases,omitempty"`
+	HasPackages                   *bool   `json:"has_packages,omitempty"`
+	HasActions                    *bool   `json:"has_actions,omitempty"`
+	AllowMergeCommits             *bool   `json:"allow_merge_commits,omitempty"`
+	AllowRebase                   *bool   `json:"allow_rebase,omitempty"`
+	AllowRebaseExplicit           *bool   `json:"allow_rebase_explicit,omitempty"`
+	AllowSquashMerge              *bool   `json:"allow_squash_merge,omitempty"`
+	AllowRebaseUpdate             *bool   `json:"allow_rebase_update,omitempty"`
 	DefaultDeleteBranchAfterMerge *bool   `json:"default_delete_branch_after_merge,omitempty"`
-	DefaultMergeStyle         *string `json:"default_merge_style,omitempty"`
-	DefaultBranch             *string `json:"default_branch,omitempty"`
-	Archived                  *bool   `json:"archived,omitempty"`
+	DefaultMergeStyle             *string `json:"default_merge_style,omitempty"`
+	DefaultBranch                 *string `json:"default_branch,omitempty"`
+	Archived                      *bool   `json:"archived,omitempty"`
 }
 
 // Organization represents a Gitea organization
 type Organization struct {
-	ID          int64  `json:"id"`
-	Username    string `json:"username"`
-	Name        string `json:"name"`
-	FullName    string `json:"full_name"`
-	Description string `json:"description"`
-	Website     string `json:"website"`
-	Location    string `json:"location"`
-	Visibility  string `json:"visibility"`
+	ID                        int64  `json:"id"`
+	Username                  string `json:"username"`
+	Name                      string `json:"name"`
+	FullName                  string `json:"full_name"`
+	Description               string `json:"description"`
+	Website                   string `json:"website"`
+	Location                  string `json:"location"`
+	Visibility                string `json:"visibility"`
 	RepoAdminChangeTeamAccess bool   `json:"repo_admin_change_team_access"`
-	Email       string `json:"email"`
-	AvatarURL   string `json:"avatar_url"`
+	Email                     string `json:"email"`
+	AvatarURL                 string `json:"avatar_url"`
 }
 
 // CreateOrganizationRequest represents the request body for creating an organization
 type CreateOrganizationRequest struct {
-	Username    string `json:"username"`
-	Name        string `json:"name,omitempty"`
-	FullName    string `json:"full_name,omitempty"`
-	Description string `json:"description,omitempty"`
-	Website     string `json:"website,omitempty"`
-	Location    string `json:"location,omitempty"`
-	Visibility  string `json:"visibility,omitempty"`
+	Username                  string `json:"username"`
+	Name                      string `json:"name,omitempty"`
+	FullName                  string `json:"full_name,omitempty"`
+	Description               string `json:"description,omitempty"`
+	Website                   string `json:"website,omitempty"`
+	Location                  string `json:"location,omitempty"`
+	Visibility                string `json:"visibility,omitempty"`
 	RepoAdminChangeTeamAccess bool   `json:"repo_admin_change_team_access,omitempty"`
 }
 
 // UpdateOrganizationRequest represents the request body for updating an organization
 type UpdateOrganizationRequest struct {
-	Name        *string `json:"name,omitempty"`
-	FullName    *string `json:"full_name,omitempty"`
-	Description *string `json:"description,omitempty"`
-	Website     *string `json:"website,omitempty"`
-	Location    *string `json:"location,omitempty"`
-	Visibility  *string `json:"visibility,omitempty"`
+	Name                      *string `json:"name,omitempty"`
+	FullName                  *string `json:"full_name,omitempty"`
+	Description               *string `json:"description,omitempty"`
+	Website                   *string `json:"website,omitempty"`
+	Location                  *string `json:"location,omitempty"`
+	Visibility                *string `json:"visibility,omitempty"`
 	RepoAdminChangeTeamAccess *bool   `json:"repo_admin_change_team_access,omitempty"`
 }
 
 // User represents a Gitea user
 type User struct {
-	ID                int64  `json:"id"`
-	Username          string `json:"username"`
-	Name              string `json:"name"`
-	FullName          string `json:"full_name"`
-	Email             string `json:"email"`
-	AvatarURL         string `json:"avatar_url"`
-	Website           string `json:"website"`
-	Location          string `json:"location"`
-	IsAdmin           bool   `json:"is_admin"`
-	LastLogin         string `json:"last_login"`
-	Created           string `json:"created"`
-	Restricted        bool   `json:"restricted"`
-	Active            bool   `json:"active"`
-	ProhibitLogin     bool   `json:"prohibit_login"`
-	LoginName         string `json:"login_name"`
-	SourceID          int64  `json:"source_id"`
-	Language          string `json:"language"`
-	Description       string `json:"description"`
+	ID            int64  `json:"id"`
+	Username      string `json:"username"`
+	Name          string `json:"name"`
+	FullName      string `json:"full_name"`
+	Email         string `json:"email"`
+	AvatarURL     string `json:"avatar_url"`
+	Website       string `json:"website"`
+	Location      string `json:"location"`
+	IsAdmin       bool   `json:"is_admin"`
+	LastLogin     string `json:"last_login"`
+	Created       string `json:"created"`
+	Restricted    bool   `json:"restricted"`
+	Active        bool   `json:"active"`
+	ProhibitLogin bool   `json:"prohibit_login"`
+	LoginName     string `json:"login_name"`
+	SourceID      int64  `json:"source_id"`
+	Language      string `json:"language"`
+	Description   string `json:"description"`
 }
 
 // CreateUserRequest represents the request body for creating a user
 type CreateUserRequest struct {
-	Username          string `json:"username"`
-	Email             string `json:"email"`
-	FullName          string `json:"full_name,omitempty"`
-	Password          string `json:"password"`
-	LoginName         string `json:"login_name,omitempty"`
-	SendNotify        bool   `json:"send_notify,omitempty"`
-	SourceID          int64  `json:"source_id,omitempty"`
+	Username           string `json:"username"`
+	Email              string `json:"email"`
+	FullName           string `json:"full_name,omitempty"`
+	Password           string `json:"password"`
+	LoginName          string `json:"login_name,omitempty"`
+	SendNotify         bool   `json:"send_notify,omitempty"`
+	SourceID           int64  `json:"source_id,omitempty"`
 	MustChangePassword bool   `json:"must_change_password,omitempty"`
-	Restricted        bool   `json:"restricted,omitempty"`
-	Visibility        string `json:"visibility,omitempty"`
+	Restricted         bool   `json:"restricted,omitempty"`
+	Visibility         string `json:"visibility,omitempty"`
 }
 
 // UpdateUserRequest represents the request body for updating a user
 type UpdateUserRequest struct {
-	Email             *string `json:"email,omitempty"`
-	FullName          *string `json:"full_name,omitempty"`
-	LoginName         *string `json:"login_name,omitempty"`
-	SourceID          *int64  `json:"source_id,omitempty"`
-	Active            *bool   `json:"active,omitempty"`
-	Admin             *bool   `json:"admin,omitempty"`
-	AllowGitHook      *bool   `json:"allow_git_hook,omitempty"`
-	AllowImportLocal  *bool   `json:"allow_import_local,omitempty"`
+	Email                   *string `json:"email,omitempty"`
+	FullName                *string `json:"full_name,omitempty"`
+	LoginName               *string `json:"login_name,omitempty"`
+	SourceID                *int64  `json:"source_id,omitempty"`
+	Active                  *bool   `json:"active,omitempty"`
+	Admin                   *bool   `json:"admin,omitempty"`
+	AllowGitHook            *bool   `json:"allow_git_hook,omitempty"`
+	AllowImportLocal        *bool   `json:"allow_import_local,omitempty"`
 	AllowCreateOrganization *bool   `json:"allow_create_organization,omitempty"`
-	ProhibitLogin     *bool   `json:"prohibit_login,omitempty"`
-	Restricted        *bool   `json:"restricted,omitempty"`
-	Website           *string `json:"website,omitempty"`
-	Location          *string `json:"location,omitempty"`
-	Description       *string `json:"description,omitempty"`
-	Visibility        *string `json:"visibility,omitempty"`
+	ProhibitLogin           *bool   `json:"prohibit_login,omitempty"`
+	Restricted              *bool   `json:"restricted,omitempty"`
+	Website                 *string `json:"website,omitempty"`
+	Location                *string `json:"location,omitempty"`
+	Description             *string `json:"description,omitempty"`
+	Visibility              *string `json:"visibility,omitempty"`
 }
 
 // Webhook represents a Gitea webhook
 type Webhook struct {
-	ID     int64             `json:"id"`
-	Type   string            `json:"type"`
-	URL    string            `json:"config.url"`
-	Active bool              `json:"active"`
-	Events []string          `json:"events"`
-	Config map[string]string `json:"config"`
-	CreatedAt string          `json:"created_at"`
-	UpdatedAt string          `json:"updated_at"`
+	ID        int64             `json:"id"`
+	Type      string            `json:"type"`
+	URL       string            `json:"config.url"`
+	Active    bool              `json:"active"`
+	Events    []string          `json:"events"`
+	Config    map[string]string `json:"config"`
+	CreatedAt string            `json:"created_at"`
+	UpdatedAt string            `json:"updated_at"`
 }
 
 // CreateWebhookRequest represents the request body for creating a webhook
@@ -456,38 +456,38 @@ func (c *giteaClient) DeleteOrganizationSecret(ctx context.Context, org, secretN
 
 // Team represents a Gitea organization team
 type Team struct {
-	ID          int64  `json:"id"`
-	Name        string `json:"name"`
-	Description string `json:"description"`
+	ID           int64  `json:"id"`
+	Name         string `json:"name"`
+	Description  string `json:"description"`
 	Organization struct {
 		ID       int64  `json:"id"`
 		Username string `json:"username"`
 		Name     string `json:"name"`
 	} `json:"organization"`
-	Permission    string `json:"permission"`
-	CanCreateOrgRepo bool   `json:"can_create_org_repo"`
-	IncludesAllRepositories bool   `json:"includes_all_repositories"`
-	UnitsMap      map[string]string `json:"units_map"`
+	Permission              string            `json:"permission"`
+	CanCreateOrgRepo        bool              `json:"can_create_org_repo"`
+	IncludesAllRepositories bool              `json:"includes_all_repositories"`
+	UnitsMap                map[string]string `json:"units_map"`
 }
 
 // CreateTeamRequest represents the request body for creating a team
 type CreateTeamRequest struct {
-	Name        string `json:"name"`
-	Description string `json:"description,omitempty"`
-	Permission  string `json:"permission,omitempty"`
-	CanCreateOrgRepo bool   `json:"can_create_org_repo,omitempty"`
-	IncludesAllRepositories bool   `json:"includes_all_repositories,omitempty"`
-	Units       []string `json:"units,omitempty"`
+	Name                    string   `json:"name"`
+	Description             string   `json:"description,omitempty"`
+	Permission              string   `json:"permission,omitempty"`
+	CanCreateOrgRepo        bool     `json:"can_create_org_repo,omitempty"`
+	IncludesAllRepositories bool     `json:"includes_all_repositories,omitempty"`
+	Units                   []string `json:"units,omitempty"`
 }
 
 // UpdateTeamRequest represents the request body for updating a team
 type UpdateTeamRequest struct {
-	Name        *string `json:"name,omitempty"`
-	Description *string `json:"description,omitempty"`
-	Permission  *string `json:"permission,omitempty"`
-	CanCreateOrgRepo *bool   `json:"can_create_org_repo,omitempty"`
-	IncludesAllRepositories *bool   `json:"includes_all_repositories,omitempty"`
-	Units       []string `json:"units,omitempty"`
+	Name                    *string  `json:"name,omitempty"`
+	Description             *string  `json:"description,omitempty"`
+	Permission              *string  `json:"permission,omitempty"`
+	CanCreateOrgRepo        *bool    `json:"can_create_org_repo,omitempty"`
+	IncludesAllRepositories *bool    `json:"includes_all_repositories,omitempty"`
+	Units                   []string `json:"units,omitempty"`
 }
 
 // Team API methods
@@ -593,10 +593,10 @@ type UpdateLabelRequest struct {
 
 // RepositoryCollaborator represents a repository collaborator
 type RepositoryCollaborator struct {
-	Username    string                          `json:"login"`
-	FullName    string                          `json:"full_name"`
-	Email       string                          `json:"email"`
-	AvatarURL   string                          `json:"avatar_url"`
+	Username    string                            `json:"login"`
+	FullName    string                            `json:"full_name"`
+	Email       string                            `json:"email"`
+	AvatarURL   string                            `json:"avatar_url"`
 	Permissions RepositoryCollaboratorPermissions `json:"permissions"`
 }
 
@@ -620,40 +620,40 @@ type UpdateCollaboratorRequest struct {
 // OrganizationSettings represents organization-wide settings and policies
 type OrganizationSettings struct {
 	// Default repository settings
-	DefaultRepoPermission     string `json:"default_repo_permission"`     // read, write, admin
-	MembersCanCreateRepos     bool   `json:"members_can_create_repos"`
-	MembersCanCreatePrivate   bool   `json:"members_can_create_private"`
-	MembersCanCreateInternal  bool   `json:"members_can_create_internal"`
-	
+	DefaultRepoPermission    string `json:"default_repo_permission"` // read, write, admin
+	MembersCanCreateRepos    bool   `json:"members_can_create_repos"`
+	MembersCanCreatePrivate  bool   `json:"members_can_create_private"`
+	MembersCanCreateInternal bool   `json:"members_can_create_internal"`
+
 	// Member management settings
-	MembersCanDeleteRepos     bool   `json:"members_can_delete_repos"`
-	MembersCanFork            bool   `json:"members_can_fork"`
-	MembersCanCreatePages     bool   `json:"members_can_create_pages"`
-	
+	MembersCanDeleteRepos bool `json:"members_can_delete_repos"`
+	MembersCanFork        bool `json:"members_can_fork"`
+	MembersCanCreatePages bool `json:"members_can_create_pages"`
+
 	// Security and visibility settings
-	DefaultRepoVisibility     string `json:"default_repo_visibility"`     // public, private, internal
-	RequireSignedCommits      bool   `json:"require_signed_commits"`
-	EnableDependencyGraph     bool   `json:"enable_dependency_graph"`
-	
+	DefaultRepoVisibility string `json:"default_repo_visibility"` // public, private, internal
+	RequireSignedCommits  bool   `json:"require_signed_commits"`
+	EnableDependencyGraph bool   `json:"enable_dependency_graph"`
+
 	// Git hooks and automation
-	AllowGitHooks             bool   `json:"allow_git_hooks"`
-	AllowCustomGitHooks       bool   `json:"allow_custom_git_hooks"`
+	AllowGitHooks       bool `json:"allow_git_hooks"`
+	AllowCustomGitHooks bool `json:"allow_custom_git_hooks"`
 }
 
 // UpdateOrganizationSettingsRequest represents the request body for updating organization settings
 type UpdateOrganizationSettingsRequest struct {
-	DefaultRepoPermission     *string `json:"default_repo_permission,omitempty"`
-	MembersCanCreateRepos     *bool   `json:"members_can_create_repos,omitempty"`
-	MembersCanCreatePrivate   *bool   `json:"members_can_create_private,omitempty"`
-	MembersCanCreateInternal  *bool   `json:"members_can_create_internal,omitempty"`
-	MembersCanDeleteRepos     *bool   `json:"members_can_delete_repos,omitempty"`
-	MembersCanFork            *bool   `json:"members_can_fork,omitempty"`
-	MembersCanCreatePages     *bool   `json:"members_can_create_pages,omitempty"`
-	DefaultRepoVisibility     *string `json:"default_repo_visibility,omitempty"`
-	RequireSignedCommits      *bool   `json:"require_signed_commits,omitempty"`
-	EnableDependencyGraph     *bool   `json:"enable_dependency_graph,omitempty"`
-	AllowGitHooks             *bool   `json:"allow_git_hooks,omitempty"`
-	AllowCustomGitHooks       *bool   `json:"allow_custom_git_hooks,omitempty"`
+	DefaultRepoPermission    *string `json:"default_repo_permission,omitempty"`
+	MembersCanCreateRepos    *bool   `json:"members_can_create_repos,omitempty"`
+	MembersCanCreatePrivate  *bool   `json:"members_can_create_private,omitempty"`
+	MembersCanCreateInternal *bool   `json:"members_can_create_internal,omitempty"`
+	MembersCanDeleteRepos    *bool   `json:"members_can_delete_repos,omitempty"`
+	MembersCanFork           *bool   `json:"members_can_fork,omitempty"`
+	MembersCanCreatePages    *bool   `json:"members_can_create_pages,omitempty"`
+	DefaultRepoVisibility    *string `json:"default_repo_visibility,omitempty"`
+	RequireSignedCommits     *bool   `json:"require_signed_commits,omitempty"`
+	EnableDependencyGraph    *bool   `json:"enable_dependency_graph,omitempty"`
+	AllowGitHooks            *bool   `json:"allow_git_hooks,omitempty"`
+	AllowCustomGitHooks      *bool   `json:"allow_custom_git_hooks,omitempty"`
 }
 
 // GitHook represents a Git hook
@@ -679,81 +679,81 @@ type UpdateGitHookRequest struct {
 
 // BranchProtection represents a Git branch protection rule
 type BranchProtection struct {
-	RuleName                         string   `json:"rule_name"`
-	EnablePush                       bool     `json:"enable_push"`
-	EnablePushWhitelist              bool     `json:"enable_push_whitelist"`
-	PushWhitelistUsernames           []string `json:"push_whitelist_usernames"`
-	PushWhitelistTeams               []string `json:"push_whitelist_teams"`
-	PushWhitelistDeployKeys          bool     `json:"push_whitelist_deploy_keys"`
-	EnableMergeWhitelist             bool     `json:"enable_merge_whitelist"`
-	MergeWhitelistUsernames          []string `json:"merge_whitelist_usernames"`
-	MergeWhitelistTeams              []string `json:"merge_whitelist_teams"`
-	EnableStatusCheck                bool     `json:"enable_status_check"`
-	StatusCheckContexts              []string `json:"status_check_contexts"`
-	RequiredApprovals                int      `json:"required_approvals"`
-	EnableApprovalsWhitelist         bool     `json:"enable_approvals_whitelist"`
-	ApprovalsWhitelistUsernames      []string `json:"approvals_whitelist_usernames"`
-	ApprovalsWhitelistTeams          []string `json:"approvals_whitelist_teams"`
-	BlockOnRejectedReviews           bool     `json:"block_on_rejected_reviews"`
-	BlockOnOfficialReviewRequests    bool     `json:"block_on_official_review_requests"`
-	BlockOnOutdatedBranch            bool     `json:"block_on_outdated_branch"`
-	DismissStaleApprovals            bool     `json:"dismiss_stale_approvals"`
-	RequireSignedCommits             bool     `json:"require_signed_commits"`
-	ProtectedFilePatterns            string   `json:"protected_file_patterns"`
-	UnprotectedFilePatterns          string   `json:"unprotected_file_patterns"`
-	CreatedAt                        string   `json:"created_at"`
-	UpdatedAt                        string   `json:"updated_at"`
+	RuleName                      string   `json:"rule_name"`
+	EnablePush                    bool     `json:"enable_push"`
+	EnablePushWhitelist           bool     `json:"enable_push_whitelist"`
+	PushWhitelistUsernames        []string `json:"push_whitelist_usernames"`
+	PushWhitelistTeams            []string `json:"push_whitelist_teams"`
+	PushWhitelistDeployKeys       bool     `json:"push_whitelist_deploy_keys"`
+	EnableMergeWhitelist          bool     `json:"enable_merge_whitelist"`
+	MergeWhitelistUsernames       []string `json:"merge_whitelist_usernames"`
+	MergeWhitelistTeams           []string `json:"merge_whitelist_teams"`
+	EnableStatusCheck             bool     `json:"enable_status_check"`
+	StatusCheckContexts           []string `json:"status_check_contexts"`
+	RequiredApprovals             int      `json:"required_approvals"`
+	EnableApprovalsWhitelist      bool     `json:"enable_approvals_whitelist"`
+	ApprovalsWhitelistUsernames   []string `json:"approvals_whitelist_usernames"`
+	ApprovalsWhitelistTeams       []string `json:"approvals_whitelist_teams"`
+	BlockOnRejectedReviews        bool     `json:"block_on_rejected_reviews"`
+	BlockOnOfficialReviewRequests bool     `json:"block_on_official_review_requests"`
+	BlockOnOutdatedBranch         bool     `json:"block_on_outdated_branch"`
+	DismissStaleApprovals         bool     `json:"dismiss_stale_approvals"`
+	RequireSignedCommits          bool     `json:"require_signed_commits"`
+	ProtectedFilePatterns         string   `json:"protected_file_patterns"`
+	UnprotectedFilePatterns       string   `json:"unprotected_file_patterns"`
+	CreatedAt                     string   `json:"created_at"`
+	UpdatedAt                     string   `json:"updated_at"`
 }
 
 // CreateBranchProtectionRequest represents the request body for creating branch protection
 type CreateBranchProtectionRequest struct {
-	RuleName                         string   `json:"rule_name"`
-	EnablePush                       *bool    `json:"enable_push,omitempty"`
-	EnablePushWhitelist              *bool    `json:"enable_push_whitelist,omitempty"`
-	PushWhitelistUsernames           []string `json:"push_whitelist_usernames,omitempty"`
-	PushWhitelistTeams               []string `json:"push_whitelist_teams,omitempty"`
-	PushWhitelistDeployKeys          *bool    `json:"push_whitelist_deploy_keys,omitempty"`
-	EnableMergeWhitelist             *bool    `json:"enable_merge_whitelist,omitempty"`
-	MergeWhitelistUsernames          []string `json:"merge_whitelist_usernames,omitempty"`
-	MergeWhitelistTeams              []string `json:"merge_whitelist_teams,omitempty"`
-	EnableStatusCheck                *bool    `json:"enable_status_check,omitempty"`
-	StatusCheckContexts              []string `json:"status_check_contexts,omitempty"`
-	RequiredApprovals                *int     `json:"required_approvals,omitempty"`
-	EnableApprovalsWhitelist         *bool    `json:"enable_approvals_whitelist,omitempty"`
-	ApprovalsWhitelistUsernames      []string `json:"approvals_whitelist_usernames,omitempty"`
-	ApprovalsWhitelistTeams          []string `json:"approvals_whitelist_teams,omitempty"`
-	BlockOnRejectedReviews           *bool    `json:"block_on_rejected_reviews,omitempty"`
-	BlockOnOfficialReviewRequests    *bool    `json:"block_on_official_review_requests,omitempty"`
-	BlockOnOutdatedBranch            *bool    `json:"block_on_outdated_branch,omitempty"`
-	DismissStaleApprovals            *bool    `json:"dismiss_stale_approvals,omitempty"`
-	RequireSignedCommits             *bool    `json:"require_signed_commits,omitempty"`
-	ProtectedFilePatterns            *string  `json:"protected_file_patterns,omitempty"`
-	UnprotectedFilePatterns          *string  `json:"unprotected_file_patterns,omitempty"`
+	RuleName                      string   `json:"rule_name"`
+	EnablePush                    *bool    `json:"enable_push,omitempty"`
+	EnablePushWhitelist           *bool    `json:"enable_push_whitelist,omitempty"`
+	PushWhitelistUsernames        []string `json:"push_whitelist_usernames,omitempty"`
+	PushWhitelistTeams            []string `json:"push_whitelist_teams,omitempty"`
+	PushWhitelistDeployKeys       *bool    `json:"push_whitelist_deploy_keys,omitempty"`
+	EnableMergeWhitelist          *bool    `json:"enable_merge_whitelist,omitempty"`
+	MergeWhitelistUsernames       []string `json:"merge_whitelist_usernames,omitempty"`
+	MergeWhitelistTeams           []string `json:"merge_whitelist_teams,omitempty"`
+	EnableStatusCheck             *bool    `json:"enable_status_check,omitempty"`
+	StatusCheckContexts           []string `json:"status_check_contexts,omitempty"`
+	RequiredApprovals             *int     `json:"required_approvals,omitempty"`
+	EnableApprovalsWhitelist      *bool    `json:"enable_approvals_whitelist,omitempty"`
+	ApprovalsWhitelistUsernames   []string `json:"approvals_whitelist_usernames,omitempty"`
+	ApprovalsWhitelistTeams       []string `json:"approvals_whitelist_teams,omitempty"`
+	BlockOnRejectedReviews        *bool    `json:"block_on_rejected_reviews,omitempty"`
+	BlockOnOfficialReviewRequests *bool    `json:"block_on_official_review_requests,omitempty"`
+	BlockOnOutdatedBranch         *bool    `json:"block_on_outdated_branch,omitempty"`
+	DismissStaleApprovals         *bool    `json:"dismiss_stale_approvals,omitempty"`
+	RequireSignedCommits          *bool    `json:"require_signed_commits,omitempty"`
+	ProtectedFilePatterns         *string  `json:"protected_file_patterns,omitempty"`
+	UnprotectedFilePatterns       *string  `json:"unprotected_file_patterns,omitempty"`
 }
 
 // UpdateBranchProtectionRequest represents the request body for updating branch protection
 type UpdateBranchProtectionRequest struct {
-	EnablePush                       *bool    `json:"enable_push,omitempty"`
-	EnablePushWhitelist              *bool    `json:"enable_push_whitelist,omitempty"`
-	PushWhitelistUsernames           []string `json:"push_whitelist_usernames,omitempty"`
-	PushWhitelistTeams               []string `json:"push_whitelist_teams,omitempty"`
-	PushWhitelistDeployKeys          *bool    `json:"push_whitelist_deploy_keys,omitempty"`
-	EnableMergeWhitelist             *bool    `json:"enable_merge_whitelist,omitempty"`
-	MergeWhitelistUsernames          []string `json:"merge_whitelist_usernames,omitempty"`
-	MergeWhitelistTeams              []string `json:"merge_whitelist_teams,omitempty"`
-	EnableStatusCheck                *bool    `json:"enable_status_check,omitempty"`
-	StatusCheckContexts              []string `json:"status_check_contexts,omitempty"`
-	RequiredApprovals                *int     `json:"required_approvals,omitempty"`
-	EnableApprovalsWhitelist         *bool    `json:"enable_approvals_whitelist,omitempty"`
-	ApprovalsWhitelistUsernames      []string `json:"approvals_whitelist_usernames,omitempty"`
-	ApprovalsWhitelistTeams          []string `json:"approvals_whitelist_teams,omitempty"`
-	BlockOnRejectedReviews           *bool    `json:"block_on_rejected_reviews,omitempty"`
-	BlockOnOfficialReviewRequests    *bool    `json:"block_on_official_review_requests,omitempty"`
-	BlockOnOutdatedBranch            *bool    `json:"block_on_outdated_branch,omitempty"`
-	DismissStaleApprovals            *bool    `json:"dismiss_stale_approvals,omitempty"`
-	RequireSignedCommits             *bool    `json:"require_signed_commits,omitempty"`
-	ProtectedFilePatterns            *string  `json:"protected_file_patterns,omitempty"`
-	UnprotectedFilePatterns          *string  `json:"unprotected_file_patterns,omitempty"`
+	EnablePush                    *bool    `json:"enable_push,omitempty"`
+	EnablePushWhitelist           *bool    `json:"enable_push_whitelist,omitempty"`
+	PushWhitelistUsernames        []string `json:"push_whitelist_usernames,omitempty"`
+	PushWhitelistTeams            []string `json:"push_whitelist_teams,omitempty"`
+	PushWhitelistDeployKeys       *bool    `json:"push_whitelist_deploy_keys,omitempty"`
+	EnableMergeWhitelist          *bool    `json:"enable_merge_whitelist,omitempty"`
+	MergeWhitelistUsernames       []string `json:"merge_whitelist_usernames,omitempty"`
+	MergeWhitelistTeams           []string `json:"merge_whitelist_teams,omitempty"`
+	EnableStatusCheck             *bool    `json:"enable_status_check,omitempty"`
+	StatusCheckContexts           []string `json:"status_check_contexts,omitempty"`
+	RequiredApprovals             *int     `json:"required_approvals,omitempty"`
+	EnableApprovalsWhitelist      *bool    `json:"enable_approvals_whitelist,omitempty"`
+	ApprovalsWhitelistUsernames   []string `json:"approvals_whitelist_usernames,omitempty"`
+	ApprovalsWhitelistTeams       []string `json:"approvals_whitelist_teams,omitempty"`
+	BlockOnRejectedReviews        *bool    `json:"block_on_rejected_reviews,omitempty"`
+	BlockOnOfficialReviewRequests *bool    `json:"block_on_official_review_requests,omitempty"`
+	BlockOnOutdatedBranch         *bool    `json:"block_on_outdated_branch,omitempty"`
+	DismissStaleApprovals         *bool    `json:"dismiss_stale_approvals,omitempty"`
+	RequireSignedCommits          *bool    `json:"require_signed_commits,omitempty"`
+	ProtectedFilePatterns         *string  `json:"protected_file_patterns,omitempty"`
+	UnprotectedFilePatterns       *string  `json:"unprotected_file_patterns,omitempty"`
 }
 
 // RepositoryKey represents a repository SSH key
@@ -844,13 +844,13 @@ type UpdateUserKeyRequest struct {
 
 // OrganizationMember represents an organization member
 type OrganizationMember struct {
-	Username    string `json:"username"`
-	FullName    string `json:"full_name"`
-	Email       string `json:"email"`
-	AvatarURL   string `json:"avatar_url"`
-	Role        string `json:"role"`        // owner, admin, member
-	Visibility  string `json:"visibility"`  // public, private
-	IsPublic    bool   `json:"is_public"`
+	Username   string `json:"username"`
+	FullName   string `json:"full_name"`
+	Email      string `json:"email"`
+	AvatarURL  string `json:"avatar_url"`
+	Role       string `json:"role"`       // owner, admin, member
+	Visibility string `json:"visibility"` // public, private
+	IsPublic   bool   `json:"is_public"`
 }
 
 // AddOrganizationMemberRequest represents the request body for adding an organization member
@@ -866,11 +866,11 @@ type UpdateOrganizationMemberRequest struct {
 
 // Action represents a Gitea Actions workflow
 type Action struct {
-	WorkflowName string            `json:"workflow_name"`
-	State        string            `json:"state"`        // active, disabled
-	Badge        string            `json:"badge_url"`
-	CreatedAt    string            `json:"created_at"`
-	UpdatedAt    string            `json:"updated_at"`
+	WorkflowName string             `json:"workflow_name"`
+	State        string             `json:"state"` // active, disabled
+	Badge        string             `json:"badge_url"`
+	CreatedAt    string             `json:"created_at"`
+	UpdatedAt    string             `json:"updated_at"`
 	WorkflowFile ActionWorkflowFile `json:"workflow_file"`
 	LastRun      *ActionLastRun     `json:"last_run,omitempty"`
 }
@@ -916,14 +916,14 @@ type Runner struct {
 	ID              int64           `json:"id"`
 	UUID            string          `json:"uuid"`
 	Name            string          `json:"name"`
-	Status          string          `json:"status"`          // online, offline, idle, active
+	Status          string          `json:"status"` // online, offline, idle, active
 	LastOnline      string          `json:"last_online"`
 	CreatedAt       string          `json:"created_at"`
 	UpdatedAt       string          `json:"updated_at"`
 	Labels          []string        `json:"labels"`
 	Description     string          `json:"description"`
-	Scope           string          `json:"scope"`           // repository, organization, system
-	ScopeValue      string          `json:"scope_value"`     // repo name or org name
+	Scope           string          `json:"scope"`       // repository, organization, system
+	ScopeValue      string          `json:"scope_value"` // repo name or org name
 	RunnerGroup     *RunnerGroupRef `json:"runner_group,omitempty"`
 	Version         string          `json:"version"`
 	Architecture    string          `json:"architecture"`
@@ -956,33 +956,33 @@ type UpdateRunnerRequest struct {
 
 // AdminUser represents a Gitea administrative user
 type AdminUser struct {
-	ID                int64           `json:"id"`
-	Username          string          `json:"username"`
-	Email             string          `json:"email"`
-	FullName          string          `json:"full_name"`
-	AvatarURL         string          `json:"avatar_url"`
-	IsAdmin           bool            `json:"is_admin"`
-	IsActive          bool            `json:"is_active"`
-	IsRestricted      bool            `json:"is_restricted"`
-	ProhibitLogin     bool            `json:"prohibit_login"`
-	Visibility        string          `json:"visibility"`     // public, private, limited
-	CreatedAt         string          `json:"created_at"`
-	LastLogin         string          `json:"last_login"`
-	Language          string          `json:"language"`
-	MaxRepoCreation   int             `json:"max_repo_creation"`
-	Website           string          `json:"website"`
-	Location          string          `json:"location"`
-	Description       string          `json:"description"`
-	UserStats         *AdminUserStats `json:"user_stats,omitempty"`
+	ID              int64           `json:"id"`
+	Username        string          `json:"username"`
+	Email           string          `json:"email"`
+	FullName        string          `json:"full_name"`
+	AvatarURL       string          `json:"avatar_url"`
+	IsAdmin         bool            `json:"is_admin"`
+	IsActive        bool            `json:"is_active"`
+	IsRestricted    bool            `json:"is_restricted"`
+	ProhibitLogin   bool            `json:"prohibit_login"`
+	Visibility      string          `json:"visibility"` // public, private, limited
+	CreatedAt       string          `json:"created_at"`
+	LastLogin       string          `json:"last_login"`
+	Language        string          `json:"language"`
+	MaxRepoCreation int             `json:"max_repo_creation"`
+	Website         string          `json:"website"`
+	Location        string          `json:"location"`
+	Description     string          `json:"description"`
+	UserStats       *AdminUserStats `json:"user_stats,omitempty"`
 }
 
 // AdminUserStats represents user statistics
 type AdminUserStats struct {
-	Repositories  int `json:"repositories"`
-	PublicRepos   int `json:"public_repos"`
-	Followers     int `json:"followers"`
-	Following     int `json:"following"`
-	StarredRepos  int `json:"starred_repos"`
+	Repositories int `json:"repositories"`
+	PublicRepos  int `json:"public_repos"`
+	Followers    int `json:"followers"`
+	Following    int `json:"following"`
+	StarredRepos int `json:"starred_repos"`
 }
 
 // CreateAdminUserRequest represents the request body for creating an admin user
@@ -1178,11 +1178,11 @@ func (c *giteaClient) GetOrganizationSettings(ctx context.Context, org string) (
 	// Map Organization data to OrganizationSettings
 	// Note: This is a simplified mapping - real implementation would aggregate multiple endpoints
 	settings := &OrganizationSettings{
-		DefaultRepoPermission:   "read", // Default fallback
-		MembersCanCreateRepos:   true,   // Default fallback
-		MembersCanCreatePrivate: true,   // Default fallback
+		DefaultRepoPermission:   "read",   // Default fallback
+		MembersCanCreateRepos:   true,     // Default fallback
+		MembersCanCreatePrivate: true,     // Default fallback
 		DefaultRepoVisibility:   "public", // Default fallback
-		AllowGitHooks:          false,   // Default fallback
+		AllowGitHooks:           false,    // Default fallback
 	}
 
 	return settings, nil
@@ -1192,10 +1192,10 @@ func (c *giteaClient) UpdateOrganizationSettings(ctx context.Context, org string
 	// Note: This is a conceptual implementation - real implementation would update
 	// organization settings through appropriate Gitea admin endpoints
 	path := fmt.Sprintf("/orgs/%s", org)
-	
+
 	// For now, we'll use the organization update endpoint as a placeholder
 	orgUpdateReq := &UpdateOrganizationRequest{}
-	
+
 	resp, err := c.doRequest(ctx, "PATCH", path, orgUpdateReq)
 	if err != nil {
 		return nil, err

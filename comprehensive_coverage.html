@@ -54,35 +54,35 @@
 		<div id="topbar">
 			<div id="nav">
 				<select id="files">
-				
+
 				<option value="file0">github.com/crossplane-contrib/provider-gitea/internal/clients/deploykey.go (76.2%)</option>
-				
+
 				<option value="file1">github.com/crossplane-contrib/provider-gitea/internal/clients/gitea.go (78.4%)</option>
-				
+
 				<option value="file2">github.com/crossplane-contrib/provider-gitea/internal/clients/organization.go (75.9%)</option>
-				
+
 				<option value="file3">github.com/crossplane-contrib/provider-gitea/internal/clients/repository.go (59.5%)</option>
-				
+
 				<option value="file4">github.com/crossplane-contrib/provider-gitea/internal/clients/user.go (75.9%)</option>
-				
+
 				<option value="file5">github.com/crossplane-contrib/provider-gitea/internal/clients/webhook.go (75.9%)</option>
-				
+
 				<option value="file6">github.com/crossplane-contrib/provider-gitea/internal/controller/organizationsecret/organizationsecret.go (65.8%)</option>
-				
+
 				<option value="file7">github.com/crossplane-contrib/provider-gitea/internal/controller/repository/repository.go (37.8%)</option>
-				
+
 				</select>
 			</div>
 			<div id="legend">
 				<span>not tracked</span>
-			
+
 				<span class="cov0">not covered</span>
 				<span class="cov8">covered</span>
-			
+
 			</div>
 		</div>
 		<div id="content">
-		
+
 		<pre class="file" id="file0" style="display: none">/*
 Copyright 2024 The Crossplane Authors.
 
@@ -127,7 +127,7 @@ type CreateDeployKeyRequest struct {
 // GetDeployKey retrieves a deploy key by repository and key ID
 func (c *giteaClient) GetDeployKey(ctx context.Context, owner, repo string, id int64) (*DeployKey, error) <span class="cov8" title="1">{
         path := fmt.Sprintf("/repos/%s/%s/keys/%d", owner, repo, id)
-        
+
         resp, err := c.doRequest(ctx, "GET", path, nil)
         if err != nil </span><span class="cov0" title="0">{
                 return nil, err
@@ -144,7 +144,7 @@ func (c *giteaClient) GetDeployKey(ctx context.Context, owner, repo string, id i
 // CreateDeployKey creates a new deploy key for a repository
 func (c *giteaClient) CreateDeployKey(ctx context.Context, owner, repo string, req *CreateDeployKeyRequest) (*DeployKey, error) <span class="cov8" title="1">{
         path := fmt.Sprintf("/repos/%s/%s/keys", owner, repo)
-        
+
         resp, err := c.doRequest(ctx, "POST", path, req)
         if err != nil </span><span class="cov0" title="0">{
                 return nil, err
@@ -161,7 +161,7 @@ func (c *giteaClient) CreateDeployKey(ctx context.Context, owner, repo string, r
 // DeleteDeployKey deletes a deploy key
 func (c *giteaClient) DeleteDeployKey(ctx context.Context, owner, repo string, id int64) error <span class="cov8" title="1">{
         path := fmt.Sprintf("/repos/%s/%s/keys/%d", owner, repo, id)
-        
+
         resp, err := c.doRequest(ctx, "DELETE", path, nil)
         if err != nil </span><span class="cov0" title="0">{
                 return err
@@ -169,7 +169,7 @@ func (c *giteaClient) DeleteDeployKey(ctx context.Context, owner, repo string, i
 
         <span class="cov8" title="1">return handleResponse(resp, nil)</span>
 }</pre>
-		
+
 		<pre class="file" id="file1" style="display: none">/*
 Copyright 2024 The Crossplane Authors.
 
@@ -210,7 +210,7 @@ import (
 const (
         // HTTP timeout for API requests
         defaultTimeout = 30 * time.Second
-        
+
         // API paths
         apiPath = "/api/v1"
 )
@@ -621,7 +621,7 @@ func IsNotFound(err error) bool <span class="cov0" title="0">{
         // Check if the error message contains status 404
         <span class="cov0" title="0">return strings.Contains(err.Error(), "status 404")</span>
 }</pre>
-		
+
 		<pre class="file" id="file2" style="display: none">/*
 Copyright 2024 The Crossplane Authors.
 
@@ -648,7 +648,7 @@ import (
 // GetOrganization retrieves an organization by name
 func (c *giteaClient) GetOrganization(ctx context.Context, name string) (*Organization, error) <span class="cov8" title="1">{
         path := fmt.Sprintf("/orgs/%s", name)
-        
+
         resp, err := c.doRequest(ctx, "GET", path, nil)
         if err != nil </span><span class="cov0" title="0">{
                 return nil, err
@@ -665,7 +665,7 @@ func (c *giteaClient) GetOrganization(ctx context.Context, name string) (*Organi
 // CreateOrganization creates a new organization
 func (c *giteaClient) CreateOrganization(ctx context.Context, req *CreateOrganizationRequest) (*Organization, error) <span class="cov8" title="1">{
         path := "/orgs"
-        
+
         resp, err := c.doRequest(ctx, "POST", path, req)
         if err != nil </span><span class="cov0" title="0">{
                 return nil, err
@@ -682,7 +682,7 @@ func (c *giteaClient) CreateOrganization(ctx context.Context, req *CreateOrganiz
 // UpdateOrganization updates an existing organization
 func (c *giteaClient) UpdateOrganization(ctx context.Context, name string, req *UpdateOrganizationRequest) (*Organization, error) <span class="cov8" title="1">{
         path := fmt.Sprintf("/orgs/%s", name)
-        
+
         resp, err := c.doRequest(ctx, "PATCH", path, req)
         if err != nil </span><span class="cov0" title="0">{
                 return nil, err
@@ -699,7 +699,7 @@ func (c *giteaClient) UpdateOrganization(ctx context.Context, name string, req *
 // DeleteOrganization deletes an organization
 func (c *giteaClient) DeleteOrganization(ctx context.Context, name string) error <span class="cov8" title="1">{
         path := fmt.Sprintf("/orgs/%s", name)
-        
+
         resp, err := c.doRequest(ctx, "DELETE", path, nil)
         if err != nil </span><span class="cov0" title="0">{
                 return err
@@ -707,7 +707,7 @@ func (c *giteaClient) DeleteOrganization(ctx context.Context, name string) error
 
         <span class="cov8" title="1">return handleResponse(resp, nil)</span>
 }</pre>
-		
+
 		<pre class="file" id="file3" style="display: none">/*
 Copyright 2024 The Crossplane Authors.
 
@@ -734,7 +734,7 @@ import (
 // GetRepository retrieves a repository by owner and name
 func (c *giteaClient) GetRepository(ctx context.Context, owner, name string) (*Repository, error) <span class="cov8" title="1">{
         path := fmt.Sprintf("/repos/%s/%s", owner, name)
-        
+
         resp, err := c.doRequest(ctx, "GET", path, nil)
         if err != nil </span><span class="cov0" title="0">{
                 return nil, err
@@ -751,7 +751,7 @@ func (c *giteaClient) GetRepository(ctx context.Context, owner, name string) (*R
 // CreateRepository creates a new repository
 func (c *giteaClient) CreateRepository(ctx context.Context, req *CreateRepositoryRequest) (*Repository, error) <span class="cov8" title="1">{
         path := "/user/repos"
-        
+
         resp, err := c.doRequest(ctx, "POST", path, req)
         if err != nil </span><span class="cov0" title="0">{
                 return nil, err
@@ -768,7 +768,7 @@ func (c *giteaClient) CreateRepository(ctx context.Context, req *CreateRepositor
 // CreateOrganizationRepository creates a new repository in an organization
 func (c *giteaClient) CreateOrganizationRepository(ctx context.Context, org string, req *CreateRepositoryRequest) (*Repository, error) <span class="cov0" title="0">{
         path := fmt.Sprintf("/orgs/%s/repos", org)
-        
+
         resp, err := c.doRequest(ctx, "POST", path, req)
         if err != nil </span><span class="cov0" title="0">{
                 return nil, err
@@ -785,7 +785,7 @@ func (c *giteaClient) CreateOrganizationRepository(ctx context.Context, org stri
 // UpdateRepository updates an existing repository
 func (c *giteaClient) UpdateRepository(ctx context.Context, owner, name string, req *UpdateRepositoryRequest) (*Repository, error) <span class="cov8" title="1">{
         path := fmt.Sprintf("/repos/%s/%s", owner, name)
-        
+
         resp, err := c.doRequest(ctx, "PATCH", path, req)
         if err != nil </span><span class="cov0" title="0">{
                 return nil, err
@@ -802,7 +802,7 @@ func (c *giteaClient) UpdateRepository(ctx context.Context, owner, name string, 
 // DeleteRepository deletes a repository
 func (c *giteaClient) DeleteRepository(ctx context.Context, owner, name string) error <span class="cov8" title="1">{
         path := fmt.Sprintf("/repos/%s/%s", owner, name)
-        
+
         resp, err := c.doRequest(ctx, "DELETE", path, nil)
         if err != nil </span><span class="cov0" title="0">{
                 return err
@@ -810,7 +810,7 @@ func (c *giteaClient) DeleteRepository(ctx context.Context, owner, name string) 
 
         <span class="cov8" title="1">return handleResponse(resp, nil)</span>
 }</pre>
-		
+
 		<pre class="file" id="file4" style="display: none">/*
 Copyright 2024 The Crossplane Authors.
 
@@ -837,7 +837,7 @@ import (
 // GetUser retrieves a user by username
 func (c *giteaClient) GetUser(ctx context.Context, username string) (*User, error) <span class="cov8" title="1">{
         path := fmt.Sprintf("/users/%s", username)
-        
+
         resp, err := c.doRequest(ctx, "GET", path, nil)
         if err != nil </span><span class="cov0" title="0">{
                 return nil, err
@@ -854,7 +854,7 @@ func (c *giteaClient) GetUser(ctx context.Context, username string) (*User, erro
 // CreateUser creates a new user (admin only)
 func (c *giteaClient) CreateUser(ctx context.Context, req *CreateUserRequest) (*User, error) <span class="cov8" title="1">{
         path := "/admin/users"
-        
+
         resp, err := c.doRequest(ctx, "POST", path, req)
         if err != nil </span><span class="cov0" title="0">{
                 return nil, err
@@ -871,7 +871,7 @@ func (c *giteaClient) CreateUser(ctx context.Context, req *CreateUserRequest) (*
 // UpdateUser updates an existing user (admin only)
 func (c *giteaClient) UpdateUser(ctx context.Context, username string, req *UpdateUserRequest) (*User, error) <span class="cov8" title="1">{
         path := fmt.Sprintf("/admin/users/%s", username)
-        
+
         resp, err := c.doRequest(ctx, "PATCH", path, req)
         if err != nil </span><span class="cov0" title="0">{
                 return nil, err
@@ -888,7 +888,7 @@ func (c *giteaClient) UpdateUser(ctx context.Context, username string, req *Upda
 // DeleteUser deletes a user (admin only)
 func (c *giteaClient) DeleteUser(ctx context.Context, username string) error <span class="cov8" title="1">{
         path := fmt.Sprintf("/admin/users/%s", username)
-        
+
         resp, err := c.doRequest(ctx, "DELETE", path, nil)
         if err != nil </span><span class="cov0" title="0">{
                 return err
@@ -896,7 +896,7 @@ func (c *giteaClient) DeleteUser(ctx context.Context, username string) error <sp
 
         <span class="cov8" title="1">return handleResponse(resp, nil)</span>
 }</pre>
-		
+
 		<pre class="file" id="file5" style="display: none">/*
 Copyright 2024 The Crossplane Authors.
 
@@ -923,7 +923,7 @@ import (
 // GetRepositoryWebhook retrieves a webhook by repository and webhook ID
 func (c *giteaClient) GetRepositoryWebhook(ctx context.Context, owner, repo string, id int64) (*Webhook, error) <span class="cov8" title="1">{
         path := fmt.Sprintf("/repos/%s/%s/hooks/%d", owner, repo, id)
-        
+
         resp, err := c.doRequest(ctx, "GET", path, nil)
         if err != nil </span><span class="cov0" title="0">{
                 return nil, err
@@ -940,7 +940,7 @@ func (c *giteaClient) GetRepositoryWebhook(ctx context.Context, owner, repo stri
 // CreateRepositoryWebhook creates a new webhook for a repository
 func (c *giteaClient) CreateRepositoryWebhook(ctx context.Context, owner, repo string, req *CreateWebhookRequest) (*Webhook, error) <span class="cov8" title="1">{
         path := fmt.Sprintf("/repos/%s/%s/hooks", owner, repo)
-        
+
         resp, err := c.doRequest(ctx, "POST", path, req)
         if err != nil </span><span class="cov0" title="0">{
                 return nil, err
@@ -957,7 +957,7 @@ func (c *giteaClient) CreateRepositoryWebhook(ctx context.Context, owner, repo s
 // UpdateRepositoryWebhook updates an existing webhook
 func (c *giteaClient) UpdateRepositoryWebhook(ctx context.Context, owner, repo string, id int64, req *UpdateWebhookRequest) (*Webhook, error) <span class="cov8" title="1">{
         path := fmt.Sprintf("/repos/%s/%s/hooks/%d", owner, repo, id)
-        
+
         resp, err := c.doRequest(ctx, "PATCH", path, req)
         if err != nil </span><span class="cov0" title="0">{
                 return nil, err
@@ -974,7 +974,7 @@ func (c *giteaClient) UpdateRepositoryWebhook(ctx context.Context, owner, repo s
 // DeleteRepositoryWebhook deletes a webhook
 func (c *giteaClient) DeleteRepositoryWebhook(ctx context.Context, owner, repo string, id int64) error <span class="cov8" title="1">{
         path := fmt.Sprintf("/repos/%s/%s/hooks/%d", owner, repo, id)
-        
+
         resp, err := c.doRequest(ctx, "DELETE", path, nil)
         if err != nil </span><span class="cov0" title="0">{
                 return err
@@ -986,7 +986,7 @@ func (c *giteaClient) DeleteRepositoryWebhook(ctx context.Context, owner, repo s
 // GetOrganizationWebhook retrieves a webhook by organization and webhook ID
 func (c *giteaClient) GetOrganizationWebhook(ctx context.Context, org string, id int64) (*Webhook, error) <span class="cov8" title="1">{
         path := fmt.Sprintf("/orgs/%s/hooks/%d", org, id)
-        
+
         resp, err := c.doRequest(ctx, "GET", path, nil)
         if err != nil </span><span class="cov0" title="0">{
                 return nil, err
@@ -1003,7 +1003,7 @@ func (c *giteaClient) GetOrganizationWebhook(ctx context.Context, org string, id
 // CreateOrganizationWebhook creates a new webhook for an organization
 func (c *giteaClient) CreateOrganizationWebhook(ctx context.Context, org string, req *CreateWebhookRequest) (*Webhook, error) <span class="cov8" title="1">{
         path := fmt.Sprintf("/orgs/%s/hooks", org)
-        
+
         resp, err := c.doRequest(ctx, "POST", path, req)
         if err != nil </span><span class="cov0" title="0">{
                 return nil, err
@@ -1020,7 +1020,7 @@ func (c *giteaClient) CreateOrganizationWebhook(ctx context.Context, org string,
 // UpdateOrganizationWebhook updates an existing organization webhook
 func (c *giteaClient) UpdateOrganizationWebhook(ctx context.Context, org string, id int64, req *UpdateWebhookRequest) (*Webhook, error) <span class="cov8" title="1">{
         path := fmt.Sprintf("/orgs/%s/hooks/%d", org, id)
-        
+
         resp, err := c.doRequest(ctx, "PATCH", path, req)
         if err != nil </span><span class="cov0" title="0">{
                 return nil, err
@@ -1037,7 +1037,7 @@ func (c *giteaClient) UpdateOrganizationWebhook(ctx context.Context, org string,
 // DeleteOrganizationWebhook deletes an organization webhook
 func (c *giteaClient) DeleteOrganizationWebhook(ctx context.Context, org string, id int64) error <span class="cov8" title="1">{
         path := fmt.Sprintf("/orgs/%s/hooks/%d", org, id)
-        
+
         resp, err := c.doRequest(ctx, "DELETE", path, nil)
         if err != nil </span><span class="cov0" title="0">{
                 return err
@@ -1045,7 +1045,7 @@ func (c *giteaClient) DeleteOrganizationWebhook(ctx context.Context, org string,
 
         <span class="cov8" title="1">return handleResponse(resp, nil)</span>
 }</pre>
-		
+
 		<pre class="file" id="file6" style="display: none">/*
 Copyright 2024 The Crossplane Authors.
 
@@ -1178,10 +1178,10 @@ func (c *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
         // Gitea organization secrets API doesn't support GET operations (returns 405)
         // So we use a write-through approach: assume the secret needs to be created/updated
         // since we can't verify its existence or current value
-        
+
         // Check if we have an external name - this indicates we've created it before
         resourceExists := meta.GetExternalName(cr) != ""
-        
+
         // Use secretName as external name for this resource if not already set
         if meta.GetExternalName(cr) == "" </span><span class="cov8" title="1">{
                 meta.SetExternalName(cr, secretName)
@@ -1323,7 +1323,7 @@ func (c *external) getSecretData(ctx context.Context, cr *v1alpha1.OrganizationS
 
         <span class="cov0" title="0">return "", errors.New("either data or dataFrom must be specified")</span>
 }</pre>
-		
+
 		<pre class="file" id="file7" style="display: none">/*
 Copyright 2024 The Crossplane Authors.
 
@@ -1542,7 +1542,7 @@ func (c *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
         }</span>
 
         <span class="cov8" title="1">meta.SetExternalName(cr, repository.Name)
-        
+
         return managed.ExternalCreation{}, nil</span>
 }
 
@@ -1558,7 +1558,7 @@ func (c *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
         }</span>
 
         <span class="cov0" title="0">externalName := meta.GetExternalName(cr)
-        
+
         req := &amp;giteaclients.UpdateRepositoryRequest{}
 
         if cr.Spec.ForProvider.Description != nil </span><span class="cov0" title="0">{
@@ -1644,7 +1644,7 @@ func (c *external) Delete(ctx context.Context, mg resource.Managed) (managed.Ext
         }</span>
 
         <span class="cov8" title="1">externalName := meta.GetExternalName(cr)
-        
+
         err := c.client.DeleteRepository(ctx, *owner, externalName)
         if err != nil </span><span class="cov8" title="1">{
                 return managed.ExternalDelete{}, errors.Wrap(err, errDeleteRepository)
@@ -1670,10 +1670,10 @@ func (c *external) isUpToDate(cr *v1alpha1.Repository, repository *giteaclients.
         <span class="cov8" title="1">if cr.Spec.ForProvider.Archived != nil &amp;&amp; *cr.Spec.ForProvider.Archived != repository.Archived </span><span class="cov0" title="0">{
                 return false
         }</span>
-        
+
         <span class="cov8" title="1">return true</span>
 }</pre>
-		
+
 		</div>
 	</body>
 	<script>

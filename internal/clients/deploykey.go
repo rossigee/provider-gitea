@@ -42,7 +42,7 @@ type CreateDeployKeyRequest struct {
 // GetDeployKey retrieves a deploy key by repository and key ID
 func (c *giteaClient) GetDeployKey(ctx context.Context, owner, repo string, id int64) (*DeployKey, error) {
 	path := fmt.Sprintf("/repos/%s/%s/keys/%d", owner, repo, id)
-	
+
 	resp, err := c.doRequest(ctx, "GET", path, nil)
 	if err != nil {
 		return nil, err
@@ -59,7 +59,7 @@ func (c *giteaClient) GetDeployKey(ctx context.Context, owner, repo string, id i
 // CreateDeployKey creates a new deploy key for a repository
 func (c *giteaClient) CreateDeployKey(ctx context.Context, owner, repo string, req *CreateDeployKeyRequest) (*DeployKey, error) {
 	path := fmt.Sprintf("/repos/%s/%s/keys", owner, repo)
-	
+
 	resp, err := c.doRequest(ctx, "POST", path, req)
 	if err != nil {
 		return nil, err
@@ -76,7 +76,7 @@ func (c *giteaClient) CreateDeployKey(ctx context.Context, owner, repo string, r
 // DeleteDeployKey deletes a deploy key
 func (c *giteaClient) DeleteDeployKey(ctx context.Context, owner, repo string, id int64) error {
 	path := fmt.Sprintf("/repos/%s/%s/keys/%d", owner, repo, id)
-	
+
 	resp, err := c.doRequest(ctx, "DELETE", path, nil)
 	if err != nil {
 		return err

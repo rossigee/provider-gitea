@@ -24,7 +24,7 @@ import (
 // GetUser retrieves a user by username
 func (c *giteaClient) GetUser(ctx context.Context, username string) (*User, error) {
 	path := fmt.Sprintf("/users/%s", username)
-	
+
 	resp, err := c.doRequest(ctx, "GET", path, nil)
 	if err != nil {
 		return nil, err
@@ -41,7 +41,7 @@ func (c *giteaClient) GetUser(ctx context.Context, username string) (*User, erro
 // CreateUser creates a new user (admin only)
 func (c *giteaClient) CreateUser(ctx context.Context, req *CreateUserRequest) (*User, error) {
 	path := "/admin/users"
-	
+
 	resp, err := c.doRequest(ctx, "POST", path, req)
 	if err != nil {
 		return nil, err
@@ -58,7 +58,7 @@ func (c *giteaClient) CreateUser(ctx context.Context, req *CreateUserRequest) (*
 // UpdateUser updates an existing user (admin only)
 func (c *giteaClient) UpdateUser(ctx context.Context, username string, req *UpdateUserRequest) (*User, error) {
 	path := fmt.Sprintf("/admin/users/%s", username)
-	
+
 	resp, err := c.doRequest(ctx, "PATCH", path, req)
 	if err != nil {
 		return nil, err
@@ -75,7 +75,7 @@ func (c *giteaClient) UpdateUser(ctx context.Context, username string, req *Upda
 // DeleteUser deletes a user (admin only)
 func (c *giteaClient) DeleteUser(ctx context.Context, username string) error {
 	path := fmt.Sprintf("/admin/users/%s", username)
-	
+
 	resp, err := c.doRequest(ctx, "DELETE", path, nil)
 	if err != nil {
 		return err

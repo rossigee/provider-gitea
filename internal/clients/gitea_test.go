@@ -119,12 +119,12 @@ func TestNewClient(t *testing.T) {
 			// Create fake kubernetes client
 			scheme := runtime.NewScheme()
 			_ = corev1.AddToScheme(scheme)
-			
+
 			objects := []runtime.Object{}
 			if tt.secret != nil {
 				objects = append(objects, tt.secret)
 			}
-			
+
 			kubeClient := fake.NewClientBuilder().
 				WithScheme(scheme).
 				WithRuntimeObjects(objects...).
@@ -696,7 +696,7 @@ func TestOrganizationSecretOperations(t *testing.T) {
 			// Gitea returns 405 for GET operations on organization secrets
 			w.Header().Set("Allow", "PUT, DELETE")
 			w.WriteHeader(http.StatusMethodNotAllowed)
-			
+
 		case r.Method == "PUT" && strings.Contains(r.URL.Path, "/orgs/testorg/actions/secrets/testsecret"):
 			// Verify request body
 			body, err := io.ReadAll(r.Body)
@@ -705,15 +705,15 @@ func TestOrganizationSecretOperations(t *testing.T) {
 			err = json.Unmarshal(body, &req)
 			require.NoError(t, err)
 			assert.Equal(t, "test-secret-value", req["data"])
-			
+
 			w.WriteHeader(http.StatusCreated)
-			
+
 		case r.Method == "PUT" && strings.Contains(r.URL.Path, "/orgs/testorg/actions/secrets/newsecret"):
 			w.WriteHeader(http.StatusCreated)
-			
+
 		case r.Method == "DELETE" && strings.Contains(r.URL.Path, "/orgs/testorg/actions/secrets/testsecret"):
 			w.WriteHeader(http.StatusNoContent)
-			
+
 		default:
 			t.Logf("Unexpected request: %s %s", r.Method, r.URL.Path)
 			w.WriteHeader(http.StatusNotFound)

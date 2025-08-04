@@ -10,20 +10,20 @@ spec:
   forProvider:
     # Runner scope: repository, organization, or system
     scope: "repository"
-    
+
     # Repository in owner/name format for repository scope
     scopeValue: "example-org/webapp"
-    
+
     # Runner name and description
     name: "WebApp Dedicated Runner"
     description: "Dedicated runner for webapp builds and deployments"
-    
+
     # Labels for job targeting
     labels:
       - "ubuntu-latest"
       - "nodejs"
       - "docker"
       - "webapp-specific"
-    
+
   providerConfigRef:
     name: default

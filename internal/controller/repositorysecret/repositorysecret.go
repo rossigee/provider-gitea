@@ -39,13 +39,13 @@ import (
 )
 
 const (
-	errNotRepositorySecret = "managed resource is not a RepositorySecret custom resource"
-	errTrackPCUsage        = "cannot track ProviderConfig usage"
-	errGetPC               = "cannot get ProviderConfig"
-	errGetCreds            = "cannot get credentials"
-	errNewClient           = "cannot create new Service"
-	errGetSecret           = "cannot get secret from Kubernetes"
-	errGetRepositorySecret = "cannot get repository secret"
+	errNotRepositorySecret    = "managed resource is not a RepositorySecret custom resource"
+	errTrackPCUsage           = "cannot track ProviderConfig usage"
+	errGetPC                  = "cannot get ProviderConfig"
+	errGetCreds               = "cannot get credentials"
+	errNewClient              = "cannot create new Service"
+	errGetSecret              = "cannot get secret from Kubernetes"
+	errGetRepositorySecret    = "cannot get repository secret"
 	errCreateRepositorySecret = "cannot create repository secret"
 	errUpdateRepositorySecret = "cannot update repository secret"
 	errDeleteRepositorySecret = "cannot delete repository secret"

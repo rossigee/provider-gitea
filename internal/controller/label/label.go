@@ -39,17 +39,17 @@ import (
 )
 
 const (
-	errNotLabel       = "managed resource is not a Label custom resource"
-	errTrackPCUsage   = "cannot track ProviderConfig usage"
-	errGetPC          = "cannot get ProviderConfig"
-	errGetCreds       = "cannot get credentials"
-	errNewClient      = "cannot create new Service"
-	errCreateLabel    = "cannot create label"
-	errUpdateLabel    = "cannot update label"
-	errDeleteLabel    = "cannot delete label"
-	errGetLabel       = "cannot get label"
-	errParseLabelID   = "cannot parse label ID"
-	errParseRepo      = "cannot parse repository (expected owner/repo format)"
+	errNotLabel     = "managed resource is not a Label custom resource"
+	errTrackPCUsage = "cannot track ProviderConfig usage"
+	errGetPC        = "cannot get ProviderConfig"
+	errGetCreds     = "cannot get credentials"
+	errNewClient    = "cannot create new Service"
+	errCreateLabel  = "cannot create label"
+	errUpdateLabel  = "cannot update label"
+	errDeleteLabel  = "cannot delete label"
+	errGetLabel     = "cannot get label"
+	errParseLabelID = "cannot parse label ID"
+	errParseRepo    = "cannot parse repository (expected owner/repo format)"
 )
 
 // Setup adds a controller that reconciles Label managed resources.
@@ -200,7 +200,7 @@ func (c *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 
 	// Set external name to the label ID
 	meta.SetExternalName(cr, strconv.FormatInt(label.ID, 10))
-	
+
 	return managed.ExternalCreation{}, nil
 }
 
@@ -222,7 +222,7 @@ func (c *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 	if err != nil {
 		return managed.ExternalUpdate{}, errors.Wrap(err, errParseLabelID)
 	}
-	
+
 	req := &giteaclients.UpdateLabelRequest{}
 
 	if cr.Spec.ForProvider.Name != "" {
@@ -266,7 +266,7 @@ func (c *external) Delete(ctx context.Context, mg resource.Managed) (managed.Ext
 	if err != nil {
 		return managed.ExternalDelete{}, errors.Wrap(err, errParseLabelID)
 	}
-	
+
 	err = c.client.DeleteLabel(ctx, owner, repo, labelID)
 	if err != nil {
 		return managed.ExternalDelete{}, errors.Wrap(err, errDeleteLabel)
@@ -289,6 +289,6 @@ func (c *external) isUpToDate(cr *v1alpha1.Label, label *giteaclients.Label) boo
 	if cr.Spec.ForProvider.Exclusive != nil && *cr.Spec.ForProvider.Exclusive != label.Exclusive {
 		return false
 	}
-	
+
 	return true
 }

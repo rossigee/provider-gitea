@@ -11,23 +11,23 @@ spec:
       #!/bin/bash
       # Pre-receive hook example
       # This hook runs before any ref is updated
-      
+
       while read oldrev newrev refname; do
           echo "Checking ref: $refname"
-          
+
           # Reject pushes to protected branch from non-admin users
           if [[ $refname == "refs/heads/main" ]]; then
               echo "Push to main branch - checking permissions..."
               # Add your validation logic here
           fi
-          
+
           # Check commit message format
           if git log --format=%s $oldrev..$newrev | grep -v "^[A-Z]\+: "; then
               echo "Error: Commit messages must follow format 'TYPE: description'"
               exit 1
           fi
       done
-      
+
       echo "Pre-receive validation passed"
       exit 0
   providerConfigRef:

@@ -24,7 +24,7 @@ import (
 
 // OrganizationSecretParameters define the desired state of a Gitea Organization Secret
 type OrganizationSecretParameters struct {
-	// Organization is the organization name that owns the secret  
+	// Organization is the organization name that owns the secret
 	// +kubebuilder:validation:Required
 	// +kubebuilder:validation:Pattern="^[a-zA-Z0-9]([a-zA-Z0-9._-]*[a-zA-Z0-9])?$"
 	Organization string `json:"organization"`

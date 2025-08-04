@@ -38,13 +38,13 @@ import (
 )
 
 const (
-	errNotOrganizationMember = "managed resource is not a OrganizationMember custom resource"
-	errTrackPCUsage          = "cannot track ProviderConfig usage"
-	errGetPC                 = "cannot get ProviderConfig"
-	errGetCreds              = "cannot get credentials"
-	errNewClient             = "cannot create new Service"
-	errGetOrganizationMember = "cannot get organization member"
-	errAddOrganizationMember = "cannot add organization member"
+	errNotOrganizationMember    = "managed resource is not a OrganizationMember custom resource"
+	errTrackPCUsage             = "cannot track ProviderConfig usage"
+	errGetPC                    = "cannot get ProviderConfig"
+	errGetCreds                 = "cannot get credentials"
+	errNewClient                = "cannot create new Service"
+	errGetOrganizationMember    = "cannot get organization member"
+	errAddOrganizationMember    = "cannot add organization member"
 	errUpdateOrganizationMember = "cannot update organization member"
 	errRemoveOrganizationMember = "cannot remove organization member"
 )

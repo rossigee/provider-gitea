@@ -24,7 +24,7 @@ import (
 // GetOrganization retrieves an organization by name
 func (c *giteaClient) GetOrganization(ctx context.Context, name string) (*Organization, error) {
 	path := fmt.Sprintf("/orgs/%s", name)
-	
+
 	resp, err := c.doRequest(ctx, "GET", path, nil)
 	if err != nil {
 		return nil, err
@@ -41,7 +41,7 @@ func (c *giteaClient) GetOrganization(ctx context.Context, name string) (*Organi
 // CreateOrganization creates a new organization
 func (c *giteaClient) CreateOrganization(ctx context.Context, req *CreateOrganizationRequest) (*Organization, error) {
 	path := "/orgs"
-	
+
 	resp, err := c.doRequest(ctx, "POST", path, req)
 	if err != nil {
 		return nil, err
@@ -58,7 +58,7 @@ func (c *giteaClient) CreateOrganization(ctx context.Context, req *CreateOrganiz
 // UpdateOrganization updates an existing organization
 func (c *giteaClient) UpdateOrganization(ctx context.Context, name string, req *UpdateOrganizationRequest) (*Organization, error) {
 	path := fmt.Sprintf("/orgs/%s", name)
-	
+
 	resp, err := c.doRequest(ctx, "PATCH", path, req)
 	if err != nil {
 		return nil, err
@@ -75,7 +75,7 @@ func (c *giteaClient) UpdateOrganization(ctx context.Context, name string, req *
 // DeleteOrganization deletes an organization
 func (c *giteaClient) DeleteOrganization(ctx context.Context, name string) error {
 	path := fmt.Sprintf("/orgs/%s", name)
-	
+
 	resp, err := c.doRequest(ctx, "DELETE", path, nil)
 	if err != nil {
 		return err

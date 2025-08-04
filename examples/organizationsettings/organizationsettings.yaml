@@ -12,7 +12,7 @@ spec:
     membersCanCreatePrivate: false
     membersCanCreateInternal: true
     membersCanDeleteRepos: false
-    # Member collaboration permissions  
+    # Member collaboration permissions
     membersCanFork: true
     membersCanCreatePages: false
     # Default settings for new repositories

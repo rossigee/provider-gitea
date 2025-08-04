@@ -172,10 +172,10 @@ func (c *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 	cr.SetConditions(xpv1.Creating())
 
 	req := &giteaclients.CreateRepositoryRequest{
-		Name:         cr.Spec.ForProvider.Name,
-		AutoInit:     cr.Spec.ForProvider.AutoInit != nil && *cr.Spec.ForProvider.AutoInit,
-		Private:      cr.Spec.ForProvider.Private != nil && *cr.Spec.ForProvider.Private,
-		Template:     cr.Spec.ForProvider.Template != nil && *cr.Spec.ForProvider.Template,
+		Name:     cr.Spec.ForProvider.Name,
+		AutoInit: cr.Spec.ForProvider.AutoInit != nil && *cr.Spec.ForProvider.AutoInit,
+		Private:  cr.Spec.ForProvider.Private != nil && *cr.Spec.ForProvider.Private,
+		Template: cr.Spec.ForProvider.Template != nil && *cr.Spec.ForProvider.Template,
 	}
 
 	if cr.Spec.ForProvider.Description != nil {
@@ -216,7 +216,7 @@ func (c *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 	}
 
 	meta.SetExternalName(cr, repository.Name)
-	
+
 	return managed.ExternalCreation{}, nil
 }
 
@@ -232,7 +232,7 @@ func (c *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 	}
 
 	externalName := meta.GetExternalName(cr)
-	
+
 	req := &giteaclients.UpdateRepositoryRequest{}
 
 	if cr.Spec.ForProvider.Description != nil {
@@ -318,7 +318,7 @@ func (c *external) Delete(ctx context.Context, mg resource.Managed) (managed.Ext
 	}
 
 	externalName := meta.GetExternalName(cr)
-	
+
 	err := c.client.DeleteRepository(ctx, *owner, externalName)
 	if err != nil {
 		return managed.ExternalDelete{}, errors.Wrap(err, errDeleteRepository)
@@ -344,6 +344,6 @@ func (c *external) isUpToDate(cr *v1alpha1.Repository, repository *giteaclients.
 	if cr.Spec.ForProvider.Archived != nil && *cr.Spec.ForProvider.Archived != repository.Archived {
 		return false
 	}
-	
+
 	return true
 }

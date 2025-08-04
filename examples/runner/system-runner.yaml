@@ -10,10 +10,10 @@ spec:
   forProvider:
     scope: "system"
     # No scopeValue needed for system scope
-    
+
     name: "System Maintenance Runner"
     description: "System-wide runner for maintenance and administrative tasks"
-    
+
     labels:
       - "ubuntu-latest"
       - "maintenance"
@@ -21,6 +21,6 @@ spec:
       - "system-tasks"
       - "backup"
       - "cleanup"
-    
+
   providerConfigRef:
     name: default

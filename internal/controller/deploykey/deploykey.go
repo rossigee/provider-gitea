@@ -39,10 +39,10 @@ import (
 
 const (
 	errNotDeployKey    = "managed resource is not a DeployKey custom resource"
-	errTrackPCUsage       = "cannot track ProviderConfig usage"
-	errGetPC              = "cannot get ProviderConfig"
-	errGetCreds           = "cannot get credentials"
-	errNewClient          = "cannot create new Service"
+	errTrackPCUsage    = "cannot track ProviderConfig usage"
+	errGetPC           = "cannot get ProviderConfig"
+	errGetCreds        = "cannot get credentials"
+	errNewClient       = "cannot create new Service"
 	errCreateDeployKey = "cannot create deploy key"
 	errUpdateDeployKey = "cannot update deploy key"
 	errDeleteDeployKey = "cannot delete deploy key"
@@ -171,7 +171,7 @@ func (c *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 		Key:      cr.Spec.ForProvider.Key,
 		ReadOnly: *cr.Spec.ForProvider.ReadOnly,
 	}
-	
+
 	deployKey, err := c.client.CreateDeployKey(ctx, cr.Spec.ForProvider.Owner, cr.Spec.ForProvider.Repository, req)
 	if err != nil {
 		return managed.ExternalCreation{}, errors.Wrap(err, errCreateDeployKey)
@@ -195,7 +195,7 @@ func (c *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 	// The common pattern is to delete and recreate them
 	// For now, return success without changes
 	// TODO: Implement delete-and-recreate pattern if needed
-	
+
 	return managed.ExternalUpdate{
 		ConnectionDetails: managed.ConnectionDetails{},
 	}, nil

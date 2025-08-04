@@ -14,7 +14,7 @@ for file in "$@"; do
             echo "ERROR: $file - API types should embed metav1.TypeMeta"
             ((errors++))
         fi
-        
+
         # Check for required Crossplane resource embedding for managed resources
         if grep -q "type.*struct" "$file" && [[ "$file" != *"/v1beta1/"* ]]; then
             if ! grep -q "xpv1.ResourceSpec" "$file" && ! grep -q "xpv1.ResourceStatus" "$file"; then
@@ -22,14 +22,14 @@ for file in "$@"; do
             fi
         fi
     fi
-    
+
     # Check controller patterns
     if [[ "$file" == *"/internal/controller/"* ]]; then
         # Check for proper error wrapping
         if grep -q "return.*err" "$file" && ! grep -q "errors.Wrap\|fmt.Errorf" "$file"; then
             echo "WARNING: $file - Consider using error wrapping for better error context"
         fi
-        
+
         # Check for proper reconcile result patterns
         if grep -q "ctrl.Result" "$file" && ! grep -q "reconcile.Result" "$file"; then
             echo "WARNING: $file - Use reconcile.Result instead of ctrl.Result for consistency"

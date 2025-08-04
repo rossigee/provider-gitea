@@ -27,8 +27,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
-	"github.com/crossplane/crossplane-runtime/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/pkg/meta"
+	"github.com/crossplane/crossplane-runtime/pkg/reconciler/managed"
 
 	"github.com/crossplane-contrib/provider-gitea/apis/organizationsecret/v1alpha1"
 	giteaclients "github.com/crossplane-contrib/provider-gitea/internal/clients"
@@ -188,7 +188,7 @@ func (m *MockGiteaClient) ListOrganizationTeams(ctx context.Context, org string)
 	return nil, nil
 }
 
-// Label operations - mock implementations  
+// Label operations - mock implementations
 func (m *MockGiteaClient) GetLabel(ctx context.Context, owner, repo string, id int64) (*giteaclients.Label, error) {
 	return nil, nil
 }
@@ -384,18 +384,34 @@ func (m *MockGiteaClient) DeleteAdminUser(ctx context.Context, username string) 
 }
 
 // GitHook methods
-func (m *MockGiteaClient) GetGitHook(ctx context.Context, repository, hookType string) (*giteaclients.GitHook, error) { return nil, nil }
-func (m *MockGiteaClient) CreateGitHook(ctx context.Context, repository string, req *giteaclients.CreateGitHookRequest) (*giteaclients.GitHook, error) { return nil, nil }
-func (m *MockGiteaClient) UpdateGitHook(ctx context.Context, repository, hookType string, req *giteaclients.UpdateGitHookRequest) (*giteaclients.GitHook, error) { return nil, nil }
-func (m *MockGiteaClient) DeleteGitHook(ctx context.Context, repository, hookType string) error { return nil }
+func (m *MockGiteaClient) GetGitHook(ctx context.Context, repository, hookType string) (*giteaclients.GitHook, error) {
+	return nil, nil
+}
+func (m *MockGiteaClient) CreateGitHook(ctx context.Context, repository string, req *giteaclients.CreateGitHookRequest) (*giteaclients.GitHook, error) {
+	return nil, nil
+}
+func (m *MockGiteaClient) UpdateGitHook(ctx context.Context, repository, hookType string, req *giteaclients.UpdateGitHookRequest) (*giteaclients.GitHook, error) {
+	return nil, nil
+}
+func (m *MockGiteaClient) DeleteGitHook(ctx context.Context, repository, hookType string) error {
+	return nil
+}
 
-// Action methods  
-func (m *MockGiteaClient) EnableAction(ctx context.Context, repository, workflowName string) error { return nil }
-func (m *MockGiteaClient) DisableAction(ctx context.Context, repository, workflowName string) error { return nil }
+// Action methods
+func (m *MockGiteaClient) EnableAction(ctx context.Context, repository, workflowName string) error {
+	return nil
+}
+func (m *MockGiteaClient) DisableAction(ctx context.Context, repository, workflowName string) error {
+	return nil
+}
 
 // OrganizationSettings methods
-func (m *MockGiteaClient) GetOrganizationSettings(ctx context.Context, org string) (*giteaclients.OrganizationSettings, error) { return nil, nil }
-func (m *MockGiteaClient) UpdateOrganizationSettings(ctx context.Context, org string, req *giteaclients.UpdateOrganizationSettingsRequest) (*giteaclients.OrganizationSettings, error) { return nil, nil }
+func (m *MockGiteaClient) GetOrganizationSettings(ctx context.Context, org string) (*giteaclients.OrganizationSettings, error) {
+	return nil, nil
+}
+func (m *MockGiteaClient) UpdateOrganizationSettings(ctx context.Context, org string, req *giteaclients.UpdateOrganizationSettingsRequest) (*giteaclients.OrganizationSettings, error) {
+	return nil, nil
+}
 
 func TestOrganizationSecretObserve(t *testing.T) {
 	tests := []struct {

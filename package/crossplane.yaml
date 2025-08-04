@@ -9,7 +9,7 @@ metadata:
     meta.crossplane.io/description: |
       A comprehensive Crossplane provider for managing Gitea with enterprise security, CI/CD integration, and administrative capabilities.
     meta.crossplane.io/readme: |
-      This provider enables declarative management of Gitea instances through Kubernetes custom resources with enterprise-grade features. 
+      This provider enables declarative management of Gitea instances through Kubernetes custom resources with enterprise-grade features.
       It supports repository management, organization control, user administration, security enforcement, CI/CD integration, and complete automation workflows.
 
       ## Core Features
@@ -17,19 +17,19 @@ metadata:
       - **Organization Management**: Organizations, settings, and membership control
       - **User Administration**: Administrative user management with privilege controls
       - **Webhook Management**: Repository and organization webhook configurations
-      
+
       ## Security Features (NEW)
       - **Branch Protection**: Enterprise-grade branch protection with approval workflows
       - **SSH Key Management**: User and repository SSH key lifecycle management
       - **Access Token Management**: Scoped API token management with security controls
       - **Repository Secrets**: Secure CI/CD secret management with Kubernetes integration
       - **Organization Membership**: Team membership with role-based access control
-      
+
       ## CI/CD Integration (NEW)
       - **Actions Workflows**: Declarative CI/CD pipeline management
       - **Self-hosted Runners**: Multi-scope runner management (repository, organization, system)
       - **Complete CI/CD Automation**: End-to-end DevOps workflow orchestration
-      
+
       ## Administrative Features (NEW)
       - **Administrative Users**: Service account and admin user lifecycle management
       - **Enterprise Security**: Comprehensive security policy enforcement
@@ -44,7 +44,7 @@ metadata:
       ## Example Enterprise Setup
       See `examples/enterprise-complete-setup.yaml` for a comprehensive enterprise configuration including:
       - Administrative users and service accounts
-      - Branch protection and security policies  
+      - Branch protection and security policies
       - CI/CD runners and workflow automation
       - Complete security and compliance setup
 

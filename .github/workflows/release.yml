@@ -107,7 +107,7 @@ jobs:
       #   run: |
       #     echo "Uploading package to Upbound registry..."
       #     make xpkg.push PACKAGE_REGISTRY=xpkg.upbound.io VERSION=${{ steps.version.outputs.version }}
-      
+
       - name: Upload Package to GHCR
         if: "!contains(steps.version.outputs.version, '-')"
         run: |

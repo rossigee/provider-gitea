@@ -9,13 +9,13 @@ metadata:
 spec:
   forProvider:
     repository: "secure-org/backend-api"
-    workflowName: "security-scan.yml" 
+    workflowName: "security-scan.yml"
     branch: "main"
     commitMessage: "Add comprehensive security scanning workflow"
-    
+
     content: |
       name: Security Scanning Pipeline
-      
+
       on:
         push:
           branches: [ main, develop ]
@@ -24,50 +24,50 @@ spec:
         schedule:
           # Run security scans daily at 2 AM
           - cron: '0 2 * * *'
-      
+
       jobs:
         dependency-scan:
           name: Dependency Vulnerability Scan
           runs-on: ubuntu-latest
           steps:
             - uses: actions/checkout@v3
-            
+
             - name: Setup Node.js
               uses: actions/setup-node@v3
               with:
                 node-version: '18'
                 cache: 'npm'
-            
+
             - name: Install dependencies
               run: npm ci
-            
+
             - name: Audit dependencies
               run: npm audit --audit-level high
-            
+
             - name: Generate security report
               run: npm audit --json > security-report.json
-            
+
             - name: Upload security report
               uses: actions/upload-artifact@v3
               with:
                 name: security-report
                 path: security-report.json
-        
+
         code-scan:
           name: Static Code Analysis
           runs-on: ubuntu-latest
           steps:
             - uses: actions/checkout@v3
-            
+
             - name: Run CodeQL Analysis
               uses: github/codeql-action/analyze@v2
               with:
                 languages: javascript
-            
+
             - name: ESLint Security Rules
               run: |
                 npx eslint . --ext .js,.ts --config .eslintrc-security.json
-        
+
         secrets-scan:
           name: Secrets Detection
           runs-on: ubuntu-latest
@@ -75,43 +75,43 @@ spec:
             - uses: actions/checkout@v3
               with:
                 fetch-depth: 0
-            
+
             - name: TruffleHog Secrets Scan
               run: |
                 docker run --rm -v "$PWD:/pwd" trufflesecurity/trufflehog:latest \
                   filesystem /pwd --fail
-        
+
         container-scan:
           name: Container Security Scan
           runs-on: ubuntu-latest
           steps:
             - uses: actions/checkout@v3
-            
+
             - name: Build Docker image
               run: docker build -t security-scan-test .
-            
+
             - name: Trivy vulnerability scanner
               run: |
                 docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
                   -v $HOME/Library/Caches:/root/.cache/ \
                   aquasec/trivy image security-scan-test
-        
+
         compliance-check:
           name: Security Compliance Check
           runs-on: ubuntu-latest
           steps:
             - uses: actions/checkout@v3
-            
+
             - name: Check security headers
               run: |
                 # Validate security configuration files exist
                 test -f .security-policy.json || exit 1
                 test -f Dockerfile || exit 1
-                
+
             - name: Validate security policies
               run: |
                 # Custom security policy validation
                 npm run security:validate
-      
+
   providerConfigRef:
     name: default

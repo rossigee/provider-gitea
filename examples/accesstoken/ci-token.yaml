@@ -10,20 +10,20 @@ spec:
   forProvider:
     # Username that owns this token
     username: "ci-user"
-    
+
     # Descriptive name for the token
     name: "CI/CD Automation Token"
-    
+
     # Scoped permissions for CI/CD operations
     scopes:
       - "read:repository"
-      - "write:repository" 
+      - "write:repository"
       - "read:issue"
       - "write:issue"
       - "read:pull_request"
       - "write:pull_request"
       - "read:release"
       - "write:release"
-    
+
   providerConfigRef:
     name: default

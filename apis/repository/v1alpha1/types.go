@@ -73,20 +73,20 @@ type RepositoryParameters struct {
 	Website *string `json:"website,omitempty"`
 
 	// Settings for repository features
-	HasIssues *bool `json:"hasIssues,omitempty"`
-	HasWiki   *bool `json:"hasWiki,omitempty"`
+	HasIssues       *bool `json:"hasIssues,omitempty"`
+	HasWiki         *bool `json:"hasWiki,omitempty"`
 	HasPullRequests *bool `json:"hasPullRequests,omitempty"`
-	HasProjects *bool `json:"hasProjects,omitempty"`
-	HasReleases *bool `json:"hasReleases,omitempty"`
-	HasPackages *bool `json:"hasPackages,omitempty"`
-	HasActions  *bool `json:"hasActions,omitempty"`
+	HasProjects     *bool `json:"hasProjects,omitempty"`
+	HasReleases     *bool `json:"hasReleases,omitempty"`
+	HasPackages     *bool `json:"hasPackages,omitempty"`
+	HasActions      *bool `json:"hasActions,omitempty"`
 
 	// Merge settings
-	AllowMergeCommits     *bool `json:"allowMergeCommits,omitempty"`
-	AllowRebase           *bool `json:"allowRebase,omitempty"`
-	AllowRebaseExplicit   *bool `json:"allowRebaseExplicit,omitempty"`
-	AllowSquashMerge      *bool `json:"allowSquashMerge,omitempty"`
-	AllowRebaseUpdate     *bool `json:"allowRebaseUpdate,omitempty"`
+	AllowMergeCommits             *bool `json:"allowMergeCommits,omitempty"`
+	AllowRebase                   *bool `json:"allowRebase,omitempty"`
+	AllowRebaseExplicit           *bool `json:"allowRebaseExplicit,omitempty"`
+	AllowSquashMerge              *bool `json:"allowSquashMerge,omitempty"`
+	AllowRebaseUpdate             *bool `json:"allowRebaseUpdate,omitempty"`
 	DefaultDeleteBranchAfterMerge *bool `json:"defaultDeleteBranchAfterMerge,omitempty"`
 
 	// DefaultMergeStyle specifies the default merge style

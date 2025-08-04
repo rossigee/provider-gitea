@@ -9,16 +9,16 @@ metadata:
 spec:
   forProvider:
     repository: "myorg/internal-tools"
-    
+
     # SSH public key for admin access
     key: |
-      ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDH5vF2mN8xYzLkPo1qV3wJ9Kt7XnRp2C== 
+      ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDH5vF2mN8xYzLkPo1qV3wJ9Kt7XnRp2C==
       admin@company.com
-    
+
     title: "Admin Repository Access Key"
-    
+
     # Write access for administrative tasks
     readOnly: false
-    
+
   providerConfigRef:
     name: default

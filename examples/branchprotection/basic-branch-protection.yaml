@@ -11,21 +11,21 @@ spec:
     repository: "myorg/myapp"
     branch: "main"
     ruleName: "Basic main protection"
-    
+
     # Require at least one approval
     requiredApprovals: 1
-    
+
     # Block direct pushes
     enablePush: false
-    
+
     # Require status checks
     enableStatusCheck: true
     statusCheckContexts:
       - "ci/build"
       - "ci/test"
-    
+
     # Basic review protection
     blockOnRejectedReviews: true
-    
+
   providerConfigRef:
     name: default

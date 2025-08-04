@@ -40,15 +40,15 @@ import (
 )
 
 const (
-	errNotGitHook     = "managed resource is not a GitHook custom resource"
-	errTrackPCUsage   = "cannot track ProviderConfig usage"
-	errGetPC          = "cannot get ProviderConfig"
-	errGetCreds       = "cannot get credentials"
-	errNewClient      = "cannot create new Service"
-	errGetGitHook     = "cannot get git hook"
-	errCreateGitHook  = "cannot create git hook"
-	errUpdateGitHook  = "cannot update git hook"
-	errDeleteGitHook  = "cannot delete git hook"
+	errNotGitHook    = "managed resource is not a GitHook custom resource"
+	errTrackPCUsage  = "cannot track ProviderConfig usage"
+	errGetPC         = "cannot get ProviderConfig"
+	errGetCreds      = "cannot get credentials"
+	errNewClient     = "cannot create new Service"
+	errGetGitHook    = "cannot get git hook"
+	errCreateGitHook = "cannot create git hook"
+	errUpdateGitHook = "cannot update git hook"
+	errDeleteGitHook = "cannot delete git hook"
 )
 
 // Setup adds a controller that reconciles GitHook managed resources.

@@ -37,15 +37,15 @@ import (
 )
 
 const (
-	errNotUser    = "managed resource is not a User custom resource"
-	errTrackPCUsage       = "cannot track ProviderConfig usage"
-	errGetPC              = "cannot get ProviderConfig"
-	errGetCreds           = "cannot get credentials"
-	errNewClient          = "cannot create new Service"
-	errCreateUser = "cannot create user"
-	errUpdateUser = "cannot update user"
-	errDeleteUser = "cannot delete user"
-	errGetUser    = "cannot get user"
+	errNotUser      = "managed resource is not a User custom resource"
+	errTrackPCUsage = "cannot track ProviderConfig usage"
+	errGetPC        = "cannot get ProviderConfig"
+	errGetCreds     = "cannot get credentials"
+	errNewClient    = "cannot create new Service"
+	errCreateUser   = "cannot create user"
+	errUpdateUser   = "cannot update user"
+	errDeleteUser   = "cannot delete user"
+	errGetUser      = "cannot get user"
 )
 
 // Setup adds a controller that reconciles User managed resources.
@@ -169,7 +169,7 @@ func (c *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 		Email:    cr.Spec.ForProvider.Email,
 		Password: cr.Spec.ForProvider.Password,
 	}
-	
+
 	user, err := c.client.CreateUser(ctx, req)
 	if err != nil {
 		return managed.ExternalCreation{}, errors.Wrap(err, errCreateUser)
@@ -193,7 +193,7 @@ func (c *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 	req := &giteaclients.UpdateUserRequest{
 		Email: &cr.Spec.ForProvider.Email,
 	}
-	
+
 	_, err := c.client.UpdateUser(ctx, cr.Spec.ForProvider.Username, req)
 	if err != nil {
 		return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateUser)

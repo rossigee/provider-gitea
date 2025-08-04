@@ -130,10 +130,10 @@ func (c *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 	// Gitea organization secrets API doesn't support GET operations (returns 405)
 	// So we use a write-through approach: assume the secret needs to be created/updated
 	// since we can't verify its existence or current value
-	
+
 	// Check if we have an external name - this indicates we've created it before
 	resourceExists := meta.GetExternalName(cr) != ""
-	
+
 	// Use secretName as external name for this resource if not already set
 	if meta.GetExternalName(cr) == "" {
 		meta.SetExternalName(cr, secretName)

@@ -26,10 +26,10 @@ import (
 
 	"github.com/crossplane-contrib/provider-gitea/apis/v1beta1"
 	"github.com/crossplane-contrib/provider-gitea/internal/clients"
-	"k8s.io/apimachinery/pkg/runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
 func main() {
@@ -56,7 +56,7 @@ func main() {
 <body>
     <h1>🎉 Gitea Provider Test Client</h1>
     <p class="status">✅ Status: Running</p>
-    
+
     <div class="info">
         <h2>Provider Information</h2>
         <ul>
@@ -66,7 +66,7 @@ func main() {
             <li><strong>API Client:</strong> ✅ Ready</li>
             <li><strong>Supported Resources:</strong> Repository, Organization, User, Webhook, DeployKey</li>
         </ul>
-        
+
         <h2>Test Client Features</h2>
         <ul>
             <li>✅ HTTP Client Library (74.1%% test coverage)</li>
@@ -74,7 +74,7 @@ func main() {
             <li>✅ Authentication Support</li>
             <li>🔄 Crossplane Controllers (in development)</li>
         </ul>
-        
+
         <h2>Health Endpoints</h2>
         <ul>
             <li><a href="/health">/health</a> - Health check endpoint</li>
@@ -88,15 +88,15 @@ func main() {
 
 	http.HandleFunc("/test", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/plain")
-		
+
 		// Test that our client can be instantiated
 		log.Println("Running client test...")
-		
+
 		// Create a fake Kubernetes client for testing
 		scheme := runtime.NewScheme()
 		_ = corev1.AddToScheme(scheme)
 		_ = v1beta1.AddToScheme(scheme)
-		
+
 		secret := &corev1.Secret{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "gitea-credentials",
@@ -106,12 +106,12 @@ func main() {
 				"token": []byte("test-token"),
 			},
 		}
-		
+
 		kubeClient := fake.NewClientBuilder().
 			WithScheme(scheme).
 			WithRuntimeObjects(secret).
 			Build()
-		
+
 		// Create provider config
 		providerConfig := &v1beta1.ProviderConfig{
 			Spec: v1beta1.ProviderConfigSpec{
@@ -126,21 +126,21 @@ func main() {
 				},
 			},
 		}
-		
+
 		// Test client creation
 		giteaClient, err := clients.NewClient(context.Background(), providerConfig, kubeClient)
 		if err != nil {
 			_, _ = fmt.Fprintf(w, "❌ Client test failed: %v\n", err)
 			return
 		}
-		
+
 		_, _ = fmt.Fprintf(w, "✅ Client test passed!\n")
 		_, _ = fmt.Fprintf(w, "✅ Gitea client created successfully\n")
 		_, _ = fmt.Fprintf(w, "✅ Authentication configured\n")
 		_, _ = fmt.Fprintf(w, "✅ HTTP client ready\n")
 		_, _ = fmt.Fprintf(w, "\nThe Gitea provider client library is working correctly.\n")
 		_, _ = fmt.Fprintf(w, "Next steps: Complete Crossplane controller integration.\n")
-		
+
 		log.Println("Client test completed successfully")
 		_ = giteaClient // Use the client to avoid unused variable
 	})
@@ -155,7 +155,7 @@ func main() {
 	log.Printf("Health check: http://localhost:%s/health", port)
 	log.Printf("Web UI: http://localhost:%s/", port)
 	log.Printf("Client test: http://localhost:%s/test", port)
-	
+
 	if err := http.ListenAndServe(":"+port, nil); err != nil {
 		log.Fatal("Server failed to start:", err)
 	}

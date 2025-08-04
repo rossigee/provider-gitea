@@ -38,12 +38,12 @@ import (
 )
 
 const (
-	errNotRepositoryKey = "managed resource is not a RepositoryKey custom resource"
-	errTrackPCUsage     = "cannot track ProviderConfig usage"
-	errGetPC            = "cannot get ProviderConfig"
-	errGetCreds         = "cannot get credentials"
-	errNewClient        = "cannot create new Service"
-	errGetRepositoryKey = "cannot get repository key"
+	errNotRepositoryKey    = "managed resource is not a RepositoryKey custom resource"
+	errTrackPCUsage        = "cannot track ProviderConfig usage"
+	errGetPC               = "cannot get ProviderConfig"
+	errGetCreds            = "cannot get credentials"
+	errNewClient           = "cannot create new Service"
+	errGetRepositoryKey    = "cannot get repository key"
 	errCreateRepositoryKey = "cannot create repository key"
 	errUpdateRepositoryKey = "cannot update repository key"
 	errDeleteRepositoryKey = "cannot delete repository key"

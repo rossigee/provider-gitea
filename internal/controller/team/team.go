@@ -38,16 +38,16 @@ import (
 )
 
 const (
-	errNotTeam        = "managed resource is not a Team custom resource"
-	errTrackPCUsage   = "cannot track ProviderConfig usage"
-	errGetPC          = "cannot get ProviderConfig"
-	errGetCreds       = "cannot get credentials"
-	errNewClient      = "cannot create new Service"
-	errCreateTeam     = "cannot create team"
-	errUpdateTeam     = "cannot update team"
-	errDeleteTeam     = "cannot delete team"
-	errGetTeam        = "cannot get team"
-	errParseTeamID    = "cannot parse team ID"
+	errNotTeam      = "managed resource is not a Team custom resource"
+	errTrackPCUsage = "cannot track ProviderConfig usage"
+	errGetPC        = "cannot get ProviderConfig"
+	errGetCreds     = "cannot get credentials"
+	errNewClient    = "cannot create new Service"
+	errCreateTeam   = "cannot create team"
+	errUpdateTeam   = "cannot update team"
+	errDeleteTeam   = "cannot delete team"
+	errGetTeam      = "cannot get team"
+	errParseTeamID  = "cannot parse team ID"
 )
 
 // Setup adds a controller that reconciles Team managed resources.
@@ -192,7 +192,7 @@ func (c *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 
 	// Set external name to the team ID
 	meta.SetExternalName(cr, strconv.FormatInt(team.ID, 10))
-	
+
 	return managed.ExternalCreation{}, nil
 }
 
@@ -207,7 +207,7 @@ func (c *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 	if err != nil {
 		return managed.ExternalUpdate{}, errors.Wrap(err, errParseTeamID)
 	}
-	
+
 	req := &giteaclients.UpdateTeamRequest{}
 
 	if cr.Spec.ForProvider.Name != "" {
@@ -250,7 +250,7 @@ func (c *external) Delete(ctx context.Context, mg resource.Managed) (managed.Ext
 	if err != nil {
 		return managed.ExternalDelete{}, errors.Wrap(err, errParseTeamID)
 	}
-	
+
 	err = c.client.DeleteTeam(ctx, teamID)
 	if err != nil {
 		return managed.ExternalDelete{}, errors.Wrap(err, errDeleteTeam)
@@ -276,6 +276,6 @@ func (c *external) isUpToDate(cr *v1alpha1.Team, team *giteaclients.Team) bool {
 	if cr.Spec.ForProvider.IncludesAllRepositories != nil && *cr.Spec.ForProvider.IncludesAllRepositories != team.IncludesAllRepositories {
 		return false
 	}
-	
+
 	return true
 }

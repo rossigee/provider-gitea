@@ -40,15 +40,15 @@ import (
 )
 
 const (
-	errNotRunner     = "managed resource is not a Runner custom resource"
-	errTrackPCUsage  = "cannot track ProviderConfig usage"
-	errGetPC         = "cannot get ProviderConfig"
-	errGetCreds      = "cannot get credentials"
-	errNewClient     = "cannot create new Service"
-	errCreateRunner  = "cannot create runner"
-	errUpdateRunner  = "cannot update runner"
-	errDeleteRunner  = "cannot delete runner"
-	errGetRunner     = "cannot get runner"
+	errNotRunner    = "managed resource is not a Runner custom resource"
+	errTrackPCUsage = "cannot track ProviderConfig usage"
+	errGetPC        = "cannot get ProviderConfig"
+	errGetCreds     = "cannot get credentials"
+	errNewClient    = "cannot create new Service"
+	errCreateRunner = "cannot create runner"
+	errUpdateRunner = "cannot update runner"
+	errDeleteRunner = "cannot delete runner"
+	errGetRunner    = "cannot get runner"
 )
 
 // Setup adds a controller that reconciles Runner managed resources.
@@ -151,17 +151,17 @@ func (c *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 
 	// Update observed state
 	cr.Status.AtProvider = v1alpha1.RunnerObservation{
-		ID:          &runner.ID,
-		Name:        &runner.Name,
-		Status:      &runner.Status,
-		Labels:      runner.Labels,
-		Version:     &runner.Version,
-		UUID:        &runner.UUID,
-		LastOnline:  &runner.LastOnline,
-		CreatedAt:   &runner.CreatedAt,
-		UpdatedAt:   &runner.UpdatedAt,
-		Scope:       &runner.Scope,
-		ScopeValue:  &runner.ScopeValue,
+		ID:         &runner.ID,
+		Name:       &runner.Name,
+		Status:     &runner.Status,
+		Labels:     runner.Labels,
+		Version:    &runner.Version,
+		UUID:       &runner.UUID,
+		LastOnline: &runner.LastOnline,
+		CreatedAt:  &runner.CreatedAt,
+		UpdatedAt:  &runner.UpdatedAt,
+		Scope:      &runner.Scope,
+		ScopeValue: &runner.ScopeValue,
 	}
 
 	cr.SetConditions(xpv1.Available())

@@ -38,12 +38,12 @@ import (
 )
 
 const (
-	errNotUserKey = "managed resource is not a UserKey custom resource"
-	errTrackPCUsage = "cannot track ProviderConfig usage"
-	errGetPC        = "cannot get ProviderConfig"
-	errGetCreds     = "cannot get credentials"
-	errNewClient    = "cannot create new Service"
-	errGetUserKey   = "cannot get user key"
+	errNotUserKey    = "managed resource is not a UserKey custom resource"
+	errTrackPCUsage  = "cannot track ProviderConfig usage"
+	errGetPC         = "cannot get ProviderConfig"
+	errGetCreds      = "cannot get credentials"
+	errNewClient     = "cannot create new Service"
+	errGetUserKey    = "cannot get user key"
 	errCreateUserKey = "cannot create user key"
 	errUpdateUserKey = "cannot update user key"
 	errDeleteUserKey = "cannot delete user key"

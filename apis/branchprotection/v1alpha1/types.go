@@ -132,27 +132,27 @@ type BranchProtectionObservation struct {
 
 // BranchProtectionAppliedSettings represents the current applied protection settings
 type BranchProtectionAppliedSettings struct {
-	EnablePush                       *bool    `json:"enablePush,omitempty"`
-	EnablePushWhitelist              *bool    `json:"enablePushWhitelist,omitempty"`
-	PushWhitelistUsernames           []string `json:"pushWhitelistUsernames,omitempty"`
-	PushWhitelistTeams               []string `json:"pushWhitelistTeams,omitempty"`
-	PushWhitelistDeployKeys          *bool    `json:"pushWhitelistDeployKeys,omitempty"`
-	EnableMergeWhitelist             *bool    `json:"enableMergeWhitelist,omitempty"`
-	MergeWhitelistUsernames          []string `json:"mergeWhitelistUsernames,omitempty"`
-	MergeWhitelistTeams              []string `json:"mergeWhitelistTeams,omitempty"`
-	EnableStatusCheck                *bool    `json:"enableStatusCheck,omitempty"`
-	StatusCheckContexts              []string `json:"statusCheckContexts,omitempty"`
-	RequiredApprovals                *int     `json:"requiredApprovals,omitempty"`
-	EnableApprovalsWhitelist         *bool    `json:"enableApprovalsWhitelist,omitempty"`
-	ApprovalsWhitelistUsernames      []string `json:"approvalsWhitelistUsernames,omitempty"`
-	ApprovalsWhitelistTeams          []string `json:"approvalsWhitelistTeams,omitempty"`
-	BlockOnRejectedReviews           *bool    `json:"blockOnRejectedReviews,omitempty"`
-	BlockOnOfficialReviewRequests    *bool    `json:"blockOnOfficialReviewRequests,omitempty"`
-	BlockOnOutdatedBranch            *bool    `json:"blockOnOutdatedBranch,omitempty"`
-	DismissStaleApprovals            *bool    `json:"dismissStaleApprovals,omitempty"`
-	RequireSignedCommits             *bool    `json:"requireSignedCommits,omitempty"`
-	ProtectedFilePatterns            *string  `json:"protectedFilePatterns,omitempty"`
-	UnprotectedFilePatterns          *string  `json:"unprotectedFilePatterns,omitempty"`
+	EnablePush                    *bool    `json:"enablePush,omitempty"`
+	EnablePushWhitelist           *bool    `json:"enablePushWhitelist,omitempty"`
+	PushWhitelistUsernames        []string `json:"pushWhitelistUsernames,omitempty"`
+	PushWhitelistTeams            []string `json:"pushWhitelistTeams,omitempty"`
+	PushWhitelistDeployKeys       *bool    `json:"pushWhitelistDeployKeys,omitempty"`
+	EnableMergeWhitelist          *bool    `json:"enableMergeWhitelist,omitempty"`
+	MergeWhitelistUsernames       []string `json:"mergeWhitelistUsernames,omitempty"`
+	MergeWhitelistTeams           []string `json:"mergeWhitelistTeams,omitempty"`
+	EnableStatusCheck             *bool    `json:"enableStatusCheck,omitempty"`
+	StatusCheckContexts           []string `json:"statusCheckContexts,omitempty"`
+	RequiredApprovals             *int     `json:"requiredApprovals,omitempty"`
+	EnableApprovalsWhitelist      *bool    `json:"enableApprovalsWhitelist,omitempty"`
+	ApprovalsWhitelistUsernames   []string `json:"approvalsWhitelistUsernames,omitempty"`
+	ApprovalsWhitelistTeams       []string `json:"approvalsWhitelistTeams,omitempty"`
+	BlockOnRejectedReviews        *bool    `json:"blockOnRejectedReviews,omitempty"`
+	BlockOnOfficialReviewRequests *bool    `json:"blockOnOfficialReviewRequests,omitempty"`
+	BlockOnOutdatedBranch         *bool    `json:"blockOnOutdatedBranch,omitempty"`
+	DismissStaleApprovals         *bool    `json:"dismissStaleApprovals,omitempty"`
+	RequireSignedCommits          *bool    `json:"requireSignedCommits,omitempty"`
+	ProtectedFilePatterns         *string  `json:"protectedFilePatterns,omitempty"`
+	UnprotectedFilePatterns       *string  `json:"unprotectedFilePatterns,omitempty"`
 }
 
 // A BranchProtectionSpec defines the desired state of a BranchProtection.

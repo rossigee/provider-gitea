@@ -130,33 +130,33 @@ spec:
     repository: "enterprise-org/production-app"
     branch: "main"
     ruleName: "Production Main Branch Protection"
-    
+
     # Strict protection settings
     enablePush: false
     enablePushWhitelist: true
     pushWhitelistUsernames: ["gitea-admin"]
     pushWhitelistDeployKeys: true
-    
+
     enableMergeWhitelist: true
     mergeWhitelistUsernames: ["gitea-admin"]
-    
+
     enableStatusCheck: true
     statusCheckContexts:
       - "ci/build"
       - "ci/test"
       - "security/scan"
       - "quality/sonar"
-    
+
     requiredApprovals: 2
     enableApprovalsWhitelist: true
     approvalsWhitelistUsernames: ["gitea-admin"]
-    
+
     blockOnRejectedReviews: true
     blockOnOfficialReviewRequests: true
     blockOnOutdatedBranch: true
     dismissStaleApprovals: true
     requireSignedCommits: true
-    
+
     protectedFilePatterns: "*.config,Dockerfile,*.env,secrets/*"
   providerConfigRef:
     name: default
@@ -247,54 +247,54 @@ spec:
     commitMessage: "Add enterprise CI/CD pipeline"
     content: |
       name: Enterprise CI/CD Pipeline
-      
+
       on:
         push:
           branches: [ main, develop ]
         pull_request:
           branches: [ main ]
-      
+
       jobs:
         security-scan:
           runs-on: [self-hosted, security, scanning]
           steps:
             - uses: actions/checkout@v3
-            
+
             - name: Dependency Audit
               run: npm audit --audit-level high
-            
+
             - name: Security Scan
               run: npm run security:scan
-            
+
             - name: Secrets Detection
               run: docker run --rm -v "$PWD:/pwd" trufflesecurity/trufflehog:latest filesystem /pwd
-        
+
         build-and-test:
           runs-on: [self-hosted, build, docker, enterprise]
           needs: security-scan
           steps:
             - uses: actions/checkout@v3
-            
+
             - name: Setup Node.js
               uses: actions/setup-node@v3
               with:
                 node-version: '18'
                 cache: 'npm'
-            
+
             - name: Install dependencies
               run: npm ci
-            
+
             - name: Run tests with coverage
               run: npm run test:coverage
-            
+
             - name: Build application
               run: npm run build
-            
+
             - name: Build Docker image
               run: |
                 docker build -t production-app:${{ github.sha }} .
                 docker tag production-app:${{ github.sha }} registry.enterprise.com/production-app:latest
-        
+
         deploy:
           runs-on: [self-hosted, enterprise]
           needs: [security-scan, build-and-test]
@@ -307,7 +307,7 @@ spec:
                 echo $DOCKER_PASSWORD | docker login registry.enterprise.com -u deploy --password-stdin
                 docker push registry.enterprise.com/production-app:${{ github.sha }}
                 docker push registry.enterprise.com/production-app:latest
-            
+
             - name: Deploy to production
               env:
                 DEPLOY_TOKEN: ${{ secrets.DEPLOY_TOKEN }}

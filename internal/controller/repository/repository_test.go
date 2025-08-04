@@ -190,7 +190,7 @@ func (m *MockClient) ListOrganizationTeams(ctx context.Context, org string) ([]*
 	return nil, nil
 }
 
-// Label operations - mock implementations  
+// Label operations - mock implementations
 func (m *MockClient) GetLabel(ctx context.Context, owner, repo string, id int64) (*giteaclients.Label, error) {
 	return nil, nil
 }
@@ -386,18 +386,34 @@ func (m *MockClient) DeleteAdminUser(ctx context.Context, username string) error
 }
 
 // GitHook methods
-func (m *MockClient) GetGitHook(ctx context.Context, repository, hookType string) (*giteaclients.GitHook, error) { return nil, nil }
-func (m *MockClient) CreateGitHook(ctx context.Context, repository string, req *giteaclients.CreateGitHookRequest) (*giteaclients.GitHook, error) { return nil, nil }
-func (m *MockClient) UpdateGitHook(ctx context.Context, repository, hookType string, req *giteaclients.UpdateGitHookRequest) (*giteaclients.GitHook, error) { return nil, nil }
-func (m *MockClient) DeleteGitHook(ctx context.Context, repository, hookType string) error { return nil }
+func (m *MockClient) GetGitHook(ctx context.Context, repository, hookType string) (*giteaclients.GitHook, error) {
+	return nil, nil
+}
+func (m *MockClient) CreateGitHook(ctx context.Context, repository string, req *giteaclients.CreateGitHookRequest) (*giteaclients.GitHook, error) {
+	return nil, nil
+}
+func (m *MockClient) UpdateGitHook(ctx context.Context, repository, hookType string, req *giteaclients.UpdateGitHookRequest) (*giteaclients.GitHook, error) {
+	return nil, nil
+}
+func (m *MockClient) DeleteGitHook(ctx context.Context, repository, hookType string) error {
+	return nil
+}
 
-// Action methods  
-func (m *MockClient) EnableAction(ctx context.Context, repository, workflowName string) error { return nil }
-func (m *MockClient) DisableAction(ctx context.Context, repository, workflowName string) error { return nil }
+// Action methods
+func (m *MockClient) EnableAction(ctx context.Context, repository, workflowName string) error {
+	return nil
+}
+func (m *MockClient) DisableAction(ctx context.Context, repository, workflowName string) error {
+	return nil
+}
 
 // OrganizationSettings methods
-func (m *MockClient) GetOrganizationSettings(ctx context.Context, org string) (*giteaclients.OrganizationSettings, error) { return nil, nil }
-func (m *MockClient) UpdateOrganizationSettings(ctx context.Context, org string, req *giteaclients.UpdateOrganizationSettingsRequest) (*giteaclients.OrganizationSettings, error) { return nil, nil }
+func (m *MockClient) GetOrganizationSettings(ctx context.Context, org string) (*giteaclients.OrganizationSettings, error) {
+	return nil, nil
+}
+func (m *MockClient) UpdateOrganizationSettings(ctx context.Context, org string, req *giteaclients.UpdateOrganizationSettingsRequest) (*giteaclients.OrganizationSettings, error) {
+	return nil, nil
+}
 
 func TestObserve(t *testing.T) {
 	tests := []struct {
@@ -538,7 +554,7 @@ func TestCreate(t *testing.T) {
 						Name: "test-repo",
 					}, nil)
 			},
-			want: managed.ExternalCreation{},
+			want:    managed.ExternalCreation{},
 			wantErr: false,
 		},
 		{
@@ -559,7 +575,7 @@ func TestCreate(t *testing.T) {
 						Name: "test-repo",
 					}, nil)
 			},
-			want: managed.ExternalCreation{},
+			want:    managed.ExternalCreation{},
 			wantErr: false,
 		},
 		{

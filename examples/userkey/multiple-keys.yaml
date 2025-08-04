@@ -10,7 +10,7 @@ spec:
   forProvider:
     username: "admin"
     key: |
-      ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDFo5uRt3wK8vJ2nPl6hX9Y1== 
+      ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDFo5uRt3wK8vJ2nPl6hX9Y1==
       admin@workstation
     title: "Admin Workstation"
     readOnly: false
@@ -28,7 +28,7 @@ spec:
   forProvider:
     username: "admin"
     key: |
-      ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC3pN9tV7wL5mJ4nHx2hG8Z2== 
+      ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC3pN9tV7wL5mJ4nHx2hG8Z2==
       admin@mobile
     title: "Admin Mobile Device"
     readOnly: true  # Read-only access from mobile

@@ -27,15 +27,15 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/yaml"
 
+	accesstokenv1alpha1 "github.com/crossplane-contrib/provider-gitea/apis/accesstoken/v1alpha1"
 	actionv1alpha1 "github.com/crossplane-contrib/provider-gitea/apis/action/v1alpha1"
 	adminuserv1alpha1 "github.com/crossplane-contrib/provider-gitea/apis/adminuser/v1alpha1"
-	runnerv1alpha1 "github.com/crossplane-contrib/provider-gitea/apis/runner/v1alpha1"
 	branchprotectionv1alpha1 "github.com/crossplane-contrib/provider-gitea/apis/branchprotection/v1alpha1"
-	repositorykeyv1alpha1 "github.com/crossplane-contrib/provider-gitea/apis/repositorykey/v1alpha1"
-	accesstokenv1alpha1 "github.com/crossplane-contrib/provider-gitea/apis/accesstoken/v1alpha1"
-	repositorysecretv1alpha1 "github.com/crossplane-contrib/provider-gitea/apis/repositorysecret/v1alpha1"
-	userkeyv1alpha1 "github.com/crossplane-contrib/provider-gitea/apis/userkey/v1alpha1"
 	organizationmemberv1alpha1 "github.com/crossplane-contrib/provider-gitea/apis/organizationmember/v1alpha1"
+	repositorykeyv1alpha1 "github.com/crossplane-contrib/provider-gitea/apis/repositorykey/v1alpha1"
+	repositorysecretv1alpha1 "github.com/crossplane-contrib/provider-gitea/apis/repositorysecret/v1alpha1"
+	runnerv1alpha1 "github.com/crossplane-contrib/provider-gitea/apis/runner/v1alpha1"
+	userkeyv1alpha1 "github.com/crossplane-contrib/provider-gitea/apis/userkey/v1alpha1"
 )
 
 // ExampleTest validates that example manifests are syntactically correct
@@ -49,7 +49,7 @@ type ExampleTest struct {
 
 func TestExampleManifests(t *testing.T) {
 	scheme := runtime.NewScheme()
-	
+
 	// Add all our CRD types to the scheme
 	if err := actionv1alpha1.SchemeBuilder.AddToScheme(scheme); err != nil {
 		t.Fatalf("Failed to add action scheme: %v", err)
@@ -108,7 +108,7 @@ func TestExampleManifests(t *testing.T) {
 				}
 			},
 		},
-		
+
 		// Runner examples
 		{
 			name:   "Repository Runner",
@@ -390,7 +390,7 @@ func TestExampleCompleteness(t *testing.T) {
 func TestExampleSecretRefs(t *testing.T) {
 	exampleDirs := []string{
 		"../../examples/accesstoken",
-		"../../examples/adminuser", 
+		"../../examples/adminuser",
 		"../../examples/repositorysecret",
 		"../../examples/enterprise-complete-setup.yaml",
 	}
@@ -401,7 +401,7 @@ func TestExampleSecretRefs(t *testing.T) {
 				if err != nil {
 					return err
 				}
-				
+
 				if !strings.HasSuffix(path, ".yaml") && !strings.HasSuffix(path, ".yml") {
 					return nil
 				}
@@ -412,7 +412,7 @@ func TestExampleSecretRefs(t *testing.T) {
 				}
 
 				content := string(data)
-				
+
 				// Check for secret references
 				if strings.Contains(content, "SecretRef") {
 					// Validate secret ref has required fields
@@ -426,10 +426,10 @@ func TestExampleSecretRefs(t *testing.T) {
 						t.Errorf("SecretRef in %s missing key field", path)
 					}
 				}
-				
+
 				return nil
 			})
-			
+
 			if err != nil {
 				t.Fatalf("Failed to walk directory %s: %v", dir, err)
 			}

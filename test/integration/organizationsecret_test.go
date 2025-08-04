@@ -46,14 +46,14 @@ func TestOrganizationSecretIntegration(t *testing.T) {
 	// For now, we'll focus on the test structure
 	k8sClient := setupTestClient(t)
 	ctx := context.Background() // will be used once k8sClient is properly implemented
-	
+
 	tests := []struct {
-		name          string
-		secretSpec    v1alpha1.OrganizationSecretSpec
-		secretData    *corev1.Secret // For dataFrom tests
-		expectReady   bool
-		expectSynced  bool
-		validateFunc  func(t *testing.T, secret *v1alpha1.OrganizationSecret)
+		name         string
+		secretSpec   v1alpha1.OrganizationSecretSpec
+		secretData   *corev1.Secret // For dataFrom tests
+		expectReady  bool
+		expectSynced bool
+		validateFunc func(t *testing.T, secret *v1alpha1.OrganizationSecret)
 	}{
 		{
 			name: "DirectDataSecret",
@@ -74,11 +74,11 @@ func TestOrganizationSecretIntegration(t *testing.T) {
 			validateFunc: func(t *testing.T, secret *v1alpha1.OrganizationSecret) {
 				// Validate external name is set
 				assert.Equal(t, "INTEGRATION_TEST_DIRECT", meta.GetExternalName(secret))
-				
+
 				// Validate conditions
 				readyCondition := secret.GetCondition(xpv1.TypeReady)
 				assert.Equal(t, corev1.ConditionTrue, readyCondition.Status)
-				
+
 				syncedCondition := secret.GetCondition(xpv1.TypeSynced)
 				assert.Equal(t, corev1.ConditionTrue, syncedCondition.Status)
 			},
@@ -117,7 +117,7 @@ func TestOrganizationSecretIntegration(t *testing.T) {
 			validateFunc: func(t *testing.T, secret *v1alpha1.OrganizationSecret) {
 				// Validate external name is set
 				assert.Equal(t, "INTEGRATION_TEST_REF", meta.GetExternalName(secret))
-				
+
 				// Validate conditions
 				readyCondition := secret.GetCondition(xpv1.TypeReady)
 				assert.NotNil(t, readyCondition)
@@ -156,7 +156,7 @@ func TestOrganizationSecretIntegration(t *testing.T) {
 			if tt.secretData != nil {
 				err := k8sClient.Create(ctx, tt.secretData)
 				require.NoError(t, err)
-				
+
 				defer func() {
 					_ = k8sClient.Delete(ctx, tt.secretData)
 				}()

@@ -254,7 +254,7 @@ func (c *external) Delete(ctx context.Context, mg resource.Managed) (managed.Ext
 func (c *external) isUpToDate(cr *v1alpha1.RepositoryCollaborator, collaborator *giteaclients.RepositoryCollaborator) bool {
 	// Check permission level - we need to derive the permission from the collaborator's permissions
 	desiredPermission := cr.Spec.ForProvider.Permission
-	
+
 	var currentPermission string
 	if collaborator.Permissions.Admin {
 		currentPermission = "admin"

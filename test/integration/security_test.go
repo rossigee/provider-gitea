@@ -43,17 +43,17 @@ func TestBranchProtectionSecurity(t *testing.T) {
 			protection: &branchprotectionv1alpha1.BranchProtection{
 				Spec: branchprotectionv1alpha1.BranchProtectionSpec{
 					ForProvider: branchprotectionv1alpha1.BranchProtectionParameters{
-						Repository:                    "org/repo",
-						Branch:                        "main",
-						EnablePush:                    boolPtr(false),
-						EnableStatusCheck:             boolPtr(true),
-						RequiredApprovals:             intPtr(2),
-						BlockOnRejectedReviews:        boolPtr(true),
-						RequireSignedCommits:          boolPtr(true),
-						BlockOnOutdatedBranch:         boolPtr(true),
-						DismissStaleApprovals:         boolPtr(true),
-						ProtectedFilePatterns:         stringPtr("*.config,Dockerfile,secrets/*"),
-						StatusCheckContexts:           []string{"ci/build", "security/scan"},
+						Repository:             "org/repo",
+						Branch:                 "main",
+						EnablePush:             boolPtr(false),
+						EnableStatusCheck:      boolPtr(true),
+						RequiredApprovals:      intPtr(2),
+						BlockOnRejectedReviews: boolPtr(true),
+						RequireSignedCommits:   boolPtr(true),
+						BlockOnOutdatedBranch:  boolPtr(true),
+						DismissStaleApprovals:  boolPtr(true),
+						ProtectedFilePatterns:  stringPtr("*.config,Dockerfile,secrets/*"),
+						StatusCheckContexts:    []string{"ci/build", "security/scan"},
 					},
 				},
 			},
@@ -104,31 +104,45 @@ func TestBranchProtectionSecurity(t *testing.T) {
 
 func evaluateBranchProtectionSecurity(bp *branchprotectionv1alpha1.BranchProtection) bool {
 	params := bp.Spec.ForProvider
-	
+
 	// Check critical security settings
-	if (params.EnablePush != nil && *params.EnablePush) && 
-	   (params.EnablePushWhitelist == nil || !*params.EnablePushWhitelist) {
+	if (params.EnablePush != nil && *params.EnablePush) &&
+		(params.EnablePushWhitelist == nil || !*params.EnablePushWhitelist) {
 		return false // Direct push allowed without restrictions
 	}
-	
+
 	if params.RequiredApprovals == nil || *params.RequiredApprovals < 1 {
 		return false // No required approvals
 	}
-	
+
 	if params.EnableStatusCheck == nil || !*params.EnableStatusCheck {
 		return false // No status checks
 	}
-	
+
 	// Recommended security settings
 	score := 0
-	if params.RequiredApprovals != nil && *params.RequiredApprovals >= 2 { score++ }
-	if params.BlockOnRejectedReviews != nil && *params.BlockOnRejectedReviews { score++ }
-	if params.RequireSignedCommits != nil && *params.RequireSignedCommits { score++ }
-	if params.BlockOnOutdatedBranch != nil && *params.BlockOnOutdatedBranch { score++ }
-	if params.DismissStaleApprovals != nil && *params.DismissStaleApprovals { score++ }
-	if len(params.StatusCheckContexts) > 0 { score++ }
-	if params.ProtectedFilePatterns != nil && *params.ProtectedFilePatterns != "" { score++ }
-	
+	if params.RequiredApprovals != nil && *params.RequiredApprovals >= 2 {
+		score++
+	}
+	if params.BlockOnRejectedReviews != nil && *params.BlockOnRejectedReviews {
+		score++
+	}
+	if params.RequireSignedCommits != nil && *params.RequireSignedCommits {
+		score++
+	}
+	if params.BlockOnOutdatedBranch != nil && *params.BlockOnOutdatedBranch {
+		score++
+	}
+	if params.DismissStaleApprovals != nil && *params.DismissStaleApprovals {
+		score++
+	}
+	if len(params.StatusCheckContexts) > 0 {
+		score++
+	}
+	if params.ProtectedFilePatterns != nil && *params.ProtectedFilePatterns != "" {
+		score++
+	}
+
 	// Consider secure if it has at least 4 out of 7 recommended settings
 	return score >= 4
 }
@@ -136,40 +150,40 @@ func evaluateBranchProtectionSecurity(bp *branchprotectionv1alpha1.BranchProtect
 // TestSSHKeySecurity validates SSH key formats and security
 func TestSSHKeySecurity(t *testing.T) {
 	tests := []struct {
-		name       string
-		key        string
+		name        string
+		key         string
 		expectValid bool
-		reason     string
+		reason      string
 	}{
 		{
-			name: "Valid RSA Key",
-			key: `ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC7vbqajDhA+17FiQDlnT5hoKHDTkPAo6pN5aOtVw== user@example.com`,
+			name:        "Valid RSA Key",
+			key:         `ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC7vbqajDhA+17FiQDlnT5hoKHDTkPAo6pN5aOtVw== user@example.com`,
 			expectValid: true,
-			reason: "properly formatted RSA key",
+			reason:      "properly formatted RSA key",
 		},
 		{
-			name: "Valid Ed25519 Key", 
-			key: `ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIG4rT3vTt99Eq/ieQXDFbYVTQyQsF3+lc0pO8vH+abcd user@example.com`,
+			name:        "Valid Ed25519 Key",
+			key:         `ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIG4rT3vTt99Eq/ieQXDFbYVTQyQsF3+lc0pO8vH+abcd user@example.com`,
 			expectValid: true,
-			reason: "properly formatted Ed25519 key",
+			reason:      "properly formatted Ed25519 key",
 		},
 		{
-			name: "Invalid Key Format",
-			key: `invalid-key-format`,
+			name:        "Invalid Key Format",
+			key:         `invalid-key-format`,
 			expectValid: false,
-			reason: "malformed key",
+			reason:      "malformed key",
 		},
 		{
-			name: "Empty Key",
-			key: ``,
+			name:        "Empty Key",
+			key:         ``,
 			expectValid: false,
-			reason: "empty key",
+			reason:      "empty key",
 		},
 		{
-			name: "Key Without Email",
-			key: `ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC7vbqajDhA+17FiQDlnT5hoKHDTkPAo6pN5aOtVw==`,
+			name:        "Key Without Email",
+			key:         `ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC7vbqajDhA+17FiQDlnT5hoKHDTkPAo6pN5aOtVw==`,
 			expectValid: true,
-			reason: "key without email is still valid",
+			reason:      "key without email is still valid",
 		},
 	}
 
@@ -187,15 +201,15 @@ func validateSSHKey(key string) bool {
 	if strings.TrimSpace(key) == "" {
 		return false
 	}
-	
+
 	parts := strings.Fields(key)
 	if len(parts) < 2 {
 		return false
 	}
-	
+
 	keyType := parts[0]
 	keyData := parts[1]
-	
+
 	// Check valid key types
 	validTypes := []string{"ssh-rsa", "ssh-ed25519", "ssh-ecdsa", "ssh-dss"}
 	validType := false
@@ -205,16 +219,16 @@ func validateSSHKey(key string) bool {
 			break
 		}
 	}
-	
+
 	if !validType {
 		return false
 	}
-	
+
 	// Basic length check for key data
 	if len(keyData) < 50 {
 		return false
 	}
-	
+
 	return true
 }
 
@@ -278,7 +292,7 @@ func evaluateTokenScopeSecurity(scopes []string) bool {
 			}
 		}
 	}
-	
+
 	// Count write permissions
 	writeCount := 0
 	for _, scope := range scopes {
@@ -286,7 +300,7 @@ func evaluateTokenScopeSecurity(scopes []string) bool {
 			writeCount++
 		}
 	}
-	
+
 	// Consider secure if fewer than 4 write permissions
 	return writeCount < 4
 }
@@ -358,12 +372,12 @@ func TestOrganizationMemberSecurity(t *testing.T) {
 
 func evaluateOrganizationMemberSecurity(member *organizationmemberv1alpha1.OrganizationMember) bool {
 	params := member.Spec.ForProvider
-	
+
 	// Admin with public visibility is concerning
 	if params.Role == "admin" && params.Visibility != nil && *params.Visibility == "public" {
 		return false
 	}
-	
+
 	// Generally secure for most configurations
 	return true
 }
@@ -416,18 +430,18 @@ func validateSecretData(data string) bool {
 	if strings.TrimSpace(data) == "" {
 		return false
 	}
-	
+
 	// Check if it's valid base64
 	decoded, err := base64.StdEncoding.DecodeString(data)
 	if err != nil {
 		return false
 	}
-	
+
 	// Check minimum length for decoded secret
 	if len(decoded) < 8 {
 		return false
 	}
-	
+
 	return true
 }
 
@@ -450,7 +464,7 @@ func TestRunnerSecurity(t *testing.T) {
 		{
 			name:           "Repository Runner",
 			labels:         []string{"ubuntu-latest", "build"},
-			scope:          "repository", 
+			scope:          "repository",
 			expectedSecure: true,
 			reason:         "repository scope is most secure",
 		},
@@ -486,12 +500,12 @@ func evaluateRunnerSecurity(scope string, labels []string) bool {
 		// Check for admin-related labels
 		for _, label := range labels {
 			if strings.Contains(strings.ToLower(label), "admin") ||
-			   strings.Contains(strings.ToLower(label), "system") {
+				strings.Contains(strings.ToLower(label), "system") {
 				return false
 			}
 		}
 	}
-	
+
 	// Check for privileged labels
 	privilegedLabels := []string{"privileged", "root", "docker-daemon", "admin"}
 	for _, label := range labels {
@@ -501,6 +515,6 @@ func evaluateRunnerSecurity(scope string, labels []string) bool {
 			}
 		}
 	}
-	
+
 	return true
 }

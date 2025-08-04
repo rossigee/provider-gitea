@@ -139,18 +139,18 @@ func (c *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 	// Update observed state
 	cr.Status.AtProvider = v1alpha1.OrganizationSettingsObservation{
 		AppliedSettings: &v1alpha1.AppliedOrganizationSettings{
-			DefaultRepoPermission:     &settings.DefaultRepoPermission,
-			MembersCanCreateRepos:     &settings.MembersCanCreateRepos,
-			MembersCanCreatePrivate:   &settings.MembersCanCreatePrivate,
-			MembersCanCreateInternal:  &settings.MembersCanCreateInternal,
-			MembersCanDeleteRepos:     &settings.MembersCanDeleteRepos,
-			MembersCanFork:            &settings.MembersCanFork,
-			MembersCanCreatePages:     &settings.MembersCanCreatePages,
-			DefaultRepoVisibility:     &settings.DefaultRepoVisibility,
-			RequireSignedCommits:      &settings.RequireSignedCommits,
-			EnableDependencyGraph:     &settings.EnableDependencyGraph,
-			AllowGitHooks:             &settings.AllowGitHooks,
-			AllowCustomGitHooks:       &settings.AllowCustomGitHooks,
+			DefaultRepoPermission:    &settings.DefaultRepoPermission,
+			MembersCanCreateRepos:    &settings.MembersCanCreateRepos,
+			MembersCanCreatePrivate:  &settings.MembersCanCreatePrivate,
+			MembersCanCreateInternal: &settings.MembersCanCreateInternal,
+			MembersCanDeleteRepos:    &settings.MembersCanDeleteRepos,
+			MembersCanFork:           &settings.MembersCanFork,
+			MembersCanCreatePages:    &settings.MembersCanCreatePages,
+			DefaultRepoVisibility:    &settings.DefaultRepoVisibility,
+			RequireSignedCommits:     &settings.RequireSignedCommits,
+			EnableDependencyGraph:    &settings.EnableDependencyGraph,
+			AllowGitHooks:            &settings.AllowGitHooks,
+			AllowCustomGitHooks:      &settings.AllowCustomGitHooks,
 		},
 	}
 
@@ -208,7 +208,7 @@ func (c *external) Delete(ctx context.Context, mg resource.Managed) (managed.Ext
 // buildUpdateRequest creates an update request from the CR spec
 func (c *external) buildUpdateRequest(cr *v1alpha1.OrganizationSettings) *giteaclients.UpdateOrganizationSettingsRequest {
 	req := &giteaclients.UpdateOrganizationSettingsRequest{}
-	
+
 	if cr.Spec.ForProvider.DefaultRepoPermission != nil {
 		req.DefaultRepoPermission = cr.Spec.ForProvider.DefaultRepoPermission
 	}

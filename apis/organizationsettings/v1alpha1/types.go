@@ -94,18 +94,18 @@ type OrganizationSettingsObservation struct {
 
 // AppliedOrganizationSettings represents the current applied settings
 type AppliedOrganizationSettings struct {
-	DefaultRepoPermission     *string `json:"defaultRepoPermission,omitempty"`
-	MembersCanCreateRepos     *bool   `json:"membersCanCreateRepos,omitempty"`
-	MembersCanCreatePrivate   *bool   `json:"membersCanCreatePrivate,omitempty"`
-	MembersCanCreateInternal  *bool   `json:"membersCanCreateInternal,omitempty"`
-	MembersCanDeleteRepos     *bool   `json:"membersCanDeleteRepos,omitempty"`
-	MembersCanFork            *bool   `json:"membersCanFork,omitempty"`
-	MembersCanCreatePages     *bool   `json:"membersCanCreatePages,omitempty"`
-	DefaultRepoVisibility     *string `json:"defaultRepoVisibility,omitempty"`
-	RequireSignedCommits      *bool   `json:"requireSignedCommits,omitempty"`
-	EnableDependencyGraph     *bool   `json:"enableDependencyGraph,omitempty"`
-	AllowGitHooks             *bool   `json:"allowGitHooks,omitempty"`
-	AllowCustomGitHooks       *bool   `json:"allowCustomGitHooks,omitempty"`
+	DefaultRepoPermission    *string `json:"defaultRepoPermission,omitempty"`
+	MembersCanCreateRepos    *bool   `json:"membersCanCreateRepos,omitempty"`
+	MembersCanCreatePrivate  *bool   `json:"membersCanCreatePrivate,omitempty"`
+	MembersCanCreateInternal *bool   `json:"membersCanCreateInternal,omitempty"`
+	MembersCanDeleteRepos    *bool   `json:"membersCanDeleteRepos,omitempty"`
+	MembersCanFork           *bool   `json:"membersCanFork,omitempty"`
+	MembersCanCreatePages    *bool   `json:"membersCanCreatePages,omitempty"`
+	DefaultRepoVisibility    *string `json:"defaultRepoVisibility,omitempty"`
+	RequireSignedCommits     *bool   `json:"requireSignedCommits,omitempty"`
+	EnableDependencyGraph    *bool   `json:"enableDependencyGraph,omitempty"`
+	AllowGitHooks            *bool   `json:"allowGitHooks,omitempty"`
+	AllowCustomGitHooks      *bool   `json:"allowCustomGitHooks,omitempty"`
 }
 
 // A OrganizationSettingsSpec defines the desired state of OrganizationSettings.

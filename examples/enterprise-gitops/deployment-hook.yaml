@@ -13,31 +13,31 @@ spec:
       #!/bin/bash
       # Enterprise Git Post-receive Hook
       # Implements automated deployment and notification workflows
-      
+
       set -e
-      
+
       # Configuration
       CI_WEBHOOK_URL="${CI_WEBHOOK_URL:-https://ci.acme-corp.com/webhook/git}"
       SLACK_WEBHOOK_URL="${SLACK_WEBHOOK_URL:-https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX}"
       DEPLOYMENT_BRANCHES="main|master|release/*"
-      
+
       while read oldrev newrev refname; do
           echo "=== Processing push to $refname ==="
-          
+
           # Extract branch and commit info
           branch_name=$(echo $refname | sed 's/refs\/heads\///')
           commit_msg=$(git log -1 --format="%s" $newrev)
           commit_author=$(git log -1 --format="%an <%ae>" $newrev)
           commit_hash=$(echo $newrev | cut -c1-8)
-          
+
           echo "Branch: $branch_name"
           echo "Commit: $commit_hash - $commit_msg"
           echo "Author: $commit_author"
-          
+
           # 1. Trigger CI/CD pipeline for deployment branches
           if echo "$branch_name" | grep -qE "$DEPLOYMENT_BRANCHES"; then
               echo "🚀 Triggering deployment pipeline for $branch_name"
-              
+
               # Send webhook to CI/CD system
               curl -s -X POST "$CI_WEBHOOK_URL" \
                 -H "Content-Type: application/json" \
@@ -59,13 +59,13 @@ spec:
                     }
                   }]
                 }' || echo "⚠️ Failed to trigger CI/CD pipeline"
-              
+
               echo "✅ CI/CD pipeline triggered"
           fi
-          
+
           # 2. Send notifications to team
           echo "📢 Sending team notifications"
-          
+
           # Determine notification message based on branch
           if [[ $branch_name == "main" || $branch_name == "master" ]]; then
               notification_color="good"
@@ -77,7 +77,7 @@ spec:
               notification_color="#36a64f"
               notification_text="🔧 Development branch updated"
           fi
-          
+
           # Send Slack notification
           curl -s -X POST "$SLACK_WEBHOOK_URL" \
             -H "Content-Type: application/json" \
@@ -116,20 +116,20 @@ spec:
                 "ts": '$(date +%s)'
               }]
             }' || echo "⚠️ Failed to send Slack notification"
-          
+
           # 3. Update deployment status tracking
           echo "📊 Logging deployment metrics"
-          
+
           # Log to central metrics system (example with InfluxDB)
           metrics_payload="gitea_push,repository=acme-corp/platform-services,branch=$branch_name,author=$(git log -1 --format='%ae' $newrev | sed 's/@.*//' | sed 's/[^a-zA-Z0-9]/_/g') value=1 $(date +%s)000000000"
-          
+
           curl -s -X POST "https://metrics.acme-corp.com/write?db=gitops" \
             -H "Content-Type: text/plain" \
             -d "$metrics_payload" || echo "⚠️ Failed to log metrics"
-          
+
           # 4. Generate compliance audit log
           echo "📋 Creating compliance audit entry"
-          
+
           audit_entry='{
             "timestamp": "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'",
             "event_type": "git_push",
@@ -141,18 +141,18 @@ spec:
             "verified": '$(git verify-commit $newrev >/dev/null 2>&1 && echo true || echo false)',
             "deployment_triggered": '$(echo "$branch_name" | grep -qE "$DEPLOYMENT_BRANCHES" && echo true || echo false)'
           }'
-          
+
           curl -s -X POST "https://audit.acme-corp.com/api/events" \
             -H "Content-Type: application/json" \
             -H "Authorization: Bearer $AUDIT_API_TOKEN" \
             -d "$audit_entry" || echo "⚠️ Failed to create audit log"
-          
+
           echo "✅ Post-receive processing completed for $refname"
       done
-      
+
       echo "🎉 All post-receive workflows completed successfully"
       exit 0
-      
+
   providerConfigRef:
     name: default
   managementPolicies: ["Observe", "Create", "Update", "Delete"]

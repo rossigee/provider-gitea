@@ -190,7 +190,7 @@ func (c *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 	}
 
 	meta.SetExternalName(cr, organization.Username)
-	
+
 	return managed.ExternalCreation{}, nil
 }
 
@@ -201,7 +201,7 @@ func (c *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 	}
 
 	externalName := meta.GetExternalName(cr)
-	
+
 	req := &giteaclients.UpdateOrganizationRequest{}
 
 	if cr.Spec.ForProvider.Name != nil {
@@ -243,7 +243,7 @@ func (c *external) Delete(ctx context.Context, mg resource.Managed) (managed.Ext
 	cr.SetConditions(xpv1.Deleting())
 
 	externalName := meta.GetExternalName(cr)
-	
+
 	err := c.client.DeleteOrganization(ctx, externalName)
 	if err != nil {
 		return managed.ExternalDelete{}, errors.Wrap(err, errDeleteOrganization)
@@ -275,6 +275,6 @@ func (c *external) isUpToDate(cr *v1alpha1.Organization, organization *giteaclie
 	if cr.Spec.ForProvider.RepoAdminChangeTeamAccess != nil && *cr.Spec.ForProvider.RepoAdminChangeTeamAccess != organization.RepoAdminChangeTeamAccess {
 		return false
 	}
-	
+
 	return true
 }

@@ -32,17 +32,17 @@ import (
 	"github.com/crossplane/crossplane-runtime/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/pkg/resource"
 
-	"github.com/crossplane-contrib/provider-gitea/apis/webhook/v1alpha1"
 	"github.com/crossplane-contrib/provider-gitea/apis/v1beta1"
+	"github.com/crossplane-contrib/provider-gitea/apis/webhook/v1alpha1"
 	giteaclients "github.com/crossplane-contrib/provider-gitea/internal/clients"
 )
 
 const (
 	errNotWebhook    = "managed resource is not a Webhook custom resource"
-	errTrackPCUsage       = "cannot track ProviderConfig usage"
-	errGetPC              = "cannot get ProviderConfig"
-	errGetCreds           = "cannot get credentials"
-	errNewClient          = "cannot create new Service"
+	errTrackPCUsage  = "cannot track ProviderConfig usage"
+	errGetPC         = "cannot get ProviderConfig"
+	errGetCreds      = "cannot get credentials"
+	errNewClient     = "cannot create new Service"
 	errCreateWebhook = "cannot create webhook"
 	errUpdateWebhook = "cannot update webhook"
 	errDeleteWebhook = "cannot delete webhook"
@@ -130,32 +130,32 @@ func (c *external) isOrganizationWebhook(cr *v1alpha1.Webhook) bool {
 func (c *external) buildWebhookRequest(cr *v1alpha1.Webhook) *giteaclients.CreateWebhookRequest {
 	config := make(map[string]string)
 	config["url"] = cr.Spec.ForProvider.URL
-	
+
 	if cr.Spec.ForProvider.ContentType != nil {
 		config["content_type"] = *cr.Spec.ForProvider.ContentType
 	} else {
 		config["content_type"] = "json"
 	}
-	
+
 	if cr.Spec.ForProvider.Secret != nil {
 		config["secret"] = *cr.Spec.ForProvider.Secret
 	}
-	
+
 	webhookType := "gitea"
 	if cr.Spec.ForProvider.Type != nil {
 		webhookType = *cr.Spec.ForProvider.Type
 	}
-	
+
 	active := true
 	if cr.Spec.ForProvider.Active != nil {
 		active = *cr.Spec.ForProvider.Active
 	}
-	
+
 	events := cr.Spec.ForProvider.Events
 	if len(events) == 0 {
 		events = []string{"push"}
 	}
-	
+
 	return &giteaclients.CreateWebhookRequest{
 		Type:   webhookType,
 		Config: config,
@@ -185,7 +185,7 @@ func (c *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 
 	var webhook *giteaclients.Webhook
 	var err error
-	
+
 	// Determine webhook type and call appropriate method
 	if c.isRepositoryWebhook(cr) {
 		webhook, err = c.client.GetRepositoryWebhook(ctx, *cr.Spec.ForProvider.Owner, *cr.Spec.ForProvider.Repository, webhookID)
@@ -199,7 +199,7 @@ func (c *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 	} else {
 		return managed.ExternalObservation{}, errors.New("webhook must specify either repository (owner+repository) or organization")
 	}
-	
+
 	if err != nil {
 		// If webhook doesn't exist, that's not an error
 		if giteaclients.IsNotFound(err) {
@@ -234,7 +234,7 @@ func (c *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 	req := c.buildWebhookRequest(cr)
 	var webhook *giteaclients.Webhook
 	var err error
-	
+
 	// Determine webhook type and call appropriate method
 	if c.isRepositoryWebhook(cr) {
 		webhook, err = c.client.CreateRepositoryWebhook(ctx, *cr.Spec.ForProvider.Owner, *cr.Spec.ForProvider.Repository, req)
@@ -243,7 +243,7 @@ func (c *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 	} else {
 		return managed.ExternalCreation{}, errors.New("webhook must specify either repository (owner+repository) or organization")
 	}
-	
+
 	if err != nil {
 		return managed.ExternalCreation{}, errors.Wrap(err, errCreateWebhook)
 	}
@@ -278,18 +278,18 @@ func (c *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 	if cr.Spec.ForProvider.Secret != nil {
 		config["secret"] = *cr.Spec.ForProvider.Secret
 	}
-	
+
 	events := cr.Spec.ForProvider.Events
 	if len(events) == 0 {
 		events = []string{"push"}
 	}
-	
+
 	req := &giteaclients.UpdateWebhookRequest{
 		Config: &config,
 		Events: &events,
 		Active: cr.Spec.ForProvider.Active,
 	}
-	
+
 	// Determine webhook type and call appropriate method
 	if c.isRepositoryWebhook(cr) {
 		_, err = c.client.UpdateRepositoryWebhook(ctx, *cr.Spec.ForProvider.Owner, *cr.Spec.ForProvider.Repository, webhookID, req)
@@ -298,7 +298,7 @@ func (c *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 	} else {
 		return managed.ExternalUpdate{}, errors.New("webhook must specify either repository (owner+repository) or organization")
 	}
-	
+
 	if err != nil {
 		return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateWebhook)
 	}
@@ -330,7 +330,7 @@ func (c *external) Delete(ctx context.Context, mg resource.Managed) (managed.Ext
 	} else {
 		return managed.ExternalDelete{}, errors.New("webhook must specify either repository (owner+repository) or organization")
 	}
-	
+
 	return managed.ExternalDelete{}, errors.Wrap(err, errDeleteWebhook)
 }
 

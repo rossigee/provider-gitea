@@ -39,12 +39,12 @@ import (
 )
 
 const (
-	errNotAccessToken = "managed resource is not a AccessToken custom resource"
-	errTrackPCUsage   = "cannot track ProviderConfig usage"
-	errGetPC          = "cannot get ProviderConfig"
-	errGetCreds       = "cannot get credentials"
-	errNewClient      = "cannot create new Service"
-	errGetAccessToken = "cannot get access token"
+	errNotAccessToken    = "managed resource is not a AccessToken custom resource"
+	errTrackPCUsage      = "cannot track ProviderConfig usage"
+	errGetPC             = "cannot get ProviderConfig"
+	errGetCreds          = "cannot get credentials"
+	errNewClient         = "cannot create new Service"
+	errGetAccessToken    = "cannot get access token"
 	errCreateAccessToken = "cannot create access token"
 	errUpdateAccessToken = "cannot update access token"
 	errDeleteAccessToken = "cannot delete access token"

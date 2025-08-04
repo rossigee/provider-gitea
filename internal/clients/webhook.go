@@ -24,7 +24,7 @@ import (
 // GetRepositoryWebhook retrieves a webhook by repository and webhook ID
 func (c *giteaClient) GetRepositoryWebhook(ctx context.Context, owner, repo string, id int64) (*Webhook, error) {
 	path := fmt.Sprintf("/repos/%s/%s/hooks/%d", owner, repo, id)
-	
+
 	resp, err := c.doRequest(ctx, "GET", path, nil)
 	if err != nil {
 		return nil, err
@@ -41,7 +41,7 @@ func (c *giteaClient) GetRepositoryWebhook(ctx context.Context, owner, repo stri
 // CreateRepositoryWebhook creates a new webhook for a repository
 func (c *giteaClient) CreateRepositoryWebhook(ctx context.Context, owner, repo string, req *CreateWebhookRequest) (*Webhook, error) {
 	path := fmt.Sprintf("/repos/%s/%s/hooks", owner, repo)
-	
+
 	resp, err := c.doRequest(ctx, "POST", path, req)
 	if err != nil {
 		return nil, err
@@ -58,7 +58,7 @@ func (c *giteaClient) CreateRepositoryWebhook(ctx context.Context, owner, repo s
 // UpdateRepositoryWebhook updates an existing webhook
 func (c *giteaClient) UpdateRepositoryWebhook(ctx context.Context, owner, repo string, id int64, req *UpdateWebhookRequest) (*Webhook, error) {
 	path := fmt.Sprintf("/repos/%s/%s/hooks/%d", owner, repo, id)
-	
+
 	resp, err := c.doRequest(ctx, "PATCH", path, req)
 	if err != nil {
 		return nil, err
@@ -75,7 +75,7 @@ func (c *giteaClient) UpdateRepositoryWebhook(ctx context.Context, owner, repo s
 // DeleteRepositoryWebhook deletes a webhook
 func (c *giteaClient) DeleteRepositoryWebhook(ctx context.Context, owner, repo string, id int64) error {
 	path := fmt.Sprintf("/repos/%s/%s/hooks/%d", owner, repo, id)
-	
+
 	resp, err := c.doRequest(ctx, "DELETE", path, nil)
 	if err != nil {
 		return err
@@ -87,7 +87,7 @@ func (c *giteaClient) DeleteRepositoryWebhook(ctx context.Context, owner, repo s
 // GetOrganizationWebhook retrieves a webhook by organization and webhook ID
 func (c *giteaClient) GetOrganizationWebhook(ctx context.Context, org string, id int64) (*Webhook, error) {
 	path := fmt.Sprintf("/orgs/%s/hooks/%d", org, id)
-	
+
 	resp, err := c.doRequest(ctx, "GET", path, nil)
 	if err != nil {
 		return nil, err
@@ -104,7 +104,7 @@ func (c *giteaClient) GetOrganizationWebhook(ctx context.Context, org string, id
 // CreateOrganizationWebhook creates a new webhook for an organization
 func (c *giteaClient) CreateOrganizationWebhook(ctx context.Context, org string, req *CreateWebhookRequest) (*Webhook, error) {
 	path := fmt.Sprintf("/orgs/%s/hooks", org)
-	
+
 	resp, err := c.doRequest(ctx, "POST", path, req)
 	if err != nil {
 		return nil, err
@@ -121,7 +121,7 @@ func (c *giteaClient) CreateOrganizationWebhook(ctx context.Context, org string,
 // UpdateOrganizationWebhook updates an existing organization webhook
 func (c *giteaClient) UpdateOrganizationWebhook(ctx context.Context, org string, id int64, req *UpdateWebhookRequest) (*Webhook, error) {
 	path := fmt.Sprintf("/orgs/%s/hooks/%d", org, id)
-	
+
 	resp, err := c.doRequest(ctx, "PATCH", path, req)
 	if err != nil {
 		return nil, err
@@ -138,7 +138,7 @@ func (c *giteaClient) UpdateOrganizationWebhook(ctx context.Context, org string,
 // DeleteOrganizationWebhook deletes an organization webhook
 func (c *giteaClient) DeleteOrganizationWebhook(ctx context.Context, org string, id int64) error {
 	path := fmt.Sprintf("/orgs/%s/hooks/%d", org, id)
-	
+
 	resp, err := c.doRequest(ctx, "DELETE", path, nil)
 	if err != nil {
 		return err

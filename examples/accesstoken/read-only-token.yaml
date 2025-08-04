@@ -10,14 +10,14 @@ spec:
   forProvider:
     username: "monitoring-service"
     name: "Monitoring and Reporting Token"
-    
+
     # Limited read-only scopes
     scopes:
       - "read:repository"
       - "read:user"
       - "read:organization"
-      - "read:issue" 
+      - "read:issue"
       - "read:pull_request"
-    
+
   providerConfigRef:
     name: default

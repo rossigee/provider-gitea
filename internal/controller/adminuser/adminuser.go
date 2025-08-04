@@ -38,16 +38,16 @@ import (
 )
 
 const (
-	errNotAdminUser   = "managed resource is not an AdminUser custom resource"
-	errTrackPCUsage   = "cannot track ProviderConfig usage"
-	errGetPC          = "cannot get ProviderConfig"
-	errGetCreds       = "cannot get credentials"
-	errNewClient      = "cannot create new Service"
+	errNotAdminUser    = "managed resource is not an AdminUser custom resource"
+	errTrackPCUsage    = "cannot track ProviderConfig usage"
+	errGetPC           = "cannot get ProviderConfig"
+	errGetCreds        = "cannot get credentials"
+	errNewClient       = "cannot create new Service"
 	errCreateAdminUser = "cannot create admin user"
 	errUpdateAdminUser = "cannot update admin user"
 	errDeleteAdminUser = "cannot delete admin user"
-	errGetAdminUser   = "cannot get admin user"
-	errGetPassword    = "cannot get password from secret"
+	errGetAdminUser    = "cannot get admin user"
+	errGetPassword     = "cannot get password from secret"
 )
 
 // Setup adds a controller that reconciles AdminUser managed resources.

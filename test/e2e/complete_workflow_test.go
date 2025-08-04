@@ -24,6 +24,7 @@ import (
 	"path/filepath"
 	"testing"
 	"time"
+
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/yaml"
@@ -31,15 +32,15 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 
+	accesstokenv1alpha1 "github.com/crossplane-contrib/provider-gitea/apis/accesstoken/v1alpha1"
 	actionv1alpha1 "github.com/crossplane-contrib/provider-gitea/apis/action/v1alpha1"
 	adminuserv1alpha1 "github.com/crossplane-contrib/provider-gitea/apis/adminuser/v1alpha1"
-	runnerv1alpha1 "github.com/crossplane-contrib/provider-gitea/apis/runner/v1alpha1"
 	branchprotectionv1alpha1 "github.com/crossplane-contrib/provider-gitea/apis/branchprotection/v1alpha1"
-	repositorykeyv1alpha1 "github.com/crossplane-contrib/provider-gitea/apis/repositorykey/v1alpha1"
-	accesstokenv1alpha1 "github.com/crossplane-contrib/provider-gitea/apis/accesstoken/v1alpha1"
-	repositorysecretv1alpha1 "github.com/crossplane-contrib/provider-gitea/apis/repositorysecret/v1alpha1"
-	userkeyv1alpha1 "github.com/crossplane-contrib/provider-gitea/apis/userkey/v1alpha1"
 	organizationmemberv1alpha1 "github.com/crossplane-contrib/provider-gitea/apis/organizationmember/v1alpha1"
+	repositorykeyv1alpha1 "github.com/crossplane-contrib/provider-gitea/apis/repositorykey/v1alpha1"
+	repositorysecretv1alpha1 "github.com/crossplane-contrib/provider-gitea/apis/repositorysecret/v1alpha1"
+	runnerv1alpha1 "github.com/crossplane-contrib/provider-gitea/apis/runner/v1alpha1"
+	userkeyv1alpha1 "github.com/crossplane-contrib/provider-gitea/apis/userkey/v1alpha1"
 )
 
 // Utility functions for pointer types
@@ -147,12 +148,12 @@ func testCreateAdminUsers(t *testing.T, ctx context.Context, k8sClient client.Cl
 	adminUser.SetName("test-admin")
 	adminUser.SetNamespace("default")
 	adminUser.Spec.ForProvider = adminuserv1alpha1.AdminUserParameters{
-		Username: "test-admin",
-		Email:    "admin@test.com",
-		FullName: stringPtr("Test Administrator"),
-		IsAdmin:  boolPtr(true),
-		IsActive: boolPtr(true),
-		Visibility: stringPtr("private"),
+		Username:    "test-admin",
+		Email:       "admin@test.com",
+		FullName:    stringPtr("Test Administrator"),
+		IsAdmin:     boolPtr(true),
+		IsActive:    boolPtr(true),
+		Visibility:  stringPtr("private"),
 		Description: stringPtr("Test admin user for E2E testing"),
 	}
 
@@ -177,15 +178,15 @@ func testSetupSecurity(t *testing.T, ctx context.Context, k8sClient client.Clien
 	branchProtection.SetName("main-protection")
 	branchProtection.SetNamespace("default")
 	branchProtection.Spec.ForProvider = branchprotectionv1alpha1.BranchProtectionParameters{
-		Repository:                    "test-org/test-repo",
-		Branch:                        "main",
-		RuleName:                      "Main Branch Protection",
-		EnablePush:                    boolPtr(false),
-		EnableStatusCheck:             boolPtr(true),
-		RequiredApprovals:             intPtr(2),
-		BlockOnRejectedReviews:        boolPtr(true),
-		RequireSignedCommits:          boolPtr(true),
-		StatusCheckContexts:           []string{"ci/build", "security/scan"},
+		Repository:             "test-org/test-repo",
+		Branch:                 "main",
+		RuleName:               "Main Branch Protection",
+		EnablePush:             boolPtr(false),
+		EnableStatusCheck:      boolPtr(true),
+		RequiredApprovals:      intPtr(2),
+		BlockOnRejectedReviews: boolPtr(true),
+		RequireSignedCommits:   boolPtr(true),
+		StatusCheckContexts:    []string{"ci/build", "security/scan"},
 	}
 
 	if err := k8sClient.Create(ctx, branchProtection); err != nil {
@@ -328,7 +329,7 @@ func testValidateCompleteSetup(t *testing.T, ctx context.Context, k8sClient clie
 			if err := k8sClient.List(ctx, list); err != nil {
 				t.Fatalf("Failed to list %s: %v", resource.name, err)
 			}
-			
+
 			// Use reflection to get Items field
 			items := list.(*unstructured.UnstructuredList).Items
 			if len(items) == 0 {
@@ -345,15 +346,15 @@ func TestWorkflowDependencies(t *testing.T) {
 	}
 
 	dependencies := map[string][]string{
-		"AdminUser":            {},                                    // No dependencies
-		"OrganizationMember":   {"AdminUser"},                        // Requires user
-		"AccessToken":          {"AdminUser"},                        // Requires user
-		"UserKey":              {"AdminUser"},                        // Requires user
-		"BranchProtection":     {"Repository"},                       // Requires repository
-		"RepositoryKey":        {"Repository"},                       // Requires repository
-		"RepositorySecret":     {"Repository"},                       // Requires repository
-		"Action":               {"Repository", "Runner"},             // Requires repository and runner
-		"Runner":               {"Organization"},                     // Requires organization
+		"AdminUser":          {},                       // No dependencies
+		"OrganizationMember": {"AdminUser"},            // Requires user
+		"AccessToken":        {"AdminUser"},            // Requires user
+		"UserKey":            {"AdminUser"},            // Requires user
+		"BranchProtection":   {"Repository"},           // Requires repository
+		"RepositoryKey":      {"Repository"},           // Requires repository
+		"RepositorySecret":   {"Repository"},           // Requires repository
+		"Action":             {"Repository", "Runner"}, // Requires repository and runner
+		"Runner":             {"Organization"},         // Requires organization
 	}
 
 	for resource, deps := range dependencies {
@@ -373,7 +374,7 @@ func TestExampleValidation(t *testing.T) {
 
 	exampleFiles := []string{
 		"../../examples/action/ci-pipeline.yaml",
-		"../../examples/runner/organization-runners.yaml", 
+		"../../examples/runner/organization-runners.yaml",
 		"../../examples/adminuser/admin-users.yaml",
 		"../../examples/branchprotection/enterprise-protection.yaml",
 		"../../examples/repositorykey/deployment-keys.yaml",
@@ -466,12 +467,12 @@ func TestPerformanceScenarios(t *testing.T) {
 	for _, scenario := range scenarios {
 		t.Run(scenario.name, func(t *testing.T) {
 			start := time.Now()
-			
+
 			// This would create multiple resources of the specified type
 			// For now, we just validate the test structure
-			t.Logf("Would create %d %s resources within %v", 
+			t.Logf("Would create %d %s resources within %v",
 				scenario.resourceCount, scenario.resourceType, scenario.timeout)
-			
+
 			elapsed := time.Since(start)
 			if elapsed > scenario.timeout {
 				t.Errorf("Scenario took %v, exceeded timeout of %v", elapsed, scenario.timeout)

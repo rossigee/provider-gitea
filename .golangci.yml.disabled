@@ -17,25 +17,25 @@ output:
 linters-settings:
   errcheck:
     check-type-assertions: true
-  
+
   goconst:
     min-len: 3
     min-occurrences: 3
-  
+
   gocyclo:
     min-complexity: 15
-  
+
   goimports:
     local-prefixes: github.com/crossplane-contrib/provider-gitea
-  
+
   govet:
     enable-all: true
     disable:
       - fieldalignment
-  
+
   lll:
     line-length: 120
-  
+
   misspell:
     locale: US
 
@@ -64,7 +64,7 @@ issues:
         - gocyclo
         - errcheck
         - goconst
-    
+
     # Exclude generated files
     - path: zz_generated\..*\.go
       linters:

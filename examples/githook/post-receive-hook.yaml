@@ -11,10 +11,10 @@ spec:
       #!/bin/bash
       # Post-receive hook example
       # This hook runs after all refs have been updated
-      
+
       while read oldrev newrev refname; do
           echo "Processing ref: $refname"
-          
+
           # Trigger CI/CD pipeline on main branch updates
           if [[ $refname == "refs/heads/main" ]]; then
               echo "Main branch updated - triggering deployment pipeline"
@@ -22,15 +22,15 @@ spec:
               #   -H "Authorization: Bearer $CI_TOKEN" \
               #   -d '{"ref": "'$refname'", "commit": "'$newrev'"}'
           fi
-          
+
           # Send notification to team chat
           branch_name=$(echo $refname | sed 's/refs\/heads\///')
           commit_msg=$(git log -1 --format=%s $newrev)
-          
+
           echo "Notifying team of push to $branch_name: $commit_msg"
           # Add your notification logic here
       done
-      
+
       echo "Post-receive processing completed"
       exit 0
   providerConfigRef:

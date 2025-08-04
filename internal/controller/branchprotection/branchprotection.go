@@ -38,12 +38,12 @@ import (
 )
 
 const (
-	errNotBranchProtection = "managed resource is not a BranchProtection custom resource"
-	errTrackPCUsage        = "cannot track ProviderConfig usage"
-	errGetPC               = "cannot get ProviderConfig"
-	errGetCreds            = "cannot get credentials"
-	errNewClient           = "cannot create new Service"
-	errGetBranchProtection = "cannot get branch protection"
+	errNotBranchProtection    = "managed resource is not a BranchProtection custom resource"
+	errTrackPCUsage           = "cannot track ProviderConfig usage"
+	errGetPC                  = "cannot get ProviderConfig"
+	errGetCreds               = "cannot get credentials"
+	errNewClient              = "cannot create new Service"
+	errGetBranchProtection    = "cannot get branch protection"
 	errCreateBranchProtection = "cannot create branch protection"
 	errUpdateBranchProtection = "cannot update branch protection"
 	errDeleteBranchProtection = "cannot delete branch protection"
@@ -144,27 +144,27 @@ func (c *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		CreatedAt: &protection.CreatedAt,
 		UpdatedAt: &protection.UpdatedAt,
 		AppliedSettings: &v1alpha1.BranchProtectionAppliedSettings{
-			EnablePush:                       &protection.EnablePush,
-			EnablePushWhitelist:              &protection.EnablePushWhitelist,
-			PushWhitelistUsernames:           protection.PushWhitelistUsernames,
-			PushWhitelistTeams:               protection.PushWhitelistTeams,
-			PushWhitelistDeployKeys:          &protection.PushWhitelistDeployKeys,
-			EnableMergeWhitelist:             &protection.EnableMergeWhitelist,
-			MergeWhitelistUsernames:          protection.MergeWhitelistUsernames,
-			MergeWhitelistTeams:              protection.MergeWhitelistTeams,
-			EnableStatusCheck:                &protection.EnableStatusCheck,
-			StatusCheckContexts:              protection.StatusCheckContexts,
-			RequiredApprovals:                &protection.RequiredApprovals,
-			EnableApprovalsWhitelist:         &protection.EnableApprovalsWhitelist,
-			ApprovalsWhitelistUsernames:      protection.ApprovalsWhitelistUsernames,
-			ApprovalsWhitelistTeams:          protection.ApprovalsWhitelistTeams,
-			BlockOnRejectedReviews:           &protection.BlockOnRejectedReviews,
-			BlockOnOfficialReviewRequests:    &protection.BlockOnOfficialReviewRequests,
-			BlockOnOutdatedBranch:            &protection.BlockOnOutdatedBranch,
-			DismissStaleApprovals:            &protection.DismissStaleApprovals,
-			RequireSignedCommits:             &protection.RequireSignedCommits,
-			ProtectedFilePatterns:            &protection.ProtectedFilePatterns,
-			UnprotectedFilePatterns:          &protection.UnprotectedFilePatterns,
+			EnablePush:                    &protection.EnablePush,
+			EnablePushWhitelist:           &protection.EnablePushWhitelist,
+			PushWhitelistUsernames:        protection.PushWhitelistUsernames,
+			PushWhitelistTeams:            protection.PushWhitelistTeams,
+			PushWhitelistDeployKeys:       &protection.PushWhitelistDeployKeys,
+			EnableMergeWhitelist:          &protection.EnableMergeWhitelist,
+			MergeWhitelistUsernames:       protection.MergeWhitelistUsernames,
+			MergeWhitelistTeams:           protection.MergeWhitelistTeams,
+			EnableStatusCheck:             &protection.EnableStatusCheck,
+			StatusCheckContexts:           protection.StatusCheckContexts,
+			RequiredApprovals:             &protection.RequiredApprovals,
+			EnableApprovalsWhitelist:      &protection.EnableApprovalsWhitelist,
+			ApprovalsWhitelistUsernames:   protection.ApprovalsWhitelistUsernames,
+			ApprovalsWhitelistTeams:       protection.ApprovalsWhitelistTeams,
+			BlockOnRejectedReviews:        &protection.BlockOnRejectedReviews,
+			BlockOnOfficialReviewRequests: &protection.BlockOnOfficialReviewRequests,
+			BlockOnOutdatedBranch:         &protection.BlockOnOutdatedBranch,
+			DismissStaleApprovals:         &protection.DismissStaleApprovals,
+			RequireSignedCommits:          &protection.RequireSignedCommits,
+			ProtectedFilePatterns:         &protection.ProtectedFilePatterns,
+			UnprotectedFilePatterns:       &protection.UnprotectedFilePatterns,
 		},
 	}
 

@@ -7,30 +7,30 @@ metadata:
 spec:
   forProvider:
     organization: acme-corp
-    
+
     # Security-first repository defaults
     defaultRepoPermission: read          # Minimum access by default
     defaultRepoVisibility: private       # Private by default for security
     requireSignedCommits: true          # Enforce commit signing for compliance
     enableDependencyGraph: true         # Enable security vulnerability scanning
-    
+
     # Controlled repository creation
     membersCanCreateRepos: true         # Allow innovation
-    membersCanCreatePrivate: true       # Enable private experimentation  
+    membersCanCreatePrivate: true       # Enable private experimentation
     membersCanCreateInternal: false     # Restrict internal repos to admins
     membersCanDeleteRepos: false        # Prevent accidental data loss
-    
+
     # Collaboration policies
     membersCanFork: true                # Enable open source contribution
     membersCanCreatePages: false        # Restrict Pages to prevent data leaks
-    
+
     # Enterprise Git hooks management
     allowGitHooks: true                 # Enable automation infrastructure
     allowCustomGitHooks: false          # Only allow admin-managed hooks
-    
+
   providerConfigRef:
     name: default
   managementPolicies: ["Observe", "Create", "Update"]
-  
+
   # Prevent accidental deletion of security policies
   deletionPolicy: Retain

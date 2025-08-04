@@ -13,19 +13,19 @@ spec:
       #!/bin/bash
       # Enterprise Git Pre-receive Hook
       # Implements security and compliance validation
-      
+
       set -e
-      
+
       # Configuration
       PROTECTED_BRANCHES="main|master|release/*"
       REQUIRED_COMMIT_FORMAT="^(feat|fix|docs|style|refactor|test|chore|security)(\(.+\))?: .{1,50}"
-      
+
       while read oldrev newrev refname; do
           echo "=== Validating push to $refname ==="
-          
+
           # Extract branch name
           branch_name=$(echo $refname | sed 's/refs\/heads\///')
-          
+
           # 1. Validate commit message format (conventional commits)
           echo "Checking commit message format..."
           while read commit; do
@@ -38,11 +38,11 @@ spec:
               fi
               echo "✅ Valid commit message: $msg"
           done < <(git rev-list $oldrev..$newrev)
-          
+
           # 2. Check for protected branch push restrictions
           if echo "$branch_name" | grep -qE "$PROTECTED_BRANCHES"; then
               echo "Validating push to protected branch: $branch_name"
-              
+
               # Check if commits are signed (GPG)
               while read commit; do
                   if ! git verify-commit $commit 2>/dev/null; then
@@ -53,17 +53,17 @@ spec:
                   echo "✅ Signed commit: $commit"
               done < <(git rev-list $oldrev..$newrev)
           fi
-          
+
           # 3. Security checks
           echo "Running security scans..."
-          
+
           # Check for sensitive data patterns
           if git diff $oldrev..$newrev | grep -qiE "(password|secret|token|key|api_key)" --; then
               echo "⚠️  Potential sensitive data detected"
               echo "Please review changes for hardcoded secrets"
               # In production, you might want to fail here
           fi
-          
+
           # 4. Code quality checks
           echo "Checking file size limits..."
           while read commit; do
@@ -75,13 +75,13 @@ spec:
                   exit 1
               fi
           done < <(git rev-list $oldrev..$newrev)
-          
+
           echo "✅ All validations passed for $refname"
       done
-      
+
       echo "🎉 Pre-receive validation completed successfully"
       exit 0
-      
+
   providerConfigRef:
     name: default
   managementPolicies: ["Observe", "Create", "Update", "Delete"]

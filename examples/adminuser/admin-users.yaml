@@ -10,35 +10,35 @@ spec:
   forProvider:
     username: "platform-admin"
     email: "platform-admin@company.com"
-    
+
     passwordSecretRef:
       name: "platform-admin-credentials"
       namespace: "crossplane-system"
       key: "password"
-    
+
     fullName: "Platform Administrator"
-    
+
     # Full admin privileges
     isAdmin: true
-    
+
     # Security settings
     mustChangePassword: true  # Force password change on first login
     sendNotify: true         # Send welcome email
-    
+
     # Account status
     isActive: true
     isRestricted: false
     prohibitLogin: false
-    
+
     # User preferences
     visibility: "public"
     maxRepoCreation: -1  # Unlimited repository creation
-    
+
     # Contact information
     website: "https://company.com/team/platform"
     location: "San Francisco, CA"
     description: "Platform team administrator responsible for Gitea instance management"
-    
+
   providerConfigRef:
     name: default
 
@@ -53,29 +53,29 @@ spec:
   forProvider:
     username: "security-admin"
     email: "security-admin@company.com"
-    
+
     passwordSecretRef:
       name: "security-admin-credentials"
       namespace: "crossplane-system"
       key: "password"
-    
+
     fullName: "Security Administrator"
     isAdmin: true
-    
+
     # Enhanced security settings for security admin
     mustChangePassword: true
     sendNotify: true
-    
+
     isActive: true
     isRestricted: false
     prohibitLogin: false
-    
+
     visibility: "limited"  # Limited visibility for security
     maxRepoCreation: 20
-    
+
     location: "Remote"
     description: "Security team administrator for compliance and security management"
-    
+
   providerConfigRef:
     name: default
 

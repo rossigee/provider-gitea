@@ -10,20 +10,20 @@ spec:
   forProvider:
     scope: "organization"
     scopeValue: "acme-corp"
-    
+
     name: "Organization Build Runner"
     description: "High-performance runner for organization builds"
-    
+
     labels:
       - "ubuntu-20.04"
       - "build"
       - "high-memory"
       - "docker"
       - "node-18"
-    
+
     # Optional: assign to specific runner group
     runnerGroupId: 1
-    
+
   providerConfigRef:
     name: default
 
@@ -38,10 +38,10 @@ spec:
   forProvider:
     scope: "organization"
     scopeValue: "acme-corp"
-    
+
     name: "Security Scanning Runner"
     description: "Dedicated runner for security scans and compliance checks"
-    
+
     labels:
       - "ubuntu-latest"
       - "security"
@@ -49,7 +49,7 @@ spec:
       - "compliance"
       - "trivy"
       - "codeql"
-    
+
   providerConfigRef:
     name: default
 
@@ -64,16 +64,16 @@ spec:
   forProvider:
     scope: "organization"
     scopeValue: "acme-corp"
-    
+
     name: "Deployment Runner"
     description: "Runner with deployment credentials and access"
-    
+
     labels:
       - "ubuntu-latest"
       - "deployment"
       - "kubernetes"
       - "docker"
       - "production"
-    
+
   providerConfigRef:
     name: default
