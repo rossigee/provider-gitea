@@ -48,6 +48,9 @@ jobs:
       - name: Download Dependencies
         run: go mod download
 
+      - name: Install Build Tools
+        run: make local-dev
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
         with:
