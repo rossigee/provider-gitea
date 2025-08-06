@@ -27,7 +27,10 @@ import (
 	"github.com/rossigee/provider-gitea/internal/controller/branchprotection"
 	"github.com/rossigee/provider-gitea/internal/controller/deploykey"
 	"github.com/rossigee/provider-gitea/internal/controller/githook"
+	"github.com/rossigee/provider-gitea/internal/controller/issue"
 	"github.com/rossigee/provider-gitea/internal/controller/label"
+	"github.com/rossigee/provider-gitea/internal/controller/pullrequest"
+	"github.com/rossigee/provider-gitea/internal/controller/release"
 	"github.com/rossigee/provider-gitea/internal/controller/organization"
 	"github.com/rossigee/provider-gitea/internal/controller/organizationmember"
 	"github.com/rossigee/provider-gitea/internal/controller/organizationsecret"
@@ -58,6 +61,9 @@ func Setup(mgr ctrl.Manager, o controller.Options) error {
 		repositorycollaborator.Setup,
 		organizationsettings.Setup,
 		githook.Setup,
+		issue.Setup,
+		pullrequest.Setup,
+		release.Setup,
 		branchprotection.Setup,
 		repositorykey.Setup,
 		accesstoken.Setup,

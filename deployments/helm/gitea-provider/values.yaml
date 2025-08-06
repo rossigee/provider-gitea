@@ -1,0 +1,325 @@
+# Default values for Crossplane Gitea Provider with Complete Native Architecture
+# This configuration provides enterprise-grade defaults for production deployments
+
+## Provider Configuration
+provider:
+  # Provider image configuration
+  image:
+    repository: ghcr.io/rossigee/provider-gitea
+    tag: "v0.8.2"  # Use latest stable version
+    pullPolicy: IfNotPresent
+  
+  # Provider package configuration  
+  package:
+    name: provider-gitea
+    source: ghcr.io/rossigee/provider-gitea
+    version: "v0.8.2"
+  
+  # Resource management
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "100m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+  
+  # High availability configuration
+  replicas: 1  # Set to 3+ for HA in production
+  
+  # Pod disruption budget
+  podDisruptionBudget:
+    enabled: true
+    minAvailable: 1
+  
+  # Security context
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 65534
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop: ["ALL"]
+    seccompProfile:
+      type: RuntimeDefault
+  
+  # Node selection and affinity
+  nodeSelector: {}
+  tolerations: []
+  affinity:
+    # Anti-affinity for HA deployments
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchLabels:
+              app.kubernetes.io/name: gitea-provider
+          topologyKey: kubernetes.io/hostname
+
+## Crossplane Configuration
+crossplane:
+  # Enable if Crossplane is not already installed
+  enabled: false
+  
+  # Crossplane configuration
+  provider:
+    # Provider configuration reference
+    config:
+      name: gitea-provider-config
+      spec:
+        # Gitea server configuration
+        server:
+          url: "https://gitea.example.com"
+          # API token should be provided via secret
+          tokenSecretRef:
+            name: gitea-api-token
+            namespace: crossplane-system
+            key: token
+        
+        # Client configuration
+        client:
+          timeout: 30s
+          retryAttempts: 3
+          rateLimitRequests: 100
+          rateLimitPeriod: "1m"
+        
+        # TLS configuration
+        tls:
+          insecureSkipVerify: false
+          caCertSecretRef:
+            name: gitea-ca-cert
+            namespace: crossplane-system
+            key: ca.crt
+
+## Monitoring Configuration
+monitoring:
+  # Enable monitoring stack
+  enabled: true
+  
+  # ServiceMonitor for Prometheus
+  serviceMonitor:
+    enabled: true
+    namespace: monitoring
+    labels:
+      prometheus: kube-prometheus
+    interval: 30s
+    scrapeTimeout: 10s
+    path: /metrics
+  
+  # Prometheus configuration
+  prometheus:
+    enabled: true
+    retention: 30d
+    storageClass: fast-ssd
+    storage: 50Gi
+    resources:
+      requests:
+        memory: 1Gi
+        cpu: 500m
+      limits:
+        memory: 2Gi
+        cpu: 1000m
+  
+  # Grafana configuration  
+  grafana:
+    enabled: true
+    adminPassword: "admin"  # Change in production
+    storageClass: fast-ssd
+    storage: 10Gi
+    dashboards:
+      enabled: true
+      # Pre-configured dashboards for provider monitoring
+      configMaps:
+      - name: gitea-provider-dashboard
+        key: dashboard.json
+    
+    # Grafana datasources
+    datasources:
+      - name: Prometheus
+        type: prometheus
+        url: http://prometheus:9090
+        isDefault: true
+  
+  # Alerting configuration
+  alerting:
+    enabled: true
+    rules:
+      # Critical alerts
+      providerDown:
+        enabled: true
+        severity: critical
+        threshold: 0
+      
+      # Warning alerts  
+      highLatency:
+        enabled: true
+        severity: warning
+        threshold: 1000ms
+      
+      resourceErrors:
+        enabled: true
+        severity: warning
+        threshold: 5
+
+## Security Configuration
+security:
+  # Pod Security Standards
+  podSecurityPolicy:
+    enabled: true
+    policy: restricted
+  
+  # Network Policies
+  networkPolicy:
+    enabled: true
+    ingress:
+      enabled: true
+      from:
+      - namespaceSelector:
+          matchLabels:
+            name: crossplane-system
+    egress:
+      enabled: true
+      to:
+      - ports:
+        - protocol: TCP
+          port: 443
+        - protocol: TCP 
+          port: 80
+  
+  # RBAC configuration
+  rbac:
+    enabled: true
+    # Custom roles and bindings
+    customRoles:
+    - name: gitea-provider-operator
+      rules:
+      - apiGroups: [""]
+        resources: ["secrets", "configmaps"]
+        verbs: ["get", "list", "watch"]
+      - apiGroups: ["gitea.crossplane.io"]
+        resources: ["*"]
+        verbs: ["*"]
+
+## Performance Configuration
+performance:
+  # Horizontal Pod Autoscaler
+  hpa:
+    enabled: false  # Enable for auto-scaling
+    minReplicas: 1
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+  
+  # Vertical Pod Autoscaler
+  vpa:
+    enabled: false
+    updatePolicy: "Off"  # Use "Auto" for automatic updates
+  
+  # Resource quotas
+  resourceQuota:
+    enabled: false
+    requests:
+      cpu: "2"
+      memory: "4Gi"
+    limits:
+      cpu: "4" 
+      memory: "8Gi"
+
+## Backup Configuration
+backup:
+  enabled: true
+  
+  # Backup schedule (daily at 2 AM)
+  schedule: "0 2 * * *"
+  
+  # Retention policy
+  retention:
+    daily: 7
+    weekly: 4
+    monthly: 12
+  
+  # Storage configuration
+  storage:
+    class: backup-storage
+    size: 100Gi
+  
+  # Backup destinations
+  destinations:
+  - type: s3
+    bucket: crossplane-backups
+    region: us-west-2
+    secretRef:
+      name: backup-credentials
+      key: aws-credentials
+
+## Development & Testing
+development:
+  # Enable development features
+  enabled: false
+  
+  # Debug logging
+  debug: false
+  
+  # Hot reload for development
+  hotReload: false
+  
+  # Test fixtures
+  fixtures:
+    enabled: false
+    data: |
+      # Test data configuration
+
+## Enterprise Features
+enterprise:
+  # Multi-tenancy support
+  multiTenancy:
+    enabled: true
+    isolationLevel: namespace
+  
+  # Compliance features
+  compliance:
+    enabled: true
+    standards:
+    - SOC2
+    - PCI-DSS
+    - GDPR
+  
+  # Audit logging
+  auditLogging:
+    enabled: true
+    destination: s3
+    retention: 7years
+  
+  # Advanced security
+  advancedSecurity:
+    enabled: true
+    features:
+    - threatDetection
+    - vulnerabilityScanning
+    - complianceReporting
+
+## Custom Configuration
+custom:
+  # Environment-specific configurations
+  environment: production  # development, staging, production
+  
+  # Custom annotations
+  annotations: {}
+  
+  # Custom labels
+  labels: {}
+  
+  # Additional configuration
+  config: |
+    # Custom configuration goes here
+    
+## Legacy Support (for migration scenarios)
+legacy:
+  # Support for Terraform-based resources during migration
+  terraformCompat:
+    enabled: false
+    
+  # Legacy API versions
+  apiVersions:
+    v1alpha1: true
+    v1beta1: false

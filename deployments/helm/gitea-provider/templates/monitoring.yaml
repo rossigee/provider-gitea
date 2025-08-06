@@ -1,0 +1,316 @@
+{{- if .Values.monitoring.enabled }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "gitea-provider.fullname" . }}-metrics
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "gitea-provider.labels" . | nindent 4 }}
+    app.kubernetes.io/component: metrics
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "8080"
+    prometheus.io/path: "/metrics"
+spec:
+  type: ClusterIP
+  ports:
+  - name: http-metrics
+    port: 8080
+    targetPort: 8080
+    protocol: TCP
+  selector:
+    {{- include "gitea-provider.selectorLabels" . | nindent 4 }}
+
+---
+{{- if .Values.monitoring.serviceMonitor.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ include "gitea-provider.fullname" . }}
+  namespace: {{ .Values.monitoring.serviceMonitor.namespace | default .Release.Namespace }}
+  labels:
+    {{- include "gitea-provider.monitoringLabels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "gitea-provider.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: metrics
+  endpoints:
+  - port: http-metrics
+    path: {{ .Values.monitoring.serviceMonitor.path }}
+    interval: {{ .Values.monitoring.serviceMonitor.interval }}
+    scrapeTimeout: {{ .Values.monitoring.serviceMonitor.scrapeTimeout }}
+    honorLabels: true
+    metricRelabelings:
+    - sourceLabels: [__name__]
+      regex: 'controller_runtime_.*'
+      action: drop
+    - sourceLabels: [__name__]
+      regex: 'workqueue_.*'
+      action: drop
+    relabelings:
+    - sourceLabels: [__meta_kubernetes_pod_name]
+      targetLabel: pod
+    - sourceLabels: [__meta_kubernetes_pod_node_name]
+      targetLabel: node
+    - sourceLabels: [__meta_kubernetes_namespace]
+      targetLabel: namespace
+    - targetLabel: provider
+      replacement: gitea
+    - targetLabel: architecture
+      replacement: complete-native
+{{- end }}
+
+---
+{{- if .Values.monitoring.alerting.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: {{ include "gitea-provider.fullname" . }}
+  namespace: {{ .Values.monitoring.serviceMonitor.namespace | default .Release.Namespace }}
+  labels:
+    {{- include "gitea-provider.labels" . | nindent 4 }}
+    app.kubernetes.io/component: alerting
+spec:
+  groups:
+  - name: gitea-provider.critical
+    interval: 30s
+    rules:
+    {{- if .Values.monitoring.alerting.rules.providerDown.enabled }}
+    - alert: GiteaProviderDown
+      expr: up{job="gitea-provider"} == 0
+      for: 1m
+      labels:
+        severity: {{ .Values.monitoring.alerting.rules.providerDown.severity }}
+        provider: gitea
+        architecture: complete-native
+      annotations:
+        summary: "Gitea Provider is down"
+        description: "The Gitea Provider has been down for more than 1 minute."
+        runbook_url: "https://github.com/rossigee/provider-gitea/blob/main/deployments/docs/troubleshooting.md#provider-down"
+    {{- end }}
+    
+    - alert: GiteaProviderHighRestartRate
+      expr: rate(kube_pod_container_status_restarts_total{container="provider",pod=~"provider-gitea-.*"}[15m]) > 0.1
+      for: 5m
+      labels:
+        severity: warning
+        provider: gitea
+      annotations:
+        summary: "High restart rate for Gitea Provider"
+        description: "Gitea Provider is restarting frequently ({{ "{{ $value }}" }} restarts/min)"
+        
+  - name: gitea-provider.performance
+    interval: 30s
+    rules:
+    {{- if .Values.monitoring.alerting.rules.highLatency.enabled }}
+    - alert: GiteaProviderHighLatency
+      expr: histogram_quantile(0.95, rate(controller_runtime_reconcile_time_seconds_bucket{controller=~".*gitea.*"}[5m])) > {{ .Values.monitoring.alerting.rules.highLatency.threshold | replace "ms" "" | div 1000 }}
+      for: 5m
+      labels:
+        severity: {{ .Values.monitoring.alerting.rules.highLatency.severity }}
+        provider: gitea
+      annotations:
+        summary: "High reconciliation latency for Gitea Provider"
+        description: "95th percentile latency is {{ "{{ $value }}" }}s"
+    {{- end }}
+        
+    - alert: GiteaProviderHighMemoryUsage
+      expr: container_memory_usage_bytes{container="provider",pod=~"provider-gitea-.*"} / container_spec_memory_limit_bytes{container="provider",pod=~"provider-gitea-.*"} > 0.9
+      for: 5m
+      labels:
+        severity: warning
+        provider: gitea
+      annotations:
+        summary: "High memory usage for Gitea Provider"
+        description: "Memory usage is {{ "{{ $value | humanizePercentage }}" }}"
+        
+  - name: gitea-provider.resources
+    interval: 30s  
+    rules:
+    {{- if .Values.monitoring.alerting.rules.resourceErrors.enabled }}
+    - alert: GiteaResourceErrors
+      expr: rate(controller_runtime_reconcile_errors_total{controller=~".*gitea.*"}[5m]) > {{ .Values.monitoring.alerting.rules.resourceErrors.threshold }}
+      for: 2m
+      labels:
+        severity: {{ .Values.monitoring.alerting.rules.resourceErrors.severity }}
+        provider: gitea
+      annotations:
+        summary: "High error rate for Gitea resources"
+        description: "Error rate is {{ "{{ $value }}" }} errors/sec for controller {{ "{{ $labels.controller }}" }}"
+    {{- end }}
+        
+    - alert: GiteaResourceCreationStalled
+      expr: increase(controller_runtime_reconcile_total{controller=~".*gitea.*",result="success"}[10m]) == 0 and on() (time() - process_start_time_seconds{job="gitea-provider"}) > 600
+      for: 10m
+      labels:
+        severity: warning
+        provider: gitea
+      annotations:
+        summary: "Gitea resource creation appears stalled"
+        description: "No successful reconciliations in the last 10 minutes for controller {{ "{{ $labels.controller }}" }}"
+
+  - name: gitea-provider.business
+    interval: 60s
+    rules:
+    - alert: GiteaRepositoryCreationRateHigh
+      expr: rate(crossplane_managed_resource_exists{provider="gitea",kind="Repository"}[5m]) > 10
+      for: 5m
+      labels:
+        severity: info
+        provider: gitea
+      annotations:
+        summary: "High repository creation rate"
+        description: "Repository creation rate is {{ "{{ $value }}" }} repos/sec"
+        
+    - alert: GiteaOrganizationCreationAnomaly
+      expr: rate(crossplane_managed_resource_exists{provider="gitea",kind="Organization"}[1h]) > 2 * rate(crossplane_managed_resource_exists{provider="gitea",kind="Organization"}[24h])
+      for: 30m
+      labels:
+        severity: info
+        provider: gitea
+      annotations:
+        summary: "Unusual organization creation pattern"
+        description: "Organization creation rate is significantly higher than normal"
+
+  - name: gitea-provider.security
+    interval: 60s
+    rules:
+    - alert: GiteaSecurityPolicyViolation
+      expr: increase(opa_violations_total{provider="gitea"}[5m]) > 0
+      for: 1m
+      labels:
+        severity: critical
+        provider: gitea
+        category: security
+      annotations:
+        summary: "Security policy violation detected"
+        description: "{{ "{{ $value }}" }} security policy violations in the last 5 minutes"
+        
+    - alert: GiteaUnauthorizedAccessAttempt
+      expr: rate(http_requests_total{provider="gitea",code=~"401|403"}[5m]) > 0.1
+      for: 2m
+      labels:
+        severity: warning
+        provider: gitea
+        category: security
+      annotations:
+        summary: "Unauthorized access attempts detected"
+        description: "Rate of unauthorized access: {{ "{{ $value }}" }}/sec"
+{{- end }}
+
+---
+{{- if .Values.monitoring.grafana.dashboards.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "gitea-provider.fullname" . }}-dashboard
+  namespace: {{ .Values.monitoring.serviceMonitor.namespace | default .Release.Namespace }}
+  labels:
+    {{- include "gitea-provider.labels" . | nindent 4 }}
+    app.kubernetes.io/component: dashboard
+    grafana_dashboard: "1"
+data:
+  dashboard.json: |
+    {
+      "dashboard": {
+        "id": null,
+        "title": "Gitea Provider - Complete Native Architecture",
+        "description": "Comprehensive monitoring dashboard for Crossplane Gitea Provider with 100% native controller coverage",
+        "tags": ["crossplane", "gitea", "native-architecture"],
+        "timezone": "browser",
+        "panels": [
+          {
+            "id": 1,
+            "title": "Provider Health Overview",
+            "type": "stat",
+            "targets": [
+              {
+                "expr": "up{job=\"gitea-provider\"}",
+                "legendFormat": "Provider Status"
+              }
+            ],
+            "fieldConfig": {
+              "defaults": {
+                "color": {"mode": "thresholds"},
+                "thresholds": {
+                  "steps": [
+                    {"color": "red", "value": 0},
+                    {"color": "green", "value": 1}
+                  ]
+                },
+                "mappings": [
+                  {"options": {"0": {"text": "DOWN"}}, "type": "value"},
+                  {"options": {"1": {"text": "UP"}}, "type": "value"}
+                ]
+              }
+            },
+            "gridPos": {"h": 4, "w": 6, "x": 0, "y": 0}
+          },
+          {
+            "id": 2,
+            "title": "Controller Coverage",
+            "type": "stat",
+            "targets": [
+              {
+                "expr": "count(count by (controller) (controller_runtime_reconcile_total{controller=~\".*gitea.*\"}))",
+                "legendFormat": "Active Controllers"
+              }
+            ],
+            "fieldConfig": {
+              "defaults": {
+                "color": {"mode": "thresholds"},
+                "thresholds": {
+                  "steps": [
+                    {"color": "red", "value": 0},
+                    {"color": "yellow", "value": 20},
+                    {"color": "green", "value": 23}
+                  ]
+                },
+                "unit": "none"
+              }
+            },
+            "gridPos": {"h": 4, "w": 6, "x": 6, "y": 0}
+          },
+          {
+            "id": 3,
+            "title": "Resource Operations Rate",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "rate(controller_runtime_reconcile_total{controller=~\".*gitea.*\",result=\"success\"}[5m])",
+                "legendFormat": "{{ "{{ controller }}" }} - Success"
+              },
+              {
+                "expr": "rate(controller_runtime_reconcile_total{controller=~\".*gitea.*\",result=\"error\"}[5m])",
+                "legendFormat": "{{ "{{ controller }}" }} - Error"
+              }
+            ],
+            "yAxes": [
+              {"label": "Operations/sec", "min": 0}
+            ],
+            "gridPos": {"h": 8, "w": 12, "x": 0, "y": 4}
+          },
+          {
+            "id": 4,
+            "title": "Reconciliation Latency (95th percentile)",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "histogram_quantile(0.95, rate(controller_runtime_reconcile_time_seconds_bucket{controller=~\".*gitea.*\"}[5m]))",
+                "legendFormat": "{{ "{{ controller }}" }}"
+              }
+            ],
+            "yAxes": [
+              {"label": "Latency (seconds)", "min": 0}
+            ],
+            "gridPos": {"h": 8, "w": 12, "x": 12, "y": 4}
+          }
+        ],
+        "time": {"from": "now-1h", "to": "now"},
+        "refresh": "30s"
+      }
+    }
+{{- end }}
+{{- end }}

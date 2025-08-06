@@ -1,0 +1,232 @@
+apiVersion: pkg.crossplane.io/v1
+kind: Provider
+metadata:
+  name: {{ .Values.provider.package.name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "gitea-provider.labels" . | nindent 4 }}
+  annotations:
+    {{- if .Values.custom.annotations }}
+    {{- toYaml .Values.custom.annotations | nindent 4 }}
+    {{- end }}
+spec:
+  package: {{ .Values.provider.package.source }}:{{ .Values.provider.package.version }}
+  packagePullPolicy: {{ .Values.provider.image.pullPolicy }}
+  
+  # Controller configuration
+  controllerConfigRef:
+    name: {{ .Values.provider.package.name }}-controller-config
+  
+  # Skip dependency resolution for faster startup
+  skipDependencyResolution: false
+  
+  # Package runtime configuration
+  runtimeConfigRef:
+    name: {{ .Values.provider.package.name }}-runtime-config
+    apiVersion: pkg.crossplane.io/v1beta1
+
+---
+apiVersion: pkg.crossplane.io/v1beta1
+kind: ControllerConfig
+metadata:
+  name: {{ .Values.provider.package.name }}-controller-config
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "gitea-provider.labels" . | nindent 4 }}
+spec:
+  # Pod configuration
+  replicas: {{ .Values.provider.replicas }}
+  
+  # Security context
+  securityContext:
+    {{- toYaml .Values.provider.securityContext | nindent 4 }}
+  
+  # Resource management
+  resources:
+    {{- toYaml .Values.provider.resources | nindent 4 }}
+  
+  # Node selection
+  {{- if .Values.provider.nodeSelector }}
+  nodeSelector:
+    {{- toYaml .Values.provider.nodeSelector | nindent 4 }}
+  {{- end }}
+  
+  # Tolerations
+  {{- if .Values.provider.tolerations }}
+  tolerations:
+    {{- toYaml .Values.provider.tolerations | nindent 4 }}
+  {{- end }}
+  
+  # Affinity rules
+  {{- if .Values.provider.affinity }}
+  affinity:
+    {{- toYaml .Values.provider.affinity | nindent 4 }}
+  {{- end }}
+  
+  # Environment variables
+  env:
+  - name: POD_NAME
+    valueFrom:
+      fieldRef:
+        fieldPath: metadata.name
+  - name: POD_NAMESPACE  
+    valueFrom:
+      fieldRef:
+        fieldPath: metadata.namespace
+  {{- if .Values.development.debug }}
+  - name: DEBUG
+    value: "true"
+  {{- end }}
+  {{- if .Values.monitoring.enabled }}
+  - name: ENABLE_METRICS
+    value: "true"
+  {{- end }}
+  
+  # Probes configuration
+  livenessProbe:
+    httpGet:
+      path: /healthz
+      port: 8080
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+  
+  readinessProbe:
+    httpGet:
+      path: /readyz  
+      port: 8080
+    initialDelaySeconds: 5
+    periodSeconds: 5
+    timeoutSeconds: 3
+    failureThreshold: 3
+
+---
+apiVersion: pkg.crossplane.io/v1beta1
+kind: DeploymentRuntimeConfig  
+metadata:
+  name: {{ .Values.provider.package.name }}-runtime-config
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "gitea-provider.labels" . | nindent 4 }}
+spec:
+  # Deployment configuration
+  deploymentTemplate:
+    spec:
+      replicas: {{ .Values.provider.replicas }}
+      selector:
+        matchLabels:
+          {{- include "gitea-provider.selectorLabels" . | nindent 10 }}
+      template:
+        metadata:
+          labels:
+            {{- include "gitea-provider.selectorLabels" . | nindent 12 }}
+          annotations:
+            # Force restart on config change
+            checksum/config: {{ include (print $.Template.BasePath "/provider-config.yaml") . | sha256sum }}
+        spec:
+          serviceAccountName: {{ .Values.provider.package.name }}
+          
+          # Security context
+          securityContext:
+            {{- toYaml .Values.provider.securityContext | nindent 12 }}
+          
+          # Image pull secrets
+          {{- if .Values.provider.image.pullSecrets }}
+          imagePullSecrets:
+            {{- toYaml .Values.provider.image.pullSecrets | nindent 12 }}
+          {{- end }}
+          
+          containers:
+          - name: provider
+            image: {{ .Values.provider.image.repository }}:{{ .Values.provider.image.tag }}
+            imagePullPolicy: {{ .Values.provider.image.pullPolicy }}
+            
+            # Resource limits
+            resources:
+              {{- toYaml .Values.provider.resources | nindent 14 }}
+            
+            # Security context
+            securityContext:
+              {{- toYaml .Values.provider.securityContext | nindent 14 }}
+            
+            # Environment variables
+            env:
+            - name: GOMAXPROCS
+              valueFrom:
+                resourceFieldRef:
+                  resource: limits.cpu
+            {{- if .Values.monitoring.enabled }}
+            - name: METRICS_ADDR
+              value: "0.0.0.0:8080"
+            {{- end }}
+            
+            # Probes
+            livenessProbe:
+              httpGet:
+                path: /healthz
+                port: 8080
+              initialDelaySeconds: 30
+              periodSeconds: 10
+            
+            readinessProbe:
+              httpGet:
+                path: /readyz
+                port: 8080
+              initialDelaySeconds: 5
+              periodSeconds: 5
+            
+            # Ports
+            ports:
+            - name: http-metrics
+              containerPort: 8080
+              protocol: TCP
+            
+            # Volume mounts
+            volumeMounts:
+            - name: provider-config
+              mountPath: /etc/provider
+              readOnly: true
+          
+          # Volumes
+          volumes:
+          - name: provider-config
+            configMap:
+              name: {{ .Values.provider.package.name }}-config
+
+          # Node selection and scheduling
+          {{- if .Values.provider.nodeSelector }}
+          nodeSelector:
+            {{- toYaml .Values.provider.nodeSelector | nindent 12 }}
+          {{- end }}
+          
+          {{- if .Values.provider.tolerations }}
+          tolerations:
+            {{- toYaml .Values.provider.tolerations | nindent 12 }}
+          {{- end }}
+          
+          {{- if .Values.provider.affinity }}
+          affinity:
+            {{- toYaml .Values.provider.affinity | nindent 12 }}
+          {{- end }}
+
+---
+{{- if .Values.provider.podDisruptionBudget.enabled }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ .Values.provider.package.name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "gitea-provider.labels" . | nindent 4 }}
+spec:
+  {{- if .Values.provider.podDisruptionBudget.minAvailable }}
+  minAvailable: {{ .Values.provider.podDisruptionBudget.minAvailable }}
+  {{- end }}
+  {{- if .Values.provider.podDisruptionBudget.maxUnavailable }}
+  maxUnavailable: {{ .Values.provider.podDisruptionBudget.maxUnavailable }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "gitea-provider.selectorLabels" . | nindent 6 }}
+{{- end }}

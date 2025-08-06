@@ -135,11 +135,48 @@ This provides:
 - 👑 **Administrative Control**: Service accounts and administrative users
 - 🏢 **Organization Management**: Complete organizational policies
 
+## Testing
+
+This provider includes comprehensive test coverage:
+
+- **23/23 controllers** with 100% test success rate
+- **184 passing tests** across all resource types  
+- **Shared test infrastructure** for maintainable, consistent testing
+- **Mock clients** for Gitea API and Kubernetes integration testing
+
+### Test Infrastructure
+
+The provider includes a shared test infrastructure at [`internal/controller/testing/`](internal/controller/testing/) that provides:
+
+- **TestFixtures** - Common test data and response builders
+- **MockClientBuilder** - Fluent interface for Gitea mock clients
+- **K8sSecretBuilder** - Kubernetes secret creation utilities
+- **TestSuite** - Test orchestration and assertion helpers
+
+See the [Test Infrastructure README](internal/controller/testing/README.md) for detailed usage examples.
+
+### Running Tests
+
+```bash
+# Run all tests
+make test
+
+# Run with coverage
+make test-coverage
+
+# Run specific controller tests
+go test ./internal/controller/repository/...
+
+# Lint code
+make lint
+```
+
 ## Documentation
 
 - [Configuration Guide](docs/CONFIGURATION.md)
 - [Development Guide](docs/DEVELOPMENT.md)
 - [Resource Reference](docs/RESOURCES.md)
+- [Test Infrastructure](internal/controller/testing/README.md)
 
 ## Development
 

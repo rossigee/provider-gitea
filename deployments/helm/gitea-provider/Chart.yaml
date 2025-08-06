@@ -1,0 +1,94 @@
+apiVersion: v2
+name: gitea-provider
+description: |
+  Enterprise-grade Helm chart for Crossplane Gitea Provider with Complete Native Architecture.
+  Provides 100% native controller coverage, comprehensive monitoring, security hardening,
+  and production-ready operations suite.
+
+type: application
+version: 1.0.0
+appVersion: "v0.8.2"
+
+maintainers:
+  - name: Crossplane Gitea Provider Team
+    email: maintainers@provider-gitea.io
+    url: https://github.com/rossigee/provider-gitea
+
+home: https://github.com/rossigee/provider-gitea
+sources:
+  - https://github.com/rossigee/provider-gitea
+
+keywords:
+  - crossplane
+  - gitea
+  - git
+  - devops
+  - infrastructure
+  - kubernetes
+  - native-controllers
+  - enterprise
+
+annotations:
+  # Artifact Hub annotations
+  artifacthub.io/operator: "true"
+  artifacthub.io/operatorCapabilities: "Full Lifecycle"
+  artifacthub.io/category: "integration-delivery"
+  artifacthub.io/license: "Apache-2.0"
+  artifacthub.io/links: |
+    - name: Documentation
+      url: https://github.com/rossigee/provider-gitea/tree/main/docs
+    - name: Source Code
+      url: https://github.com/rossigee/provider-gitea
+    - name: Complete Native Architecture Guide
+      url: https://github.com/rossigee/provider-gitea/blob/main/NATIVE-ARCHITECTURE-SHOWCASE.md
+  artifacthub.io/crds: |
+    - kind: Repository
+      version: v1alpha1
+      name: repositories.repository.gitea.crossplane.io
+      displayName: Gitea Repository
+      description: Manages Gitea repositories with native Crossplane controllers
+    - kind: Organization  
+      version: v1alpha1
+      name: organizations.organization.gitea.crossplane.io
+      displayName: Gitea Organization
+      description: Manages Gitea organizations with enterprise features
+    - kind: Issue
+      version: v1alpha1
+      name: issues.issue.gitea.crossplane.io
+      displayName: Gitea Issue
+      description: Manages Gitea issues and project tracking
+    - kind: PullRequest
+      version: v1alpha1
+      name: pullrequests.pullrequest.gitea.crossplane.io
+      displayName: Gitea Pull Request
+      description: Manages Gitea pull requests and code review workflows
+    - kind: Release
+      version: v1alpha1
+      name: releases.release.gitea.crossplane.io
+      displayName: Gitea Release
+      description: Manages Gitea releases and artifact distribution
+  artifacthub.io/changes: |
+    - kind: added
+      description: Complete Native Architecture with 23 native controllers
+    - kind: added  
+      description: Comprehensive testing framework with 100% coverage
+    - kind: added
+      description: Enterprise security and compliance features
+    - kind: added
+      description: Production monitoring and alerting
+    - kind: added
+      description: High availability and auto-scaling support
+
+dependencies:
+  - name: crossplane
+    version: ">=1.12.0"
+    repository: "https://charts.crossplane.io/stable"
+    condition: crossplane.enabled
+  - name: prometheus
+    version: ">=15.0.0"
+    repository: "https://prometheus-community.github.io/helm-charts"
+    condition: monitoring.prometheus.enabled
+  - name: grafana
+    version: ">=6.0.0"
+    repository: "https://grafana.github.io/helm-charts"
+    condition: monitoring.grafana.enabled

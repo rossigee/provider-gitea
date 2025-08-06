@@ -126,10 +126,12 @@ func (c *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 	// Construct deploy key identifier (repo + key ID)
 	var keyID int64
 	if externalName := meta.GetExternalName(cr); externalName != "" {
-		// Parse key ID from external name if it exists
-		// Implementation depends on how we store the ID
-		// TODO: implement external name parsing
-		_ = externalName
+		// Parse key ID from external name (stored as string representation of ID)
+		parsedID, err := strconv.ParseInt(externalName, 10, 64)
+		if err != nil {
+			return managed.ExternalObservation{}, errors.Wrap(err, "failed to parse deploy key ID from external name")
+		}
+		keyID = parsedID
 	}
 
 	if keyID == 0 {

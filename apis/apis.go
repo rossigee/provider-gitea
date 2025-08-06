@@ -26,7 +26,10 @@ import (
 	branchprotectionv1alpha1 "github.com/rossigee/provider-gitea/apis/branchprotection/v1alpha1"
 	deploykeyv1alpha1 "github.com/rossigee/provider-gitea/apis/deploykey/v1alpha1"
 	githookv1alpha1 "github.com/rossigee/provider-gitea/apis/githook/v1alpha1"
+	issuev1alpha1 "github.com/rossigee/provider-gitea/apis/issue/v1alpha1"
 	labelv1alpha1 "github.com/rossigee/provider-gitea/apis/label/v1alpha1"
+	pullrequestv1alpha1 "github.com/rossigee/provider-gitea/apis/pullrequest/v1alpha1"
+	releasev1alpha1 "github.com/rossigee/provider-gitea/apis/release/v1alpha1"
 	orgv1alpha1 "github.com/rossigee/provider-gitea/apis/organization/v1alpha1"
 	organizationmemberv1alpha1 "github.com/rossigee/provider-gitea/apis/organizationmember/v1alpha1"
 	orgsecretv1alpha1 "github.com/rossigee/provider-gitea/apis/organizationsecret/v1alpha1"
@@ -60,6 +63,9 @@ func init() {
 		repositorycollaboratorv1alpha1.SchemeBuilder.AddToScheme,
 		organizationsettingsv1alpha1.SchemeBuilder.AddToScheme,
 		githookv1alpha1.SchemeBuilder.AddToScheme,
+		issuev1alpha1.SchemeBuilder.AddToScheme,
+		pullrequestv1alpha1.SchemeBuilder.AddToScheme,
+		releasev1alpha1.SchemeBuilder.AddToScheme,
 		branchprotectionv1alpha1.SchemeBuilder.AddToScheme,
 		repositorykeyv1alpha1.SchemeBuilder.AddToScheme,
 		accesstokenv1alpha1.SchemeBuilder.AddToScheme,

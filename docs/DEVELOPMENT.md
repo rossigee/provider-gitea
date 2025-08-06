@@ -1,6 +1,6 @@
 # Development Guide
 
-This guide covers how to develop and contribute to the Gitea provider.
+This guide covers how to develop and contribute to the enterprise-grade Gitea provider with 22 managed resource types and comprehensive testing infrastructure.
 
 ## Prerequisites
 
@@ -9,6 +9,7 @@ This guide covers how to develop and contribute to the Gitea provider.
 - kubectl
 - kind (for local testing)
 - Crossplane CLI
+- Git with pre-commit hooks support
 
 ## Local Development Setup
 
@@ -18,17 +19,22 @@ git clone https://github.com/crossplane-contrib/provider-gitea.git
 cd provider-gitea
 ```
 
-2. Initialize git submodules:
+2. Install Git hooks (prevents large file commits):
+```bash
+./scripts/install-hooks.sh
+```
+
+3. Initialize git submodules:
 ```bash
 make submodules
 ```
 
-3. Install dependencies:
+4. Install dependencies:
 ```bash
 go mod download
 ```
 
-4. Generate code:
+5. Generate code:
 ```bash
 make generate
 ```
@@ -80,19 +86,33 @@ make run
 
 ```
 provider-gitea/
-├── apis/                    # API definitions
-│   ├── repository/v1alpha1/ # Repository resource
-│   ├── organization/v1alpha1/ # Organization resource
-│   ├── user/v1alpha1/       # User resource
-│   ├── webhook/v1alpha1/    # Webhook resource
-│   └── v1beta1/             # Provider configuration
-├── cmd/provider/            # Main entry point
+├── apis/                           # API definitions (22 resource types)
+│   ├── repository/v1alpha1/        # Repository management
+│   ├── organization/v1alpha1/      # Organization management  
+│   ├── user/v1alpha1/              # User management
+│   ├── webhook/v1alpha1/           # Webhook configuration
+│   ├── branchprotection/v1alpha1/  # Branch protection rules
+│   ├── accesstoken/v1alpha1/       # API token management
+│   ├── repositorysecret/v1alpha1/  # CI/CD secrets
+│   ├── action/v1alpha1/            # Actions/workflows
+│   ├── runner/v1alpha1/            # Self-hosted runners
+│   ├── adminuser/v1alpha1/         # Administrative users
+│   ├── [+12 more enterprise resources]
+│   └── v1beta1/                    # Provider configuration
+├── cmd/provider/                   # Main entry point
 ├── internal/
-│   ├── clients/             # Gitea API clients
-│   ├── controller/          # Resource controllers
-│   └── features/            # Feature flags
-├── package/                 # Crossplane package manifests
-└── examples/                # Example manifests
+│   ├── clients/                    # Gitea API clients (60+ methods)
+│   ├── controller/                 # Resource controllers (22 controllers)
+│   │   ├── testing/                # Shared test infrastructure
+│   │   ├── repository/             # Repository controller
+│   │   ├── organization/           # Organization controller
+│   │   └── [+20 more controllers]
+│   └── features/                   # Feature flags
+├── package/                        # Crossplane package manifests
+├── examples/                       # Example manifests (100+ examples)
+├── docs/                           # Documentation
+├── test/                           # Test utilities and mocks
+└── scripts/                        # Development scripts
 ```
 
 ## Adding New Resources
@@ -119,15 +139,37 @@ provider-gitea/
 make generate
 ```
 
+## Testing Infrastructure
+
+The provider includes comprehensive testing infrastructure at `internal/controller/testing/`:
+
+### Shared Test Components
+- **TestFixtures**: Common test data and response builders
+- **MockClientBuilder**: Fluent interface for Gitea mock clients
+- **K8sSecretBuilder**: Kubernetes secret creation utilities  
+- **K8sClientBuilder**: Fake Kubernetes client setup
+- **TestSuite**: Test orchestration and assertion helpers
+
+### Test Coverage
+- **23/23 controllers** with 100% test success rate
+- **184 passing tests** across all resource types
+- **Mock integration** for both Gitea API and Kubernetes clients
+- **Systematic patterns** for CRUD operations testing
+
+See [Test Infrastructure README](../internal/controller/testing/README.md) for detailed usage.
+
 ## Testing Checklist
 
 Before submitting a PR:
 
 - [ ] Code builds successfully
-- [ ] Unit tests pass
-- [ ] Generated code is up to date
+- [ ] All 184 tests pass (`make test`)
+- [ ] Lint checks pass (`make lint`)
+- [ ] Generated code is up to date (`make generate`)
 - [ ] Examples work with a real Gitea instance
+- [ ] Test infrastructure patterns followed for new controllers
 - [ ] Documentation is updated
+- [ ] Git hooks pass (no large files committed)
 - [ ] Commit follows conventional commit format
 
 ## Release Process
