@@ -329,6 +329,9 @@ jobs:
       - name: Vendor Dependencies
         run: go mod vendor
 
+      - name: Install Build Tools
+        run: make local-dev
+
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
         with:
