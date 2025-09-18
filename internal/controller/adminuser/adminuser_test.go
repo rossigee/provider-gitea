@@ -29,7 +29,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
-	xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
+	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
 	"github.com/rossigee/provider-gitea/apis/adminuser/v1alpha1"
 	"github.com/rossigee/provider-gitea/internal/clients"
 	giteamock "github.com/rossigee/provider-gitea/test/mock"

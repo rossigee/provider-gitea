@@ -7,7 +7,7 @@ metadata:
     meta.crossplane.io/source: github.com/crossplane-contrib/provider-gitea
     meta.crossplane.io/license: Apache-2.0
     meta.crossplane.io/description: |
-      A comprehensive Crossplane provider for managing Gitea with enterprise security, CI/CD integration, and administrative capabilities.
+      A comprehensive Crossplane provider for managing Gitea with enterprise security, CI/CD integration, administrative capabilities, and secure TLS certificate handling for internal deployments.
     meta.crossplane.io/readme: |
       This provider enables declarative management of Gitea instances through Kubernetes custom resources with enterprise-grade features.
       It supports repository management, organization control, user administration, security enforcement, CI/CD integration, and complete automation workflows.
@@ -51,7 +51,7 @@ metadata:
       Perfect for organizations requiring enterprise-grade Git management with integrated DevOps automation.
 spec:
   crossplane:
-    version: ">=v1.20.0-0"
+    version: ">=v2.0.0-0"
   dependsOn:
     - provider: xpkg.upbound.io/crossplane-contrib/function-go-templating
       version: ">=v0.4.0"

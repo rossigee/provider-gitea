@@ -32,7 +32,7 @@ import (
 	"github.com/rossigee/provider-gitea/apis/repositorysecret/v1alpha1"
 	"github.com/rossigee/provider-gitea/internal/clients"
 	giteamock "github.com/rossigee/provider-gitea/test/mock"
-	xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
+	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
 )
 
 func TestRepositorySecret_Create_SuccessfulCreate(t *testing.T) {

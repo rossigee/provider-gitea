@@ -5,9 +5,15 @@ Enterprise-grade Crossplane provider for comprehensive Gitea management with int
 
 ## Development Status
 - **Created**: 2024-01-17
-- **Status**: Production ready - Enterprise features complete
-- **Version**: v0.5.0 (ready for release)
-- **Registry**: `ghcr.io/rossigee/provider-gitea:v0.5.0`
+- **Status**: Production ready - Enterprise features complete with TLS security
+- **Version**: v0.5.4 (latest release)
+- **Registry**: `ghcr.io/rossigee/provider-gitea:v0.5.4`
+
+## v0.5.4 Release Highlights
+- ✅ **TLS Certificate Support**: Proper internal CA certificate handling for secure Gitea connections
+- ✅ **Binary Path Fix**: Corrected Docker image configuration for reliable container startup
+- ✅ **Runtime Configuration**: Automated CA certificate mounting via DeploymentRuntimeConfig
+- ✅ **All Tests Passing**: 176+ unit tests with comprehensive controller coverage
 
 ## Complete Resource Catalog (22 Types)
 
@@ -54,7 +60,7 @@ Enterprise-grade Crossplane provider for comprehensive Gitea management with int
 - **GitOps Integration**: Kubernetes-native Git infrastructure management
 
 ## Architecture
-- Built on Crossplane Runtime v1.15.0
+- Built on Crossplane Runtime v2.0.0
 - Uses Gitea API v1 with comprehensive coverage
 - Follows standard Crossplane provider patterns
 - **Test Coverage**: 22-66% across all controllers
@@ -70,7 +76,7 @@ Enterprise-grade Crossplane provider for comprehensive Gitea management with int
 ## Quick Start - Enterprise Setup
 ```bash
 # Install enterprise provider
-kubectl crossplane install provider ghcr.io/rossigee/provider-gitea:v0.5.0
+kubectl crossplane install provider ghcr.io/rossigee/provider-gitea:v0.5.4
 
 # Complete enterprise configuration
 kubectl apply -f examples/enterprise-complete-setup.yaml

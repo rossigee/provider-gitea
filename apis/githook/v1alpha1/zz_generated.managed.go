@@ -18,7 +18,7 @@ limitations under the License.
 
 package v1alpha1
 
-import xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
+import xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
 
 // GetCondition of this GitHook.
 func (mg *GitHook) GetCondition(ct xpv1.ConditionType) xpv1.Condition {
@@ -38,11 +38,6 @@ func (mg *GitHook) GetManagementPolicies() xpv1.ManagementPolicies {
 // GetProviderConfigReference of this GitHook.
 func (mg *GitHook) GetProviderConfigReference() *xpv1.Reference {
 	return mg.Spec.ProviderConfigReference
-}
-
-// GetPublishConnectionDetailsTo of this GitHook.
-func (mg *GitHook) GetPublishConnectionDetailsTo() *xpv1.PublishConnectionDetailsTo {
-	return mg.Spec.PublishConnectionDetailsTo
 }
 
 // GetWriteConnectionSecretToReference of this GitHook.
@@ -68,11 +63,6 @@ func (mg *GitHook) SetManagementPolicies(r xpv1.ManagementPolicies) {
 // SetProviderConfigReference of this GitHook.
 func (mg *GitHook) SetProviderConfigReference(r *xpv1.Reference) {
 	mg.Spec.ProviderConfigReference = r
-}
-
-// SetPublishConnectionDetailsTo of this GitHook.
-func (mg *GitHook) SetPublishConnectionDetailsTo(r *xpv1.PublishConnectionDetailsTo) {
-	mg.Spec.PublishConnectionDetailsTo = r
 }
 
 // SetWriteConnectionSecretToReference of this GitHook.

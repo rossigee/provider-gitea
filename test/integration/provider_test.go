@@ -30,8 +30,8 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
-	xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
-	"github.com/crossplane/crossplane-runtime/pkg/meta"
+	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
+	"github.com/crossplane/crossplane-runtime/v2/pkg/meta"
 
 	"github.com/rossigee/provider-gitea/apis/organization/v1alpha1"
 	repov1alpha1 "github.com/rossigee/provider-gitea/apis/repository/v1alpha1"

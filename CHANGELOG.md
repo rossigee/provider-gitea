@@ -214,7 +214,7 @@ This release marks the transition from a basic provider to a **production-ready 
 - **GitOps Integration**: Kubernetes-native Git infrastructure as code
 
 ### Technical Details
-- Built on Crossplane Runtime v1.15.0
+- Built on Crossplane Runtime v2.0.0
 - Uses Gitea API v1 with comprehensive coverage (60+ methods)
 - Supports both user and organization repositories
 - SSL verification configurable  

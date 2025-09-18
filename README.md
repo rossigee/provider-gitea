@@ -41,11 +41,11 @@ This provider enables declarative management of Gitea instances through Kubernet
 [![Coverage](https://codecov.io/gh/crossplane-contrib/provider-gitea/branch/master/graph/badge.svg)](https://codecov.io/gh/crossplane-contrib/provider-gitea)
 [![Go Report Card](https://goreportcard.com/badge/github.com/crossplane-contrib/provider-gitea)](https://goreportcard.com/report/github.com/crossplane-contrib/provider-gitea)
 
-- **Version**: v0.2.0 (Enterprise features complete)
+- **Version**: v0.5.0 (Enterprise features complete)
 - **Resources**: 22 managed resource types
 - **API Client**: Complete Gitea API integration with enterprise features
 - **Controller Status**: Production ready with comprehensive test coverage
-- **Registry**: `ghcr.io/rossigee/provider-gitea:v0.2.0`
+- **Registry**: `ghcr.io/rossigee/provider-gitea:v0.5.0`
 
 ## Complete Resource Catalog
 
@@ -93,7 +93,7 @@ This installs a pre-commit hook that prevents:
 1. Install the provider from GitHub Container Registry:
 ```bash
 # Install latest enterprise version
-kubectl crossplane install provider ghcr.io/rossigee/provider-gitea:v0.2.0
+kubectl crossplane install provider ghcr.io/rossigee/provider-gitea:v0.5.0
 
 # Or install latest stable
 kubectl crossplane install provider ghcr.io/rossigee/provider-gitea:latest
