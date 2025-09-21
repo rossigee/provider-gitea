@@ -36,6 +36,7 @@ import (
 	"github.com/rossigee/provider-gitea/internal/controller/organizationsecret"
 	"github.com/rossigee/provider-gitea/internal/controller/organizationsettings"
 	"github.com/rossigee/provider-gitea/internal/controller/repository"
+	repositoryv2 "github.com/rossigee/provider-gitea/internal/controller/repository/v2"
 	"github.com/rossigee/provider-gitea/internal/controller/repositorycollaborator"
 	"github.com/rossigee/provider-gitea/internal/controller/repositorykey"
 	"github.com/rossigee/provider-gitea/internal/controller/repositorysecret"
@@ -51,6 +52,7 @@ import (
 func Setup(mgr ctrl.Manager, o controller.Options) error {
 	for _, setup := range []func(ctrl.Manager, controller.Options) error{
 		repository.Setup,
+		repositoryv2.Setup, // V2 namespaced repository controller
 		organization.Setup,
 		organizationsecret.Setup,
 		user.Setup,

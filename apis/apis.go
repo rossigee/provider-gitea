@@ -35,6 +35,7 @@ import (
 	orgsecretv1alpha1 "github.com/rossigee/provider-gitea/apis/organizationsecret/v1alpha1"
 	organizationsettingsv1alpha1 "github.com/rossigee/provider-gitea/apis/organizationsettings/v1alpha1"
 	giteav1alpha1 "github.com/rossigee/provider-gitea/apis/repository/v1alpha1"
+	giteav2 "github.com/rossigee/provider-gitea/apis/repository/v2"
 	repositorycollaboratorv1alpha1 "github.com/rossigee/provider-gitea/apis/repositorycollaborator/v1alpha1"
 	repositorykeyv1alpha1 "github.com/rossigee/provider-gitea/apis/repositorykey/v1alpha1"
 	repositorysecretv1alpha1 "github.com/rossigee/provider-gitea/apis/repositorysecret/v1alpha1"
@@ -53,6 +54,7 @@ func init() {
 		v1alpha1.SchemeBuilder.AddToScheme,
 		v1beta1.SchemeBuilder.AddToScheme,
 		giteav1alpha1.SchemeBuilder.AddToScheme,
+		giteav2.SchemeBuilder.AddToScheme,
 		orgv1alpha1.SchemeBuilder.AddToScheme,
 		orgsecretv1alpha1.SchemeBuilder.AddToScheme,
 		userv1alpha1.SchemeBuilder.AddToScheme,
