@@ -49,9 +49,12 @@ metadata:
       - Complete security and compliance setup
 
       Perfect for organizations requiring enterprise-grade Git management with integrated DevOps automation.
+
+      ## V2 Features (NEW)
+      - **Namespaced Resources**: Repository and other resources can now be scoped to namespaces
+      - **Enhanced Multi-tenancy**: Namespace-scoped ProviderConfig support
+      - **Rich Observability**: Extended status fields for better monitoring and debugging
+      - **Modern Architecture**: Built with kubebuilder patterns for better maintainability
 spec:
   crossplane:
     version: ">=v2.0.0-0"
-  dependsOn:
-    - provider: xpkg.upbound.io/crossplane-contrib/function-go-templating
-      version: ">=v0.4.0"

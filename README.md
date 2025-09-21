@@ -35,17 +35,24 @@ This provider enables declarative management of Gitea instances through Kubernet
 - **Organization Settings**: Enterprise-grade organizational policies
 - **Multi-tenant Support**: Organization and user isolation with proper access controls
 
+### **V2 Features** ✨ (NEW in v0.6.0)
+- **Namespaced Resources**: Repository and other resources can now be scoped to namespaces
+- **Enhanced Multi-tenancy**: Namespace-scoped ProviderConfig support
+- **Rich Observability**: Extended status fields for better monitoring and debugging
+- **Modern Architecture**: Built with kubebuilder patterns for better maintainability
+- **Connection References**: Advanced multi-tenant capabilities
+
 ## Status
 
 [![CI](https://github.com/crossplane-contrib/provider-gitea/workflows/CI/badge.svg)](https://github.com/crossplane-contrib/provider-gitea/actions)
 [![Coverage](https://codecov.io/gh/crossplane-contrib/provider-gitea/branch/master/graph/badge.svg)](https://codecov.io/gh/crossplane-contrib/provider-gitea)
 [![Go Report Card](https://goreportcard.com/badge/github.com/crossplane-contrib/provider-gitea)](https://goreportcard.com/report/github.com/crossplane-contrib/provider-gitea)
 
-- **Version**: v0.5.0 (Enterprise features complete)
-- **Resources**: 22 managed resource types
+- **Version**: v0.6.0 (V2 Namespaced APIs + Enterprise features)
+- **Resources**: 22 managed resource types with v2 namespaced support
 - **API Client**: Complete Gitea API integration with enterprise features
 - **Controller Status**: Production ready with comprehensive test coverage
-- **Registry**: `ghcr.io/rossigee/provider-gitea:v0.5.0`
+- **Registry**: `ghcr.io/rossigee/provider-gitea:v0.6.0`
 
 ## Complete Resource Catalog
 

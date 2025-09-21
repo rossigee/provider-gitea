@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.0] - 2025-09-21
+
+### ✨ **V2 Namespaced API Support**
+
+#### **Major Feature: Full Namespaced Resource Support**
+- **V2 API Version**: New `repository.gitea.crossplane.io/v2` API with full namespace support
+- **Multi-tenant Architecture**: Namespace-scoped ProviderConfig references for enhanced isolation
+- **Enhanced Observability**: Rich status fields including stars, forks, size, language for better monitoring
+- **Modern Controller**: Built with kubebuilder patterns and enhanced error handling
+- **Connection References**: Advanced connection management for multi-tenant deployments
+
+#### **Migration Support**
+- **Dual API Support**: Both v1alpha1 and v2 APIs available simultaneously
+- **Storage Version**: V2 set as storage version for forward compatibility
+- **Seamless Migration**: Automatic CRD upgrade from cluster-scoped to namespaced
+- **Backward Compatibility**: Existing v1alpha1 resources continue to function
+
+#### **Developer Experience**
+- **Enhanced Testing**: V2 controller integration with comprehensive test suite
+- **Updated Documentation**: Complete v2 API documentation and migration guides
+- **CI/CD Updates**: Workflow updates for Go 1.25.1 and latest action versions
+
 ### 🧪 **Test Infrastructure Enhancement**
 
 #### **Comprehensive Test Infrastructure**

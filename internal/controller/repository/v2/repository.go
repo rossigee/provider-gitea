@@ -174,13 +174,8 @@ func (c *externalV2) Observe(ctx context.Context, mg resource.Managed) (managed.
 	}
 
 	// Check if repository is up to date
-	upToDate := true
-	if cr.Spec.ForProvider.Description != nil && repo.Description != *cr.Spec.ForProvider.Description {
-		upToDate = false
-	}
-	if cr.Spec.ForProvider.Private != nil && repo.Private != *cr.Spec.ForProvider.Private {
-		upToDate = false
-	}
+	upToDate := (cr.Spec.ForProvider.Description == nil || repo.Description == *cr.Spec.ForProvider.Description) &&
+		(cr.Spec.ForProvider.Private == nil || repo.Private == *cr.Spec.ForProvider.Private)
 
 	cr.SetConditions(xpv1.Available())
 
