@@ -39,7 +39,6 @@ import (
 	repositorycollaboratorv1alpha1 "github.com/rossigee/provider-gitea/apis/repositorycollaborator/v1alpha1"
 	repositorykeyv1alpha1 "github.com/rossigee/provider-gitea/apis/repositorykey/v1alpha1"
 	repositorysecretv1alpha1 "github.com/rossigee/provider-gitea/apis/repositorysecret/v1alpha1"
-	runnerv1alpha1 "github.com/rossigee/provider-gitea/apis/runner/v1alpha1"
 	teamv1alpha1 "github.com/rossigee/provider-gitea/apis/team/v1alpha1"
 	userv1alpha1 "github.com/rossigee/provider-gitea/apis/user/v1alpha1"
 	userkeyv1alpha1 "github.com/rossigee/provider-gitea/apis/userkey/v1alpha1"
@@ -75,7 +74,6 @@ func init() {
 		userkeyv1alpha1.SchemeBuilder.AddToScheme,
 		organizationmemberv1alpha1.SchemeBuilder.AddToScheme,
 		actionv1alpha1.SchemeBuilder.AddToScheme,
-		runnerv1alpha1.SchemeBuilder.AddToScheme,
 		adminuserv1alpha1.SchemeBuilder.AddToScheme,
 	)
 }

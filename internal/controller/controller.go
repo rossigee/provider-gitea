@@ -40,7 +40,6 @@ import (
 	"github.com/rossigee/provider-gitea/internal/controller/repositorycollaborator"
 	"github.com/rossigee/provider-gitea/internal/controller/repositorykey"
 	"github.com/rossigee/provider-gitea/internal/controller/repositorysecret"
-	"github.com/rossigee/provider-gitea/internal/controller/runner"
 	"github.com/rossigee/provider-gitea/internal/controller/team"
 	"github.com/rossigee/provider-gitea/internal/controller/user"
 	"github.com/rossigee/provider-gitea/internal/controller/userkey"
@@ -73,7 +72,6 @@ func Setup(mgr ctrl.Manager, o controller.Options) error {
 		userkey.Setup,
 		organizationmember.Setup,
 		action.Setup,
-		runner.Setup,
 		adminuser.Setup,
 	} {
 		if err := setup(mgr, o); err != nil {
