@@ -1,0 +1,298 @@
+# Complete Enterprise Setup with v2 APIs
+# Demonstrates comprehensive Git infrastructure management with namespace isolation
+
+# Enterprise Namespace
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: enterprise-git
+  labels:
+    environment: production
+    team: platform
+    gitea-managed: "true"
+
+---
+# Enterprise ProviderConfig with TLS
+apiVersion: pkg.crossplane.io/v1beta1
+kind: ProviderConfig
+metadata:
+  name: enterprise-gitea
+  namespace: enterprise-git
+spec:
+  credentials:
+    source: Secret
+    secretRef:
+      namespace: enterprise-git
+      name: enterprise-gitea-credentials
+      key: admin-token
+  baseURL: "https://gitea.enterprise.company.com"
+  insecure: false
+
+---
+# Organization Management
+apiVersion: organization.gitea.m.crossplane.io/v2
+kind: Organization
+metadata:
+  name: platform-engineering
+  namespace: enterprise-git
+spec:
+  forProvider:
+    username: platform-engineering
+    name: "Platform Engineering"
+    fullName: "Platform Engineering Division"
+    description: "Enterprise platform and infrastructure management"
+    website: "https://platform.company.com"
+    location: "Global"
+    visibility: "private"
+    providerConfigRef:
+      name: enterprise-gitea
+  deletionPolicy: Delete
+
+---
+# Core Infrastructure Repository
+apiVersion: repository.gitea.m.crossplane.io/v2
+kind: Repository
+metadata:
+  name: infrastructure-core
+  namespace: enterprise-git
+spec:
+  forProvider:
+    name: infrastructure-core
+    owner: platform-engineering
+    description: "Core infrastructure as code repository"
+    private: true
+    autoInit: true
+    defaultBranch: "main"
+    template: false
+    trustModel: "collaborator"
+    providerConfigRef:
+      name: enterprise-gitea
+  deletionPolicy: Delete
+
+---
+# Branch Protection for Main Branch
+apiVersion: branchprotection.gitea.m.crossplane.io/v2
+kind: BranchProtection
+metadata:
+  name: main-branch-protection
+  namespace: enterprise-git
+spec:
+  forProvider:
+    repository: platform-engineering/infrastructure-core
+    branchName: "main"
+    enablePush: false
+    enableStatusCheck: true
+    enableMergeWhitelist: true
+    mergeWhitelistUsers: ["platform-admin"]
+    enableStatusCheckWhitelist: true
+    statusCheckContexts: ["ci/tests", "ci/security-scan", "ci/compliance"]
+    requireSignedCommits: true
+    protectedFilePatterns: ["*.tf", "*.yaml", "*.yml"]
+    unprotectedFilePatterns: ["README.md", "docs/*"]
+    providerConfigRef:
+      name: enterprise-gitea
+  deletionPolicy: Delete
+
+---
+# CI/CD Webhook for Infrastructure
+apiVersion: webhook.gitea.m.crossplane.io/v2
+kind: Webhook
+metadata:
+  name: infrastructure-ci-webhook
+  namespace: enterprise-git
+spec:
+  forProvider:
+    repository: platform-engineering/infrastructure-core
+    type: "gitea"
+    config:
+      url: "https://ci.company.com/webhook/gitea"
+      contentType: "json"
+      secret: "webhook-secret-key"
+    events: ["push", "pull_request", "release"]
+    active: true
+    providerConfigRef:
+      name: enterprise-gitea
+  deletionPolicy: Delete
+
+---
+# Deploy Key for CI/CD Access
+apiVersion: deploykey.gitea.m.crossplane.io/v2
+kind: DeployKey
+metadata:
+  name: ci-deploy-key
+  namespace: enterprise-git
+spec:
+  forProvider:
+    repository: platform-engineering/infrastructure-core
+    title: "CI/CD Deploy Key"
+    key: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC..." # Your public key
+    readOnly: true
+    providerConfigRef:
+      name: enterprise-gitea
+  deletionPolicy: Delete
+
+---
+# Team for Repository Access
+apiVersion: team.gitea.m.crossplane.io/v2
+kind: Team
+metadata:
+  name: infrastructure-team
+  namespace: enterprise-git
+spec:
+  forProvider:
+    organization: platform-engineering
+    name: "Infrastructure Team"
+    description: "Core infrastructure management team"
+    permission: "admin"
+    canCreateOrgRepo: true
+    includesAllRepositories: false
+    units: ["repo.code", "repo.issues", "repo.pulls", "repo.releases"]
+    providerConfigRef:
+      name: enterprise-gitea
+  deletionPolicy: Delete
+
+---
+# Repository Secret for CI/CD
+apiVersion: repositorysecret.gitea.m.crossplane.io/v2
+kind: RepositorySecret
+metadata:
+  name: docker-registry-secret
+  namespace: enterprise-git
+spec:
+  forProvider:
+    repository: platform-engineering/infrastructure-core
+    secretName: "DOCKER_REGISTRY_TOKEN"
+    data:
+      secretKeyRef:
+        namespace: enterprise-git
+        name: docker-registry-credentials
+        key: token
+    providerConfigRef:
+      name: enterprise-gitea
+  deletionPolicy: Delete
+
+---
+# Organization-wide Secret
+apiVersion: organizationsecret.gitea.m.crossplane.io/v2
+kind: OrganizationSecret
+metadata:
+  name: aws-credentials
+  namespace: enterprise-git
+spec:
+  forProvider:
+    organization: platform-engineering
+    secretName: "AWS_ACCESS_KEY_ID"
+    data:
+      secretKeyRef:
+        namespace: enterprise-git
+        name: aws-credentials
+        key: access-key-id
+    providerConfigRef:
+      name: enterprise-gitea
+  deletionPolicy: Delete
+
+---
+# Action/Workflow Configuration
+apiVersion: action.gitea.m.crossplane.io/v2
+kind: Action
+metadata:
+  name: infrastructure-ci
+  namespace: enterprise-git
+spec:
+  forProvider:
+    repository: platform-engineering/infrastructure-core
+    workflowName: "ci.yml"
+    branch: "main"
+    content: |
+      name: Infrastructure CI
+      on:
+        push:
+          branches: [main]
+        pull_request:
+          branches: [main]
+      jobs:
+        test:
+          runs-on: ubuntu-latest
+          steps:
+            - uses: actions/checkout@v3
+            - name: Terraform Validate
+              run: terraform validate
+            - name: Security Scan
+              run: checkov -f .
+            - name: Deploy
+              if: github.ref == 'refs/heads/main'
+              run: terraform apply -auto-approve
+    enabled: true
+    providerConfigRef:
+      name: enterprise-gitea
+  deletionPolicy: Delete
+
+---
+# Self-hosted Runner
+apiVersion: runner.gitea.m.crossplane.io/v2
+kind: Runner
+metadata:
+  name: enterprise-runner
+  namespace: enterprise-git
+spec:
+  forProvider:
+    scope: "organization"
+    scopeInfo: "platform-engineering"
+    name: "enterprise-runner-01"
+    description: "Enterprise self-hosted runner for secure workloads"
+    labels: ["enterprise", "secure", "terraform"]
+    providerConfigRef:
+      name: enterprise-gitea
+  deletionPolicy: Delete
+
+---
+# Labels for Issue Management
+apiVersion: label.gitea.m.crossplane.io/v2
+kind: Label
+metadata:
+  name: infrastructure-labels
+  namespace: enterprise-git
+spec:
+  forProvider:
+    repository: platform-engineering/infrastructure-core
+    name: "infrastructure"
+    color: "#0052cc"
+    description: "Infrastructure related issues and PRs"
+    providerConfigRef:
+      name: enterprise-gitea
+  deletionPolicy: Delete
+
+---
+# Enterprise Credentials Secret
+apiVersion: v1
+kind: Secret
+metadata:
+  name: enterprise-gitea-credentials
+  namespace: enterprise-git
+type: Opaque
+stringData:
+  admin-token: "your-admin-token-here"
+
+---
+# Docker Registry Credentials
+apiVersion: v1
+kind: Secret
+metadata:
+  name: docker-registry-credentials
+  namespace: enterprise-git
+type: Opaque
+stringData:
+  token: "docker-registry-token-here"
+
+---
+# AWS Credentials for Infrastructure
+apiVersion: v1
+kind: Secret
+metadata:
+  name: aws-credentials
+  namespace: enterprise-git
+type: Opaque
+stringData:
+  access-key-id: "aws-access-key-here"
+  secret-access-key: "aws-secret-key-here"

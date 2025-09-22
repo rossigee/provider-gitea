@@ -1,0 +1,132 @@
+# Example: Multi-tenant setup using v2 APIs
+# Demonstrates namespace isolation and tenant-specific configurations
+
+# Tenant 1: Development Team
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: team-frontend
+  labels:
+    team: frontend
+    environment: development
+
+---
+apiVersion: pkg.crossplane.io/v1beta1
+kind: ProviderConfig
+metadata:
+  name: frontend-gitea
+  namespace: team-frontend
+spec:
+  credentials:
+    source: Secret
+    secretRef:
+      namespace: team-frontend
+      name: frontend-gitea-token
+      key: token
+  baseURL: "https://gitea.dev.company.com"
+
+---
+apiVersion: repository.gitea.m.crossplane.io/v2
+kind: Repository
+metadata:
+  name: frontend-app
+  namespace: team-frontend
+spec:
+  forProvider:
+    name: frontend-web-app
+    owner: frontend-team
+    description: "Frontend web application"
+    private: true
+    providerConfigRef:
+      name: frontend-gitea
+  deletionPolicy: Delete
+
+---
+# Tenant 2: Backend Team
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: team-backend
+  labels:
+    team: backend
+    environment: development
+
+---
+apiVersion: pkg.crossplane.io/v1beta1
+kind: ProviderConfig
+metadata:
+  name: backend-gitea
+  namespace: team-backend
+spec:
+  credentials:
+    source: Secret
+    secretRef:
+      namespace: team-backend
+      name: backend-gitea-token
+      key: token
+  baseURL: "https://gitea.dev.company.com"
+
+---
+apiVersion: repository.gitea.m.crossplane.io/v2
+kind: Repository
+metadata:
+  name: backend-api
+  namespace: team-backend
+spec:
+  forProvider:
+    name: backend-api-service
+    owner: backend-team
+    description: "Backend API service"
+    private: true
+    providerConfigRef:
+      name: backend-gitea
+  deletionPolicy: Delete
+
+---
+# Tenant 3: Platform Team (Cross-environment)
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: team-platform
+  labels:
+    team: platform
+    environment: multi
+
+---
+apiVersion: organization.gitea.m.crossplane.io/v2
+kind: Organization
+metadata:
+  name: platform-org
+  namespace: team-platform
+spec:
+  forProvider:
+    username: platform-engineering
+    name: "Platform Engineering"
+    description: "Platform and infrastructure team"
+    visibility: "private"
+    providerConfigRef:
+      name: platform-gitea
+  deletionPolicy: Delete
+
+---
+# Secrets would be managed separately by each team
+# Example structure:
+apiVersion: v1
+kind: Secret
+metadata:
+  name: frontend-gitea-token
+  namespace: team-frontend
+type: Opaque
+stringData:
+  token: "frontend_team_token_here"
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: backend-gitea-token
+  namespace: team-backend
+type: Opaque
+stringData:
+  token: "backend_team_token_here"

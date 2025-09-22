@@ -1,0 +1,54 @@
+# Example: Namespaced Organization using v2 API
+# Demonstrates enhanced observability and namespace isolation
+
+apiVersion: organization.gitea.m.crossplane.io/v2
+kind: Organization
+metadata:
+  name: example-org-v2
+  namespace: production  # v2 namespace isolation
+  annotations:
+    crossplane.io/external-name: "my-company"
+spec:
+  forProvider:
+    username: my-company
+    name: "My Company"
+    fullName: "My Company Inc."
+    description: "Enterprise organization managed with Crossplane v2"
+    website: "https://my-company.com"
+    location: "San Francisco, CA"
+    visibility: "public"
+
+    # v2 Enhancement: Namespace-scoped provider config
+    providerConfigRef:
+      name: gitea-production-config
+
+  deletionPolicy: Delete
+
+---
+# Example: Production ProviderConfig in production namespace
+apiVersion: pkg.crossplane.io/v1beta1
+kind: ProviderConfig
+metadata:
+  name: gitea-production-config
+  namespace: production
+spec:
+  credentials:
+    source: Secret
+    secretRef:
+      namespace: production
+      name: gitea-production-credentials
+      key: admin-token
+  baseURL: "https://gitea.production.company.com"
+  insecure: false
+
+---
+# Production credentials secret
+apiVersion: v1
+kind: Secret
+metadata:
+  name: gitea-production-credentials
+  namespace: production
+type: Opaque
+data:
+  # Base64 encoded admin token for production Gitea
+  admin-token: cHJvZHVjdGlvbl90b2tlbl9oZXJl  # Replace with actual token

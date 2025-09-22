@@ -1,0 +1,144 @@
+# Migration Guide: v1alpha1 to v2 APIs
+# This file demonstrates how to migrate from cluster-scoped v1alpha1 to namespaced v2 APIs
+
+# ========================================
+# BEFORE: v1alpha1 (cluster-scoped)
+# ========================================
+
+# OLD: Cluster-scoped repository (v1alpha1)
+---
+apiVersion: repository.gitea.crossplane.io/v1alpha1
+kind: Repository
+metadata:
+  name: legacy-repo
+  # No namespace - cluster-scoped
+  annotations:
+    crossplane.io/external-name: "legacy-project"
+spec:
+  forProvider:
+    name: legacy-project
+    owner: my-org
+    description: "Legacy cluster-scoped repository"
+    private: false
+  providerConfigRef:
+    name: default  # References cluster-scoped ProviderConfig
+  deletionPolicy: Delete
+
+---
+# OLD: Cluster-scoped ProviderConfig (v1alpha1/v1beta1)
+apiVersion: pkg.crossplane.io/v1beta1
+kind: ProviderConfig
+metadata:
+  name: default
+  # No namespace - cluster-scoped
+spec:
+  credentials:
+    source: Secret
+    secretRef:
+      namespace: crossplane-system  # Secret in system namespace
+      name: gitea-credentials
+      key: token
+  baseURL: "https://gitea.company.com"
+
+# ========================================
+# AFTER: v2 (namespaced)
+# ========================================
+
+# NEW: Namespaced repository (v2)
+---
+apiVersion: repository.gitea.m.crossplane.io/v2  # Note .m. in API group
+kind: Repository
+metadata:
+  name: modern-repo
+  namespace: my-team  # Namespace isolation
+  annotations:
+    crossplane.io/external-name: "modern-project"
+spec:
+  forProvider:
+    name: modern-project
+    owner: my-org
+    description: "Modern namespaced repository with v2 enhancements"
+    private: false
+
+    # v2 Enhancement: Namespace-scoped provider config
+    providerConfigRef:
+      name: team-gitea  # References ProviderConfig in same namespace
+
+    # v2 Enhancement: Connection references (optional)
+    # connectionRef:
+    #   name: gitea-connection
+
+  deletionPolicy: Delete
+
+---
+# NEW: Namespace-scoped ProviderConfig
+apiVersion: pkg.crossplane.io/v1beta1
+kind: ProviderConfig
+metadata:
+  name: team-gitea
+  namespace: my-team  # Same namespace as resources
+spec:
+  credentials:
+    source: Secret
+    secretRef:
+      namespace: my-team  # Secret in same namespace
+      name: team-gitea-credentials
+      key: token
+  baseURL: "https://gitea.company.com"
+
+---
+# Team-specific secret in namespace
+apiVersion: v1
+kind: Secret
+metadata:
+  name: team-gitea-credentials
+  namespace: my-team
+type: Opaque
+stringData:
+  token: "team_specific_token_here"
+
+# ========================================
+# MIGRATION BENEFITS
+# ========================================
+
+# 1. NAMESPACE ISOLATION
+#    - Resources are isolated by namespace
+#    - Teams can manage their own credentials
+#    - RBAC can be applied per namespace
+
+# 2. ENHANCED OBSERVABILITY
+#    - v2 APIs include additional status fields
+#    - Better monitoring and debugging capabilities
+#    - Enhanced metadata and annotations
+
+# 3. MULTI-TENANCY
+#    - Multiple teams can use same provider
+#    - Separate configurations per team
+#    - No conflicts between team resources
+
+# 4. BACKWARD COMPATIBILITY
+#    - v1alpha1 resources continue to work
+#    - Gradual migration possible
+#    - No breaking changes to existing deployments
+
+# ========================================
+# MIGRATION STRATEGY
+# ========================================
+
+# Step 1: Create namespace and credentials
+# kubectl create namespace my-team
+# kubectl create secret generic team-gitea-credentials -n my-team --from-literal=token=your_token
+
+# Step 2: Create namespace-scoped ProviderConfig
+# kubectl apply -f namespace-provider-config.yaml
+
+# Step 3: Create v2 resources in namespace
+# kubectl apply -f v2-resources.yaml
+
+# Step 4: Verify functionality
+# kubectl get repositories.repository.gitea.m.crossplane.io -n my-team
+
+# Step 5: Gradually migrate existing resources
+# - Create v2 equivalents
+# - Test thoroughly
+# - Delete v1alpha1 resources when ready

@@ -1,0 +1,61 @@
+# Example: Namespaced Repository using v2 API
+# This demonstrates the v2 namespaced Repository API with enhanced features
+
+apiVersion: repository.gitea.m.crossplane.io/v2
+kind: Repository
+metadata:
+  name: example-repo-v2
+  namespace: development  # v2 supports namespace isolation
+  annotations:
+    crossplane.io/external-name: "my-awesome-project"
+spec:
+  forProvider:
+    name: my-awesome-project
+    owner: my-organization
+    description: "A modern project managed with Crossplane v2 APIs"
+    private: false
+    autoInit: true
+    defaultBranch: "main"
+    template: false
+    trustModel: "default"
+
+    # v2 Enhancement: Namespace-scoped provider config
+    providerConfigRef:
+      name: gitea-config  # References ProviderConfig in same namespace
+
+    # v2 Enhancement: Connection reference for multi-tenant support
+    # connectionRef:
+    #   name: gitea-connection
+
+  # Standard Crossplane resource configuration
+  deletionPolicy: Delete
+  managementPolicies: ["Create", "Update", "Delete"]
+
+---
+# Example: Namespace-scoped ProviderConfig for v2 APIs
+apiVersion: pkg.crossplane.io/v1beta1
+kind: ProviderConfig
+metadata:
+  name: gitea-config
+  namespace: development  # Same namespace as the Repository
+spec:
+  credentials:
+    source: Secret
+    secretRef:
+      namespace: development
+      name: gitea-credentials
+      key: token
+  baseURL: "https://gitea.development.company.com"
+  insecure: false
+
+---
+# Secret containing Gitea credentials for namespace isolation
+apiVersion: v1
+kind: Secret
+metadata:
+  name: gitea-credentials
+  namespace: development
+type: Opaque
+data:
+  # Base64 encoded Gitea access token
+  token: Z2l0ZWFfdG9rZW5faGVyZQ==  # Replace with actual token
