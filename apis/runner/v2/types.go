@@ -23,6 +23,18 @@ import (
 	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
 )
 
+// RunnerGroupInfo contains runner group information
+type RunnerGroupInfo struct {
+	// ID is the group identifier
+	ID *int64 `json:"id,omitempty"`
+
+	// Name is the group name
+	Name *string `json:"name,omitempty"`
+
+	// Description is the group description
+	Description *string `json:"description,omitempty"`
+}
+
 type RunnerParameters struct {
 	// Scope defines where the runner is registered (repository, organization, or system)
 	// +kubebuilder:validation:Required

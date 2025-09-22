@@ -23,6 +23,21 @@ import (
 	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
 )
 
+// OrganizationMemberUserInfo contains basic user information
+type OrganizationMemberUserInfo struct {
+	// ID is the user's unique identifier
+	ID *int64 `json:"id,omitempty"`
+
+	// Email is the user's email address
+	Email *string `json:"email,omitempty"`
+
+	// FullName is the user's full name
+	FullName *string `json:"fullName,omitempty"`
+
+	// AvatarURL is the URL to the user's avatar
+	AvatarURL *string `json:"avatarUrl,omitempty"`
+}
+
 type OrganizationMemberParameters struct {
 	// Organization is the organization name
 	// +kubebuilder:validation:Required

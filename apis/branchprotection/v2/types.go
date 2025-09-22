@@ -23,6 +23,18 @@ import (
 	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
 )
 
+// BranchProtectionAppliedSettings contains the currently applied protection settings
+type BranchProtectionAppliedSettings struct {
+	// EnablePush indicates if push protection is enabled
+	EnablePush *bool `json:"enablePush,omitempty"`
+
+	// EnableStatusCheck indicates if status checks are required
+	EnableStatusCheck *bool `json:"enableStatusCheck,omitempty"`
+
+	// RequiredStatusChecks lists the required status checks
+	RequiredStatusChecks []string `json:"requiredStatusChecks,omitempty"`
+}
+
 type BranchProtectionParameters struct {
 	// Repository is the repository that owns this branch protection rule (owner/name format)
 	// +kubebuilder:validation:Required

@@ -23,6 +23,51 @@ import (
 	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
 )
 
+// ReleaseAsset represents a file attached to a release
+type ReleaseAsset struct {
+	// Name is the filename for the asset
+	// +kubebuilder:validation:Required
+	Name string `json:"name"`
+
+	// ContentType is the MIME type of the asset
+	ContentType *string `json:"contentType,omitempty"`
+
+	// Content is the base64-encoded content of the asset
+	// For large files, consider using a separate storage solution
+	Content *string `json:"content,omitempty"`
+
+	// URL is a URL to download the asset content from
+	// Alternative to inline content for large files
+	URL *string `json:"url,omitempty"`
+}
+
+// ReleaseAssetObservation contains the observed state of a release asset
+type ReleaseAssetObservation struct {
+	// ID is the unique identifier of the asset
+	ID int64 `json:"id,omitempty"`
+
+	// Name is the filename of the asset
+	Name string `json:"name,omitempty"`
+
+	// Size is the size of the asset in bytes
+	Size int64 `json:"size,omitempty"`
+
+	// DownloadCount is the number of times this asset has been downloaded
+	DownloadCount int64 `json:"downloadCount,omitempty"`
+
+	// ContentType is the MIME type of the asset
+	ContentType string `json:"contentType,omitempty"`
+
+	// BrowserDownloadURL is the direct download URL for the asset
+	BrowserDownloadURL string `json:"browserDownloadUrl,omitempty"`
+
+	// CreatedAt is the creation timestamp
+	CreatedAt *metav1.Time `json:"createdAt,omitempty"`
+
+	// UpdatedAt is the last update timestamp
+	UpdatedAt *metav1.Time `json:"updatedAt,omitempty"`
+}
+
 type ReleaseParameters struct {
 	// Repository is the name of the repository
 	// +kubebuilder:validation:Required

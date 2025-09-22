@@ -23,6 +23,27 @@ import (
 	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
 )
 
+// DataFromSource represents the source of secret data
+type DataFromSource struct {
+	// SecretKeyRef is a reference to a key in a Secret
+	SecretKeyRef *SecretKeySelector `json:"secretKeyRef,omitempty"`
+
+	// Value is the direct value of the secret
+	Value *string `json:"value,omitempty"`
+}
+
+// SecretKeySelector selects a key from a Secret
+type SecretKeySelector struct {
+	// Name of the secret
+	Name string `json:"name"`
+
+	// Namespace of the secret
+	Namespace string `json:"namespace"`
+
+	// Key within the secret
+	Key string `json:"key"`
+}
+
 type OrganizationSecretParameters struct {
 	// Organization is the organization name that owns the secret
 	// +kubebuilder:validation:Required

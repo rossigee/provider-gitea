@@ -23,6 +23,18 @@ import (
 	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
 )
 
+// AdminUserStats contains statistics about the admin user
+type AdminUserStats struct {
+	// TotalUsers is the total number of users
+	TotalUsers *int64 `json:"totalUsers,omitempty"`
+
+	// TotalOrganizations is the total number of organizations
+	TotalOrganizations *int64 `json:"totalOrganizations,omitempty"`
+
+	// TotalRepositories is the total number of repositories
+	TotalRepositories *int64 `json:"totalRepositories,omitempty"`
+}
+
 type AdminUserParameters struct {
 	// Username is the user's login name
 	// +kubebuilder:validation:Required

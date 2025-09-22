@@ -23,6 +23,18 @@ import (
 	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
 )
 
+// RepositoryCollaboratorPermissions defines the permissions for a collaborator
+type RepositoryCollaboratorPermissions struct {
+	// Admin permission
+	Admin *bool `json:"admin,omitempty"`
+
+	// Push permission
+	Push *bool `json:"push,omitempty"`
+
+	// Pull permission
+	Pull *bool `json:"pull,omitempty"`
+}
+
 type RepositoryCollaboratorParameters struct {
 	// Username is the collaborator's username
 	// +kubebuilder:validation:Required

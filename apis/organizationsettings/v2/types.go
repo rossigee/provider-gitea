@@ -23,6 +23,18 @@ import (
 	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
 )
 
+// AppliedOrganizationSettings contains the currently applied organization settings
+type AppliedOrganizationSettings struct {
+	// Description is the applied organization description
+	Description *string `json:"description,omitempty"`
+
+	// Website is the applied organization website
+	Website *string `json:"website,omitempty"`
+
+	// Location is the applied organization location
+	Location *string `json:"location,omitempty"`
+}
+
 type OrganizationSettingsParameters struct {
 	// Organization is the organization name to configure
 	// +kubebuilder:validation:Required
