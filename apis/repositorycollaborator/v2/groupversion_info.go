@@ -14,9 +14,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// Package v2 contains the v2 API of repository
+// Package v2 contains the v2 API of repositorycollaborator
 // +kubebuilder:object:generate=true
-// +groupName=repository.gitea.m.crossplane.io
+// +groupName=repositorycollaborator.gitea.m.crossplane.io
 // +versionName=v2
 package v2
 
@@ -27,7 +27,7 @@ import (
 
 // Package type metadata.
 const (
-	Group   = "repository.gitea.m.crossplane.io"
+	Group   = "repositorycollaborator.gitea.m.crossplane.io"
 	Version = "v2"
 )
 
