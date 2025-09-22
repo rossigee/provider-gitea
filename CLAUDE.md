@@ -5,15 +5,17 @@ Enterprise-grade Crossplane provider for comprehensive Gitea management with int
 
 ## Development Status
 - **Created**: 2024-01-17
-- **Status**: Production ready - Enterprise features complete with TLS security
-- **Version**: v0.5.4 (latest release)
-- **Registry**: `ghcr.io/rossigee/provider-gitea:v0.5.4`
+- **Status**: v2-Only Provider - Pure namespace-scoped implementation
+- **Version**: v0.7.0+ (v2-only clean slate)
+- **Registry**: `ghcr.io/rossigee/provider-gitea:v0.7.0`
 
-## v0.5.4 Release Highlights
-- ✅ **TLS Certificate Support**: Proper internal CA certificate handling for secure Gitea connections
-- ✅ **Binary Path Fix**: Corrected Docker image configuration for reliable container startup
-- ✅ **Runtime Configuration**: Automated CA certificate mounting via DeploymentRuntimeConfig
-- ✅ **All Tests Passing**: 176+ unit tests with comprehensive controller coverage
+## v0.7.0+ Release Highlights - Pure v2 Provider
+- ✅ **v2-Only Architecture**: Clean implementation without legacy v1alpha1 code
+- ✅ **Namespace Isolation**: All resources are namespace-scoped with `.m.` API groups
+- ✅ **22 v2 Resource Types**: Complete API coverage with enhanced v2 features
+- ✅ **Enhanced Connectivity**: ConnectionRef and ProviderConfigRef for all resources
+- ✅ **Multi-Tenancy Ready**: Teams can deploy in separate namespaces
+- ✅ **Clean Codebase**: No backward compatibility burden
 
 ## Complete Resource Catalog (22 Types)
 
@@ -70,16 +72,17 @@ Enterprise-grade Crossplane provider for comprehensive Gitea management with int
 - `cmd/provider/main.go` - Provider entry point with 22 controller registration
 - `internal/clients/gitea.go` - Complete Gitea API client (60+ methods)
 - `internal/controller/*/` - 22 resource controllers with full lifecycle management
-- `apis/*/v1alpha1/types.go` - Comprehensive resource definitions with validation
+- `apis/*/v2/types.go` - v2 namespaced resource definitions with enhanced features
 - `examples/` - 100+ example configurations for enterprise setup
 
-## Quick Start - Enterprise Setup
+## Quick Start - v2 Namespace Setup
 ```bash
-# Install enterprise provider
-kubectl crossplane install provider ghcr.io/rossigee/provider-gitea:v0.5.4
+# Install v2-only provider
+kubectl crossplane install provider ghcr.io/rossigee/provider-gitea:v0.7.0
 
-# Complete enterprise configuration
-kubectl apply -f examples/enterprise-complete-setup.yaml
+# v2 namespaced configuration with multi-tenancy
+kubectl apply -f examples/v2/repository-namespaced.yaml
+kubectl apply -f examples/v2/multi-tenant-setup.yaml
 ```
 
 ## Build & Test (Development)

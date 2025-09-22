@@ -20,32 +20,7 @@ package apis
 import (
 	"k8s.io/apimachinery/pkg/runtime"
 
-	// v1alpha1 APIs (cluster-scoped)
-	accesstokenv1alpha1 "github.com/rossigee/provider-gitea/apis/accesstoken/v1alpha1"
-	actionv1alpha1 "github.com/rossigee/provider-gitea/apis/action/v1alpha1"
-	adminuserv1alpha1 "github.com/rossigee/provider-gitea/apis/adminuser/v1alpha1"
-	branchprotectionv1alpha1 "github.com/rossigee/provider-gitea/apis/branchprotection/v1alpha1"
-	deploykeyv1alpha1 "github.com/rossigee/provider-gitea/apis/deploykey/v1alpha1"
-	githookv1alpha1 "github.com/rossigee/provider-gitea/apis/githook/v1alpha1"
-	issuev1alpha1 "github.com/rossigee/provider-gitea/apis/issue/v1alpha1"
-	labelv1alpha1 "github.com/rossigee/provider-gitea/apis/label/v1alpha1"
-	pullrequestv1alpha1 "github.com/rossigee/provider-gitea/apis/pullrequest/v1alpha1"
-	releasev1alpha1 "github.com/rossigee/provider-gitea/apis/release/v1alpha1"
-	orgv1alpha1 "github.com/rossigee/provider-gitea/apis/organization/v1alpha1"
-	organizationmemberv1alpha1 "github.com/rossigee/provider-gitea/apis/organizationmember/v1alpha1"
-	orgsecretv1alpha1 "github.com/rossigee/provider-gitea/apis/organizationsecret/v1alpha1"
-	organizationsettingsv1alpha1 "github.com/rossigee/provider-gitea/apis/organizationsettings/v1alpha1"
-	giteav1alpha1 "github.com/rossigee/provider-gitea/apis/repository/v1alpha1"
-	repositorycollaboratorv1alpha1 "github.com/rossigee/provider-gitea/apis/repositorycollaborator/v1alpha1"
-	repositorykeyv1alpha1 "github.com/rossigee/provider-gitea/apis/repositorykey/v1alpha1"
-	repositorysecretv1alpha1 "github.com/rossigee/provider-gitea/apis/repositorysecret/v1alpha1"
-	runnerv1alpha1 "github.com/rossigee/provider-gitea/apis/runner/v1alpha1"
-	teamv1alpha1 "github.com/rossigee/provider-gitea/apis/team/v1alpha1"
-	userv1alpha1 "github.com/rossigee/provider-gitea/apis/user/v1alpha1"
-	userkeyv1alpha1 "github.com/rossigee/provider-gitea/apis/userkey/v1alpha1"
-	webhookv1alpha1 "github.com/rossigee/provider-gitea/apis/webhook/v1alpha1"
-
-	// v2 APIs (namespaced with .m. API group)
+	// v2 APIs (namespaced with .m. API group) - v2-only provider
 	accesstokenv2 "github.com/rossigee/provider-gitea/apis/accesstoken/v2"
 	actionv2 "github.com/rossigee/provider-gitea/apis/action/v2"
 	adminuserv2 "github.com/rossigee/provider-gitea/apis/adminuser/v2"
@@ -82,32 +57,7 @@ func init() {
 		v1alpha1.SchemeBuilder.AddToScheme,
 		v1beta1.SchemeBuilder.AddToScheme,
 
-		// v1alpha1 APIs (cluster-scoped) - backward compatibility
-		giteav1alpha1.SchemeBuilder.AddToScheme,
-		orgv1alpha1.SchemeBuilder.AddToScheme,
-		orgsecretv1alpha1.SchemeBuilder.AddToScheme,
-		userv1alpha1.SchemeBuilder.AddToScheme,
-		webhookv1alpha1.SchemeBuilder.AddToScheme,
-		deploykeyv1alpha1.SchemeBuilder.AddToScheme,
-		teamv1alpha1.SchemeBuilder.AddToScheme,
-		labelv1alpha1.SchemeBuilder.AddToScheme,
-		repositorycollaboratorv1alpha1.SchemeBuilder.AddToScheme,
-		organizationsettingsv1alpha1.SchemeBuilder.AddToScheme,
-		githookv1alpha1.SchemeBuilder.AddToScheme,
-		issuev1alpha1.SchemeBuilder.AddToScheme,
-		pullrequestv1alpha1.SchemeBuilder.AddToScheme,
-		releasev1alpha1.SchemeBuilder.AddToScheme,
-		branchprotectionv1alpha1.SchemeBuilder.AddToScheme,
-		repositorykeyv1alpha1.SchemeBuilder.AddToScheme,
-		accesstokenv1alpha1.SchemeBuilder.AddToScheme,
-		repositorysecretv1alpha1.SchemeBuilder.AddToScheme,
-		userkeyv1alpha1.SchemeBuilder.AddToScheme,
-		organizationmemberv1alpha1.SchemeBuilder.AddToScheme,
-		actionv1alpha1.SchemeBuilder.AddToScheme,
-		adminuserv1alpha1.SchemeBuilder.AddToScheme,
-		runnerv1alpha1.SchemeBuilder.AddToScheme,
-
-		// v2 APIs (namespaced with .m. API group) - native v2 support
+		// v2 APIs (namespaced with .m. API group) - v2-only provider
 		giteav2.SchemeBuilder.AddToScheme,
 		orgv2.SchemeBuilder.AddToScheme,
 		orgsecretv2.SchemeBuilder.AddToScheme,

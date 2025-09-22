@@ -20,63 +20,13 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 
 	"github.com/crossplane/crossplane-runtime/v2/pkg/controller"
-
-	"github.com/rossigee/provider-gitea/internal/controller/accesstoken"
-	"github.com/rossigee/provider-gitea/internal/controller/action"
-	"github.com/rossigee/provider-gitea/internal/controller/adminuser"
-	"github.com/rossigee/provider-gitea/internal/controller/branchprotection"
-	"github.com/rossigee/provider-gitea/internal/controller/deploykey"
-	"github.com/rossigee/provider-gitea/internal/controller/githook"
-	"github.com/rossigee/provider-gitea/internal/controller/issue"
-	"github.com/rossigee/provider-gitea/internal/controller/label"
-	"github.com/rossigee/provider-gitea/internal/controller/pullrequest"
-	"github.com/rossigee/provider-gitea/internal/controller/release"
-	"github.com/rossigee/provider-gitea/internal/controller/organization"
-	"github.com/rossigee/provider-gitea/internal/controller/organizationmember"
-	"github.com/rossigee/provider-gitea/internal/controller/organizationsecret"
-	"github.com/rossigee/provider-gitea/internal/controller/organizationsettings"
-	"github.com/rossigee/provider-gitea/internal/controller/repository"
-	repositoryv2 "github.com/rossigee/provider-gitea/internal/controller/repository/v2"
-	"github.com/rossigee/provider-gitea/internal/controller/repositorycollaborator"
-	"github.com/rossigee/provider-gitea/internal/controller/repositorykey"
-	"github.com/rossigee/provider-gitea/internal/controller/repositorysecret"
-	"github.com/rossigee/provider-gitea/internal/controller/team"
-	"github.com/rossigee/provider-gitea/internal/controller/user"
-	"github.com/rossigee/provider-gitea/internal/controller/userkey"
-	"github.com/rossigee/provider-gitea/internal/controller/webhook"
 )
 
-// Setup creates all Gitea controllers with the supplied logger and adds them to
+// Setup creates all Gitea v2 controllers with the supplied logger and adds them to
 // the supplied manager.
 func Setup(mgr ctrl.Manager, o controller.Options) error {
-	for _, setup := range []func(ctrl.Manager, controller.Options) error{
-		repository.Setup,
-		repositoryv2.Setup, // V2 namespaced repository controller
-		organization.Setup,
-		organizationsecret.Setup,
-		user.Setup,
-		webhook.Setup,
-		deploykey.Setup,
-		team.Setup,
-		label.Setup,
-		repositorycollaborator.Setup,
-		organizationsettings.Setup,
-		githook.Setup,
-		issue.Setup,
-		pullrequest.Setup,
-		release.Setup,
-		branchprotection.Setup,
-		repositorykey.Setup,
-		accesstoken.Setup,
-		repositorysecret.Setup,
-		userkey.Setup,
-		organizationmember.Setup,
-		action.Setup,
-		adminuser.Setup,
-	} {
-		if err := setup(mgr, o); err != nil {
-			return err
-		}
-	}
+	// TODO: Implement v2 controllers for all 22 resource types
+	// This is a v2-only provider with namespace isolation and enhanced features
+	// Controllers will be added incrementally as they are implemented
 	return nil
 }
