@@ -61,11 +61,11 @@ This provider framework includes **22 v2 resource type definitions** for declara
 [![Coverage](https://codecov.io/gh/crossplane-contrib/provider-gitea/branch/master/graph/badge.svg)](https://codecov.io/gh/crossplane-contrib/provider-gitea)
 [![Go Report Card](https://goreportcard.com/badge/github.com/crossplane-contrib/provider-gitea)](https://goreportcard.com/report/github.com/crossplane-contrib/provider-gitea)
 
-- **Version**: v0.6.0 (V2 Namespaced APIs + Enterprise features)
-- **Resources**: 22 managed resource types with v2 namespaced support
-- **API Client**: Complete Gitea API integration with enterprise features
-- **Controller Status**: Production ready with comprehensive test coverage
-- **Registry**: `ghcr.io/rossigee/provider-gitea:v0.6.0`
+- **Version**: v0.7.0+ (v2-only provider framework)
+- **Resources**: 22 v2 resource type definitions with namespace isolation
+- **API Client**: Complete Gitea API integration with 19.7% test coverage
+- **Controller Status**: Framework ready - controller implementations required
+- **Registry**: `ghcr.io/rossigee/provider-gitea:v0.7.0`
 
 ## Complete Resource Catalog
 
@@ -108,62 +108,54 @@ This installs a pre-commit hook that prevents:
 - Binary artifacts (*.xpkg, *.tar.gz, etc.)
 - Build artifacts (provider binaries, cache files)
 
-## Quick Start
+## Quick Start (Framework Installation)
 
-1. Install the v2-only provider from GitHub Container Registry:
+⚠️ **Note**: This installs the provider framework with API definitions. Controller implementations are required for actual resource management.
+
+1. Install the v2-only provider framework:
 ```bash
-# Install v2-only enterprise version
+# Install v2-only framework
 kubectl crossplane install provider ghcr.io/rossigee/provider-gitea:v0.7.0
-
-# Or install latest v2-only stable
-kubectl crossplane install provider ghcr.io/rossigee/provider-gitea:latest
 ```
 
-Alternatively, use the install manifest:
+2. View available v2 resource definitions:
 ```bash
-kubectl apply -f examples/install.yaml
+kubectl get crds | grep gitea.m.crossplane.io
 ```
 
-2. Create a namespace-scoped provider configuration:
-```bash
-kubectl apply -f examples/v2/provider-config-namespaced.yaml
-```
-
-3. Create your first v2 namespaced repository:
+3. Example v2 resource definition (requires controller implementation):
 ```bash
 kubectl apply -f examples/v2/repository-namespaced.yaml
+# Note: Resource will be created but not reconciled until controllers are implemented
 ```
 
-## Enterprise Setup
+## Framework Development
 
-For complete enterprise-grade setup with CI/CD integration, security policies, and administrative automation:
+This v2-only provider framework includes complete API definitions and examples for enterprise Gitea management:
 
 ```bash
-# Complete enterprise configuration
-kubectl apply -f examples/enterprise-complete-setup.yaml
+# View all available v2 resource examples
+ls examples/v2/
 
-# Or step-by-step setup:
-kubectl apply -f examples/adminuser/service-accounts.yaml
-kubectl apply -f examples/branchprotection/enterprise-branch-protection.yaml  
-kubectl apply -f examples/runner/organization-runners.yaml
-kubectl apply -f examples/action/ci-pipeline.yaml
+# View enterprise feature examples (require controller implementation)
+ls examples/adminuser/ examples/branchprotection/ examples/action/
 ```
 
-This provides:
+**Enterprise capabilities when controllers are implemented**:
 - 🔒 **Enterprise Security**: Branch protection, SSH keys, access tokens
-- 🚀 **CI/CD Integration**: Actions workflows and self-hosted runners  
+- 🚀 **CI/CD Integration**: Actions workflows and self-hosted runners
 - 👑 **Administrative Control**: Service accounts and administrative users
 - 🏢 **Organization Management**: Complete organizational policies
 
 ## Testing
 
-This provider includes comprehensive test coverage:
+This provider framework includes solid test coverage for its current scope:
 
-- **Core infrastructure** with 100% test success rate
-- **Client library tests** with 19.7% coverage across all Gitea API operations
-- **Testing infrastructure** with 8.4% coverage for shared test utilities
-- **Mock clients** for Gitea API testing and development
-- **v2-only architecture** with clean, maintainable codebase
+- **Test Success Rate**: 100% - all tests pass
+- **Client Library**: 19.7% coverage across all major Gitea API operations
+- **Test Infrastructure**: 8.4% coverage for shared testing utilities
+- **Overall Coverage**: 4.8% (appropriate for framework with no controllers)
+- **Mock Clients**: Ready for controller development and testing
 
 ### Test Infrastructure
 
@@ -185,8 +177,8 @@ make test
 # Run with coverage
 make test-coverage
 
-# Run specific controller tests
-go test ./internal/controller/repository/...
+# Run client library tests
+go test ./internal/clients/...
 
 # Lint code
 make lint
