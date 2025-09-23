@@ -67,18 +67,9 @@ jobs:
         id: version
         run: echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
 
-      - name: Build Artifacts
+      - name: Build and Publish
         run: |
-          make build VERSION=${{ steps.version.outputs.version }}
-          make docker-build VERSION=${{ steps.version.outputs.version }}
-          make xpkg.build VERSION=${{ steps.version.outputs.version }}
-
-      - name: Tag and Push Docker Image
-        run: |
-          docker tag crossplane/provider-gitea:${{ steps.version.outputs.version }} ${{ env.REGISTRY }}/${{ github.repository }}:${{ steps.version.outputs.version }}
-          docker tag crossplane/provider-gitea:${{ steps.version.outputs.version }} ${{ env.REGISTRY }}/${{ github.repository }}:latest
-          docker push ${{ env.REGISTRY }}/${{ github.repository }}:${{ steps.version.outputs.version }}
-          docker push ${{ env.REGISTRY }}/${{ github.repository }}:latest
+          make publish VERSION=${{ steps.version.outputs.version }} PLATFORMS=linux_amd64
 
       - name: Generate Release Notes
         id: release_notes
