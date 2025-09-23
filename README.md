@@ -1,10 +1,22 @@
 # Provider Gitea
 
-A comprehensive Crossplane provider for enterprise-grade Gitea management with integrated CI/CD automation, security enforcement, and administrative capabilities.
+A v2-only Crossplane provider framework for Gitea management with complete API definitions and client libraries. **Note**: Controller implementations required for actual resource management functionality.
 
 ## Overview
 
-This provider enables declarative management of Gitea instances through Kubernetes custom resources with **22 managed resource types**. It provides complete enterprise functionality including repository management, security enforcement, CI/CD integration, and administrative automation using Crossplane's managed resource lifecycle.
+This provider framework includes **22 v2 resource type definitions** for declarative Gitea management. It provides complete API definitions, client libraries, and testing infrastructure. **Controller implementations are required to enable actual resource management functionality.**
+
+## ⚠️ Current Status: Framework Ready
+
+**What's Included:**
+- ✅ Complete v2 API definitions with namespace isolation
+- ✅ Gitea client library with comprehensive API coverage
+- ✅ Provider infrastructure that builds and packages successfully
+- ✅ Testing framework and mock clients
+
+**What's Missing:**
+- ❌ Controller implementations for resource lifecycle management
+- ❌ Actual Gitea resource synchronization and management
 
 ## Core Features
 
@@ -35,12 +47,13 @@ This provider enables declarative management of Gitea instances through Kubernet
 - **Organization Settings**: Enterprise-grade organizational policies
 - **Multi-tenant Support**: Organization and user isolation with proper access controls
 
-### **V2 Features** ✨ (NEW in v0.6.0)
-- **Namespaced Resources**: Repository and other resources can now be scoped to namespaces
-- **Enhanced Multi-tenancy**: Namespace-scoped ProviderConfig support
-- **Rich Observability**: Extended status fields for better monitoring and debugging
-- **Modern Architecture**: Built with kubebuilder patterns for better maintainability
-- **Connection References**: Advanced multi-tenant capabilities
+### **V2-Only Architecture** ✨ (v0.7.0+)
+- **Pure V2 Implementation**: Clean v2-only provider without legacy code burden
+- **Namespace Isolation**: All 22 resources use namespace-scoped `.m.` API groups
+- **Enhanced Multi-tenancy**: Complete namespace isolation and tenant separation
+- **Modern Architecture**: Built with Crossplane Runtime v2.0 patterns
+- **Connection References**: Advanced multi-tenant capabilities with enhanced connectivity
+- **No Backward Compatibility**: Clean slate implementation for optimal performance
 
 ## Status
 
@@ -97,12 +110,12 @@ This installs a pre-commit hook that prevents:
 
 ## Quick Start
 
-1. Install the provider from GitHub Container Registry:
+1. Install the v2-only provider from GitHub Container Registry:
 ```bash
-# Install latest enterprise version
-kubectl crossplane install provider ghcr.io/rossigee/provider-gitea:v0.5.0
+# Install v2-only enterprise version
+kubectl crossplane install provider ghcr.io/rossigee/provider-gitea:v0.7.0
 
-# Or install latest stable
+# Or install latest v2-only stable
 kubectl crossplane install provider ghcr.io/rossigee/provider-gitea:latest
 ```
 
@@ -111,14 +124,14 @@ Alternatively, use the install manifest:
 kubectl apply -f examples/install.yaml
 ```
 
-2. Create a provider configuration:
+2. Create a namespace-scoped provider configuration:
 ```bash
-kubectl apply -f examples/provider/config.yaml
+kubectl apply -f examples/v2/provider-config-namespaced.yaml
 ```
 
-3. Create your first repository:
+3. Create your first v2 namespaced repository:
 ```bash
-kubectl apply -f examples/repository/basic-repo.yaml
+kubectl apply -f examples/v2/repository-namespaced.yaml
 ```
 
 ## Enterprise Setup
@@ -146,10 +159,11 @@ This provides:
 
 This provider includes comprehensive test coverage:
 
-- **23/23 controllers** with 100% test success rate
-- **184 passing tests** across all resource types  
-- **Shared test infrastructure** for maintainable, consistent testing
-- **Mock clients** for Gitea API and Kubernetes integration testing
+- **Core infrastructure** with 100% test success rate
+- **Client library tests** with 19.7% coverage across all Gitea API operations
+- **Testing infrastructure** with 8.4% coverage for shared test utilities
+- **Mock clients** for Gitea API testing and development
+- **v2-only architecture** with clean, maintainable codebase
 
 ### Test Infrastructure
 

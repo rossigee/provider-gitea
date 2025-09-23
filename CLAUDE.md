@@ -1,21 +1,36 @@
 # Gitea Provider for Crossplane
 
 ## Overview
-Enterprise-grade Crossplane provider for comprehensive Gitea management with integrated CI/CD automation, security enforcement, and administrative capabilities. Supports **22 managed resource types** for complete enterprise Git infrastructure automation.
+**v2-Only Crossplane Provider Framework** for Gitea management with **22 v2 resource type definitions**. This provider contains complete API definitions and client libraries but requires controller implementations for resource management functionality.
 
 ## Development Status
 - **Created**: 2024-01-17
-- **Status**: v2-Only Provider - Pure namespace-scoped implementation
+- **Status**: v2 Provider Framework - API definitions and client library complete
 - **Version**: v0.7.0+ (v2-only clean slate)
 - **Registry**: `ghcr.io/rossigee/provider-gitea:v0.7.0`
 
-## v0.7.0+ Release Highlights - Pure v2 Provider
-- ✅ **v2-Only Architecture**: Clean implementation without legacy v1alpha1 code
-- ✅ **Namespace Isolation**: All resources are namespace-scoped with `.m.` API groups
-- ✅ **22 v2 Resource Types**: Complete API coverage with enhanced v2 features
-- ✅ **Enhanced Connectivity**: ConnectionRef and ProviderConfigRef for all resources
-- ✅ **Multi-Tenancy Ready**: Teams can deploy in separate namespaces
-- ✅ **Clean Codebase**: No backward compatibility burden
+## v0.7.0+ Framework Status
+- ✅ **v2 API Definitions**: Complete 22 resource types with `.m.` API groups
+- ✅ **Namespace-Scoped**: All resources support namespace isolation
+- ✅ **Client Library**: Working Gitea API client with 19.7% test coverage
+- ✅ **Provider Infrastructure**: Builds and packages successfully
+- ✅ **Testing Framework**: Shared testing utilities and mock clients
+- ⚠️ **Controllers**: Framework ready - controller implementations needed for functionality
+
+## Current Limitations
+
+**⚠️ Controller Implementation Required**: This provider currently contains API definitions and client libraries but **does not include controller implementations**. To manage actual Gitea resources, controllers must be implemented for each resource type.
+
+**What Works**:
+- ✅ API type definitions compile and generate CRDs
+- ✅ Provider binary builds and starts successfully
+- ✅ Gitea client library with full API coverage
+- ✅ Testing infrastructure and mock clients
+
+**What Doesn't Work Yet**:
+- ❌ Resource lifecycle management (Create, Update, Delete operations)
+- ❌ Status updates and condition reporting
+- ❌ Actual Gitea resource synchronization
 
 ## Complete Resource Catalog (22 Types)
 

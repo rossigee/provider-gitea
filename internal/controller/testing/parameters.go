@@ -17,14 +17,14 @@ limitations under the License.
 package testing
 
 import (
-	"github.com/rossigee/provider-gitea/apis/repository/v1alpha1"
+	"github.com/rossigee/provider-gitea/apis/repository/v2"
 )
 
 // Simple parameter builders that avoid complex type issues
 
-// RepositoryParameters creates basic repository parameters 
-func (f *TestFixtures) RepositoryParameters() v1alpha1.RepositoryParameters {
-	return v1alpha1.RepositoryParameters{
+// RepositoryParameters creates basic repository parameters
+func (f *TestFixtures) RepositoryParameters() v2.RepositoryParameters {
+	return v2.RepositoryParameters{
 		Name:        f.TestRepo,
 		Owner:       &f.TestOrg,
 		Description: func() *string { s := "Test repository"; return &s }(),

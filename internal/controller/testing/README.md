@@ -112,7 +112,7 @@ fixtures := testing.NewTestFixtures()
 
 // Repository parameters
 repoParams := fixtures.RepositoryParameters()
-// Returns v1alpha1.RepositoryParameters with test data
+// Returns v2.RepositoryParameters with test data
 ```
 
 ### TestSuite
