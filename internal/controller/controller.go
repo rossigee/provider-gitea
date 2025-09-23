@@ -25,8 +25,8 @@ import (
 // Setup creates all Gitea v2 controllers with the supplied logger and adds them to
 // the supplied manager.
 func Setup(mgr ctrl.Manager, o controller.Options) error {
-	// TODO: Implement v2 controllers for all 22 resource types
-	// This is a v2-only provider with namespace isolation and enhanced features
-	// Controllers will be added incrementally as they are implemented
+	// NOTE: v2 controller implementations needed for 22 resource types
+	// See CLAUDE.md for complete resource catalog and implementation status
+	// This provider framework is ready - controllers are the next development phase
 	return nil
 }
