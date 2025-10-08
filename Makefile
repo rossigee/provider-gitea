@@ -47,7 +47,7 @@ XPKGS = provider-gitea
 xpkg.build.provider-gitea: do.build.images
 
 # Setup Package Metadata
-export CROSSPLANE_VERSION := v2.0.0
+export CROSSPLANE_VERSION := v2.0.2
 -include build/makelib/local.xpkg.mk
 -include build/makelib/controlplane.mk
 
