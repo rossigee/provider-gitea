@@ -76,10 +76,7 @@ jobs:
           echo "Repository owner: ${{ github.repository_owner }}"
           echo "Version: ${VERSION}"
 
-          # Build artifacts first (workaround for submodule dependency issue)
-          make build.artifacts
-
-          # Then publish using make targets that handle Docker + Crossplane packages
+          # Build and publish using make targets that handle Docker + Crossplane packages
           make publish REGISTRY_ORGS="ghcr.io/${{ github.repository_owner }}" XPKG_REG_ORGS="ghcr.io/${{ github.repository_owner }}"
 
           echo "✅ Published to ghcr.io/${{ github.repository_owner }}"
