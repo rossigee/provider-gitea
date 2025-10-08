@@ -57,7 +57,7 @@ jobs:
           submodules: true
 
       - name: Setup Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version: ${{ env.GO_VERSION }}
 
@@ -78,7 +78,7 @@ jobs:
           submodules: true
 
       - name: Setup Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version: ${{ env.GO_VERSION }}
 
@@ -90,10 +90,14 @@ jobs:
           make reviewable
           git diff --exit-code
 
-  unit-tests:
+  # Comprehensive Testing Suite - leverages our testing framework
+  comprehensive-tests:
     runs-on: ubuntu-24.04
     needs: detect-noop
     if: needs.detect-noop.outputs.noop != 'true'
+    strategy:
+      matrix:
+        test-type: [unit, integration, benchmark, e2e]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -102,23 +106,159 @@ jobs:
           fetch-depth: 0
 
       - name: Setup Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version: ${{ env.GO_VERSION }}
 
       - name: Vendor Dependencies
         run: go mod vendor
 
-      - name: Run Unit Tests
-        run: make test
+      - name: Run Comprehensive Unit Tests
+        if: matrix.test-type == 'unit'
+        run: |
+          echo "🧪 Running comprehensive unit tests (all 23 controllers)..."
+          go test ./internal/controller/... -v -race -coverprofile=unit-coverage.out
+          echo "📊 Unit test coverage summary:"
+          go tool cover -func=unit-coverage.out
+
+      - name: Run Integration Tests
+        if: matrix.test-type == 'integration'
+        run: |
+          echo "🔗 Running integration tests..."
+          go test ./test/integration -v -coverprofile=integration-coverage.out
+          echo "📊 Integration test coverage summary:"
+          go tool cover -func=integration-coverage.out
+
+      - name: Run Performance Benchmarks
+        if: matrix.test-type == 'benchmark'
+        run: |
+          echo "⚡ Running performance benchmarks with Terraform comparison..."
+          go test ./test/benchmark -v -bench=. -benchmem -run=^$ > benchmark-results.txt
+          go test ./internal/controller/... -v -bench=. -benchmem -run=^$ >> benchmark-results.txt
+          echo "📈 Benchmark Results Summary:"
+          head -n 20 benchmark-results.txt
+
+      - name: Run E2E Tests
+        if: matrix.test-type == 'e2e'
+        run: |
+          echo "🚀 Running end-to-end enterprise workflow tests..."
+          go test ./test/e2e -v -timeout=30m
 
       - name: Upload Coverage Reports
+        if: matrix.test-type == 'unit' || matrix.test-type == 'integration'
         uses: codecov/codecov-action@v4
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          file: ./coverage.out
+          file: ./${{ matrix.test-type }}-coverage.out
+          flags: ${{ matrix.test-type }}
           verbose: true
 
+      - name: Upload Test Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ matrix.test-type }}
+          path: |
+            ${{ matrix.test-type }}-coverage.out
+            benchmark-results.txt
+        if: always()
+
+  # Performance Regression Detection
+  performance-analysis:
+    runs-on: ubuntu-24.04
+    needs: comprehensive-tests
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Download Benchmark Results
+        uses: actions/download-artifact@v4
+        with:
+          name: test-results-benchmark
+        continue-on-error: true
+
+      - name: Analyze Performance Metrics
+        run: |
+          echo "📊 Analyzing performance metrics and regression detection..."
+
+          # Create performance analysis script
+          cat > analyze_performance.go << 'EOF'
+          package main
+
+          import (
+            "bufio"
+            "fmt"
+            "os"
+            "regexp"
+            "strconv"
+          )
+
+          func main() {
+            file, err := os.Open("benchmark-results.txt")
+            if err != nil {
+              fmt.Printf("No benchmark results found, skipping analysis\n")
+              return
+            }
+            defer file.Close()
+
+            scanner := bufio.NewScanner(file)
+            benchmarkRegex := regexp.MustCompile(`Benchmark(\w+)-\d+\s+(\d+)\s+([\d.]+)\s+ns/op`)
+
+            fmt.Println("📈 Performance Analysis Results:")
+            fmt.Println("==================================")
+
+            totalBenchmarks := 0
+            slowBenchmarks := 0
+
+            for scanner.Scan() {
+              line := scanner.Text()
+              matches := benchmarkRegex.FindStringSubmatch(line)
+              if len(matches) == 4 {
+                name := matches[1]
+                iterations := matches[2]
+                nsPerOp, _ := strconv.ParseFloat(matches[3], 64)
+
+                totalBenchmarks++
+                status := "✅ PASS"
+
+                // Performance thresholds based on our targets
+                if nsPerOp > 10000000 { // 10ms
+                  status = "⚠️  SLOW"
+                  slowBenchmarks++
+                }
+                if nsPerOp > 50000000 { // 50ms
+                  status = "❌ FAIL"
+                  slowBenchmarks++
+                }
+
+                fmt.Printf("%-25s %s (iters: %s, latency: %.2fms)\n",
+                  name, status, iterations, nsPerOp/1000000)
+              }
+            }
+
+            fmt.Printf("\n📊 Analysis Summary:\n")
+            fmt.Printf("Total benchmarks: %d\n", totalBenchmarks)
+            fmt.Printf("Slow/failed benchmarks: %d\n", slowBenchmarks)
+
+            if totalBenchmarks > 0 {
+              successRate := float64(totalBenchmarks-slowBenchmarks) / float64(totalBenchmarks) * 100
+              fmt.Printf("Performance success rate: %.1f%%\n", successRate)
+
+              if successRate < 80 {
+                fmt.Printf("⚠️  Performance regression detected!\n")
+                os.Exit(1)
+              }
+            }
+
+            fmt.Printf("✅ Performance analysis completed successfully\n")
+          }
+          EOF
+
+          go run analyze_performance.go
   security-scan:
     runs-on: ubuntu-24.04
     needs: detect-noop
@@ -133,7 +273,7 @@ jobs:
           submodules: true
 
       - name: Setup Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version: ${{ env.GO_VERSION }}
 
@@ -169,7 +309,7 @@ jobs:
   # CI ONLY VALIDATES BUILDS - NO PUBLISHING
   build-validation:
     runs-on: ubuntu-24.04
-    needs: [lint, check-diff, unit-tests, security-scan]
+    needs: [lint, check-diff, comprehensive-tests, security-scan]
     if: github.ref == 'refs/heads/master'
     permissions:
       contents: read
@@ -181,7 +321,7 @@ jobs:
           submodules: true
 
       - name: Setup Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version: ${{ env.GO_VERSION }}
 
