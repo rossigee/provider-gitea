@@ -193,23 +193,15 @@ jobs:
           # Validate that all build steps work without publishing
           echo "Repository: ${{ github.repository }}"
           echo "Repository owner: ${{ github.repository_owner }}"
-          
-          # Build binary
-          make build
-          echo "✅ Binary build successful"
-          
-          # Build Docker image locally (without push)
-          make docker.build
-          echo "✅ Docker image build successful"
-          
-          # Build Crossplane package locally (without push)
-          make xpkg.build
-          echo "✅ Crossplane package build successful"
-          
+
+          # Build all artifacts (binaries, images, packages)
+          make build.all
+          echo "✅ All artifacts built successfully"
+
           # Verify build artifacts exist
           ls -la _output/bin/linux_amd64/provider 2>/dev/null && echo "✅ Provider binary exists" || echo "❌ Provider binary missing"
           ls -la _output/xpkg/linux_amd64/*.xpkg 2>/dev/null && echo "✅ Crossplane package exists" || echo "❌ Crossplane package missing"
-          
+
           echo ""
           echo "🎯 Build validation completed successfully"
           echo "📦 All artifacts can be built successfully"
