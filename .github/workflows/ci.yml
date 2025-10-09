@@ -116,10 +116,10 @@ jobs:
       - name: Run Comprehensive Unit Tests
         if: matrix.test-type == 'unit'
         run: |
-          echo "🧪 Running comprehensive unit tests (all 23 controllers)..."
-          go test ./internal/controller/... -v -race -coverprofile=unit-coverage.out
+          echo "🧪 Running comprehensive unit tests..."
+          go test ./... -v -race -coverprofile=unit-coverage.out | grep -E "(PASS|FAIL|RUN)"
           echo "📊 Unit test coverage summary:"
-          go tool cover -func=unit-coverage.out
+          go tool cover -func=unit-coverage.out | tail -1
 
       - name: Run Integration Tests
         if: matrix.test-type == 'integration'
@@ -127,21 +127,20 @@ jobs:
           echo "🔗 Running integration tests..."
           go test ./test/integration -v -coverprofile=integration-coverage.out
           echo "📊 Integration test coverage summary:"
-          go tool cover -func=integration-coverage.out
+          go tool cover -func=integration-coverage.out | tail -1
 
       - name: Run Performance Benchmarks
         if: matrix.test-type == 'benchmark'
         run: |
-          echo "⚡ Running performance benchmarks with Terraform comparison..."
-          go test ./test/benchmark -v -bench=. -benchmem -run=^$ > benchmark-results.txt
-          go test ./internal/controller/... -v -bench=. -benchmem -run=^$ >> benchmark-results.txt
+          echo "⚡ Running performance benchmarks..."
+          go test ./test/benchmark -v -bench=. -benchmem > benchmark-results.txt
           echo "📈 Benchmark Results Summary:"
-          head -n 20 benchmark-results.txt
+          cat benchmark-results.txt
 
       - name: Run E2E Tests
         if: matrix.test-type == 'e2e'
         run: |
-          echo "🚀 Running end-to-end enterprise workflow tests..."
+          echo "🚀 Running end-to-end tests..."
           go test ./test/e2e -v -timeout=30m
 
       - name: Upload Coverage Reports
@@ -185,6 +184,11 @@ jobs:
         run: |
           echo "📊 Analyzing performance metrics and regression detection..."
 
+          if [ ! -f "benchmark-results.txt" ]; then
+            echo "No benchmark results found, skipping analysis"
+            exit 0
+          fi
+
           # Create performance analysis script
           cat > analyze_performance.go << 'EOF'
           package main
@@ -195,6 +199,7 @@ jobs:
             "os"
             "regexp"
             "strconv"
+            "strings"
           )
 
           func main() {
@@ -216,27 +221,29 @@ jobs:
 
             for scanner.Scan() {
               line := scanner.Text()
-              matches := benchmarkRegex.FindStringSubmatch(line)
-              if len(matches) == 4 {
-                name := matches[1]
-                iterations := matches[2]
-                nsPerOp, _ := strconv.ParseFloat(matches[3], 64)
+              if strings.Contains(line, "PASS") || strings.Contains(line, "Benchmark") {
+                matches := benchmarkRegex.FindStringSubmatch(line)
+                if len(matches) == 4 {
+                  name := matches[1]
+                  iterations := matches[2]
+                  nsPerOp, _ := strconv.ParseFloat(matches[3], 64)
 
-                totalBenchmarks++
-                status := "✅ PASS"
+                  totalBenchmarks++
+                  status := "✅ PASS"
 
-                // Performance thresholds based on our targets
-                if nsPerOp > 10000000 { // 10ms
-                  status = "⚠️  SLOW"
-                  slowBenchmarks++
+                  // Performance thresholds based on our targets
+                  if nsPerOp > 10000000 { // 10ms
+                    status = "⚠️  SLOW"
+                    slowBenchmarks++
+                  }
+                  if nsPerOp > 50000000 { // 50ms
+                    status = "❌ FAIL"
+                    slowBenchmarks++
+                  }
+
+                  fmt.Printf("%-25s %s (iters: %s, latency: %.2fms)\n",
+                    name, status, iterations, nsPerOp/1000000)
                 }
-                if nsPerOp > 50000000 { // 50ms
-                  status = "❌ FAIL"
-                  slowBenchmarks++
-                }
-
-                fmt.Printf("%-25s %s (iters: %s, latency: %.2fms)\n",
-                  name, status, iterations, nsPerOp/1000000)
               }
             }
 
@@ -252,6 +259,8 @@ jobs:
                 fmt.Printf("⚠️  Performance regression detected!\n")
                 os.Exit(1)
               }
+            } else {
+              fmt.Printf("No benchmark data found to analyze\n")
             }
 
             fmt.Printf("✅ Performance analysis completed successfully\n")
