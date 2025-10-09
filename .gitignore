@@ -43,6 +43,7 @@ Thumbs.db
 coverage.txt
 coverage.html
 *.log
+benchmark-results.txt
 
 # Local environment
 .env
