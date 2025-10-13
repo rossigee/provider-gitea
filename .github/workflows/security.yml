@@ -61,7 +61,7 @@ jobs:
           args: '-fmt sarif -out gosec.sarif ./...'
 
       - name: Upload SARIF file
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: gosec.sarif
 
@@ -81,7 +81,7 @@ jobs:
           output: 'trivy-results.sarif'
 
       - name: Upload Trivy scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: 'trivy-results.sarif'
 
@@ -118,7 +118,7 @@ jobs:
         run: semgrep --config=auto --sarif --output=semgrep.sarif .
 
       - name: Upload SARIF file
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: semgrep.sarif
         if: always()
@@ -140,18 +140,18 @@ jobs:
 
       - name: Initialize CodeQL
         if: github.event.inputs.scan_type == 'comprehensive' || github.event.inputs.scan_type == ''
-        uses: github/codeql-action/init@v3
+        uses: github/codeql-action/init@v4
         with:
           languages: go
           queries: security-extended,security-and-quality
 
       - name: Autobuild for CodeQL
         if: github.event.inputs.scan_type == 'comprehensive' || github.event.inputs.scan_type == ''
-        uses: github/codeql-action/autobuild@v3
+        uses: github/codeql-action/autobuild@v4
 
       - name: Perform CodeQL Analysis
         if: github.event.inputs.scan_type == 'comprehensive' || github.event.inputs.scan_type == ''
-        uses: github/codeql-action/analyze@v3
+        uses: github/codeql-action/analyze@v4
         with:
           category: "/language:go"
 
@@ -178,7 +178,7 @@ jobs:
 
       - name: Upload Gosec Results
         if: (github.event.inputs.scan_type == 'comprehensive' || github.event.inputs.scan_type == 'vulnerabilities' || github.event.inputs.scan_type == '') && always() && hashFiles('gosec-results.sarif') != ''
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: gosec-results.sarif
           category: gosec
@@ -215,7 +215,7 @@ jobs:
 
       - name: Upload OSV scan results
         if: always() && hashFiles('osv-results.sarif') != ''
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: osv-results.sarif
 
