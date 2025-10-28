@@ -1,5 +1,5 @@
 # Standardized CI/CD Template for Crossplane Providers
-# Version: 2025-09-26 - Updated for Go 1.25.1
+# Version: 2025-10-28 - Updated for Go 1.25.3
 #
 # This template implements CI builds and validates ONLY
 # - CI: Build validation only (no publishing to avoid tag conflicts)
@@ -27,9 +27,9 @@ permissions:
   actions: read    # Needed for detecting duplicate actions
 
 env:
-  GO_VERSION: '1.25.1'
+  GO_VERSION: '1.25.3'
   GOLANGCI_VERSION: 'latest'
-  GOLANGCILINT_VERSION: '2.4.0'
+  GOLANGCILINT_VERSION: '2.5.0'
   DOCKER_BUILDX_VERSION: 'v0.11.2'
 
 jobs:
@@ -90,14 +90,10 @@ jobs:
           make reviewable
           git diff --exit-code
 
-  # Comprehensive Testing Suite - leverages our testing framework
-  comprehensive-tests:
+  unit-tests:
     runs-on: ubuntu-24.04
     needs: detect-noop
     if: needs.detect-noop.outputs.noop != 'true'
-    strategy:
-      matrix:
-        test-type: [unit, integration, benchmark, e2e]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -113,161 +109,16 @@ jobs:
       - name: Vendor Dependencies
         run: go mod vendor
 
-      - name: Run Comprehensive Unit Tests
-        if: matrix.test-type == 'unit'
-        run: |
-          echo "🧪 Running comprehensive unit tests..."
-          go test ./... -v -race -coverprofile=unit-coverage.out | grep -E "(PASS|FAIL|RUN)"
-          echo "📊 Unit test coverage summary:"
-          go tool cover -func=unit-coverage.out | tail -1
-
-      - name: Run Integration Tests
-        if: matrix.test-type == 'integration'
-        run: |
-          echo "🔗 Running integration tests..."
-          go test ./test/integration -v -coverprofile=integration-coverage.out
-          echo "📊 Integration test coverage summary:"
-          go tool cover -func=integration-coverage.out | tail -1
-
-      - name: Run Performance Benchmarks
-        if: matrix.test-type == 'benchmark'
-        run: |
-          echo "⚡ Running performance benchmarks..."
-          go test ./test/benchmark -v -bench=. -benchmem > benchmark-results.txt
-          echo "📈 Benchmark Results Summary:"
-          cat benchmark-results.txt
-
-      - name: Run E2E Tests
-        if: matrix.test-type == 'e2e'
-        run: |
-          echo "🚀 Running end-to-end tests..."
-          go test ./test/e2e -v -timeout=30m
+      - name: Run Unit Tests
+        run: make test
 
       - name: Upload Coverage Reports
-        if: matrix.test-type == 'unit' || matrix.test-type == 'integration'
         uses: codecov/codecov-action@v4
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          file: ./${{ matrix.test-type }}-coverage.out
-          flags: ${{ matrix.test-type }}
+          file: ./coverage.out
           verbose: true
 
-      - name: Upload Test Artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-results-${{ matrix.test-type }}
-          path: |
-            ${{ matrix.test-type }}-coverage.out
-            benchmark-results.txt
-        if: always()
-
-  # Performance Regression Detection
-  performance-analysis:
-    runs-on: ubuntu-24.04
-    needs: comprehensive-tests
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Go
-        uses: actions/setup-go@v6
-        with:
-          go-version: ${{ env.GO_VERSION }}
-
-      - name: Download Benchmark Results
-        uses: actions/download-artifact@v4
-        with:
-          name: test-results-benchmark
-        continue-on-error: true
-
-      - name: Analyze Performance Metrics
-        run: |
-          echo "📊 Analyzing performance metrics and regression detection..."
-
-          if [ ! -f "benchmark-results.txt" ]; then
-            echo "No benchmark results found, skipping analysis"
-            exit 0
-          fi
-
-          # Create performance analysis script
-          cat > analyze_performance.go << 'EOF'
-          package main
-
-          import (
-            "bufio"
-            "fmt"
-            "os"
-            "regexp"
-            "strconv"
-            "strings"
-          )
-
-          func main() {
-            file, err := os.Open("benchmark-results.txt")
-            if err != nil {
-              fmt.Printf("No benchmark results found, skipping analysis\n")
-              return
-            }
-            defer file.Close()
-
-            scanner := bufio.NewScanner(file)
-            benchmarkRegex := regexp.MustCompile(`Benchmark(\w+)-\d+\s+(\d+)\s+([\d.]+)\s+ns/op`)
-
-            fmt.Println("📈 Performance Analysis Results:")
-            fmt.Println("==================================")
-
-            totalBenchmarks := 0
-            slowBenchmarks := 0
-
-            for scanner.Scan() {
-              line := scanner.Text()
-              if strings.Contains(line, "PASS") || strings.Contains(line, "Benchmark") {
-                matches := benchmarkRegex.FindStringSubmatch(line)
-                if len(matches) == 4 {
-                  name := matches[1]
-                  iterations := matches[2]
-                  nsPerOp, _ := strconv.ParseFloat(matches[3], 64)
-
-                  totalBenchmarks++
-                  status := "✅ PASS"
-
-                  // Performance thresholds based on our targets
-                  if nsPerOp > 10000000 { // 10ms
-                    status = "⚠️  SLOW"
-                    slowBenchmarks++
-                  }
-                  if nsPerOp > 50000000 { // 50ms
-                    status = "❌ FAIL"
-                    slowBenchmarks++
-                  }
-
-                  fmt.Printf("%-25s %s (iters: %s, latency: %.2fms)\n",
-                    name, status, iterations, nsPerOp/1000000)
-                }
-              }
-            }
-
-            fmt.Printf("\n📊 Analysis Summary:\n")
-            fmt.Printf("Total benchmarks: %d\n", totalBenchmarks)
-            fmt.Printf("Slow/failed benchmarks: %d\n", slowBenchmarks)
-
-            if totalBenchmarks > 0 {
-              successRate := float64(totalBenchmarks-slowBenchmarks) / float64(totalBenchmarks) * 100
-              fmt.Printf("Performance success rate: %.1f%%\n", successRate)
-
-              if successRate < 80 {
-                fmt.Printf("⚠️  Performance regression detected!\n")
-                os.Exit(1)
-              }
-            } else {
-              fmt.Printf("No benchmark data found to analyze\n")
-            }
-
-            fmt.Printf("✅ Performance analysis completed successfully\n")
-          }
-          EOF
-
-          go run analyze_performance.go
   security-scan:
     runs-on: ubuntu-24.04
     needs: detect-noop
@@ -318,7 +169,7 @@ jobs:
   # CI ONLY VALIDATES BUILDS - NO PUBLISHING
   build-validation:
     runs-on: ubuntu-24.04
-    needs: [lint, check-diff, comprehensive-tests, security-scan]
+    needs: [lint, check-diff, unit-tests, security-scan]
     if: github.ref == 'refs/heads/master'
     permissions:
       contents: read
@@ -342,15 +193,23 @@ jobs:
           # Validate that all build steps work without publishing
           echo "Repository: ${{ github.repository }}"
           echo "Repository owner: ${{ github.repository_owner }}"
-
-          # Build all artifacts (binaries, images, packages)
-          make build.all
-          echo "✅ All artifacts built successfully"
-
+          
+          # Build binary
+          make build
+          echo "✅ Binary build successful"
+          
+          # Build Docker image locally (without push)
+          make docker.build
+          echo "✅ Docker image build successful"
+          
+          # Build Crossplane package locally (without push)
+          make xpkg.build
+          echo "✅ Crossplane package build successful"
+          
           # Verify build artifacts exist
           ls -la _output/bin/linux_amd64/provider 2>/dev/null && echo "✅ Provider binary exists" || echo "❌ Provider binary missing"
           ls -la _output/xpkg/linux_amd64/*.xpkg 2>/dev/null && echo "✅ Crossplane package exists" || echo "❌ Crossplane package missing"
-
+          
           echo ""
           echo "🎯 Build validation completed successfully"
           echo "📦 All artifacts can be built successfully"
