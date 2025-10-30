@@ -16,50 +16,20 @@ on:
         type: string
 
 jobs:
-  # Custom release job to avoid submodule unshallow issues
+  # Use official provider-workflows with custom registry configuration
   release:
-    runs-on: ubuntu-24.04
-    permissions:
-      contents: write
-      packages: write
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          submodules: true
-          fetch-depth: 0
-          ref: ${{ github.event.inputs.version || github.ref_name }}
+    uses: crossplane-contrib/provider-workflows/.github/workflows/publish-provider.yml@main
+    with:
+      repository: ${{ github.event.repository.name }}
+      version: ${{ github.event.inputs.version || github.ref_name }}
+      go-version: '1.25.3'
+      registry_org: 'rossigee'  # Publish to ghcr.io/rossigee
+      mirror: false             # Disable mirroring to xpkg.upbound.io
+      cleanup-disk: true
+    secrets:
+      GHCR_PAT: ${{ secrets.PAT_TOKEN }}
 
-      - name: Setup Go
-        uses: actions/setup-go@v6
-        with:
-          go-version: '1.25.3'
-
-      - name: Login to GHCR
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.PAT_TOKEN }}
-
-      - name: Build and Publish
-        run: |
-          # Build binary
-          make build
-
-          # Build Docker image
-          make do.build.images
-
-          # Build Crossplane package
-          make xpkg.build
-
-          # Publish Docker image
-          make img.release.publish.rossigee.provider-gitea
-
-          # Publish Crossplane package
-          make xpkg.release.publish.rossigee.provider-gitea
-
-  # Create GitHub release
+  # Add GitHub release creation (preserves your custom feature)
   github-release:
     needs: release
     runs-on: ubuntu-24.04
@@ -74,23 +44,20 @@ jobs:
           prerelease: false
           generate_release_notes: true
 
-  # Verify publication
+  # Add publication verification (preserves your custom verification)
   verify-publication:
     needs: release
     runs-on: ubuntu-24.04
     steps:
       - name: Verify Publication
         run: |
-          set -e
+          set -e  # Fail fast on any error
 
           VERSION="${{ github.event.inputs.version || github.ref_name }}"
           PROVIDER_NAME="${{ github.event.repository.name }}"
           REGISTRY_PATH="ghcr.io/rossigee/${PROVIDER_NAME}"
 
           echo "Verifying publication to ${REGISTRY_PATH}:${VERSION}"
-
-          # Wait a bit for publication to complete
-          sleep 30
 
           # Verify version tag exists and is pullable
           if docker pull "${REGISTRY_PATH}:${VERSION}" > /dev/null 2>&1; then
@@ -121,4 +88,3 @@ jobs:
             echo "   Latest digest:  ${LATEST_DIGEST}"
             exit 1
           fi
-
