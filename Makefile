@@ -28,7 +28,7 @@ UPTEST_VERSION = v0.11.1
 # Setup Images
 IMAGES = provider-gitea
 # Force registry override (can be overridden by make command arguments)
-REGISTRY_ORGS = ghcr.io/rossigee
+REGISTRY_ORGS = rossigee
 -include build/makelib/imagelight.mk
 
 # Setup XPKG - Standardized registry configuration
@@ -52,8 +52,11 @@ publish.artifacts:
 		$(ERR) Publishing is only allowed on branches matching: main|master|release-.* (current: $(BRANCH_NAME)); \ 
 		exit 1; \ 
 	fi
-	$(foreach r,$(XPKG_REG_ORGS), $(foreach x,$(XPKGS),@$(MAKE) xpkg.release.publish.$(r).$(x)))
-	$(foreach r,$(REGISTRY_ORGS), $(foreach i,$(IMAGES),@$(MAKE) img.release.publish.$(r).$(i)))
+	$(foreach r,$(XPKG_REG_ORGS), $(foreach x,$(XPKGS),@$(MAKE) xpkg.release.publish.$(subst /,_,$(r)).$(x)))
+	$(foreach r,$(REGISTRY_ORGS), $(foreach i,$(IMAGES),@$(MAKE) img.release.publish.$(subst /,_,$(r)).$(i)))
+
+# Alias for publish.artifacts to match workflow expectations
+publish: publish.artifacts
 
 # Setup Package Metadata
 export CROSSPLANE_VERSION := v2.0.2
