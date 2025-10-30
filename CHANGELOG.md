@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.2] - 2025-10-30
+
+### 🔧 **Build & CI/CD Improvements**
+- **Go Version Update**: Updated to Go 1.25.3 for latest performance and security fixes
+- **Build Submodule Updates**: Integrated latest build system improvements including xpkg embedding fixes
+- **CI Workflow Enhancements**: Fixed comprehensive testing workflows and artifact publishing
+- **Dependency Updates**: Merged dependabot updates for actions and dependencies
+- **Release Workflow Fixes**: Corrected Docker image publishing and build target configurations
+- **Placeholder Tests**: Added compatibility test files for CI systems
+
+### 🐛 **Bug Fixes**
+- **Kingpin Import**: Fixed dependencies and kingpin import issues
+- **Gitignore Updates**: Added benchmark-results.txt to prevent unnecessary commits
+
 ## [0.6.0] - 2025-09-21
 
 ### ✨ **V2 Namespaced API Support**

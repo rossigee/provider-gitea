@@ -47,7 +47,7 @@ This provider framework includes **22 v2 resource type definitions** for declara
 - **Organization Settings**: Enterprise-grade organizational policies
 - **Multi-tenant Support**: Organization and user isolation with proper access controls
 
-### **V2-Only Architecture** ✨ (v0.7.0+)
+### **V2-Only Architecture** ✨ (v0.8.2)
 - **Pure V2 Implementation**: Clean v2-only provider without legacy code burden
 - **Namespace Isolation**: All 22 resources use namespace-scoped `.m.` API groups
 - **Enhanced Multi-tenancy**: Complete namespace isolation and tenant separation
@@ -61,11 +61,11 @@ This provider framework includes **22 v2 resource type definitions** for declara
 [![Coverage](https://codecov.io/gh/crossplane-contrib/provider-gitea/branch/master/graph/badge.svg)](https://codecov.io/gh/crossplane-contrib/provider-gitea)
 [![Go Report Card](https://goreportcard.com/badge/github.com/crossplane-contrib/provider-gitea)](https://goreportcard.com/report/github.com/crossplane-contrib/provider-gitea)
 
-- **Version**: v0.7.0+ (v2-only provider framework)
+- **Version**: v0.8.2 (v2-only provider framework)
 - **Resources**: 22 v2 resource type definitions with namespace isolation
 - **API Client**: Complete Gitea API integration with 19.7% test coverage
 - **Controller Status**: Framework ready - controller implementations required
-- **Registry**: `ghcr.io/rossigee/provider-gitea:v0.7.0`
+- **Registry**: `ghcr.io/rossigee/provider-gitea:v0.8.2`
 
 ## Complete Resource Catalog
 
@@ -115,7 +115,7 @@ This installs a pre-commit hook that prevents:
 1. Install the v2-only provider framework:
 ```bash
 # Install v2-only framework
-kubectl crossplane install provider ghcr.io/rossigee/provider-gitea:v0.7.0
+kubectl crossplane install provider ghcr.io/rossigee/provider-gitea:v0.8.2
 ```
 
 2. View available v2 resource definitions:
