@@ -20,7 +20,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
+	xpv1 "github.com/crossplane/crossplane/apis/v2/core/v2"
 )
 
 // RepositoryCollaboratorPermissions defines the permissions for a collaborator
@@ -80,13 +80,13 @@ type RepositoryCollaboratorObservation struct {
 
 // RepositoryCollaboratorSpec defines the desired state of RepositoryCollaborator
 type RepositoryCollaboratorSpec struct {
-	xpv1.ResourceSpec `json:",inline"`
+	xpv1.ManagedResourceSpec `json:",inline"`
 	ForProvider       RepositoryCollaboratorParameters `json:"forProvider"`
 }
 
 // RepositoryCollaboratorStatus defines the observed state of RepositoryCollaborator
 type RepositoryCollaboratorStatus struct {
-	xpv1.ResourceStatus `json:",inline"`
+	xpv1.ManagedResourceStatus `json:",inline"`
 	AtProvider          RepositoryCollaboratorObservation `json:"atProvider,omitempty"`
 }
 

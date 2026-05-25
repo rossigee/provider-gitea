@@ -18,17 +18,13 @@ limitations under the License.
 
 package v2
 
-import xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
+import xpv1 "github.com/crossplane/crossplane/apis/v2/core/v2"
 
 // GetCondition of this OrganizationSecret.
 func (mg *OrganizationSecret) GetCondition(ct xpv1.ConditionType) xpv1.Condition {
 	return mg.Status.GetCondition(ct)
 }
 
-// GetDeletionPolicy of this OrganizationSecret.
-func (mg *OrganizationSecret) GetDeletionPolicy() xpv1.DeletionPolicy {
-	return mg.Spec.DeletionPolicy
-}
 
 // GetManagementPolicies of this OrganizationSecret.
 func (mg *OrganizationSecret) GetManagementPolicies() xpv1.ManagementPolicies {
@@ -36,12 +32,12 @@ func (mg *OrganizationSecret) GetManagementPolicies() xpv1.ManagementPolicies {
 }
 
 // GetProviderConfigReference of this OrganizationSecret.
-func (mg *OrganizationSecret) GetProviderConfigReference() *xpv1.Reference {
+func (mg *OrganizationSecret) GetProviderConfigReference() *xpv1.ProviderConfigReference {
 	return mg.Spec.ProviderConfigReference
 }
 
 // GetWriteConnectionSecretToReference of this OrganizationSecret.
-func (mg *OrganizationSecret) GetWriteConnectionSecretToReference() *xpv1.SecretReference {
+func (mg *OrganizationSecret) GetWriteConnectionSecretToReference() *xpv1.LocalSecretReference {
 	return mg.Spec.WriteConnectionSecretToReference
 }
 
@@ -50,10 +46,6 @@ func (mg *OrganizationSecret) SetConditions(c ...xpv1.Condition) {
 	mg.Status.SetConditions(c...)
 }
 
-// SetDeletionPolicy of this OrganizationSecret.
-func (mg *OrganizationSecret) SetDeletionPolicy(r xpv1.DeletionPolicy) {
-	mg.Spec.DeletionPolicy = r
-}
 
 // SetManagementPolicies of this OrganizationSecret.
 func (mg *OrganizationSecret) SetManagementPolicies(r xpv1.ManagementPolicies) {
@@ -61,11 +53,11 @@ func (mg *OrganizationSecret) SetManagementPolicies(r xpv1.ManagementPolicies) {
 }
 
 // SetProviderConfigReference of this OrganizationSecret.
-func (mg *OrganizationSecret) SetProviderConfigReference(r *xpv1.Reference) {
+func (mg *OrganizationSecret) SetProviderConfigReference(r *xpv1.ProviderConfigReference) {
 	mg.Spec.ProviderConfigReference = r
 }
 
 // SetWriteConnectionSecretToReference of this OrganizationSecret.
-func (mg *OrganizationSecret) SetWriteConnectionSecretToReference(r *xpv1.SecretReference) {
+func (mg *OrganizationSecret) SetWriteConnectionSecretToReference(r *xpv1.LocalSecretReference) {
 	mg.Spec.WriteConnectionSecretToReference = r
 }

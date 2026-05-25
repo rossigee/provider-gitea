@@ -18,17 +18,13 @@ limitations under the License.
 
 package v2
 
-import xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
+import xpv1 "github.com/crossplane/crossplane/apis/v2/core/v2"
 
 // GetCondition of this Action.
 func (mg *Action) GetCondition(ct xpv1.ConditionType) xpv1.Condition {
 	return mg.Status.GetCondition(ct)
 }
 
-// GetDeletionPolicy of this Action.
-func (mg *Action) GetDeletionPolicy() xpv1.DeletionPolicy {
-	return mg.Spec.DeletionPolicy
-}
 
 // GetManagementPolicies of this Action.
 func (mg *Action) GetManagementPolicies() xpv1.ManagementPolicies {
@@ -36,12 +32,12 @@ func (mg *Action) GetManagementPolicies() xpv1.ManagementPolicies {
 }
 
 // GetProviderConfigReference of this Action.
-func (mg *Action) GetProviderConfigReference() *xpv1.Reference {
+func (mg *Action) GetProviderConfigReference() *xpv1.ProviderConfigReference {
 	return mg.Spec.ProviderConfigReference
 }
 
 // GetWriteConnectionSecretToReference of this Action.
-func (mg *Action) GetWriteConnectionSecretToReference() *xpv1.SecretReference {
+func (mg *Action) GetWriteConnectionSecretToReference() *xpv1.LocalSecretReference {
 	return mg.Spec.WriteConnectionSecretToReference
 }
 
@@ -50,10 +46,6 @@ func (mg *Action) SetConditions(c ...xpv1.Condition) {
 	mg.Status.SetConditions(c...)
 }
 
-// SetDeletionPolicy of this Action.
-func (mg *Action) SetDeletionPolicy(r xpv1.DeletionPolicy) {
-	mg.Spec.DeletionPolicy = r
-}
 
 // SetManagementPolicies of this Action.
 func (mg *Action) SetManagementPolicies(r xpv1.ManagementPolicies) {
@@ -61,11 +53,11 @@ func (mg *Action) SetManagementPolicies(r xpv1.ManagementPolicies) {
 }
 
 // SetProviderConfigReference of this Action.
-func (mg *Action) SetProviderConfigReference(r *xpv1.Reference) {
+func (mg *Action) SetProviderConfigReference(r *xpv1.ProviderConfigReference) {
 	mg.Spec.ProviderConfigReference = r
 }
 
 // SetWriteConnectionSecretToReference of this Action.
-func (mg *Action) SetWriteConnectionSecretToReference(r *xpv1.SecretReference) {
+func (mg *Action) SetWriteConnectionSecretToReference(r *xpv1.LocalSecretReference) {
 	mg.Spec.WriteConnectionSecretToReference = r
 }

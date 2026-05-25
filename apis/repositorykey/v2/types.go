@@ -20,7 +20,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
+	xpv1 "github.com/crossplane/crossplane/apis/v2/core/v2"
 )
 
 type RepositoryKeyParameters struct {
@@ -81,13 +81,13 @@ type RepositoryKeyObservation struct {
 
 // RepositoryKeySpec defines the desired state of RepositoryKey
 type RepositoryKeySpec struct {
-	xpv1.ResourceSpec `json:",inline"`
+	xpv1.ManagedResourceSpec `json:",inline"`
 	ForProvider       RepositoryKeyParameters `json:"forProvider"`
 }
 
 // RepositoryKeyStatus defines the observed state of RepositoryKey
 type RepositoryKeyStatus struct {
-	xpv1.ResourceStatus `json:",inline"`
+	xpv1.ManagedResourceStatus `json:",inline"`
 	AtProvider          RepositoryKeyObservation `json:"atProvider,omitempty"`
 }
 

@@ -20,7 +20,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
+	xpv1 "github.com/crossplane/crossplane/apis/v2/core/v2"
 )
 
 type UserKeyParameters struct {
@@ -75,13 +75,13 @@ type UserKeyObservation struct {
 
 // UserKeySpec defines the desired state of UserKey
 type UserKeySpec struct {
-	xpv1.ResourceSpec `json:",inline"`
+	xpv1.ManagedResourceSpec `json:",inline"`
 	ForProvider       UserKeyParameters `json:"forProvider"`
 }
 
 // UserKeyStatus defines the observed state of UserKey
 type UserKeyStatus struct {
-	xpv1.ResourceStatus `json:",inline"`
+	xpv1.ManagedResourceStatus `json:",inline"`
 	AtProvider          UserKeyObservation `json:"atProvider,omitempty"`
 }
 

@@ -20,7 +20,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
+	xpv1 "github.com/crossplane/crossplane/apis/v2/core/v2"
 )
 
 type LabelParameters struct {
@@ -69,13 +69,13 @@ type LabelObservation struct {
 
 // LabelSpec defines the desired state of Label
 type LabelSpec struct {
-	xpv1.ResourceSpec `json:",inline"`
+	xpv1.ManagedResourceSpec `json:",inline"`
 	ForProvider       LabelParameters `json:"forProvider"`
 }
 
 // LabelStatus defines the observed state of Label
 type LabelStatus struct {
-	xpv1.ResourceStatus `json:",inline"`
+	xpv1.ManagedResourceStatus `json:",inline"`
 	AtProvider          LabelObservation `json:"atProvider,omitempty"`
 }
 

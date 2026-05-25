@@ -20,7 +20,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
+	xpv1 "github.com/crossplane/crossplane/apis/v2/core/v2"
 )
 
 // RunnerGroupInfo contains runner group information
@@ -128,13 +128,13 @@ type RunnerObservation struct {
 
 // RunnerSpec defines the desired state of Runner
 type RunnerSpec struct {
-	xpv1.ResourceSpec `json:",inline"`
+	xpv1.ManagedResourceSpec `json:",inline"`
 	ForProvider       RunnerParameters `json:"forProvider"`
 }
 
 // RunnerStatus defines the observed state of Runner
 type RunnerStatus struct {
-	xpv1.ResourceStatus `json:",inline"`
+	xpv1.ManagedResourceStatus `json:",inline"`
 	AtProvider          RunnerObservation `json:"atProvider,omitempty"`
 }
 

@@ -20,7 +20,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
+	xpv1 "github.com/crossplane/crossplane/apis/v2/core/v2"
 )
 
 type DeployKeyParameters struct {
@@ -72,13 +72,13 @@ type DeployKeyObservation struct {
 
 // DeployKeySpec defines the desired state of DeployKey
 type DeployKeySpec struct {
-	xpv1.ResourceSpec `json:",inline"`
+	xpv1.ManagedResourceSpec `json:",inline"`
 	ForProvider       DeployKeyParameters `json:"forProvider"`
 }
 
 // DeployKeyStatus defines the observed state of DeployKey
 type DeployKeyStatus struct {
-	xpv1.ResourceStatus `json:",inline"`
+	xpv1.ManagedResourceStatus `json:",inline"`
 	AtProvider          DeployKeyObservation `json:"atProvider,omitempty"`
 }
 

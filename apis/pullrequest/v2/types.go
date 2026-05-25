@@ -20,7 +20,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
+	xpv1 "github.com/crossplane/crossplane/apis/v2/core/v2"
 )
 
 type PullRequestParameters struct {
@@ -135,13 +135,13 @@ type PullRequestObservation struct {
 
 // PullRequestSpec defines the desired state of PullRequest
 type PullRequestSpec struct {
-	xpv1.ResourceSpec `json:",inline"`
+	xpv1.ManagedResourceSpec `json:",inline"`
 	ForProvider       PullRequestParameters `json:"forProvider"`
 }
 
 // PullRequestStatus defines the observed state of PullRequest
 type PullRequestStatus struct {
-	xpv1.ResourceStatus `json:",inline"`
+	xpv1.ManagedResourceStatus `json:",inline"`
 	AtProvider          PullRequestObservation `json:"atProvider,omitempty"`
 }
 

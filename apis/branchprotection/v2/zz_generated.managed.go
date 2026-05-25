@@ -18,17 +18,13 @@ limitations under the License.
 
 package v2
 
-import xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
+import xpv1 "github.com/crossplane/crossplane/apis/v2/core/v2"
 
 // GetCondition of this BranchProtection.
 func (mg *BranchProtection) GetCondition(ct xpv1.ConditionType) xpv1.Condition {
 	return mg.Status.GetCondition(ct)
 }
 
-// GetDeletionPolicy of this BranchProtection.
-func (mg *BranchProtection) GetDeletionPolicy() xpv1.DeletionPolicy {
-	return mg.Spec.DeletionPolicy
-}
 
 // GetManagementPolicies of this BranchProtection.
 func (mg *BranchProtection) GetManagementPolicies() xpv1.ManagementPolicies {
@@ -36,12 +32,12 @@ func (mg *BranchProtection) GetManagementPolicies() xpv1.ManagementPolicies {
 }
 
 // GetProviderConfigReference of this BranchProtection.
-func (mg *BranchProtection) GetProviderConfigReference() *xpv1.Reference {
+func (mg *BranchProtection) GetProviderConfigReference() *xpv1.ProviderConfigReference {
 	return mg.Spec.ProviderConfigReference
 }
 
 // GetWriteConnectionSecretToReference of this BranchProtection.
-func (mg *BranchProtection) GetWriteConnectionSecretToReference() *xpv1.SecretReference {
+func (mg *BranchProtection) GetWriteConnectionSecretToReference() *xpv1.LocalSecretReference {
 	return mg.Spec.WriteConnectionSecretToReference
 }
 
@@ -50,10 +46,6 @@ func (mg *BranchProtection) SetConditions(c ...xpv1.Condition) {
 	mg.Status.SetConditions(c...)
 }
 
-// SetDeletionPolicy of this BranchProtection.
-func (mg *BranchProtection) SetDeletionPolicy(r xpv1.DeletionPolicy) {
-	mg.Spec.DeletionPolicy = r
-}
 
 // SetManagementPolicies of this BranchProtection.
 func (mg *BranchProtection) SetManagementPolicies(r xpv1.ManagementPolicies) {
@@ -61,11 +53,11 @@ func (mg *BranchProtection) SetManagementPolicies(r xpv1.ManagementPolicies) {
 }
 
 // SetProviderConfigReference of this BranchProtection.
-func (mg *BranchProtection) SetProviderConfigReference(r *xpv1.Reference) {
+func (mg *BranchProtection) SetProviderConfigReference(r *xpv1.ProviderConfigReference) {
 	mg.Spec.ProviderConfigReference = r
 }
 
 // SetWriteConnectionSecretToReference of this BranchProtection.
-func (mg *BranchProtection) SetWriteConnectionSecretToReference(r *xpv1.SecretReference) {
+func (mg *BranchProtection) SetWriteConnectionSecretToReference(r *xpv1.LocalSecretReference) {
 	mg.Spec.WriteConnectionSecretToReference = r
 }

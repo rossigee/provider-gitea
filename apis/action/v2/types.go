@@ -20,7 +20,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
+	xpv1 "github.com/crossplane/crossplane/apis/v2/core/v2"
 )
 
 // ActionLastRun contains information about the last workflow run
@@ -125,13 +125,13 @@ type ActionObservation struct {
 
 // ActionSpec defines the desired state of Action
 type ActionSpec struct {
-	xpv1.ResourceSpec `json:",inline"`
+	xpv1.ManagedResourceSpec `json:",inline"`
 	ForProvider       ActionParameters `json:"forProvider"`
 }
 
 // ActionStatus defines the observed state of Action
 type ActionStatus struct {
-	xpv1.ResourceStatus `json:",inline"`
+	xpv1.ManagedResourceStatus `json:",inline"`
 	AtProvider          ActionObservation `json:"atProvider,omitempty"`
 }
 

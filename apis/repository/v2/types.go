@@ -20,7 +20,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
+	xpv1 "github.com/crossplane/crossplane/apis/v2/core/v2"
 )
 
 // RepositoryParameters define the desired state of a Gitea Repository v2
@@ -110,13 +110,13 @@ type RepositoryObservation struct {
 
 // RepositorySpec defines the desired state of Repository
 type RepositorySpec struct {
-	xpv1.ResourceSpec `json:",inline"`
+	xpv1.ManagedResourceSpec `json:",inline"`
 	ForProvider       RepositoryParameters `json:"forProvider"`
 }
 
 // RepositoryStatus defines the observed state of Repository
 type RepositoryStatus struct {
-	xpv1.ResourceStatus `json:",inline"`
+	xpv1.ManagedResourceStatus `json:",inline"`
 	AtProvider          RepositoryObservation `json:"atProvider,omitempty"`
 }
 

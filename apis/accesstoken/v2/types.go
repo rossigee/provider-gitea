@@ -20,7 +20,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
+	xpv1 "github.com/crossplane/crossplane/apis/v2/core/v2"
 )
 
 type AccessTokenParameters struct {
@@ -79,13 +79,13 @@ type AccessTokenObservation struct {
 
 // AccessTokenSpec defines the desired state of AccessToken
 type AccessTokenSpec struct {
-	xpv1.ResourceSpec `json:",inline"`
+	xpv1.ManagedResourceSpec `json:",inline"`
 	ForProvider       AccessTokenParameters `json:"forProvider"`
 }
 
 // AccessTokenStatus defines the observed state of AccessToken
 type AccessTokenStatus struct {
-	xpv1.ResourceStatus `json:",inline"`
+	xpv1.ManagedResourceStatus `json:",inline"`
 	AtProvider          AccessTokenObservation `json:"atProvider,omitempty"`
 }
 

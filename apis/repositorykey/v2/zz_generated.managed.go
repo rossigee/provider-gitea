@@ -18,17 +18,13 @@ limitations under the License.
 
 package v2
 
-import xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
+import xpv1 "github.com/crossplane/crossplane/apis/v2/core/v2"
 
 // GetCondition of this RepositoryKey.
 func (mg *RepositoryKey) GetCondition(ct xpv1.ConditionType) xpv1.Condition {
 	return mg.Status.GetCondition(ct)
 }
 
-// GetDeletionPolicy of this RepositoryKey.
-func (mg *RepositoryKey) GetDeletionPolicy() xpv1.DeletionPolicy {
-	return mg.Spec.DeletionPolicy
-}
 
 // GetManagementPolicies of this RepositoryKey.
 func (mg *RepositoryKey) GetManagementPolicies() xpv1.ManagementPolicies {
@@ -36,12 +32,12 @@ func (mg *RepositoryKey) GetManagementPolicies() xpv1.ManagementPolicies {
 }
 
 // GetProviderConfigReference of this RepositoryKey.
-func (mg *RepositoryKey) GetProviderConfigReference() *xpv1.Reference {
+func (mg *RepositoryKey) GetProviderConfigReference() *xpv1.ProviderConfigReference {
 	return mg.Spec.ProviderConfigReference
 }
 
 // GetWriteConnectionSecretToReference of this RepositoryKey.
-func (mg *RepositoryKey) GetWriteConnectionSecretToReference() *xpv1.SecretReference {
+func (mg *RepositoryKey) GetWriteConnectionSecretToReference() *xpv1.LocalSecretReference {
 	return mg.Spec.WriteConnectionSecretToReference
 }
 
@@ -50,10 +46,6 @@ func (mg *RepositoryKey) SetConditions(c ...xpv1.Condition) {
 	mg.Status.SetConditions(c...)
 }
 
-// SetDeletionPolicy of this RepositoryKey.
-func (mg *RepositoryKey) SetDeletionPolicy(r xpv1.DeletionPolicy) {
-	mg.Spec.DeletionPolicy = r
-}
 
 // SetManagementPolicies of this RepositoryKey.
 func (mg *RepositoryKey) SetManagementPolicies(r xpv1.ManagementPolicies) {
@@ -61,11 +53,11 @@ func (mg *RepositoryKey) SetManagementPolicies(r xpv1.ManagementPolicies) {
 }
 
 // SetProviderConfigReference of this RepositoryKey.
-func (mg *RepositoryKey) SetProviderConfigReference(r *xpv1.Reference) {
+func (mg *RepositoryKey) SetProviderConfigReference(r *xpv1.ProviderConfigReference) {
 	mg.Spec.ProviderConfigReference = r
 }
 
 // SetWriteConnectionSecretToReference of this RepositoryKey.
-func (mg *RepositoryKey) SetWriteConnectionSecretToReference(r *xpv1.SecretReference) {
+func (mg *RepositoryKey) SetWriteConnectionSecretToReference(r *xpv1.LocalSecretReference) {
 	mg.Spec.WriteConnectionSecretToReference = r
 }

@@ -18,17 +18,13 @@ limitations under the License.
 
 package v2
 
-import xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
+import xpv1 "github.com/crossplane/crossplane/apis/v2/core/v2"
 
 // GetCondition of this RepositoryCollaborator.
 func (mg *RepositoryCollaborator) GetCondition(ct xpv1.ConditionType) xpv1.Condition {
 	return mg.Status.GetCondition(ct)
 }
 
-// GetDeletionPolicy of this RepositoryCollaborator.
-func (mg *RepositoryCollaborator) GetDeletionPolicy() xpv1.DeletionPolicy {
-	return mg.Spec.DeletionPolicy
-}
 
 // GetManagementPolicies of this RepositoryCollaborator.
 func (mg *RepositoryCollaborator) GetManagementPolicies() xpv1.ManagementPolicies {
@@ -36,12 +32,12 @@ func (mg *RepositoryCollaborator) GetManagementPolicies() xpv1.ManagementPolicie
 }
 
 // GetProviderConfigReference of this RepositoryCollaborator.
-func (mg *RepositoryCollaborator) GetProviderConfigReference() *xpv1.Reference {
+func (mg *RepositoryCollaborator) GetProviderConfigReference() *xpv1.ProviderConfigReference {
 	return mg.Spec.ProviderConfigReference
 }
 
 // GetWriteConnectionSecretToReference of this RepositoryCollaborator.
-func (mg *RepositoryCollaborator) GetWriteConnectionSecretToReference() *xpv1.SecretReference {
+func (mg *RepositoryCollaborator) GetWriteConnectionSecretToReference() *xpv1.LocalSecretReference {
 	return mg.Spec.WriteConnectionSecretToReference
 }
 
@@ -50,10 +46,6 @@ func (mg *RepositoryCollaborator) SetConditions(c ...xpv1.Condition) {
 	mg.Status.SetConditions(c...)
 }
 
-// SetDeletionPolicy of this RepositoryCollaborator.
-func (mg *RepositoryCollaborator) SetDeletionPolicy(r xpv1.DeletionPolicy) {
-	mg.Spec.DeletionPolicy = r
-}
 
 // SetManagementPolicies of this RepositoryCollaborator.
 func (mg *RepositoryCollaborator) SetManagementPolicies(r xpv1.ManagementPolicies) {
@@ -61,11 +53,11 @@ func (mg *RepositoryCollaborator) SetManagementPolicies(r xpv1.ManagementPolicie
 }
 
 // SetProviderConfigReference of this RepositoryCollaborator.
-func (mg *RepositoryCollaborator) SetProviderConfigReference(r *xpv1.Reference) {
+func (mg *RepositoryCollaborator) SetProviderConfigReference(r *xpv1.ProviderConfigReference) {
 	mg.Spec.ProviderConfigReference = r
 }
 
 // SetWriteConnectionSecretToReference of this RepositoryCollaborator.
-func (mg *RepositoryCollaborator) SetWriteConnectionSecretToReference(r *xpv1.SecretReference) {
+func (mg *RepositoryCollaborator) SetWriteConnectionSecretToReference(r *xpv1.LocalSecretReference) {
 	mg.Spec.WriteConnectionSecretToReference = r
 }

@@ -20,7 +20,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
+	xpv1 "github.com/crossplane/crossplane/apis/v2/core/v2"
 )
 
 // OrganizationParameters define the desired state of a Gitea Organization v2
@@ -95,13 +95,13 @@ type OrganizationObservation struct {
 
 // OrganizationSpec defines the desired state of Organization
 type OrganizationSpec struct {
-	xpv1.ResourceSpec `json:",inline"`
+	xpv1.ManagedResourceSpec `json:",inline"`
 	ForProvider       OrganizationParameters `json:"forProvider"`
 }
 
 // OrganizationStatus defines the observed state of Organization
 type OrganizationStatus struct {
-	xpv1.ResourceStatus `json:",inline"`
+	xpv1.ManagedResourceStatus `json:",inline"`
 	AtProvider          OrganizationObservation `json:"atProvider,omitempty"`
 }
 
