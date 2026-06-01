@@ -27,7 +27,7 @@ jobs:
       mirror: false             # Disable mirroring to xpkg.upbound.io
       cleanup-disk: true
     secrets:
-      GHCR_PAT: ${{ secrets.PAT_TOKEN }}
+      GHCR_TOKEN: ${{ github.token }}
 
   # Add GitHub release creation (preserves your custom feature)
   github-release:
