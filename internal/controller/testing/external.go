@@ -90,8 +90,10 @@ func (b *ExternalClientBuilder) ExpectCreate(method string, response interface{}
 		call = b.giteaClient.On(method, mock.Anything)
 	case "CreateTeam":
 		call = b.giteaClient.On(method, mock.Anything, mock.Anything)
-	case "CreateWebhook":
-		call = b.giteaClient.On(method, mock.Anything, mock.Anything)
+	case "CreateRepositoryWebhook":
+		call = b.giteaClient.On(method, mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+	case "CreateOrganizationWebhook":
+		call = b.giteaClient.On(method, mock.Anything, mock.Anything, mock.Anything)
 	case "CreateAccessToken":
 		call = b.giteaClient.On(method, mock.Anything, mock.Anything, mock.Anything)
 	case "CreateDeployKey":
@@ -159,7 +161,9 @@ func (b *ExternalClientBuilder) ExpectGet(method string, response interface{}, e
 		call = b.giteaClient.On(method, mock.Anything, mock.Anything)
 	case "GetTeam":
 		call = b.giteaClient.On(method, mock.Anything, mock.Anything, mock.Anything)
-	case "GetWebhook":
+	case "GetRepositoryWebhook":
+		call = b.giteaClient.On(method, mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+	case "GetOrganizationWebhook":
 		call = b.giteaClient.On(method, mock.Anything, mock.Anything, mock.Anything)
 	case "GetAccessToken":
 		call = b.giteaClient.On(method, mock.Anything, mock.Anything, mock.Anything)
@@ -218,7 +222,9 @@ func (b *ExternalClientBuilder) ExpectUpdate(method string, response interface{}
 		call = b.giteaClient.On(method, mock.Anything, mock.Anything, mock.Anything)
 	case "UpdateTeam":
 		call = b.giteaClient.On(method, mock.Anything, mock.Anything, mock.Anything, mock.Anything)
-	case "UpdateWebhook":
+	case "UpdateRepositoryWebhook":
+		call = b.giteaClient.On(method, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+	case "UpdateOrganizationWebhook":
 		call = b.giteaClient.On(method, mock.Anything, mock.Anything, mock.Anything, mock.Anything)
 	case "UpdateUserKey":
 		call = b.giteaClient.On(method, mock.Anything, mock.Anything, mock.Anything, mock.Anything)
@@ -283,7 +289,9 @@ func (b *ExternalClientBuilder) ExpectDelete(method string, err error) *External
 		call = b.giteaClient.On(method, mock.Anything, mock.Anything)
 	case "DeleteTeam":
 		call = b.giteaClient.On(method, mock.Anything, mock.Anything, mock.Anything)
-	case "DeleteWebhook":
+	case "DeleteRepositoryWebhook":
+		call = b.giteaClient.On(method, mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+	case "DeleteOrganizationWebhook":
 		call = b.giteaClient.On(method, mock.Anything, mock.Anything, mock.Anything)
 	case "DeleteAccessToken":
 		call = b.giteaClient.On(method, mock.Anything, mock.Anything, mock.Anything)

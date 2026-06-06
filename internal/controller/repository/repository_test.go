@@ -14,55 +14,131 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package repository_test
+package repository
 
 import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 
+	repositoryv2 "github.com/rossigee/provider-gitea/apis/repository/v2"
+	"github.com/rossigee/provider-gitea/internal/clients"
 	ctesting "github.com/rossigee/provider-gitea/internal/controller/testing"
 )
 
-func TestRepositoryTestFixtures(t *testing.T) {
+// Smoke tests for Repository controller
+
+func TestRepositoryFixtures(t *testing.T) {
 	fixtures := ctesting.NewTestFixtures()
 
 	assert.Equal(t, "testuser", fixtures.TestUser)
 	assert.Equal(t, "testorg", fixtures.TestOrg)
 	assert.Equal(t, "testrepo", fixtures.TestRepo)
-	assert.Equal(t, "testuser@example.com", fixtures.TestEmail)
 }
 
 func TestRepositoryResponseBuilder(t *testing.T) {
 	fixtures := ctesting.NewTestFixtures()
 	repo := fixtures.RepositoryResponse()
 
-	assert.Equal(t, fixtures.TestRepo, repo.Name)
-	assert.Equal(t, fixtures.TestOrg+"/"+fixtures.TestRepo, repo.FullName)
-	assert.True(t, repo.Private)
 	assert.Equal(t, int64(123), repo.ID)
+	assert.Equal(t, "testrepo", repo.Name)
+	assert.Equal(t, "testorg/testrepo", repo.FullName)
+	assert.True(t, repo.Private)
 }
 
-func TestExternalClientBuilder(t *testing.T) {
+func TestRepositoryMockClientSetup(t *testing.T) {
 	fixtures := ctesting.NewTestFixtures()
+	repo := fixtures.RepositoryResponse()
 
-	builder := ctesting.NewExternalClient().
-		WithFixtures(fixtures).
-		ExpectGet("GetRepository", fixtures.RepositoryResponse(), nil)
+	ext := &external{
+		client: ctesting.NewExternalClient().
+			WithFixtures(fixtures).
+			ExpectGet("GetRepository", repo, nil).
+			GetGiteaClient(),
+	}
 
-	assert.NotNil(t, builder)
-	assert.NotNil(t, builder.GetFixtures())
-	assert.Equal(t, fixtures.TestOrg, builder.GetFixtures().TestOrg)
+	assert.NotNil(t, ext)
+	assert.NotNil(t, ext.client)
 }
 
-func TestMockClientExpectations(t *testing.T) {
-	fixtures := ctesting.NewTestFixtures()
+// Helper function tests for repositoryUpToDate
 
-	builder := ctesting.NewExternalClient().
-		ExpectCreate("CreateRepository", fixtures.RepositoryResponse(), nil).
-		ExpectGet("GetRepository", fixtures.RepositoryResponse(), nil).
-		ExpectUpdate("UpdateRepository", fixtures.RepositoryResponse(), nil).
-		ExpectDelete("DeleteRepository", nil)
+func TestRepositoryUpToDate_PartialFields(t *testing.T) {
+	desc := "Test description"
+	private := true
 
-	assert.NotNil(t, builder.GetGiteaClient())
+	desired := &repositoryv2.RepositoryParameters{
+		Description: &desc,
+		Private:     &private,
+	}
+
+	actual := &clients.Repository{
+		Description: desc,
+		Private:     private,
+		Archived:    false,
+	}
+
+	// When all specified fields match, should be up to date
+	result := repositoryUpToDate(desired, actual)
+	assert.True(t, result)
+}
+
+func TestRepositoryUpToDate_DescriptionMismatch(t *testing.T) {
+	desc1 := "Description 1"
+	desc2 := "Description 2"
+
+	desired := &repositoryv2.RepositoryParameters{
+		Description: &desc1,
+	}
+
+	actual := &clients.Repository{
+		Description: desc2,
+	}
+
+	result := repositoryUpToDate(desired, actual)
+	assert.False(t, result)
+}
+
+func TestRepositoryUpToDate_PrivateMismatch(t *testing.T) {
+	private := true
+
+	desired := &repositoryv2.RepositoryParameters{
+		Private: &private,
+	}
+
+	actual := &clients.Repository{
+		Private: false,
+	}
+
+	result := repositoryUpToDate(desired, actual)
+	assert.False(t, result)
+}
+
+func TestRepositoryUpToDate_ArchivedMismatch(t *testing.T) {
+	archived := true
+
+	desired := &repositoryv2.RepositoryParameters{
+		Archived: &archived,
+	}
+
+	actual := &clients.Repository{
+		Archived: false,
+	}
+
+	result := repositoryUpToDate(desired, actual)
+	assert.False(t, result)
+}
+
+func TestRepositoryUpToDate_AllFieldsNil(t *testing.T) {
+	desired := &repositoryv2.RepositoryParameters{}
+
+	actual := &clients.Repository{
+		Description: "some desc",
+		Private:     true,
+		Archived:    true,
+	}
+
+	// No constraints, so should be up to date
+	result := repositoryUpToDate(desired, actual)
+	assert.True(t, result)
 }
