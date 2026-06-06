@@ -20,13 +20,34 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 
 	"github.com/crossplane/crossplane-runtime/v2/pkg/controller"
+	"github.com/crossplane/crossplane-runtime/v2/pkg/event"
 )
 
 // Setup creates all Gitea v2 controllers with the supplied logger and adds them to
 // the supplied manager.
+//
+// Each controller should be wired up following this pattern:
+//
+//	name := managed.ControllerName(mygroupv1alpha1.MyResourceGroupKind)
+//	r := managed.NewReconciler(mgr,
+//	    resource.ManagedKind(mygroupv1alpha1.MyResourceGroupVersionKind),
+//	    managed.WithExternalConnector(&connector{kube: mgr.GetClient()}),
+//	    managed.WithLogger(o.Logger.WithValues("controller", name)),
+//	    managed.WithPollInterval(o.PollInterval),
+//	    managed.WithRecorder(event.NewAPIRecorder(mgr.GetEventRecorder(name))),
+//	)
+//	return ctrl.NewControllerManagedBy(mgr).
+//	    Named(name).
+//	    WithOptions(o.ForControllerRuntime()).
+//	    WithEventFilter(resource.DesiredStateChanged()).
+//	    For(&mygroupv1alpha1.MyResource{}).
+//	    Complete(ratelimiter.NewReconciler(name, r, o.GlobalRateLimiter))
+//
+// Note: use mgr.GetEventRecorder (not the deprecated mgr.GetEventRecorderFor).
 func Setup(mgr ctrl.Manager, o controller.Options) error {
 	// NOTE: v2 controller implementations needed for 22 resource types
 	// See CLAUDE.md for complete resource catalog and implementation status
 	// This provider framework is ready - controllers are the next development phase
+	_ = event.NewAPIRecorder // ensure event package is referenced; remove when first controller is wired up
 	return nil
 }
