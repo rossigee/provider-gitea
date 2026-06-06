@@ -21,13 +21,20 @@ import (
 
 	"github.com/crossplane/crossplane-runtime/v2/pkg/controller"
 
+	"github.com/rossigee/provider-gitea/internal/controller/accesstoken"
+	"github.com/rossigee/provider-gitea/internal/controller/branchprotection"
 	"github.com/rossigee/provider-gitea/internal/controller/deploykey"
 	"github.com/rossigee/provider-gitea/internal/controller/label"
 	"github.com/rossigee/provider-gitea/internal/controller/organization"
+	"github.com/rossigee/provider-gitea/internal/controller/organizationmember"
+	"github.com/rossigee/provider-gitea/internal/controller/organizationsecret"
 	"github.com/rossigee/provider-gitea/internal/controller/repositorycollaborator"
 	"github.com/rossigee/provider-gitea/internal/controller/repository"
+	"github.com/rossigee/provider-gitea/internal/controller/repositorykey"
+	"github.com/rossigee/provider-gitea/internal/controller/repositorysecret"
 	"github.com/rossigee/provider-gitea/internal/controller/team"
 	"github.com/rossigee/provider-gitea/internal/controller/user"
+	"github.com/rossigee/provider-gitea/internal/controller/userkey"
 	"github.com/rossigee/provider-gitea/internal/controller/webhook"
 )
 
@@ -41,6 +48,13 @@ func Setup(mgr ctrl.Manager, o controller.Options) error {
 		team.Setup,
 		label.Setup,
 		repositorycollaborator.Setup,
+		branchprotection.Setup,
+		repositorykey.Setup,
+		accesstoken.Setup,
+		repositorysecret.Setup,
+		userkey.Setup,
+		organizationmember.Setup,
+		organizationsecret.Setup,
 	} {
 		if err := setup(mgr, o); err != nil {
 			return err
