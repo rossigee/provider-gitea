@@ -1,6 +1,6 @@
 module github.com/rossigee/provider-gitea
 
-go 1.26.3
+go 1.26.4
 
 require (
 	github.com/alecthomas/kingpin/v2 v2.4.0
