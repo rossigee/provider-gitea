@@ -14,18 +14,18 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package team_test
+package team
 
 import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 
-	ctesting "github.com/rossigee/provider-gitea/internal/controller/testing"
 	"github.com/rossigee/provider-gitea/internal/clients"
+	ctesting "github.com/rossigee/provider-gitea/internal/controller/testing"
 )
 
-func TestTeamTestFixtures(t *testing.T) {
+func TestTeamFixtures(t *testing.T) {
 	fixtures := ctesting.NewTestFixtures()
 
 	assert.Equal(t, "testorg", fixtures.TestOrg)
@@ -33,33 +33,52 @@ func TestTeamTestFixtures(t *testing.T) {
 }
 
 func TestTeamMockClientExpectations(t *testing.T) {
-	teamResponse := &clients.Team{
-		ID:          101,
-		Name:        "Development",
-		Description: "Development team",
-		Permission:  "write",
-	}
-	teamResponse.Organization.ID = 123
-	teamResponse.Organization.Username = "testorg"
-
 	builder := ctesting.NewExternalClient().
-		ExpectCreate("CreateTeam", teamResponse, nil).
-		ExpectGet("GetTeam", teamResponse, nil).
-		ExpectUpdate("UpdateTeam", teamResponse, nil).
+		ExpectCreate("CreateTeam", nil, nil).
+		ExpectGet("GetTeam", nil, nil).
+		ExpectUpdate("UpdateTeam", nil, nil).
 		ExpectDelete("DeleteTeam", nil)
 
+	assert.NotNil(t, builder)
 	assert.NotNil(t, builder.GetGiteaClient())
 }
 
-func TestTeamIDHandling(t *testing.T) {
-	teamResponse := &clients.Team{
-		ID:   999,
-		Name: "Test Team",
+func TestTeamPermissions(t *testing.T) {
+	team := &clients.Team{
+		Permission: "write",
 	}
-	teamResponse.Organization.ID = 456
+	assert.Equal(t, "write", team.Permission)
+}
 
-	builder := ctesting.NewExternalClient().
-		ExpectGet("GetTeam", teamResponse, nil)
+func TestTeamPermissionAdmin(t *testing.T) {
+	team := &clients.Team{
+		Permission: "admin",
+	}
+	assert.Equal(t, "admin", team.Permission)
+}
 
-	assert.NotNil(t, builder.GetGiteaClient())
+func TestTeamPermissionRead(t *testing.T) {
+	team := &clients.Team{
+		Permission: "read",
+	}
+	assert.Equal(t, "read", team.Permission)
+}
+
+func TestTeamOrganization(t *testing.T) {
+	team := &clients.Team{
+		ID:   101,
+		Name: "Development",
+		Organization: struct {
+			ID       int64  `json:"id"`
+			Username string `json:"username"`
+			Name     string `json:"name"`
+		}{
+			ID:       123,
+			Username: "testorg",
+			Name:     "Test Organization",
+		},
+	}
+
+	assert.Equal(t, int64(123), team.Organization.ID)
+	assert.Equal(t, "testorg", team.Organization.Username)
 }

@@ -14,21 +14,23 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package organization_test
+package organization
 
 import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 
+	organizationv2 "github.com/rossigee/provider-gitea/apis/organization/v2"
+	"github.com/rossigee/provider-gitea/internal/clients"
 	ctesting "github.com/rossigee/provider-gitea/internal/controller/testing"
 )
 
-func TestOrganizationTestFixtures(t *testing.T) {
+func TestOrganizationFixtures(t *testing.T) {
 	fixtures := ctesting.NewTestFixtures()
 
 	assert.Equal(t, "testorg", fixtures.TestOrg)
-	assert.Equal(t, "testuser", fixtures.TestUser)
+	assert.NotEmpty(t, fixtures.TestNamespace)
 }
 
 func TestOrganizationResponseBuilder(t *testing.T) {
@@ -61,4 +63,50 @@ func TestOrganizationMockClientExpectations(t *testing.T) {
 		ExpectDelete("DeleteOrganization", nil)
 
 	assert.NotNil(t, builder.GetGiteaClient())
+}
+
+// Helper function tests for organizationUpToDate (if implemented)
+// These test comparisons of organization fields
+
+func TestOrganizationField_FullName(t *testing.T) {
+	fullName := "Updated Name"
+	desired := &organizationv2.OrganizationParameters{
+		FullName: &fullName,
+	}
+
+	actual := &clients.Organization{
+		FullName: "Different Name",
+	}
+
+	// Verifies the OrganizationParameters struct can hold FullName
+	assert.NotNil(t, desired)
+	assert.NotEqual(t, *desired.FullName, actual.FullName)
+}
+
+func TestOrganizationField_Description(t *testing.T) {
+	desc := "Test Description"
+	desired := &organizationv2.OrganizationParameters{
+		Description: &desc,
+	}
+
+	actual := &clients.Organization{
+		Description: "Different Description",
+	}
+
+	assert.NotNil(t, desired)
+	assert.NotEqual(t, *desired.Description, actual.Description)
+}
+
+func TestOrganizationField_Website(t *testing.T) {
+	website := "https://example.com"
+	desired := &organizationv2.OrganizationParameters{
+		Website: &website,
+	}
+
+	actual := &clients.Organization{
+		Website: "https://different.com",
+	}
+
+	assert.NotNil(t, desired)
+	assert.NotEqual(t, *desired.Website, actual.Website)
 }

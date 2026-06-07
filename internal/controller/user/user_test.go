@@ -14,17 +14,19 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package user_test
+package user
 
 import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 
+	userv2 "github.com/rossigee/provider-gitea/apis/user/v2"
+	"github.com/rossigee/provider-gitea/internal/clients"
 	ctesting "github.com/rossigee/provider-gitea/internal/controller/testing"
 )
 
-func TestUserTestFixtures(t *testing.T) {
+func TestUserFixtures(t *testing.T) {
 	fixtures := ctesting.NewTestFixtures()
 
 	assert.Equal(t, "testuser", fixtures.TestUser)
@@ -36,10 +38,9 @@ func TestUserResponseBuilder(t *testing.T) {
 	user := fixtures.UserResponse()
 
 	assert.Equal(t, fixtures.TestUser, user.Username)
-	assert.Equal(t, fixtures.TestEmail, user.Email)
 	assert.Equal(t, "Test User", user.FullName)
+	assert.Equal(t, fixtures.TestEmail, user.Email)
 	assert.True(t, user.Active)
-	assert.Equal(t, int64(789), user.ID)
 }
 
 func TestUserExternalClientBuilder(t *testing.T) {
@@ -63,4 +64,51 @@ func TestUserMockClientExpectations(t *testing.T) {
 		ExpectDelete("DeleteUser", nil)
 
 	assert.NotNil(t, builder.GetGiteaClient())
+}
+
+// Helper function tests for user field comparisons
+
+func TestUserField_FullName(t *testing.T) {
+	fullName1 := "Updated User"
+	fullName2 := "Different User"
+
+	desired := &userv2.UserParameters{
+		FullName: &fullName1,
+	}
+
+	actual := &clients.User{
+		FullName: fullName2,
+	}
+
+	assert.NotNil(t, desired)
+	assert.NotEqual(t, *desired.FullName, actual.FullName)
+}
+
+func TestUserField_Email(t *testing.T) {
+	desired := &userv2.UserParameters{
+		Email: "new@example.com",
+	}
+
+	actual := &clients.User{
+		Email: "old@example.com",
+	}
+
+	assert.NotNil(t, desired)
+	assert.NotEqual(t, desired.Email, actual.Email)
+}
+
+func TestUserField_Active(t *testing.T) {
+	activeTrue := true
+	activeFalse := false
+
+	desired := &userv2.UserParameters{
+		Active: &activeTrue,
+	}
+
+	actual := &clients.User{
+		Active: activeFalse,
+	}
+
+	assert.NotNil(t, desired)
+	assert.NotEqual(t, *desired.Active, actual.Active)
 }

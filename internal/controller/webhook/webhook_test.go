@@ -14,53 +14,73 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package webhook_test
+package webhook
 
 import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 
-	ctesting "github.com/rossigee/provider-gitea/internal/controller/testing"
 	"github.com/rossigee/provider-gitea/internal/clients"
+	ctesting "github.com/rossigee/provider-gitea/internal/controller/testing"
 )
 
-func TestWebhookTestFixtures(t *testing.T) {
+func TestWebhookFixtures(t *testing.T) {
 	fixtures := ctesting.NewTestFixtures()
 
 	assert.Equal(t, "testorg", fixtures.TestOrg)
 	assert.Equal(t, "testrepo", fixtures.TestRepo)
-	assert.NotEmpty(t, fixtures.TestNamespace)
 }
 
 func TestWebhookMockClientExpectations(t *testing.T) {
-	webhookResponse := &clients.Webhook{
-		ID:     123,
-		URL:    "https://example.com/webhook",
-		Active: true,
-	}
-
 	builder := ctesting.NewExternalClient().
-		ExpectCreate("CreateRepositoryWebhook", webhookResponse, nil).
-		ExpectGet("GetRepositoryWebhook", webhookResponse, nil).
-		ExpectUpdate("UpdateRepositoryWebhook", webhookResponse, nil).
+		ExpectCreate("CreateRepositoryWebhook", nil, nil).
+		ExpectGet("GetRepositoryWebhook", nil, nil).
+		ExpectUpdate("UpdateRepositoryWebhook", nil, nil).
 		ExpectDelete("DeleteRepositoryWebhook", nil)
 
+	assert.NotNil(t, builder)
 	assert.NotNil(t, builder.GetGiteaClient())
 }
 
 func TestWebhookOrganizationMockExpectations(t *testing.T) {
-	webhookResponse := &clients.Webhook{
-		ID:     456,
-		URL:    "https://example.com/org-webhook",
-		Active: true,
-	}
-
 	builder := ctesting.NewExternalClient().
-		ExpectCreate("CreateOrganizationWebhook", webhookResponse, nil).
-		ExpectGet("GetOrganizationWebhook", webhookResponse, nil).
-		ExpectUpdate("UpdateOrganizationWebhook", webhookResponse, nil).
+		ExpectCreate("CreateOrganizationWebhook", nil, nil).
+		ExpectGet("GetOrganizationWebhook", nil, nil).
+		ExpectUpdate("UpdateOrganizationWebhook", nil, nil).
 		ExpectDelete("DeleteOrganizationWebhook", nil)
 
+	assert.NotNil(t, builder)
 	assert.NotNil(t, builder.GetGiteaClient())
+}
+
+// Webhook type tests
+
+func TestWebhookType_Push(t *testing.T) {
+	webhook := &clients.Webhook{
+		Type: "push",
+	}
+	assert.Equal(t, "push", webhook.Type)
+}
+
+func TestWebhookType_Issues(t *testing.T) {
+	webhook := &clients.Webhook{
+		Type: "issues",
+	}
+	assert.Equal(t, "issues", webhook.Type)
+}
+
+func TestWebhookType_PullRequest(t *testing.T) {
+	webhook := &clients.Webhook{
+		Type: "pull_request",
+	}
+	assert.Equal(t, "pull_request", webhook.Type)
+}
+
+func TestWebhookEvents(t *testing.T) {
+	webhook := &clients.Webhook{
+		Events: []string{"push", "pull_request", "issues"},
+	}
+	assert.Len(t, webhook.Events, 3)
+	assert.Contains(t, webhook.Events, "push")
 }

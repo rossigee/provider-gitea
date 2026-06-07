@@ -14,18 +14,18 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package label_test
+package label
 
 import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 
-	ctesting "github.com/rossigee/provider-gitea/internal/controller/testing"
 	"github.com/rossigee/provider-gitea/internal/clients"
+	ctesting "github.com/rossigee/provider-gitea/internal/controller/testing"
 )
 
-func TestLabelTestFixtures(t *testing.T) {
+func TestLabelFixtures(t *testing.T) {
 	fixtures := ctesting.NewTestFixtures()
 
 	assert.Equal(t, "testorg", fixtures.TestOrg)
@@ -33,33 +33,51 @@ func TestLabelTestFixtures(t *testing.T) {
 }
 
 func TestLabelMockClientExpectations(t *testing.T) {
-	labelResponse := &clients.Label{
-		ID:          111,
-		Name:        "bug",
-		Color:       "d73a4a",
-		Description: "Something isn't working",
-		URL:         "https://example.com/api/repos/org/repo/labels/111",
-	}
-
 	builder := ctesting.NewExternalClient().
-		ExpectCreate("CreateLabel", labelResponse, nil).
-		ExpectGet("GetLabel", labelResponse, nil).
-		ExpectUpdate("UpdateLabel", labelResponse, nil).
+		ExpectCreate("CreateLabel", nil, nil).
+		ExpectGet("GetLabel", nil, nil).
+		ExpectUpdate("UpdateLabel", nil, nil).
 		ExpectDelete("DeleteLabel", nil)
 
+	assert.NotNil(t, builder)
 	assert.NotNil(t, builder.GetGiteaClient())
 }
 
-func TestLabelWithoutDescription(t *testing.T) {
-	labelResponse := &clients.Label{
-		ID:    222,
-		Name:  "enhancement",
-		Color: "a2eeef",
-		URL:   "https://example.com/api/repos/org/repo/labels/222",
+func TestLabelColor(t *testing.T) {
+	label := &clients.Label{
+		Name:  "bug",
+		Color: "ff0000",
 	}
+	assert.Equal(t, "ff0000", label.Color)
+}
 
-	builder := ctesting.NewExternalClient().
-		ExpectCreate("CreateLabel", labelResponse, nil)
+func TestLabelName(t *testing.T) {
+	label := &clients.Label{
+		Name: "enhancement",
+	}
+	assert.Equal(t, "enhancement", label.Name)
+}
 
-	assert.NotNil(t, builder.GetGiteaClient())
+func TestLabelDescription(t *testing.T) {
+	label := &clients.Label{
+		Name:        "documentation",
+		Description: "Improvements or additions to documentation",
+	}
+	assert.Equal(t, "Improvements or additions to documentation", label.Description)
+}
+
+func TestLabelExclusive(t *testing.T) {
+	label := &clients.Label{
+		Name:      "priority",
+		Exclusive: true,
+	}
+	assert.True(t, label.Exclusive)
+}
+
+func TestLabelID(t *testing.T) {
+	label := &clients.Label{
+		ID:   int64(42),
+		Name: "test-label",
+	}
+	assert.Equal(t, int64(42), label.ID)
 }

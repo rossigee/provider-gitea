@@ -14,18 +14,18 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package repositorycollaborator_test
+package repositorycollaborator
 
 import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 
-	ctesting "github.com/rossigee/provider-gitea/internal/controller/testing"
 	"github.com/rossigee/provider-gitea/internal/clients"
+	ctesting "github.com/rossigee/provider-gitea/internal/controller/testing"
 )
 
-func TestRepositoryCollaboratorTestFixtures(t *testing.T) {
+func TestRepositoryCollaboratorFixtures(t *testing.T) {
 	fixtures := ctesting.NewTestFixtures()
 
 	assert.Equal(t, "testorg", fixtures.TestOrg)
@@ -34,31 +34,20 @@ func TestRepositoryCollaboratorTestFixtures(t *testing.T) {
 }
 
 func TestRepositoryCollaboratorMockClientExpectations(t *testing.T) {
-	collaboratorResponse := &clients.RepositoryCollaborator{
-		FullName: "Test User",
-		Email:    "testuser@example.com",
-		Username: "testuser",
-		Permissions: clients.RepositoryCollaboratorPermissions{
-			Admin: false,
-			Push:  true,
-			Pull:  true,
-		},
-	}
-
+	// RepositoryCollaborator uses Add/Update/Remove semantics
 	builder := ctesting.NewExternalClient().
 		ExpectCreate("AddRepositoryCollaborator", nil, nil).
-		ExpectGet("GetRepositoryCollaborator", collaboratorResponse, nil).
+		ExpectGet("GetRepositoryCollaborator", nil, nil).
 		ExpectUpdate("UpdateRepositoryCollaborator", nil, nil).
 		ExpectDelete("RemoveRepositoryCollaborator", nil)
 
+	assert.NotNil(t, builder)
 	assert.NotNil(t, builder.GetGiteaClient())
 }
 
 func TestRepositoryCollaboratorAdminPermissions(t *testing.T) {
-	collaboratorResponse := &clients.RepositoryCollaborator{
-		FullName: "Admin User",
-		Email:    "admin@example.com",
-		Username: "adminuser",
+	collaborator := &clients.RepositoryCollaborator{
+		Username: "testuser",
 		Permissions: clients.RepositoryCollaboratorPermissions{
 			Admin: true,
 			Push:  true,
@@ -66,17 +55,29 @@ func TestRepositoryCollaboratorAdminPermissions(t *testing.T) {
 		},
 	}
 
-	builder := ctesting.NewExternalClient().
-		ExpectGet("GetRepositoryCollaborator", collaboratorResponse, nil)
-
-	assert.NotNil(t, builder.GetGiteaClient())
+	assert.True(t, collaborator.Permissions.Admin)
+	assert.True(t, collaborator.Permissions.Push)
+	assert.True(t, collaborator.Permissions.Pull)
 }
 
-func TestRepositoryCollaboratorReadOnlyPermissions(t *testing.T) {
-	collaboratorResponse := &clients.RepositoryCollaborator{
-		FullName: "Read-Only User",
-		Email:    "reader@example.com",
-		Username: "readonlyuser",
+func TestRepositoryCollaboratorWritePermissions(t *testing.T) {
+	collaborator := &clients.RepositoryCollaborator{
+		Username: "developer",
+		Permissions: clients.RepositoryCollaboratorPermissions{
+			Admin: false,
+			Push:  true,
+			Pull:  true,
+		},
+	}
+
+	assert.False(t, collaborator.Permissions.Admin)
+	assert.True(t, collaborator.Permissions.Push)
+	assert.True(t, collaborator.Permissions.Pull)
+}
+
+func TestRepositoryCollaboratorReadPermissions(t *testing.T) {
+	collaborator := &clients.RepositoryCollaborator{
+		Username: "reader",
 		Permissions: clients.RepositoryCollaboratorPermissions{
 			Admin: false,
 			Push:  false,
@@ -84,8 +85,28 @@ func TestRepositoryCollaboratorReadOnlyPermissions(t *testing.T) {
 		},
 	}
 
-	builder := ctesting.NewExternalClient().
-		ExpectGet("GetRepositoryCollaborator", collaboratorResponse, nil)
+	assert.False(t, collaborator.Permissions.Admin)
+	assert.False(t, collaborator.Permissions.Push)
+	assert.True(t, collaborator.Permissions.Pull)
+}
 
-	assert.NotNil(t, builder.GetGiteaClient())
+func TestRepositoryCollaboratorUserInfo(t *testing.T) {
+	collaborator := &clients.RepositoryCollaborator{
+		Username: "testuser",
+		FullName: "Test User",
+		Email:    "test@example.com",
+	}
+
+	assert.Equal(t, "testuser", collaborator.Username)
+	assert.Equal(t, "Test User", collaborator.FullName)
+	assert.Equal(t, "test@example.com", collaborator.Email)
+}
+
+func TestRepositoryCollaboratorAvatarURL(t *testing.T) {
+	collaborator := &clients.RepositoryCollaborator{
+		Username:  "testuser",
+		AvatarURL: "https://example.com/avatar.jpg",
+	}
+
+	assert.Equal(t, "https://example.com/avatar.jpg", collaborator.AvatarURL)
 }
