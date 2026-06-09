@@ -199,6 +199,27 @@ var (
 	BranchProtectionGroupVersionKind = SchemeGroupVersion.WithKind(BranchProtectionKind)
 )
 
+
+// GetCondition returns the condition for the given ConditionType if it exists, otherwise returns nil.
+func (r *BranchProtection) GetCondition(ct xpv1.ConditionType) xpv1.Condition {
+	return r.Status.GetCondition(ct)
+}
+
+// SetConditions sets the supplied conditions, replacing any existing conditions of the same type.
+func (r *BranchProtection) SetConditions(c ...xpv1.Condition) {
+	r.Status.SetConditions(c...)
+}
+
+// GetManagementPolicies returns the management policies for this resource.
+func (r *BranchProtection) GetManagementPolicies() xpv1.ManagementPolicies {
+	return r.Spec.ManagementPolicies
+}
+
+// SetManagementPolicies sets the management policies for this resource.
+func (r *BranchProtection) SetManagementPolicies(p xpv1.ManagementPolicies) {
+	r.Spec.ManagementPolicies = p
+}
+
 func init() {
 	SchemeBuilder.Register(&BranchProtection{}, &BranchProtectionList{})
 }

@@ -117,6 +117,27 @@ var (
 	DeployKeyGroupVersionKind = SchemeGroupVersion.WithKind(DeployKeyKind)
 )
 
+
+// GetCondition returns the condition for the given ConditionType if it exists, otherwise returns nil.
+func (r *DeployKey) GetCondition(ct xpv1.ConditionType) xpv1.Condition {
+	return r.Status.GetCondition(ct)
+}
+
+// SetConditions sets the supplied conditions, replacing any existing conditions of the same type.
+func (r *DeployKey) SetConditions(c ...xpv1.Condition) {
+	r.Status.SetConditions(c...)
+}
+
+// GetManagementPolicies returns the management policies for this resource.
+func (r *DeployKey) GetManagementPolicies() xpv1.ManagementPolicies {
+	return r.Spec.ManagementPolicies
+}
+
+// SetManagementPolicies sets the management policies for this resource.
+func (r *DeployKey) SetManagementPolicies(p xpv1.ManagementPolicies) {
+	r.Spec.ManagementPolicies = p
+}
+
 func init() {
 	SchemeBuilder.Register(&DeployKey{}, &DeployKeyList{})
 }

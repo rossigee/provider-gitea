@@ -124,6 +124,27 @@ var (
 	AccessTokenGroupVersionKind = SchemeGroupVersion.WithKind(AccessTokenKind)
 )
 
+
+// GetCondition returns the condition for the given ConditionType if it exists, otherwise returns nil.
+func (r *AccessToken) GetCondition(ct xpv1.ConditionType) xpv1.Condition {
+	return r.Status.GetCondition(ct)
+}
+
+// SetConditions sets the supplied conditions, replacing any existing conditions of the same type.
+func (r *AccessToken) SetConditions(c ...xpv1.Condition) {
+	r.Status.SetConditions(c...)
+}
+
+// GetManagementPolicies returns the management policies for this resource.
+func (r *AccessToken) GetManagementPolicies() xpv1.ManagementPolicies {
+	return r.Spec.ManagementPolicies
+}
+
+// SetManagementPolicies sets the management policies for this resource.
+func (r *AccessToken) SetManagementPolicies(p xpv1.ManagementPolicies) {
+	r.Spec.ManagementPolicies = p
+}
+
 func init() {
 	SchemeBuilder.Register(&AccessToken{}, &AccessTokenList{})
 }

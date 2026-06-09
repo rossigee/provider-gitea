@@ -161,6 +161,27 @@ var (
 	OrganizationSettingsGroupVersionKind = SchemeGroupVersion.WithKind(OrganizationSettingsKind)
 )
 
+
+// GetCondition returns the condition for the given ConditionType if it exists, otherwise returns nil.
+func (r *OrganizationSettings) GetCondition(ct xpv1.ConditionType) xpv1.Condition {
+	return r.Status.GetCondition(ct)
+}
+
+// SetConditions sets the supplied conditions, replacing any existing conditions of the same type.
+func (r *OrganizationSettings) SetConditions(c ...xpv1.Condition) {
+	r.Status.SetConditions(c...)
+}
+
+// GetManagementPolicies returns the management policies for this resource.
+func (r *OrganizationSettings) GetManagementPolicies() xpv1.ManagementPolicies {
+	return r.Spec.ManagementPolicies
+}
+
+// SetManagementPolicies sets the management policies for this resource.
+func (r *OrganizationSettings) SetManagementPolicies(p xpv1.ManagementPolicies) {
+	r.Spec.ManagementPolicies = p
+}
+
 func init() {
 	SchemeBuilder.Register(&OrganizationSettings{}, &OrganizationSettingsList{})
 }
