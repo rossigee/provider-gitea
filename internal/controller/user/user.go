@@ -18,6 +18,7 @@ package user
 
 import (
 	"context"
+	"strings"
 
 	"github.com/pkg/errors"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -88,8 +89,19 @@ func (e *externalClient) Observe(ctx context.Context, mg resource.Managed) (mana
 		return managed.ExternalObservation{ResourceExists: false}, nil
 	}
 
-	// TODO: Implement actual observation logic for User
-	// This is a stub that marks resource as existing and up-to-date
+	user, err := e.client.GetUser(ctx, externalID)
+	if err != nil {
+		if strings.Contains(err.Error(), "404") {
+			return managed.ExternalObservation{ResourceExists: false}, nil
+		}
+		return managed.ExternalObservation{}, errors.Wrap(err, errGetUser)
+	}
+
+	cr.Status.AtProvider = v2.UserObservation{
+		ID:        &user.ID,
+		AvatarURL: &user.AvatarURL,
+	}
+
 	return managed.ExternalObservation{ResourceExists: true, ResourceUpToDate: true}, nil
 }
 
@@ -99,31 +111,76 @@ func (e *externalClient) Create(ctx context.Context, mg resource.Managed) (manag
 		return managed.ExternalCreation{}, errors.New(errNotUser)
 	}
 
-	// TODO: Implement creation logic for User
-	externalID := cr.GetName()
-	meta.SetExternalName(cr, externalID)
+	createReq := &clients.CreateUserRequest{
+		Username: cr.Spec.ForProvider.Username,
+		Email:    cr.Spec.ForProvider.Email,
+		Password: cr.Spec.ForProvider.Password,
+	}
 
-	return managed.ExternalCreation{}, errors.New("User controller not yet fully implemented")
+	if cr.Spec.ForProvider.FullName != nil {
+		createReq.FullName = *cr.Spec.ForProvider.FullName
+	}
+	if cr.Spec.ForProvider.LoginName != nil {
+		createReq.LoginName = *cr.Spec.ForProvider.LoginName
+	}
+	if cr.Spec.ForProvider.SendNotify != nil {
+		createReq.SendNotify = *cr.Spec.ForProvider.SendNotify
+	}
+	if cr.Spec.ForProvider.SourceID != nil {
+		createReq.SourceID = *cr.Spec.ForProvider.SourceID
+	}
+	if cr.Spec.ForProvider.MustChangePassword != nil {
+		createReq.MustChangePassword = *cr.Spec.ForProvider.MustChangePassword
+	}
+	if cr.Spec.ForProvider.Restricted != nil {
+		createReq.Restricted = *cr.Spec.ForProvider.Restricted
+	}
+	if cr.Spec.ForProvider.Visibility != nil {
+		createReq.Visibility = *cr.Spec.ForProvider.Visibility
+	}
+
+	user, err := e.client.CreateUser(ctx, createReq)
+	if err != nil {
+		return managed.ExternalCreation{}, errors.Wrap(err, errCreateUser)
+	}
+
+	meta.SetExternalName(cr, user.Username)
+	return managed.ExternalCreation{}, nil
 }
 
 func (e *externalClient) Update(ctx context.Context, mg resource.Managed) (managed.ExternalUpdate, error) {
-	_, ok := mg.(*v2.User)
+	cr, ok := mg.(*v2.User)
 	if !ok {
 		return managed.ExternalUpdate{}, errors.New(errNotUser)
 	}
 
-	// TODO: Implement update logic for User
-	return managed.ExternalUpdate{}, errors.New("User controller not yet fully implemented")
+	externalID := meta.GetExternalName(cr)
+
+	updateReq := &clients.UpdateUserRequest{}
+
+	if cr.Spec.ForProvider.Email != "" {
+		email := cr.Spec.ForProvider.Email
+		updateReq.Email = &email
+	}
+
+	_, err := e.client.UpdateUser(ctx, externalID, updateReq)
+	if err != nil {
+		return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateUser)
+	}
+
+	return managed.ExternalUpdate{}, nil
 }
 
 func (e *externalClient) Delete(ctx context.Context, mg resource.Managed) (managed.ExternalDelete, error) {
-	_, ok := mg.(*v2.User)
+	cr, ok := mg.(*v2.User)
 	if !ok {
 		return managed.ExternalDelete{}, errors.New(errNotUser)
 	}
 
-	// TODO: Implement deletion logic for User
-	return managed.ExternalDelete{}, errors.New("User controller not yet fully implemented")
+	externalID := meta.GetExternalName(cr)
+
+	err := e.client.DeleteUser(ctx, externalID)
+	return managed.ExternalDelete{}, errors.Wrap(err, errDeleteUser)
 }
 
 func (e *externalClient) Disconnect(ctx context.Context) error {
