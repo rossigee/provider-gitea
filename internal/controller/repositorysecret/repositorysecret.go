@@ -18,6 +18,7 @@ package repositorysecret
 
 import (
 	"context"
+	"strings"
 
 	"github.com/pkg/errors"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -88,8 +89,19 @@ func (e *externalClient) Observe(ctx context.Context, mg resource.Managed) (mana
 		return managed.ExternalObservation{ResourceExists: false}, nil
 	}
 
-	// TODO: Implement actual observation logic for RepositorySecret
-	// This is a stub that marks resource as existing and up-to-date
+	parts := strings.Split(cr.Spec.ForProvider.Repository, "/")
+	if len(parts) != 2 {
+		return managed.ExternalObservation{}, errors.New("invalid repository format")
+	}
+
+	_, err := e.client.GetRepositorySecret(ctx, cr.Spec.ForProvider.Repository, externalID)
+	if err != nil {
+		if strings.Contains(err.Error(), "404") {
+			return managed.ExternalObservation{ResourceExists: false}, nil
+		}
+		return managed.ExternalObservation{}, errors.Wrap(err, errGetRepositorySecret)
+	}
+
 	return managed.ExternalObservation{ResourceExists: true, ResourceUpToDate: true}, nil
 }
 
@@ -99,31 +111,44 @@ func (e *externalClient) Create(ctx context.Context, mg resource.Managed) (manag
 		return managed.ExternalCreation{}, errors.New(errNotRepositorySecret)
 	}
 
-	// TODO: Implement creation logic for RepositorySecret
-	externalID := cr.GetName()
-	meta.SetExternalName(cr, externalID)
+	createReq := &clients.CreateRepositorySecretRequest{
+		Data: "",
+	}
 
-	return managed.ExternalCreation{}, errors.New("RepositorySecret controller not yet fully implemented")
+	err := e.client.CreateRepositorySecret(ctx, cr.Spec.ForProvider.Repository, cr.Spec.ForProvider.SecretName, createReq)
+	if err != nil {
+		return managed.ExternalCreation{}, errors.Wrap(err, errCreateRepositorySecret)
+	}
+
+	meta.SetExternalName(cr, cr.Spec.ForProvider.SecretName)
+	return managed.ExternalCreation{}, nil
 }
 
 func (e *externalClient) Update(ctx context.Context, mg resource.Managed) (managed.ExternalUpdate, error) {
-	_, ok := mg.(*v2.RepositorySecret)
+	cr, ok := mg.(*v2.RepositorySecret)
 	if !ok {
 		return managed.ExternalUpdate{}, errors.New(errNotRepositorySecret)
 	}
 
-	// TODO: Implement update logic for RepositorySecret
-	return managed.ExternalUpdate{}, errors.New("RepositorySecret controller not yet fully implemented")
+	updateReq := &clients.UpdateRepositorySecretRequest{}
+
+	err := e.client.UpdateRepositorySecret(ctx, cr.Spec.ForProvider.Repository, cr.Spec.ForProvider.SecretName, updateReq)
+	if err != nil {
+		return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateRepositorySecret)
+	}
+
+	return managed.ExternalUpdate{}, nil
 }
 
 func (e *externalClient) Delete(ctx context.Context, mg resource.Managed) (managed.ExternalDelete, error) {
-	_, ok := mg.(*v2.RepositorySecret)
+	cr, ok := mg.(*v2.RepositorySecret)
 	if !ok {
 		return managed.ExternalDelete{}, errors.New(errNotRepositorySecret)
 	}
 
-	// TODO: Implement deletion logic for RepositorySecret
-	return managed.ExternalDelete{}, errors.New("RepositorySecret controller not yet fully implemented")
+	externalID := meta.GetExternalName(cr)
+	err := e.client.DeleteRepositorySecret(ctx, cr.Spec.ForProvider.Repository, externalID)
+	return managed.ExternalDelete{}, errors.Wrap(err, errDeleteRepositorySecret)
 }
 
 func (e *externalClient) Disconnect(ctx context.Context) error {
