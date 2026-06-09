@@ -25,8 +25,14 @@ import (
 // Setup creates all Gitea v2 controllers with the supplied logger and adds them to
 // the supplied manager.
 func Setup(mgr ctrl.Manager, o controller.Options) error {
-	// NOTE: v2 controller implementations needed for 22 resource types
-	// See CLAUDE.md for complete resource catalog and implementation status
-	// This provider framework is ready - controllers are the next development phase
+	// NOTE: Controller implementations pending v2.3.2 API pattern clarification
+	// See CONTROLLER_IMPLEMENTATION_GUIDE.md for detailed implementation plan
+	//
+	// Phase 1: Core Resources (7) - Repository, Organization, Team, DeployKey, User, Label, Webhook
+	// Phase 2: Security Resources (7) - AccessToken, UserKey, RepositoryKey, RepositorySecret, OrganizationSecret, BranchProtection, OrganizationMember
+	// Phase 3: CI/CD & Admin (8) - Action, Runner, AdminUser, OrganizationSettings, GitHook, RepositoryCollaborator, Issue, PullRequest, Release
+
+	// TODO: Implement 22 resource controllers
+
 	return nil
 }
