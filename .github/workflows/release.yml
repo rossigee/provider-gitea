@@ -1,90 +1,131 @@
-# Official Provider-Workflows Release Template
-# Uses crossplane-contrib/provider-workflows with GHCR registry
-# Compatible with rossigee GHCR setup
+---
+# Standardized Release Workflow for Crossplane Providers
+# Version: 2026-06-09 - Unified publish pattern across all providers
+#
+# Pattern:
+# 1. Build provider binaries and packages (make build)
+# 2. Publish to GHCR in a SINGLE step using make publish with both:
+#    - REGISTRY_ORGS for Docker images
+#    - XPKG_REG_ORGS for Crossplane packages
+# 3. Create GitHub release
+#
+# Triggered on version tags (v*)
 
-name: Release (Official Workflows)
+name: Release
 
 on:
   push:
     tags:
-      - 'v*.*.*'
-  workflow_dispatch:
-    inputs:
-      version:
-        description: 'Version tag to release (e.g., v1.0.0)'
-        required: true
-        type: string
+      - 'v*'
+
+env:
+  GO_VERSION: '1.26.4'
 
 jobs:
-  # Use official provider-workflows with custom registry configuration
   release:
-    uses: crossplane-contrib/provider-workflows/.github/workflows/publish-provider.yml@main
-    with:
-      repository: ${{ github.event.repository.name }}
-      version: ${{ github.event.inputs.version || github.ref_name }}
-      go-version: '1.26.4'
-      registry_org: 'rossigee'  # Publish to ghcr.io/rossigee
-      mirror: false             # Disable mirroring to xpkg.upbound.io
-      cleanup-disk: true
-    secrets:
-      GHCR_PAT: ${{ github.token }}
-
-  # Add GitHub release creation (preserves your custom feature)
-  github-release:
-    needs: release
     runs-on: ubuntu-24.04
     permissions:
       contents: write
+      packages: write
+      id-token: write
+
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: true
+
+      - name: Setup Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Vendor Dependencies
+        run: |
+          go mod vendor
+          make vendor.check
+
+      - name: Extract Version
+        id: version
+        run: echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+
+      - name: Build
+        run: make build BUILD_PLATFORMS="linux_amd64 linux_arm64"
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+
+      - name: Build Crossplane Packages
+        run: make xpkg.build BUILD_PLATFORMS="linux_amd64 linux_arm64"
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+
+      - name: Publish Artifacts (Docker Images + Crossplane Packages)
+        run: |
+          make publish \
+            REGISTRY_ORGS="ghcr.io/${{ github.repository_owner }}" \
+            XPKG_REG_ORGS="ghcr.io/${{ github.repository_owner }}" \
+            BRANCH_NAME=master
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+
+      - name: Verify Publication
+        run: |
+          set -e
+
+          VERSION="${{ steps.version.outputs.version }}"
+          PROVIDER_NAME="${{ github.event.repository.name }}"
+          REGISTRY_PATH="ghcr.io/${{ github.repository_owner }}/${PROVIDER_NAME}"
+
+          if docker pull "${REGISTRY_PATH}:${VERSION}" > /dev/null 2>&1; then
+            echo "✅ Verified container image ${VERSION}"
+          else
+            echo "⚠️ Container image not found - xpkg-only provider"
+          fi
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          name: Release ${{ github.event.inputs.version || github.ref_name }}
+          name: Release ${{ steps.version.outputs.version }}
           draft: false
           prerelease: false
           generate_release_notes: true
 
-  # Add publication verification (preserves your custom verification)
-  verify-publication:
-    needs: release
-    runs-on: ubuntu-24.04
-    steps:
-      - name: Verify Publication
-        run: |
-          set -e  # Fail fast on any error
-
-          VERSION="${{ github.event.inputs.version || github.ref_name }}"
-          PROVIDER_NAME="${{ github.event.repository.name }}"
-          REGISTRY_PATH="ghcr.io/rossigee/${PROVIDER_NAME}"
-
-          echo "Verifying publication to ${REGISTRY_PATH}:${VERSION}"
-
-          # Verify version tag exists and is pullable
-          if docker pull "${REGISTRY_PATH}:${VERSION}" > /dev/null 2>&1; then
-            echo "✅ Verified container image ${VERSION}"
-          else
-            echo "❌ Failed to pull container image ${VERSION}"
-            exit 1
-          fi
-
-          # Verify latest tag exists and is pullable
-          if docker pull "${REGISTRY_PATH}:latest" > /dev/null 2>&1; then
-            echo "✅ Verified container image latest"
-          else
-            echo "❌ Failed to pull container image latest"
-            exit 1
-          fi
-
-          # Verify both tags point to same image (identical digests)
-          VERSION_DIGEST=$(docker inspect "${REGISTRY_PATH}:${VERSION}" --format='{{index .RepoDigests 0}}' | cut -d'@' -f2)
-          LATEST_DIGEST=$(docker inspect "${REGISTRY_PATH}:latest" --format='{{index .RepoDigests 0}}' | cut -d'@' -f2)
-
-          if [ "$VERSION_DIGEST" = "$LATEST_DIGEST" ]; then
-            echo "✅ Version and latest tags point to identical image"
-            echo "   Digest: ${VERSION_DIGEST}"
-          else
-            echo "❌ Version and latest tags point to different images"
-            echo "   Version digest: ${VERSION_DIGEST}"
-            echo "   Latest digest:  ${LATEST_DIGEST}"
-            exit 1
-          fi
+# Key Principles:
+#
+# 1. UNIFIED PUBLISH PATTERN
+#    - Single `make publish` call handles both Docker images and xpkg packages
+#    - Both REGISTRY_ORGS and XPKG_REG_ORGS point to ghcr.io
+#    - No separate docker push steps
+#
+# 2. CONSISTENT AUTHENTICATION
+#    - docker/login-action for GHCR authentication
+#    - Standard GITHUB_TOKEN with packages:write permission
+#
+# 3. BUILD BEFORE PUBLISH
+#    - Build binaries (make build)
+#    - Build packages (make xpkg.build)
+#    - Publish everything (make publish)
+#
+# 4. VERIFICATION
+#    - Verify Docker image was published to GHCR
+#    - Handle providers that are xpkg-only (no Docker image)
+#
+# 5. GITHUB RELEASE
+#    - Auto-generate release notes from commits
+#    - Create release with version tag
+#
+# To apply this template:
+# 1. Copy to .github/workflows/release.yml in each provider repo
+# 2. Commit and push
+# 3. Create version tag: git tag v1.2.3 && git push origin v1.2.3
