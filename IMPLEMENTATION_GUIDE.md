@@ -19,13 +19,22 @@ All 22 resources have controller stubs with:
 
 ## 📋 Resources Ready for Implementation
 
-### Phase 1: Core Resources (3)
+### Phase 1: Core Resources (3) - ✅ 4/4 IMPLEMENTED
 1. **Repository** - ✅ FULLY IMPLEMENTED (see `internal/controller/repository/repository.go`)
    - Features: Create, observe, update, delete repos with owner/name format
    - Pattern: Template for other resources
    
-2. **Organization** - Framework ready
-3. **Team** - Framework ready
+2. **Organization** - ✅ FULLY IMPLEMENTED (see `internal/controller/organization/organization.go`)
+   - Uses organization username as external ID
+   - Supports all org metadata fields
+   
+3. **Team** - ✅ FULLY IMPLEMENTED (see `internal/controller/team/team.go`)
+   - Uses integer team ID as external ID (string in externalName)
+   - Includes ID parsing with strconv
+   
+4. **User** - ✅ FULLY IMPLEMENTED (see `internal/controller/user/user.go`)
+   - Uses username as external ID
+   - Supports user creation with comprehensive fields
 
 ### Phase 2: Security & Keys (7)
 4. **DeployKey** - Framework ready
@@ -53,6 +62,28 @@ All 22 resources have controller stubs with:
 20. **GitHook** - Framework ready
 21. **Issue** - Framework ready
 22. **PullRequest** - Framework ready
+
+## 📊 Implementation Progress
+
+**Current Status: 4/22 controllers (18.2%) ✅**
+
+### Recently Completed (June 9, 2026)
+- ✅ Repository - Demonstrates owner/name external ID pattern
+- ✅ Organization - String-based external ID (username)
+- ✅ Team - Integer ID pattern (stored as string, parsed with strconv)
+- ✅ User - Simple string-based ID with user creation
+
+### Patterns Established
+1. **String-based IDs**: Organization (username), User (username)
+2. **Integer IDs**: Team (stored as string, converted with strconv.ParseInt)
+3. **Composite IDs**: Repository (owner/name format with strings.Split)
+
+### Next 5 High-Priority (Ready for Implementation)
+- ⏳ Webhook - Similar to Organization (org-scoped, numeric ID)
+- ⏳ Label - Similar to Organization (repo-scoped)
+- ⏳ DeployKey - Similar to Team (integer ID)
+- ⏳ BranchProtection - Organization/Team pattern
+- ⏳ AccessToken - Simple string ID
 
 ## 🔧 Implementation Pattern
 
