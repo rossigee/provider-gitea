@@ -18,6 +18,8 @@ package userkey
 
 import (
 	"context"
+	"strconv"
+	"strings"
 
 	"github.com/pkg/errors"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -88,8 +90,24 @@ func (e *externalClient) Observe(ctx context.Context, mg resource.Managed) (mana
 		return managed.ExternalObservation{ResourceExists: false}, nil
 	}
 
-	// TODO: Implement actual observation logic for UserKey
-	// This is a stub that marks resource as existing and up-to-date
+	keyID, err := strconv.ParseInt(externalID, 10, 64)
+	if err != nil {
+		return managed.ExternalObservation{}, errors.Wrap(err, "failed to parse key ID")
+	}
+
+	key, err := e.client.GetUserKey(ctx, cr.Spec.ForProvider.Username, keyID)
+	if err != nil {
+		if strings.Contains(err.Error(), "404") {
+			return managed.ExternalObservation{ResourceExists: false}, nil
+		}
+		return managed.ExternalObservation{}, errors.Wrap(err, errGetUserKey)
+	}
+
+	cr.Status.AtProvider = v2.UserKeyObservation{
+		ID:    &key.ID,
+		Title: &key.Title,
+	}
+
 	return managed.ExternalObservation{ResourceExists: true, ResourceUpToDate: true}, nil
 }
 
@@ -99,31 +117,61 @@ func (e *externalClient) Create(ctx context.Context, mg resource.Managed) (manag
 		return managed.ExternalCreation{}, errors.New(errNotUserKey)
 	}
 
-	// TODO: Implement creation logic for UserKey
-	externalID := cr.GetName()
-	meta.SetExternalName(cr, externalID)
+	readOnly := false
+	createReq := &clients.CreateUserKeyRequest{
+		Title:   cr.Spec.ForProvider.Title,
+		Key:     cr.Spec.ForProvider.Key,
+		ReadOnly: &readOnly,
+	}
 
-	return managed.ExternalCreation{}, errors.New("UserKey controller not yet fully implemented")
+	key, err := e.client.CreateUserKey(ctx, cr.Spec.ForProvider.Username, createReq)
+	if err != nil {
+		return managed.ExternalCreation{}, errors.Wrap(err, errCreateUserKey)
+	}
+
+	meta.SetExternalName(cr, strconv.FormatInt(key.ID, 10))
+	return managed.ExternalCreation{}, nil
 }
 
 func (e *externalClient) Update(ctx context.Context, mg resource.Managed) (managed.ExternalUpdate, error) {
-	_, ok := mg.(*v2.UserKey)
+	cr, ok := mg.(*v2.UserKey)
 	if !ok {
 		return managed.ExternalUpdate{}, errors.New(errNotUserKey)
 	}
 
-	// TODO: Implement update logic for UserKey
-	return managed.ExternalUpdate{}, errors.New("UserKey controller not yet fully implemented")
+	externalID := meta.GetExternalName(cr)
+	keyID, err := strconv.ParseInt(externalID, 10, 64)
+	if err != nil {
+		return managed.ExternalUpdate{}, errors.Wrap(err, "failed to parse key ID")
+	}
+
+	title := cr.Spec.ForProvider.Title
+	updateReq := &clients.UpdateUserKeyRequest{
+		Title: &title,
+	}
+
+	_, err = e.client.UpdateUserKey(ctx, cr.Spec.ForProvider.Username, keyID, updateReq)
+	if err != nil {
+		return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateUserKey)
+	}
+
+	return managed.ExternalUpdate{}, nil
 }
 
 func (e *externalClient) Delete(ctx context.Context, mg resource.Managed) (managed.ExternalDelete, error) {
-	_, ok := mg.(*v2.UserKey)
+	cr, ok := mg.(*v2.UserKey)
 	if !ok {
 		return managed.ExternalDelete{}, errors.New(errNotUserKey)
 	}
 
-	// TODO: Implement deletion logic for UserKey
-	return managed.ExternalDelete{}, errors.New("UserKey controller not yet fully implemented")
+	externalID := meta.GetExternalName(cr)
+	keyID, err := strconv.ParseInt(externalID, 10, 64)
+	if err != nil {
+		return managed.ExternalDelete{}, errors.Wrap(err, "failed to parse key ID")
+	}
+
+	err = e.client.DeleteUserKey(ctx, cr.Spec.ForProvider.Username, keyID)
+	return managed.ExternalDelete{}, errors.Wrap(err, errDeleteUserKey)
 }
 
 func (e *externalClient) Disconnect(ctx context.Context) error {

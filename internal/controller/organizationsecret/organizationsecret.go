@@ -18,6 +18,7 @@ package organizationsecret
 
 import (
 	"context"
+	"strings"
 
 	"github.com/pkg/errors"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -88,8 +89,14 @@ func (e *externalClient) Observe(ctx context.Context, mg resource.Managed) (mana
 		return managed.ExternalObservation{ResourceExists: false}, nil
 	}
 
-	// TODO: Implement actual observation logic for OrganizationSecret
-	// This is a stub that marks resource as existing and up-to-date
+	_, err := e.client.GetOrganizationSecret(ctx, cr.Spec.ForProvider.Organization, externalID)
+	if err != nil {
+		if strings.Contains(err.Error(), "404") {
+			return managed.ExternalObservation{ResourceExists: false}, nil
+		}
+		return managed.ExternalObservation{}, errors.Wrap(err, errGetOrganizationSecret)
+	}
+
 	return managed.ExternalObservation{ResourceExists: true, ResourceUpToDate: true}, nil
 }
 
@@ -99,31 +106,44 @@ func (e *externalClient) Create(ctx context.Context, mg resource.Managed) (manag
 		return managed.ExternalCreation{}, errors.New(errNotOrganizationSecret)
 	}
 
-	// TODO: Implement creation logic for OrganizationSecret
-	externalID := cr.GetName()
-	meta.SetExternalName(cr, externalID)
+	createReq := &clients.CreateOrganizationSecretRequest{
+		Data: "",
+	}
 
-	return managed.ExternalCreation{}, errors.New("OrganizationSecret controller not yet fully implemented")
+	err := e.client.CreateOrganizationSecret(ctx, cr.Spec.ForProvider.Organization, cr.Spec.ForProvider.SecretName, createReq)
+	if err != nil {
+		return managed.ExternalCreation{}, errors.Wrap(err, errCreateOrganizationSecret)
+	}
+
+	meta.SetExternalName(cr, cr.Spec.ForProvider.SecretName)
+	return managed.ExternalCreation{}, nil
 }
 
 func (e *externalClient) Update(ctx context.Context, mg resource.Managed) (managed.ExternalUpdate, error) {
-	_, ok := mg.(*v2.OrganizationSecret)
+	cr, ok := mg.(*v2.OrganizationSecret)
 	if !ok {
 		return managed.ExternalUpdate{}, errors.New(errNotOrganizationSecret)
 	}
 
-	// TODO: Implement update logic for OrganizationSecret
-	return managed.ExternalUpdate{}, errors.New("OrganizationSecret controller not yet fully implemented")
+	updateReq := &clients.CreateOrganizationSecretRequest{}
+
+	err := e.client.UpdateOrganizationSecret(ctx, cr.Spec.ForProvider.Organization, cr.Spec.ForProvider.SecretName, updateReq)
+	if err != nil {
+		return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateOrganizationSecret)
+	}
+
+	return managed.ExternalUpdate{}, nil
 }
 
 func (e *externalClient) Delete(ctx context.Context, mg resource.Managed) (managed.ExternalDelete, error) {
-	_, ok := mg.(*v2.OrganizationSecret)
+	cr, ok := mg.(*v2.OrganizationSecret)
 	if !ok {
 		return managed.ExternalDelete{}, errors.New(errNotOrganizationSecret)
 	}
 
-	// TODO: Implement deletion logic for OrganizationSecret
-	return managed.ExternalDelete{}, errors.New("OrganizationSecret controller not yet fully implemented")
+	externalID := meta.GetExternalName(cr)
+	err := e.client.DeleteOrganizationSecret(ctx, cr.Spec.ForProvider.Organization, externalID)
+	return managed.ExternalDelete{}, errors.Wrap(err, errDeleteOrganizationSecret)
 }
 
 func (e *externalClient) Disconnect(ctx context.Context) error {

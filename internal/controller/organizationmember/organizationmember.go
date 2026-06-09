@@ -18,6 +18,7 @@ package organizationmember
 
 import (
 	"context"
+	"strings"
 
 	"github.com/pkg/errors"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -88,8 +89,18 @@ func (e *externalClient) Observe(ctx context.Context, mg resource.Managed) (mana
 		return managed.ExternalObservation{ResourceExists: false}, nil
 	}
 
-	// TODO: Implement actual observation logic for OrganizationMember
-	// This is a stub that marks resource as existing and up-to-date
+	member, err := e.client.GetOrganizationMember(ctx, cr.Spec.ForProvider.Organization, externalID)
+	if err != nil {
+		if strings.Contains(err.Error(), "404") {
+			return managed.ExternalObservation{ResourceExists: false}, nil
+		}
+		return managed.ExternalObservation{}, errors.Wrap(err, errGetOrganizationMember)
+	}
+
+	cr.Status.AtProvider = v2.OrganizationMemberObservation{
+		Username: &member.Username,
+	}
+
 	return managed.ExternalObservation{ResourceExists: true, ResourceUpToDate: true}, nil
 }
 
@@ -99,31 +110,49 @@ func (e *externalClient) Create(ctx context.Context, mg resource.Managed) (manag
 		return managed.ExternalCreation{}, errors.New(errNotOrganizationMember)
 	}
 
-	// TODO: Implement creation logic for OrganizationMember
-	externalID := cr.GetName()
-	meta.SetExternalName(cr, externalID)
+	createReq := &clients.AddOrganizationMemberRequest{
+		Role: cr.Spec.ForProvider.Role,
+	}
 
-	return managed.ExternalCreation{}, errors.New("OrganizationMember controller not yet fully implemented")
+	_, err := e.client.AddOrganizationMember(ctx, cr.Spec.ForProvider.Organization, cr.Spec.ForProvider.Username, createReq)
+	if err != nil {
+		return managed.ExternalCreation{}, errors.Wrap(err, errCreateOrganizationMember)
+	}
+
+	meta.SetExternalName(cr, cr.Spec.ForProvider.Username)
+	return managed.ExternalCreation{}, nil
 }
 
 func (e *externalClient) Update(ctx context.Context, mg resource.Managed) (managed.ExternalUpdate, error) {
-	_, ok := mg.(*v2.OrganizationMember)
+	cr, ok := mg.(*v2.OrganizationMember)
 	if !ok {
 		return managed.ExternalUpdate{}, errors.New(errNotOrganizationMember)
 	}
 
-	// TODO: Implement update logic for OrganizationMember
-	return managed.ExternalUpdate{}, errors.New("OrganizationMember controller not yet fully implemented")
+	externalID := meta.GetExternalName(cr)
+
+	role := cr.Spec.ForProvider.Role
+	updateReq := &clients.UpdateOrganizationMemberRequest{
+		Role: &role,
+	}
+
+	_, err := e.client.UpdateOrganizationMember(ctx, cr.Spec.ForProvider.Organization, externalID, updateReq)
+	if err != nil {
+		return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateOrganizationMember)
+	}
+
+	return managed.ExternalUpdate{}, nil
 }
 
 func (e *externalClient) Delete(ctx context.Context, mg resource.Managed) (managed.ExternalDelete, error) {
-	_, ok := mg.(*v2.OrganizationMember)
+	cr, ok := mg.(*v2.OrganizationMember)
 	if !ok {
 		return managed.ExternalDelete{}, errors.New(errNotOrganizationMember)
 	}
 
-	// TODO: Implement deletion logic for OrganizationMember
-	return managed.ExternalDelete{}, errors.New("OrganizationMember controller not yet fully implemented")
+	externalID := meta.GetExternalName(cr)
+	err := e.client.RemoveOrganizationMember(ctx, cr.Spec.ForProvider.Organization, externalID)
+	return managed.ExternalDelete{}, errors.Wrap(err, errDeleteOrganizationMember)
 }
 
 func (e *externalClient) Disconnect(ctx context.Context) error {

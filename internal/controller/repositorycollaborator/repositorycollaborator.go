@@ -18,6 +18,7 @@ package repositorycollaborator
 
 import (
 	"context"
+	"strings"
 
 	"github.com/pkg/errors"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -88,8 +89,33 @@ func (e *externalClient) Observe(ctx context.Context, mg resource.Managed) (mana
 		return managed.ExternalObservation{ResourceExists: false}, nil
 	}
 
-	// TODO: Implement actual observation logic for RepositoryCollaborator
-	// This is a stub that marks resource as existing and up-to-date
+	parts := strings.Split(externalID, ":")
+	if len(parts) != 2 {
+		return managed.ExternalObservation{}, errors.New("invalid external ID format")
+	}
+
+	repoParts := strings.Split(parts[0], "/")
+	if len(repoParts) != 2 {
+		return managed.ExternalObservation{}, errors.New("invalid repository format")
+	}
+
+	collab, err := e.client.GetRepositoryCollaborator(ctx, repoParts[0], repoParts[1], parts[1])
+	if err != nil {
+		if strings.Contains(err.Error(), "404") {
+			return managed.ExternalObservation{ResourceExists: false}, nil
+		}
+		return managed.ExternalObservation{}, errors.Wrap(err, errGetRepositoryCollaborator)
+	}
+
+	cr.Status.AtProvider = v2.RepositoryCollaboratorObservation{
+		FullName:  &collab.FullName,
+		Email:     &collab.Email,
+		AvatarURL: &collab.AvatarURL,
+		Permissions: &v2.RepositoryCollaboratorPermissions{
+			Admin: &collab.Permissions.Admin,
+		},
+	}
+
 	return managed.ExternalObservation{ResourceExists: true, ResourceUpToDate: true}, nil
 }
 
@@ -99,31 +125,72 @@ func (e *externalClient) Create(ctx context.Context, mg resource.Managed) (manag
 		return managed.ExternalCreation{}, errors.New(errNotRepositoryCollaborator)
 	}
 
-	// TODO: Implement creation logic for RepositoryCollaborator
-	externalID := cr.GetName()
-	meta.SetExternalName(cr, externalID)
+	parts := strings.Split(cr.Spec.ForProvider.Repository, "/")
+	if len(parts) != 2 {
+		return managed.ExternalCreation{}, errors.New("invalid repository format")
+	}
 
-	return managed.ExternalCreation{}, errors.New("RepositoryCollaborator controller not yet fully implemented")
+	createReq := &clients.AddCollaboratorRequest{
+		Permission: cr.Spec.ForProvider.Permission,
+	}
+
+	err := e.client.AddRepositoryCollaborator(ctx, parts[0], parts[1], cr.Spec.ForProvider.Username, createReq)
+	if err != nil {
+		return managed.ExternalCreation{}, errors.Wrap(err, errCreateRepositoryCollaborator)
+	}
+
+	meta.SetExternalName(cr, cr.Spec.ForProvider.Repository+":"+cr.Spec.ForProvider.Username)
+	return managed.ExternalCreation{}, nil
 }
 
 func (e *externalClient) Update(ctx context.Context, mg resource.Managed) (managed.ExternalUpdate, error) {
-	_, ok := mg.(*v2.RepositoryCollaborator)
+	cr, ok := mg.(*v2.RepositoryCollaborator)
 	if !ok {
 		return managed.ExternalUpdate{}, errors.New(errNotRepositoryCollaborator)
 	}
 
-	// TODO: Implement update logic for RepositoryCollaborator
-	return managed.ExternalUpdate{}, errors.New("RepositoryCollaborator controller not yet fully implemented")
+	externalID := meta.GetExternalName(cr)
+	parts := strings.Split(externalID, ":")
+	if len(parts) != 2 {
+		return managed.ExternalUpdate{}, errors.New("invalid external ID format")
+	}
+
+	repoParts := strings.Split(parts[0], "/")
+	if len(repoParts) != 2 {
+		return managed.ExternalUpdate{}, errors.New("invalid repository format")
+	}
+
+	updateReq := &clients.UpdateCollaboratorRequest{
+		Permission: cr.Spec.ForProvider.Permission,
+	}
+
+	err := e.client.UpdateRepositoryCollaborator(ctx, repoParts[0], repoParts[1], parts[1], updateReq)
+	if err != nil {
+		return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateRepositoryCollaborator)
+	}
+
+	return managed.ExternalUpdate{}, nil
 }
 
 func (e *externalClient) Delete(ctx context.Context, mg resource.Managed) (managed.ExternalDelete, error) {
-	_, ok := mg.(*v2.RepositoryCollaborator)
+	cr, ok := mg.(*v2.RepositoryCollaborator)
 	if !ok {
 		return managed.ExternalDelete{}, errors.New(errNotRepositoryCollaborator)
 	}
 
-	// TODO: Implement deletion logic for RepositoryCollaborator
-	return managed.ExternalDelete{}, errors.New("RepositoryCollaborator controller not yet fully implemented")
+	externalID := meta.GetExternalName(cr)
+	parts := strings.Split(externalID, ":")
+	if len(parts) != 2 {
+		return managed.ExternalDelete{}, errors.New("invalid external ID format")
+	}
+
+	repoParts := strings.Split(parts[0], "/")
+	if len(repoParts) != 2 {
+		return managed.ExternalDelete{}, errors.New("invalid repository format")
+	}
+
+	err := e.client.RemoveRepositoryCollaborator(ctx, repoParts[0], repoParts[1], parts[1])
+	return managed.ExternalDelete{}, errors.Wrap(err, errDeleteRepositoryCollaborator)
 }
 
 func (e *externalClient) Disconnect(ctx context.Context) error {
