@@ -20,19 +20,19 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 
 	"github.com/crossplane/crossplane-runtime/v2/pkg/controller"
+
+	"github.com/rossigee/provider-gitea/internal/controller/repository"
 )
 
 // Setup creates all Gitea v2 controllers with the supplied logger and adds them to
 // the supplied manager.
 func Setup(mgr ctrl.Manager, o controller.Options) error {
-	// NOTE: Controller implementations pending v2.3.2 API pattern clarification
-	// See CONTROLLER_IMPLEMENTATION_GUIDE.md for detailed implementation plan
-	//
-	// Phase 1: Core Resources (7) - Repository, Organization, Team, DeployKey, User, Label, Webhook
-	// Phase 2: Security Resources (7) - AccessToken, UserKey, RepositoryKey, RepositorySecret, OrganizationSecret, BranchProtection, OrganizationMember
-	// Phase 3: CI/CD & Admin (8) - Action, Runner, AdminUser, OrganizationSettings, GitHook, RepositoryCollaborator, Issue, PullRequest, Release
+	// Phase 1: Core Resources
+	if err := repository.Setup(mgr, o); err != nil {
+		return err
+	}
 
-	// TODO: Implement 22 resource controllers
+	// TODO: Phase 2 & 3 - Remaining 21 resources
 
 	return nil
 }
