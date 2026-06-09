@@ -18,6 +18,8 @@ package accesstoken
 
 import (
 	"context"
+	"strconv"
+	"strings"
 
 	"github.com/pkg/errors"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -88,8 +90,26 @@ func (e *externalClient) Observe(ctx context.Context, mg resource.Managed) (mana
 		return managed.ExternalObservation{ResourceExists: false}, nil
 	}
 
-	// TODO: Implement actual observation logic for AccessToken
-	// This is a stub that marks resource as existing and up-to-date
+	tokenID, err := strconv.ParseInt(externalID, 10, 64)
+	if err != nil {
+		return managed.ExternalObservation{}, errors.Wrap(err, "failed to parse token ID")
+	}
+
+	token, err := e.client.GetAccessToken(ctx, cr.Spec.ForProvider.Username, tokenID)
+	if err != nil {
+		if strings.Contains(err.Error(), "404") {
+			return managed.ExternalObservation{ResourceExists: false}, nil
+		}
+		return managed.ExternalObservation{}, errors.Wrap(err, errGetAccessToken)
+	}
+
+	cr.Status.AtProvider = v2.AccessTokenObservation{
+		ID:       &token.ID,
+		Name:     &token.Name,
+		Scopes:   token.Scopes,
+		Username: &cr.Spec.ForProvider.Username,
+	}
+
 	return managed.ExternalObservation{ResourceExists: true, ResourceUpToDate: true}, nil
 }
 
@@ -99,11 +119,18 @@ func (e *externalClient) Create(ctx context.Context, mg resource.Managed) (manag
 		return managed.ExternalCreation{}, errors.New(errNotAccessToken)
 	}
 
-	// TODO: Implement creation logic for AccessToken
-	externalID := cr.GetName()
-	meta.SetExternalName(cr, externalID)
+	createReq := &clients.CreateAccessTokenRequest{
+		Name:   cr.Spec.ForProvider.Name,
+		Scopes: cr.Spec.ForProvider.Scopes,
+	}
 
-	return managed.ExternalCreation{}, errors.New("AccessToken controller not yet fully implemented")
+	token, err := e.client.CreateAccessToken(ctx, cr.Spec.ForProvider.Username, createReq)
+	if err != nil {
+		return managed.ExternalCreation{}, errors.Wrap(err, errCreateAccessToken)
+	}
+
+	meta.SetExternalName(cr, strconv.FormatInt(token.ID, 10))
+	return managed.ExternalCreation{}, nil
 }
 
 func (e *externalClient) Update(ctx context.Context, mg resource.Managed) (managed.ExternalUpdate, error) {
@@ -112,18 +139,23 @@ func (e *externalClient) Update(ctx context.Context, mg resource.Managed) (manag
 		return managed.ExternalUpdate{}, errors.New(errNotAccessToken)
 	}
 
-	// TODO: Implement update logic for AccessToken
-	return managed.ExternalUpdate{}, errors.New("AccessToken controller not yet fully implemented")
+	return managed.ExternalUpdate{}, nil
 }
 
 func (e *externalClient) Delete(ctx context.Context, mg resource.Managed) (managed.ExternalDelete, error) {
-	_, ok := mg.(*v2.AccessToken)
+	cr, ok := mg.(*v2.AccessToken)
 	if !ok {
 		return managed.ExternalDelete{}, errors.New(errNotAccessToken)
 	}
 
-	// TODO: Implement deletion logic for AccessToken
-	return managed.ExternalDelete{}, errors.New("AccessToken controller not yet fully implemented")
+	externalID := meta.GetExternalName(cr)
+	tokenID, err := strconv.ParseInt(externalID, 10, 64)
+	if err != nil {
+		return managed.ExternalDelete{}, errors.Wrap(err, "failed to parse token ID")
+	}
+
+	err = e.client.DeleteAccessToken(ctx, cr.Spec.ForProvider.Username, tokenID)
+	return managed.ExternalDelete{}, errors.Wrap(err, errDeleteAccessToken)
 }
 
 func (e *externalClient) Disconnect(ctx context.Context) error {
