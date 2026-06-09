@@ -18,6 +18,7 @@ package adminuser
 
 import (
 	"context"
+	"strings"
 
 	"github.com/pkg/errors"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -88,8 +89,20 @@ func (e *externalClient) Observe(ctx context.Context, mg resource.Managed) (mana
 		return managed.ExternalObservation{ResourceExists: false}, nil
 	}
 
-	// TODO: Implement actual observation logic for AdminUser
-	// This is a stub that marks resource as existing and up-to-date
+	user, err := e.client.GetUser(ctx, externalID)
+	if err != nil {
+		if strings.Contains(err.Error(), "404") {
+			return managed.ExternalObservation{ResourceExists: false}, nil
+		}
+		return managed.ExternalObservation{}, errors.Wrap(err, errGetAdminUser)
+	}
+
+	cr.Status.AtProvider = v2.AdminUserObservation{
+		ID:        &user.ID,
+		IsAdmin:   &user.IsAdmin,
+		AvatarURL: &user.AvatarURL,
+	}
+
 	return managed.ExternalObservation{ResourceExists: true, ResourceUpToDate: true}, nil
 }
 
@@ -99,31 +112,58 @@ func (e *externalClient) Create(ctx context.Context, mg resource.Managed) (manag
 		return managed.ExternalCreation{}, errors.New(errNotAdminUser)
 	}
 
-	// TODO: Implement creation logic for AdminUser
-	externalID := cr.GetName()
-	meta.SetExternalName(cr, externalID)
+	createReq := &clients.CreateUserRequest{
+		Username: cr.Spec.ForProvider.Username,
+		Email:    cr.Spec.ForProvider.Email,
+		Password: "changeme",
+	}
 
-	return managed.ExternalCreation{}, errors.New("AdminUser controller not yet fully implemented")
+	if cr.Spec.ForProvider.FullName != nil {
+		createReq.FullName = *cr.Spec.ForProvider.FullName
+	}
+
+	user, err := e.client.CreateUser(ctx, createReq)
+	if err != nil {
+		return managed.ExternalCreation{}, errors.Wrap(err, errCreateAdminUser)
+	}
+
+	meta.SetExternalName(cr, user.Username)
+	return managed.ExternalCreation{}, nil
 }
 
 func (e *externalClient) Update(ctx context.Context, mg resource.Managed) (managed.ExternalUpdate, error) {
-	_, ok := mg.(*v2.AdminUser)
+	cr, ok := mg.(*v2.AdminUser)
 	if !ok {
 		return managed.ExternalUpdate{}, errors.New(errNotAdminUser)
 	}
 
-	// TODO: Implement update logic for AdminUser
-	return managed.ExternalUpdate{}, errors.New("AdminUser controller not yet fully implemented")
+	externalID := meta.GetExternalName(cr)
+
+	updateReq := &clients.UpdateUserRequest{}
+
+	if cr.Spec.ForProvider.Email != "" {
+		email := cr.Spec.ForProvider.Email
+		updateReq.Email = &email
+	}
+
+	_, err := e.client.UpdateUser(ctx, externalID, updateReq)
+	if err != nil {
+		return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateAdminUser)
+	}
+
+	return managed.ExternalUpdate{}, nil
 }
 
 func (e *externalClient) Delete(ctx context.Context, mg resource.Managed) (managed.ExternalDelete, error) {
-	_, ok := mg.(*v2.AdminUser)
+	cr, ok := mg.(*v2.AdminUser)
 	if !ok {
 		return managed.ExternalDelete{}, errors.New(errNotAdminUser)
 	}
 
-	// TODO: Implement deletion logic for AdminUser
-	return managed.ExternalDelete{}, errors.New("AdminUser controller not yet fully implemented")
+	externalID := meta.GetExternalName(cr)
+
+	err := e.client.DeleteUser(ctx, externalID)
+	return managed.ExternalDelete{}, errors.Wrap(err, errDeleteAdminUser)
 }
 
 func (e *externalClient) Disconnect(ctx context.Context) error {

@@ -18,6 +18,8 @@ package deploykey
 
 import (
 	"context"
+	"strconv"
+	"strings"
 
 	"github.com/pkg/errors"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -88,8 +90,28 @@ func (e *externalClient) Observe(ctx context.Context, mg resource.Managed) (mana
 		return managed.ExternalObservation{ResourceExists: false}, nil
 	}
 
-	// TODO: Implement actual observation logic for DeployKey
-	// This is a stub that marks resource as existing and up-to-date
+	keyID, err := strconv.ParseInt(externalID, 10, 64)
+	if err != nil {
+		return managed.ExternalObservation{}, errors.Wrap(err, "failed to parse key ID")
+	}
+
+	parts := strings.Split(cr.Spec.ForProvider.Repository, "/")
+	if len(parts) != 2 {
+		return managed.ExternalObservation{}, errors.New("invalid repository format")
+	}
+
+	key, err := e.client.GetDeployKey(ctx, parts[0], parts[1], keyID)
+	if err != nil {
+		if strings.Contains(err.Error(), "404") {
+			return managed.ExternalObservation{ResourceExists: false}, nil
+		}
+		return managed.ExternalObservation{}, errors.Wrap(err, errGetDeployKey)
+	}
+
+	cr.Status.AtProvider = v2.DeployKeyObservation{
+		ID: &key.ID,
+	}
+
 	return managed.ExternalObservation{ResourceExists: true, ResourceUpToDate: true}, nil
 }
 
@@ -99,11 +121,27 @@ func (e *externalClient) Create(ctx context.Context, mg resource.Managed) (manag
 		return managed.ExternalCreation{}, errors.New(errNotDeployKey)
 	}
 
-	// TODO: Implement creation logic for DeployKey
-	externalID := cr.GetName()
-	meta.SetExternalName(cr, externalID)
+	parts := strings.Split(cr.Spec.ForProvider.Repository, "/")
+	if len(parts) != 2 {
+		return managed.ExternalCreation{}, errors.New("invalid repository format")
+	}
 
-	return managed.ExternalCreation{}, errors.New("DeployKey controller not yet fully implemented")
+	createReq := &clients.CreateDeployKeyRequest{
+		Title: cr.Spec.ForProvider.Title,
+		Key:   cr.Spec.ForProvider.Key,
+	}
+
+	if cr.Spec.ForProvider.ReadOnly != nil {
+		createReq.ReadOnly = *cr.Spec.ForProvider.ReadOnly
+	}
+
+	key, err := e.client.CreateDeployKey(ctx, parts[0], parts[1], createReq)
+	if err != nil {
+		return managed.ExternalCreation{}, errors.Wrap(err, errCreateDeployKey)
+	}
+
+	meta.SetExternalName(cr, strconv.FormatInt(key.ID, 10))
+	return managed.ExternalCreation{}, nil
 }
 
 func (e *externalClient) Update(ctx context.Context, mg resource.Managed) (managed.ExternalUpdate, error) {
@@ -112,18 +150,28 @@ func (e *externalClient) Update(ctx context.Context, mg resource.Managed) (manag
 		return managed.ExternalUpdate{}, errors.New(errNotDeployKey)
 	}
 
-	// TODO: Implement update logic for DeployKey
-	return managed.ExternalUpdate{}, errors.New("DeployKey controller not yet fully implemented")
+	return managed.ExternalUpdate{}, nil
 }
 
 func (e *externalClient) Delete(ctx context.Context, mg resource.Managed) (managed.ExternalDelete, error) {
-	_, ok := mg.(*v2.DeployKey)
+	cr, ok := mg.(*v2.DeployKey)
 	if !ok {
 		return managed.ExternalDelete{}, errors.New(errNotDeployKey)
 	}
 
-	// TODO: Implement deletion logic for DeployKey
-	return managed.ExternalDelete{}, errors.New("DeployKey controller not yet fully implemented")
+	externalID := meta.GetExternalName(cr)
+	keyID, err := strconv.ParseInt(externalID, 10, 64)
+	if err != nil {
+		return managed.ExternalDelete{}, errors.Wrap(err, "failed to parse key ID")
+	}
+
+	parts := strings.Split(cr.Spec.ForProvider.Repository, "/")
+	if len(parts) != 2 {
+		return managed.ExternalDelete{}, errors.New("invalid repository format")
+	}
+
+	err = e.client.DeleteDeployKey(ctx, parts[0], parts[1], keyID)
+	return managed.ExternalDelete{}, errors.Wrap(err, errDeleteDeployKey)
 }
 
 func (e *externalClient) Disconnect(ctx context.Context) error {
