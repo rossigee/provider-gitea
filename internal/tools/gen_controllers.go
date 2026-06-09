@@ -8,36 +8,11 @@ import (
 	"text/template"
 )
 
-// ResourceInfo contains metadata for code generation
 type ResourceInfo struct {
-	Name       string // e.g., "organization"
-	Type       string // e.g., "Organization"
-	Package    string // e.g., "organization"
-	APIVersion string // "v2"
-}
-
-var resources = []ResourceInfo{
-	{"organization", "Organization", "organization", "v2"},
-	{"team", "Team", "team", "v2"},
-	{"deploykey", "DeployKey", "deploykey", "v2"},
-	{"user", "User", "user", "v2"},
-	{"label", "Label", "label", "v2"},
-	{"webhook", "Webhook", "webhook", "v2"},
-	{"accesstoken", "AccessToken", "accesstoken", "v2"},
-	{"userkey", "UserKey", "userkey", "v2"},
-	{"repositorykey", "RepositoryKey", "repositorykey", "v2"},
-	{"repositorysecret", "RepositorySecret", "repositorysecret", "v2"},
-	{"organizationsecret", "OrganizationSecret", "organizationsecret", "v2"},
-	{"branchprotection", "BranchProtection", "branchprotection", "v2"},
-	{"organizationmember", "OrganizationMember", "organizationmember", "v2"},
-	{"action", "Action", "action", "v2"},
-	{"runner", "Runner", "runner", "v2"},
-	{"adminuser", "AdminUser", "adminuser", "v2"},
-	{"organizationsettings", "OrganizationSettings", "organizationsettings", "v2"},
-	{"githook", "GitHook", "githook", "v2"},
-	{"repositorycollaborator", "RepositoryCollaborator", "repositorycollaborator", "v2"},
-	{"issue", "Issue", "issue", "v2"},
-	{"pullrequest", "PullRequest", "pullrequest", "v2"},
+	Name       string
+	Type       string
+	Package    string
+	APIVersion string
 }
 
 const controllerTemplate = `/*
@@ -189,72 +164,59 @@ func Setup(mgr ctrl.Manager, o xpv1.Options) error {
 `
 
 func main() {
-	if len(os.Args) > 1 && os.Args[1] == "check" {
-		checkExisting()
-		return
+	resources := []ResourceInfo{
+		{"organization", "Organization", "organization", "v2"},
+		{"team", "Team", "team", "v2"},
+		{"deploykey", "DeployKey", "deploykey", "v2"},
+		{"user", "User", "user", "v2"},
+		{"label", "Label", "label", "v2"},
+		{"webhook", "Webhook", "webhook", "v2"},
+		{"accesstoken", "AccessToken", "accesstoken", "v2"},
+		{"userkey", "UserKey", "userkey", "v2"},
+		{"repositorykey", "RepositoryKey", "repositorykey", "v2"},
+		{"repositorysecret", "RepositorySecret", "repositorysecret", "v2"},
+		{"organizationsecret", "OrganizationSecret", "organizationsecret", "v2"},
+		{"branchprotection", "BranchProtection", "branchprotection", "v2"},
+		{"organizationmember", "OrganizationMember", "organizationmember", "v2"},
+		{"action", "Action", "action", "v2"},
+		{"runner", "Runner", "runner", "v2"},
+		{"adminuser", "AdminUser", "adminuser", "v2"},
+		{"organizationsettings", "OrganizationSettings", "organizationsettings", "v2"},
+		{"githook", "GitHook", "githook", "v2"},
+		{"repositorycollaborator", "RepositoryCollaborator", "repositorycollaborator", "v2"},
+		{"issue", "Issue", "issue", "v2"},
+		{"pullrequest", "PullRequest", "pullrequest", "v2"},
 	}
-
-	generateControllers()
-}
-
-func checkExisting() {
-	fmt.Println("Checking which controllers already exist...")
-	for _, r := range resources {
-		path := filepath.Join("internal", "controller", r.Package, strings.ToLower(r.Package)+".go")
-		if _, err := os.Stat(path); err == nil {
-			fmt.Printf("✅ %s exists\n", r.Type)
-		} else {
-			fmt.Printf("⏳ %s needs implementation\n", r.Type)
-		}
-	}
-}
-
-func generateControllers() {
-	fmt.Println("Generating controller stubs for all resources...")
-	fmt.Println("")
 
 	tmpl, err := template.New("controller").Parse(controllerTemplate)
 	if err != nil {
-		fmt.Printf("❌ Template parse error: %v\n", err)
+		fmt.Printf("Template error: %v\n", err)
 		return
 	}
 
+	fmt.Println("Generating controller stubs...")
+
 	succeeded := 0
-	skipped := 0
-
 	for _, r := range resources {
-		// Skip Repository (already implemented)
-		if r.Type == "Repository" {
-			fmt.Printf("⊘ Repository: Already implemented\n")
-			skipped++
-			continue
-		}
-
 		dir := filepath.Join("internal", "controller", r.Package)
-		if err := os.MkdirAll(dir, 0755); err != nil {
-			fmt.Printf("❌ %s: Cannot create directory: %v\n", r.Type, err)
-			continue
-		}
+		os.MkdirAll(dir, 0755)
 
 		filePath := filepath.Join(dir, strings.ToLower(r.Package)+".go")
 		file, err := os.Create(filePath)
 		if err != nil {
-			fmt.Printf("❌ %s: Cannot create file: %v\n", r.Type, err)
+			fmt.Printf("❌ %s: %v\n", r.Type, err)
 			continue
 		}
 		defer file.Close()
 
 		if err := tmpl.Execute(file, r); err != nil {
-			fmt.Printf("❌ %s: Cannot generate code: %v\n", r.Type, err)
+			fmt.Printf("❌ %s: %v\n", r.Type, err)
 			continue
 		}
 
-		fmt.Printf("✅ %s: Stub generated\n", r.Type)
+		fmt.Printf("✅ %s\n", r.Type)
 		succeeded++
 	}
 
-	fmt.Println("")
-	fmt.Printf("Results: %d generated, %d skipped\n", succeeded, skipped)
-	fmt.Println("\n⚠️  Generated stubs are not fully implemented yet.")
-	fmt.Println("Each one needs specific logic in Observe/Create/Update/Delete methods.")
+	fmt.Printf("\n✅ Generated %d controllers\n", succeeded)
 }
