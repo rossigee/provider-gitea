@@ -18,6 +18,8 @@ package webhook
 
 import (
 	"context"
+	"strconv"
+	"strings"
 
 	"github.com/pkg/errors"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -88,8 +90,30 @@ func (e *externalClient) Observe(ctx context.Context, mg resource.Managed) (mana
 		return managed.ExternalObservation{ResourceExists: false}, nil
 	}
 
-	// TODO: Implement actual observation logic for Webhook
-	// This is a stub that marks resource as existing and up-to-date
+	webhookID, err := strconv.ParseInt(externalID, 10, 64)
+	if err != nil {
+		return managed.ExternalObservation{}, errors.Wrap(err, "failed to parse webhook ID")
+	}
+
+	owner := ""
+	repo := ""
+	if cr.Spec.ForProvider.Owner != nil && cr.Spec.ForProvider.Repository != nil {
+		owner = *cr.Spec.ForProvider.Owner
+		repo = *cr.Spec.ForProvider.Repository
+	}
+
+	webhook, err := e.client.GetRepositoryWebhook(ctx, owner, repo, webhookID)
+	if err != nil {
+		if strings.Contains(err.Error(), "404") {
+			return managed.ExternalObservation{ResourceExists: false}, nil
+		}
+		return managed.ExternalObservation{}, errors.Wrap(err, errGetWebhook)
+	}
+
+	cr.Status.AtProvider = v2.WebhookObservation{
+		ID: &webhook.ID,
+	}
+
 	return managed.ExternalObservation{ResourceExists: true, ResourceUpToDate: true}, nil
 }
 
@@ -99,31 +123,111 @@ func (e *externalClient) Create(ctx context.Context, mg resource.Managed) (manag
 		return managed.ExternalCreation{}, errors.New(errNotWebhook)
 	}
 
-	// TODO: Implement creation logic for Webhook
-	externalID := cr.GetName()
-	meta.SetExternalName(cr, externalID)
+	owner := ""
+	repo := ""
+	if cr.Spec.ForProvider.Owner != nil && cr.Spec.ForProvider.Repository != nil {
+		owner = *cr.Spec.ForProvider.Owner
+		repo = *cr.Spec.ForProvider.Repository
+	}
 
-	return managed.ExternalCreation{}, errors.New("Webhook controller not yet fully implemented")
+	webhookType := "gitea"
+	if cr.Spec.ForProvider.Type != nil {
+		webhookType = *cr.Spec.ForProvider.Type
+	}
+
+	config := map[string]string{
+		"url": cr.Spec.ForProvider.URL,
+	}
+	if cr.Spec.ForProvider.ContentType != nil {
+		config["content_type"] = *cr.Spec.ForProvider.ContentType
+	}
+	if cr.Spec.ForProvider.Secret != nil {
+		config["secret"] = *cr.Spec.ForProvider.Secret
+	}
+	if cr.Spec.ForProvider.BranchFilter != nil {
+		config["branch_filter"] = *cr.Spec.ForProvider.BranchFilter
+	}
+
+	active := true
+	if cr.Spec.ForProvider.Active != nil {
+		active = *cr.Spec.ForProvider.Active
+	}
+
+	createReq := &clients.CreateWebhookRequest{
+		Type:   webhookType,
+		Config: config,
+		Events: cr.Spec.ForProvider.Events,
+		Active: active,
+	}
+
+	webhook, err := e.client.CreateRepositoryWebhook(ctx, owner, repo, createReq)
+	if err != nil {
+		return managed.ExternalCreation{}, errors.Wrap(err, errCreateWebhook)
+	}
+
+	meta.SetExternalName(cr, strconv.FormatInt(webhook.ID, 10))
+	return managed.ExternalCreation{}, nil
 }
 
 func (e *externalClient) Update(ctx context.Context, mg resource.Managed) (managed.ExternalUpdate, error) {
-	_, ok := mg.(*v2.Webhook)
+	cr, ok := mg.(*v2.Webhook)
 	if !ok {
 		return managed.ExternalUpdate{}, errors.New(errNotWebhook)
 	}
 
-	// TODO: Implement update logic for Webhook
-	return managed.ExternalUpdate{}, errors.New("Webhook controller not yet fully implemented")
+	externalID := meta.GetExternalName(cr)
+	webhookID, err := strconv.ParseInt(externalID, 10, 64)
+	if err != nil {
+		return managed.ExternalUpdate{}, errors.Wrap(err, "failed to parse webhook ID")
+	}
+
+	owner := ""
+	repo := ""
+	if cr.Spec.ForProvider.Owner != nil && cr.Spec.ForProvider.Repository != nil {
+		owner = *cr.Spec.ForProvider.Owner
+		repo = *cr.Spec.ForProvider.Repository
+	}
+
+	updateReq := &clients.UpdateWebhookRequest{}
+
+	if cr.Spec.ForProvider.Active != nil {
+		active := *cr.Spec.ForProvider.Active
+		updateReq.Active = &active
+	}
+	if len(cr.Spec.ForProvider.Events) > 0 {
+		events := cr.Spec.ForProvider.Events
+		updateReq.Events = &events
+	}
+
+	_, err = e.client.UpdateRepositoryWebhook(ctx, owner, repo, webhookID, updateReq)
+	if err != nil {
+		return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateWebhook)
+	}
+
+	return managed.ExternalUpdate{}, nil
 }
 
 func (e *externalClient) Delete(ctx context.Context, mg resource.Managed) (managed.ExternalDelete, error) {
-	_, ok := mg.(*v2.Webhook)
+	cr, ok := mg.(*v2.Webhook)
 	if !ok {
 		return managed.ExternalDelete{}, errors.New(errNotWebhook)
 	}
 
-	// TODO: Implement deletion logic for Webhook
-	return managed.ExternalDelete{}, errors.New("Webhook controller not yet fully implemented")
+	externalID := meta.GetExternalName(cr)
+	webhookID, err := strconv.ParseInt(externalID, 10, 64)
+	if err != nil {
+		return managed.ExternalDelete{}, errors.Wrap(err, "failed to parse webhook ID")
+	}
+
+	owner := ""
+	repo := ""
+	if cr.Spec.ForProvider.Owner != nil && cr.Spec.ForProvider.Repository != nil {
+		owner = *cr.Spec.ForProvider.Owner
+		repo = *cr.Spec.ForProvider.Repository
+	}
+
+	err = e.client.DeleteRepositoryWebhook(ctx, owner, repo, webhookID)
+	return managed.ExternalDelete{}, errors.Wrap(err, errDeleteWebhook)
 }
 
 func (e *externalClient) Disconnect(ctx context.Context) error {

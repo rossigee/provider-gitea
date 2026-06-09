@@ -18,6 +18,8 @@ package label
 
 import (
 	"context"
+	"strconv"
+	"strings"
 
 	"github.com/pkg/errors"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -88,8 +90,29 @@ func (e *externalClient) Observe(ctx context.Context, mg resource.Managed) (mana
 		return managed.ExternalObservation{ResourceExists: false}, nil
 	}
 
-	// TODO: Implement actual observation logic for Label
-	// This is a stub that marks resource as existing and up-to-date
+	labelID, err := strconv.ParseInt(externalID, 10, 64)
+	if err != nil {
+		return managed.ExternalObservation{}, errors.Wrap(err, "failed to parse label ID")
+	}
+
+	parts := strings.Split(cr.Spec.ForProvider.Repository, "/")
+	if len(parts) != 2 {
+		return managed.ExternalObservation{}, errors.New("invalid repository format")
+	}
+
+	label, err := e.client.GetLabel(ctx, parts[0], parts[1], labelID)
+	if err != nil {
+		if strings.Contains(err.Error(), "404") {
+			return managed.ExternalObservation{ResourceExists: false}, nil
+		}
+		return managed.ExternalObservation{}, errors.Wrap(err, errGetLabel)
+	}
+
+	cr.Status.AtProvider = v2.LabelObservation{
+		ID:  &label.ID,
+		URL: &label.URL,
+	}
+
 	return managed.ExternalObservation{ResourceExists: true, ResourceUpToDate: true}, nil
 }
 
@@ -99,31 +122,89 @@ func (e *externalClient) Create(ctx context.Context, mg resource.Managed) (manag
 		return managed.ExternalCreation{}, errors.New(errNotLabel)
 	}
 
-	// TODO: Implement creation logic for Label
-	externalID := cr.GetName()
-	meta.SetExternalName(cr, externalID)
+	parts := strings.Split(cr.Spec.ForProvider.Repository, "/")
+	if len(parts) != 2 {
+		return managed.ExternalCreation{}, errors.New("invalid repository format")
+	}
 
-	return managed.ExternalCreation{}, errors.New("Label controller not yet fully implemented")
+	createReq := &clients.CreateLabelRequest{
+		Name:  cr.Spec.ForProvider.Name,
+		Color: cr.Spec.ForProvider.Color,
+	}
+
+	if cr.Spec.ForProvider.Description != nil {
+		createReq.Description = *cr.Spec.ForProvider.Description
+	}
+	if cr.Spec.ForProvider.Exclusive != nil {
+		createReq.Exclusive = *cr.Spec.ForProvider.Exclusive
+	}
+
+	label, err := e.client.CreateLabel(ctx, parts[0], parts[1], createReq)
+	if err != nil {
+		return managed.ExternalCreation{}, errors.Wrap(err, errCreateLabel)
+	}
+
+	meta.SetExternalName(cr, strconv.FormatInt(label.ID, 10))
+	return managed.ExternalCreation{}, nil
 }
 
 func (e *externalClient) Update(ctx context.Context, mg resource.Managed) (managed.ExternalUpdate, error) {
-	_, ok := mg.(*v2.Label)
+	cr, ok := mg.(*v2.Label)
 	if !ok {
 		return managed.ExternalUpdate{}, errors.New(errNotLabel)
 	}
 
-	// TODO: Implement update logic for Label
-	return managed.ExternalUpdate{}, errors.New("Label controller not yet fully implemented")
+	externalID := meta.GetExternalName(cr)
+	labelID, err := strconv.ParseInt(externalID, 10, 64)
+	if err != nil {
+		return managed.ExternalUpdate{}, errors.Wrap(err, "failed to parse label ID")
+	}
+
+	parts := strings.Split(cr.Spec.ForProvider.Repository, "/")
+	if len(parts) != 2 {
+		return managed.ExternalUpdate{}, errors.New("invalid repository format")
+	}
+
+	updateReq := &clients.UpdateLabelRequest{}
+
+	if cr.Spec.ForProvider.Description != nil {
+		updateReq.Description = cr.Spec.ForProvider.Description
+	}
+	if cr.Spec.ForProvider.Color != "" {
+		color := cr.Spec.ForProvider.Color
+		updateReq.Color = &color
+	}
+	if cr.Spec.ForProvider.Exclusive != nil {
+		updateReq.Exclusive = cr.Spec.ForProvider.Exclusive
+	}
+
+	_, err = e.client.UpdateLabel(ctx, parts[0], parts[1], labelID, updateReq)
+	if err != nil {
+		return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateLabel)
+	}
+
+	return managed.ExternalUpdate{}, nil
 }
 
 func (e *externalClient) Delete(ctx context.Context, mg resource.Managed) (managed.ExternalDelete, error) {
-	_, ok := mg.(*v2.Label)
+	cr, ok := mg.(*v2.Label)
 	if !ok {
 		return managed.ExternalDelete{}, errors.New(errNotLabel)
 	}
 
-	// TODO: Implement deletion logic for Label
-	return managed.ExternalDelete{}, errors.New("Label controller not yet fully implemented")
+	externalID := meta.GetExternalName(cr)
+	labelID, err := strconv.ParseInt(externalID, 10, 64)
+	if err != nil {
+		return managed.ExternalDelete{}, errors.Wrap(err, "failed to parse label ID")
+	}
+
+	parts := strings.Split(cr.Spec.ForProvider.Repository, "/")
+	if len(parts) != 2 {
+		return managed.ExternalDelete{}, errors.New("invalid repository format")
+	}
+
+	err = e.client.DeleteLabel(ctx, parts[0], parts[1], labelID)
+	return managed.ExternalDelete{}, errors.Wrap(err, errDeleteLabel)
 }
 
 func (e *externalClient) Disconnect(ctx context.Context) error {
