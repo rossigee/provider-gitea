@@ -46,6 +46,14 @@ jobs:
           go mod vendor
           make vendor.check
 
+      - name: Install Crossplane CLI
+        run: |
+          make build.init
+          PLATFORM=$(go env GOOS)/$(go env GOARCH)
+          CROSSPLANE_VERSION=$(grep -E "^[\s]*CROSSPLANE_VERSION" build/Makefile | cut -d'=' -f2 | tr -d ' ')
+          curl -sSL "https://github.com/crossplane/crossplane/releases/download/${CROSSPLANE_VERSION}/crossplane-${PLATFORM}" -o .cache/tools/${PLATFORM}/crossplane-cli
+          chmod +x .cache/tools/${PLATFORM}/crossplane-cli
+
       - name: Extract Version
         id: version
         run: echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
