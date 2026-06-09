@@ -242,7 +242,7 @@ func generateControllers() {
 			fmt.Printf("❌ %s: Cannot create file: %v\n", r.Type, err)
 			continue
 		}
-		defer file.Close()
+		defer func() { _ = file.Close() }()
 
 		if err := tmpl.Execute(file, r); err != nil {
 			fmt.Printf("❌ %s: Cannot generate code: %v\n", r.Type, err)

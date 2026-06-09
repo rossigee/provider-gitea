@@ -199,7 +199,10 @@ func main() {
 	succeeded := 0
 	for _, r := range resources {
 		dir := filepath.Join("internal", "controller", r.Package)
-		os.MkdirAll(dir, 0755)
+		if err := os.MkdirAll(dir, 0755); err != nil {
+			fmt.Printf("❌ %s: %v\n", r.Type, err)
+			continue
+		}
 
 		filePath := filepath.Join(dir, strings.ToLower(r.Package)+".go")
 		file, err := os.Create(filePath)
@@ -207,7 +210,7 @@ func main() {
 			fmt.Printf("❌ %s: %v\n", r.Type, err)
 			continue
 		}
-		defer file.Close()
+		defer func() { _ = file.Close() }()
 
 		if err := tmpl.Execute(file, r); err != nil {
 			fmt.Printf("❌ %s: %v\n", r.Type, err)
