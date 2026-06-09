@@ -18,6 +18,7 @@ package organization
 
 import (
 	"context"
+	"strings"
 
 	"github.com/pkg/errors"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -88,8 +89,20 @@ func (e *externalClient) Observe(ctx context.Context, mg resource.Managed) (mana
 		return managed.ExternalObservation{ResourceExists: false}, nil
 	}
 
-	// TODO: Implement actual observation logic for Organization
-	// This is a stub that marks resource as existing and up-to-date
+	org, err := e.client.GetOrganization(ctx, externalID)
+	if err != nil {
+		if strings.Contains(err.Error(), "404") {
+			return managed.ExternalObservation{ResourceExists: false}, nil
+		}
+		return managed.ExternalObservation{}, errors.Wrap(err, errGetOrganization)
+	}
+
+	cr.Status.AtProvider = v2.OrganizationObservation{
+		ID:        &org.ID,
+		AvatarURL: &org.AvatarURL,
+		Email:     &org.Email,
+	}
+
 	return managed.ExternalObservation{ResourceExists: true, ResourceUpToDate: true}, nil
 }
 
@@ -99,31 +112,85 @@ func (e *externalClient) Create(ctx context.Context, mg resource.Managed) (manag
 		return managed.ExternalCreation{}, errors.New(errNotOrganization)
 	}
 
-	// TODO: Implement creation logic for Organization
-	externalID := cr.GetName()
-	meta.SetExternalName(cr, externalID)
+	createReq := &clients.CreateOrganizationRequest{
+		Username: cr.Spec.ForProvider.Username,
+	}
 
-	return managed.ExternalCreation{}, errors.New("Organization controller not yet fully implemented")
+	if cr.Spec.ForProvider.Name != nil {
+		createReq.Name = *cr.Spec.ForProvider.Name
+	}
+	if cr.Spec.ForProvider.FullName != nil {
+		createReq.FullName = *cr.Spec.ForProvider.FullName
+	}
+	if cr.Spec.ForProvider.Description != nil {
+		createReq.Description = *cr.Spec.ForProvider.Description
+	}
+	if cr.Spec.ForProvider.Website != nil {
+		createReq.Website = *cr.Spec.ForProvider.Website
+	}
+	if cr.Spec.ForProvider.Location != nil {
+		createReq.Location = *cr.Spec.ForProvider.Location
+	}
+	if cr.Spec.ForProvider.Visibility != nil {
+		createReq.Visibility = *cr.Spec.ForProvider.Visibility
+	}
+
+	org, err := e.client.CreateOrganization(ctx, createReq)
+	if err != nil {
+		return managed.ExternalCreation{}, errors.Wrap(err, errCreateOrganization)
+	}
+
+	meta.SetExternalName(cr, org.Username)
+	return managed.ExternalCreation{}, nil
 }
 
 func (e *externalClient) Update(ctx context.Context, mg resource.Managed) (managed.ExternalUpdate, error) {
-	_, ok := mg.(*v2.Organization)
+	cr, ok := mg.(*v2.Organization)
 	if !ok {
 		return managed.ExternalUpdate{}, errors.New(errNotOrganization)
 	}
 
-	// TODO: Implement update logic for Organization
-	return managed.ExternalUpdate{}, errors.New("Organization controller not yet fully implemented")
+	externalID := meta.GetExternalName(cr)
+
+	updateReq := &clients.UpdateOrganizationRequest{}
+
+	if cr.Spec.ForProvider.Name != nil {
+		updateReq.Name = cr.Spec.ForProvider.Name
+	}
+	if cr.Spec.ForProvider.FullName != nil {
+		updateReq.FullName = cr.Spec.ForProvider.FullName
+	}
+	if cr.Spec.ForProvider.Description != nil {
+		updateReq.Description = cr.Spec.ForProvider.Description
+	}
+	if cr.Spec.ForProvider.Website != nil {
+		updateReq.Website = cr.Spec.ForProvider.Website
+	}
+	if cr.Spec.ForProvider.Location != nil {
+		updateReq.Location = cr.Spec.ForProvider.Location
+	}
+	if cr.Spec.ForProvider.Visibility != nil {
+		updateReq.Visibility = cr.Spec.ForProvider.Visibility
+	}
+
+	_, err := e.client.UpdateOrganization(ctx, externalID, updateReq)
+	if err != nil {
+		return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateOrganization)
+	}
+
+	return managed.ExternalUpdate{}, nil
 }
 
 func (e *externalClient) Delete(ctx context.Context, mg resource.Managed) (managed.ExternalDelete, error) {
-	_, ok := mg.(*v2.Organization)
+	cr, ok := mg.(*v2.Organization)
 	if !ok {
 		return managed.ExternalDelete{}, errors.New(errNotOrganization)
 	}
 
-	// TODO: Implement deletion logic for Organization
-	return managed.ExternalDelete{}, errors.New("Organization controller not yet fully implemented")
+	externalID := meta.GetExternalName(cr)
+
+	err := e.client.DeleteOrganization(ctx, externalID)
+	return managed.ExternalDelete{}, errors.Wrap(err, errDeleteOrganization)
 }
 
 func (e *externalClient) Disconnect(ctx context.Context) error {

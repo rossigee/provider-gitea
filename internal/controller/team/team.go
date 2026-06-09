@@ -18,6 +18,8 @@ package team
 
 import (
 	"context"
+	"strconv"
+	"strings"
 
 	"github.com/pkg/errors"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -88,8 +90,24 @@ func (e *externalClient) Observe(ctx context.Context, mg resource.Managed) (mana
 		return managed.ExternalObservation{ResourceExists: false}, nil
 	}
 
-	// TODO: Implement actual observation logic for Team
-	// This is a stub that marks resource as existing and up-to-date
+	teamID, err := strconv.ParseInt(externalID, 10, 64)
+	if err != nil {
+		return managed.ExternalObservation{}, errors.Wrap(err, "failed to parse team ID")
+	}
+
+	team, err := e.client.GetTeam(ctx, teamID)
+	if err != nil {
+		if strings.Contains(err.Error(), "404") {
+			return managed.ExternalObservation{ResourceExists: false}, nil
+		}
+		return managed.ExternalObservation{}, errors.Wrap(err, errGetTeam)
+	}
+
+	cr.Status.AtProvider = v2.TeamObservation{
+		ID:             &team.ID,
+		OrganizationID: &team.Organization.ID,
+	}
+
 	return managed.ExternalObservation{ResourceExists: true, ResourceUpToDate: true}, nil
 }
 
@@ -99,31 +117,87 @@ func (e *externalClient) Create(ctx context.Context, mg resource.Managed) (manag
 		return managed.ExternalCreation{}, errors.New(errNotTeam)
 	}
 
-	// TODO: Implement creation logic for Team
-	externalID := cr.GetName()
-	meta.SetExternalName(cr, externalID)
+	createReq := &clients.CreateTeamRequest{
+		Name: cr.Spec.ForProvider.Name,
+	}
 
-	return managed.ExternalCreation{}, errors.New("Team controller not yet fully implemented")
+	if cr.Spec.ForProvider.Description != nil {
+		createReq.Description = *cr.Spec.ForProvider.Description
+	}
+	if cr.Spec.ForProvider.Permission != nil {
+		createReq.Permission = *cr.Spec.ForProvider.Permission
+	}
+	if cr.Spec.ForProvider.CanCreateOrgRepo != nil {
+		createReq.CanCreateOrgRepo = *cr.Spec.ForProvider.CanCreateOrgRepo
+	}
+	if cr.Spec.ForProvider.IncludesAllRepositories != nil {
+		createReq.IncludesAllRepositories = *cr.Spec.ForProvider.IncludesAllRepositories
+	}
+	if len(cr.Spec.ForProvider.Units) > 0 {
+		createReq.Units = cr.Spec.ForProvider.Units
+	}
+
+	team, err := e.client.CreateTeam(ctx, cr.Spec.ForProvider.Organization, createReq)
+	if err != nil {
+		return managed.ExternalCreation{}, errors.Wrap(err, errCreateTeam)
+	}
+
+	meta.SetExternalName(cr, strconv.FormatInt(team.ID, 10))
+	return managed.ExternalCreation{}, nil
 }
 
 func (e *externalClient) Update(ctx context.Context, mg resource.Managed) (managed.ExternalUpdate, error) {
-	_, ok := mg.(*v2.Team)
+	cr, ok := mg.(*v2.Team)
 	if !ok {
 		return managed.ExternalUpdate{}, errors.New(errNotTeam)
 	}
 
-	// TODO: Implement update logic for Team
-	return managed.ExternalUpdate{}, errors.New("Team controller not yet fully implemented")
+	externalID := meta.GetExternalName(cr)
+	teamID, err := strconv.ParseInt(externalID, 10, 64)
+	if err != nil {
+		return managed.ExternalUpdate{}, errors.Wrap(err, "failed to parse team ID")
+	}
+
+	updateReq := &clients.UpdateTeamRequest{}
+
+	if cr.Spec.ForProvider.Description != nil {
+		updateReq.Description = cr.Spec.ForProvider.Description
+	}
+	if cr.Spec.ForProvider.Permission != nil {
+		updateReq.Permission = cr.Spec.ForProvider.Permission
+	}
+	if cr.Spec.ForProvider.CanCreateOrgRepo != nil {
+		updateReq.CanCreateOrgRepo = cr.Spec.ForProvider.CanCreateOrgRepo
+	}
+	if cr.Spec.ForProvider.IncludesAllRepositories != nil {
+		updateReq.IncludesAllRepositories = cr.Spec.ForProvider.IncludesAllRepositories
+	}
+	if len(cr.Spec.ForProvider.Units) > 0 {
+		updateReq.Units = cr.Spec.ForProvider.Units
+	}
+
+	_, err = e.client.UpdateTeam(ctx, teamID, updateReq)
+	if err != nil {
+		return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateTeam)
+	}
+
+	return managed.ExternalUpdate{}, nil
 }
 
 func (e *externalClient) Delete(ctx context.Context, mg resource.Managed) (managed.ExternalDelete, error) {
-	_, ok := mg.(*v2.Team)
+	cr, ok := mg.(*v2.Team)
 	if !ok {
 		return managed.ExternalDelete{}, errors.New(errNotTeam)
 	}
 
-	// TODO: Implement deletion logic for Team
-	return managed.ExternalDelete{}, errors.New("Team controller not yet fully implemented")
+	externalID := meta.GetExternalName(cr)
+	teamID, err := strconv.ParseInt(externalID, 10, 64)
+	if err != nil {
+		return managed.ExternalDelete{}, errors.Wrap(err, "failed to parse team ID")
+	}
+
+	err = e.client.DeleteTeam(ctx, teamID)
+	return managed.ExternalDelete{}, errors.Wrap(err, errDeleteTeam)
 }
 
 func (e *externalClient) Disconnect(ctx context.Context) error {
