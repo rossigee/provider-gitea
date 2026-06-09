@@ -18,6 +18,7 @@ package organizationsettings
 
 import (
 	"context"
+	"strings"
 
 	"github.com/pkg/errors"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -88,8 +89,14 @@ func (e *externalClient) Observe(ctx context.Context, mg resource.Managed) (mana
 		return managed.ExternalObservation{ResourceExists: false}, nil
 	}
 
-	// TODO: Implement actual observation logic for OrganizationSettings
-	// This is a stub that marks resource as existing and up-to-date
+	_, err := e.client.GetOrganizationSettings(ctx, cr.Spec.ForProvider.Organization)
+	if err != nil {
+		if strings.Contains(err.Error(), "404") {
+			return managed.ExternalObservation{ResourceExists: false}, nil
+		}
+		return managed.ExternalObservation{}, errors.Wrap(err, errGetOrganizationSettings)
+	}
+
 	return managed.ExternalObservation{ResourceExists: true, ResourceUpToDate: true}, nil
 }
 
@@ -99,31 +106,41 @@ func (e *externalClient) Create(ctx context.Context, mg resource.Managed) (manag
 		return managed.ExternalCreation{}, errors.New(errNotOrganizationSettings)
 	}
 
-	// TODO: Implement creation logic for OrganizationSettings
-	externalID := cr.GetName()
-	meta.SetExternalName(cr, externalID)
-
-	return managed.ExternalCreation{}, errors.New("OrganizationSettings controller not yet fully implemented")
+	meta.SetExternalName(cr, cr.Spec.ForProvider.Organization)
+	return managed.ExternalCreation{}, nil
 }
 
 func (e *externalClient) Update(ctx context.Context, mg resource.Managed) (managed.ExternalUpdate, error) {
-	_, ok := mg.(*v2.OrganizationSettings)
+	cr, ok := mg.(*v2.OrganizationSettings)
 	if !ok {
 		return managed.ExternalUpdate{}, errors.New(errNotOrganizationSettings)
 	}
 
-	// TODO: Implement update logic for OrganizationSettings
-	return managed.ExternalUpdate{}, errors.New("OrganizationSettings controller not yet fully implemented")
+	updateReq := &clients.UpdateOrganizationSettingsRequest{
+		DefaultRepoPermission:    cr.Spec.ForProvider.DefaultRepoPermission,
+		MembersCanCreateRepos:    cr.Spec.ForProvider.MembersCanCreateRepos,
+		MembersCanCreatePrivate:  cr.Spec.ForProvider.MembersCanCreatePrivate,
+		MembersCanCreateInternal: cr.Spec.ForProvider.MembersCanCreateInternal,
+		MembersCanDeleteRepos:    cr.Spec.ForProvider.MembersCanDeleteRepos,
+		MembersCanFork:           cr.Spec.ForProvider.MembersCanFork,
+		MembersCanCreatePages:    cr.Spec.ForProvider.MembersCanCreatePages,
+		DefaultRepoVisibility:    cr.Spec.ForProvider.DefaultRepoVisibility,
+		RequireSignedCommits:     cr.Spec.ForProvider.RequireSignedCommits,
+		EnableDependencyGraph:    cr.Spec.ForProvider.EnableDependencyGraph,
+		AllowGitHooks:            cr.Spec.ForProvider.AllowGitHooks,
+		AllowCustomGitHooks:      cr.Spec.ForProvider.AllowCustomGitHooks,
+	}
+
+	_, err := e.client.UpdateOrganizationSettings(ctx, cr.Spec.ForProvider.Organization, updateReq)
+	if err != nil {
+		return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateOrganizationSettings)
+	}
+
+	return managed.ExternalUpdate{}, nil
 }
 
 func (e *externalClient) Delete(ctx context.Context, mg resource.Managed) (managed.ExternalDelete, error) {
-	_, ok := mg.(*v2.OrganizationSettings)
-	if !ok {
-		return managed.ExternalDelete{}, errors.New(errNotOrganizationSettings)
-	}
-
-	// TODO: Implement deletion logic for OrganizationSettings
-	return managed.ExternalDelete{}, errors.New("OrganizationSettings controller not yet fully implemented")
+	return managed.ExternalDelete{}, nil
 }
 
 func (e *externalClient) Disconnect(ctx context.Context) error {

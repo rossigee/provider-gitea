@@ -18,6 +18,8 @@ package repositorykey
 
 import (
 	"context"
+	"strconv"
+	"strings"
 
 	"github.com/pkg/errors"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -88,8 +90,23 @@ func (e *externalClient) Observe(ctx context.Context, mg resource.Managed) (mana
 		return managed.ExternalObservation{ResourceExists: false}, nil
 	}
 
-	// TODO: Implement actual observation logic for RepositoryKey
-	// This is a stub that marks resource as existing and up-to-date
+	keyID, err := strconv.ParseInt(externalID, 10, 64)
+	if err != nil {
+		return managed.ExternalObservation{}, errors.Wrap(err, "failed to parse key ID")
+	}
+
+	key, err := e.client.GetRepositoryKey(ctx, cr.Spec.ForProvider.Repository, keyID)
+	if err != nil {
+		if strings.Contains(err.Error(), "404") {
+			return managed.ExternalObservation{ResourceExists: false}, nil
+		}
+		return managed.ExternalObservation{}, errors.Wrap(err, errGetRepositoryKey)
+	}
+
+	cr.Status.AtProvider = v2.RepositoryKeyObservation{
+		ID: &key.ID,
+	}
+
 	return managed.ExternalObservation{ResourceExists: true, ResourceUpToDate: true}, nil
 }
 
@@ -99,31 +116,59 @@ func (e *externalClient) Create(ctx context.Context, mg resource.Managed) (manag
 		return managed.ExternalCreation{}, errors.New(errNotRepositoryKey)
 	}
 
-	// TODO: Implement creation logic for RepositoryKey
-	externalID := cr.GetName()
-	meta.SetExternalName(cr, externalID)
+	createReq := &clients.CreateRepositoryKeyRequest{
+		Title: cr.Spec.ForProvider.Title,
+		Key:   cr.Spec.ForProvider.Key,
+	}
 
-	return managed.ExternalCreation{}, errors.New("RepositoryKey controller not yet fully implemented")
+	key, err := e.client.CreateRepositoryKey(ctx, cr.Spec.ForProvider.Repository, createReq)
+	if err != nil {
+		return managed.ExternalCreation{}, errors.Wrap(err, errCreateRepositoryKey)
+	}
+
+	meta.SetExternalName(cr, strconv.FormatInt(key.ID, 10))
+	return managed.ExternalCreation{}, nil
 }
 
 func (e *externalClient) Update(ctx context.Context, mg resource.Managed) (managed.ExternalUpdate, error) {
-	_, ok := mg.(*v2.RepositoryKey)
+	cr, ok := mg.(*v2.RepositoryKey)
 	if !ok {
 		return managed.ExternalUpdate{}, errors.New(errNotRepositoryKey)
 	}
 
-	// TODO: Implement update logic for RepositoryKey
-	return managed.ExternalUpdate{}, errors.New("RepositoryKey controller not yet fully implemented")
+	externalID := meta.GetExternalName(cr)
+	keyID, err := strconv.ParseInt(externalID, 10, 64)
+	if err != nil {
+		return managed.ExternalUpdate{}, errors.Wrap(err, "failed to parse key ID")
+	}
+
+	title := cr.Spec.ForProvider.Title
+	updateReq := &clients.UpdateRepositoryKeyRequest{
+		Title: &title,
+	}
+
+	_, err = e.client.UpdateRepositoryKey(ctx, cr.Spec.ForProvider.Repository, keyID, updateReq)
+	if err != nil {
+		return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateRepositoryKey)
+	}
+
+	return managed.ExternalUpdate{}, nil
 }
 
 func (e *externalClient) Delete(ctx context.Context, mg resource.Managed) (managed.ExternalDelete, error) {
-	_, ok := mg.(*v2.RepositoryKey)
+	cr, ok := mg.(*v2.RepositoryKey)
 	if !ok {
 		return managed.ExternalDelete{}, errors.New(errNotRepositoryKey)
 	}
 
-	// TODO: Implement deletion logic for RepositoryKey
-	return managed.ExternalDelete{}, errors.New("RepositoryKey controller not yet fully implemented")
+	externalID := meta.GetExternalName(cr)
+	keyID, err := strconv.ParseInt(externalID, 10, 64)
+	if err != nil {
+		return managed.ExternalDelete{}, errors.Wrap(err, "failed to parse key ID")
+	}
+
+	err = e.client.DeleteRepositoryKey(ctx, cr.Spec.ForProvider.Repository, keyID)
+	return managed.ExternalDelete{}, errors.Wrap(err, errDeleteRepositoryKey)
 }
 
 func (e *externalClient) Disconnect(ctx context.Context) error {
