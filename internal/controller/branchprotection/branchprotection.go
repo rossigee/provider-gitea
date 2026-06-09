@@ -18,6 +18,7 @@ package branchprotection
 
 import (
 	"context"
+	"strings"
 
 	"github.com/pkg/errors"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -88,8 +89,23 @@ func (e *externalClient) Observe(ctx context.Context, mg resource.Managed) (mana
 		return managed.ExternalObservation{ResourceExists: false}, nil
 	}
 
-	// TODO: Implement actual observation logic for BranchProtection
-	// This is a stub that marks resource as existing and up-to-date
+	parts := strings.Split(externalID, ":")
+	if len(parts) != 2 {
+		return managed.ExternalObservation{}, errors.New("invalid external ID format")
+	}
+
+	bp, err := e.client.GetBranchProtection(ctx, parts[0], parts[1])
+	if err != nil {
+		if strings.Contains(err.Error(), "404") {
+			return managed.ExternalObservation{ResourceExists: false}, nil
+		}
+		return managed.ExternalObservation{}, errors.Wrap(err, errGetBranchProtection)
+	}
+
+	cr.Status.AtProvider = v2.BranchProtectionObservation{
+		RuleName: &bp.RuleName,
+	}
+
 	return managed.ExternalObservation{ResourceExists: true, ResourceUpToDate: true}, nil
 }
 
@@ -99,31 +115,41 @@ func (e *externalClient) Create(ctx context.Context, mg resource.Managed) (manag
 		return managed.ExternalCreation{}, errors.New(errNotBranchProtection)
 	}
 
-	// TODO: Implement creation logic for BranchProtection
-	externalID := cr.GetName()
-	meta.SetExternalName(cr, externalID)
+	createReq := &clients.CreateBranchProtectionRequest{}
 
-	return managed.ExternalCreation{}, errors.New("BranchProtection controller not yet fully implemented")
+	_, err := e.client.CreateBranchProtection(ctx, cr.Spec.ForProvider.Repository, cr.Spec.ForProvider.Branch, createReq)
+	if err != nil {
+		return managed.ExternalCreation{}, errors.Wrap(err, errCreateBranchProtection)
+	}
+
+	meta.SetExternalName(cr, cr.Spec.ForProvider.Repository+":"+cr.Spec.ForProvider.Branch)
+	return managed.ExternalCreation{}, nil
 }
 
 func (e *externalClient) Update(ctx context.Context, mg resource.Managed) (managed.ExternalUpdate, error) {
-	_, ok := mg.(*v2.BranchProtection)
+	cr, ok := mg.(*v2.BranchProtection)
 	if !ok {
 		return managed.ExternalUpdate{}, errors.New(errNotBranchProtection)
 	}
 
-	// TODO: Implement update logic for BranchProtection
-	return managed.ExternalUpdate{}, errors.New("BranchProtection controller not yet fully implemented")
+	updateReq := &clients.UpdateBranchProtectionRequest{}
+
+	_, err := e.client.UpdateBranchProtection(ctx, cr.Spec.ForProvider.Repository, cr.Spec.ForProvider.Branch, updateReq)
+	if err != nil {
+		return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateBranchProtection)
+	}
+
+	return managed.ExternalUpdate{}, nil
 }
 
 func (e *externalClient) Delete(ctx context.Context, mg resource.Managed) (managed.ExternalDelete, error) {
-	_, ok := mg.(*v2.BranchProtection)
+	cr, ok := mg.(*v2.BranchProtection)
 	if !ok {
 		return managed.ExternalDelete{}, errors.New(errNotBranchProtection)
 	}
 
-	// TODO: Implement deletion logic for BranchProtection
-	return managed.ExternalDelete{}, errors.New("BranchProtection controller not yet fully implemented")
+	err := e.client.DeleteBranchProtection(ctx, cr.Spec.ForProvider.Repository, cr.Spec.ForProvider.Branch)
+	return managed.ExternalDelete{}, errors.Wrap(err, errDeleteBranchProtection)
 }
 
 func (e *externalClient) Disconnect(ctx context.Context) error {
