@@ -96,13 +96,13 @@ type IssueObservation struct {
 
 // IssueSpec defines the desired state of Issue
 type IssueSpec struct {
-	xpv1.ResourceSpec `json:",inline"`
+	xpv1.ManagedResourceSpec `json:",inline"`
 	ForProvider       IssueParameters `json:"forProvider"`
 }
 
 // IssueStatus defines the observed state of Issue
 type IssueStatus struct {
-	xpv1.ResourceStatus `json:",inline"`
+	xpv1.ManagedResourceStatus `json:",inline"`
 	AtProvider          IssueObservation `json:"atProvider,omitempty"`
 }
 

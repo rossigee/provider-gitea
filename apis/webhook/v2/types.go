@@ -90,13 +90,13 @@ type WebhookObservation struct {
 
 // WebhookSpec defines the desired state of Webhook
 type WebhookSpec struct {
-	xpv1.ResourceSpec `json:",inline"`
+	xpv1.ManagedResourceSpec `json:",inline"`
 	ForProvider       WebhookParameters `json:"forProvider"`
 }
 
 // WebhookStatus defines the observed state of Webhook
 type WebhookStatus struct {
-	xpv1.ResourceStatus `json:",inline"`
+	xpv1.ManagedResourceStatus `json:",inline"`
 	AtProvider          WebhookObservation `json:"atProvider,omitempty"`
 }
 

@@ -125,13 +125,13 @@ type ActionObservation struct {
 
 // ActionSpec defines the desired state of Action
 type ActionSpec struct {
-	xpv1.ResourceSpec `json:",inline"`
+	xpv1.ManagedResourceSpec `json:",inline"`
 	ForProvider       ActionParameters `json:"forProvider"`
 }
 
 // ActionStatus defines the observed state of Action
 type ActionStatus struct {
-	xpv1.ResourceStatus `json:",inline"`
+	xpv1.ManagedResourceStatus `json:",inline"`
 	AtProvider          ActionObservation `json:"atProvider,omitempty"`
 }
 

@@ -172,13 +172,13 @@ type ReleaseObservation struct {
 
 // ReleaseSpec defines the desired state of Release
 type ReleaseSpec struct {
-	xpv1.ResourceSpec `json:",inline"`
+	xpv1.ManagedResourceSpec `json:",inline"`
 	ForProvider       ReleaseParameters `json:"forProvider"`
 }
 
 // ReleaseStatus defines the observed state of Release
 type ReleaseStatus struct {
-	xpv1.ResourceStatus `json:",inline"`
+	xpv1.ManagedResourceStatus `json:",inline"`
 	AtProvider          ReleaseObservation `json:"atProvider,omitempty"`
 }
 

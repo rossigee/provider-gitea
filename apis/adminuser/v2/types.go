@@ -172,13 +172,13 @@ type AdminUserObservation struct {
 
 // AdminUserSpec defines the desired state of AdminUser
 type AdminUserSpec struct {
-	xpv1.ResourceSpec `json:",inline"`
+	xpv1.ManagedResourceSpec `json:",inline"`
 	ForProvider       AdminUserParameters `json:"forProvider"`
 }
 
 // AdminUserStatus defines the observed state of AdminUser
 type AdminUserStatus struct {
-	xpv1.ResourceStatus `json:",inline"`
+	xpv1.ManagedResourceStatus `json:",inline"`
 	AtProvider          AdminUserObservation `json:"atProvider,omitempty"`
 }
 

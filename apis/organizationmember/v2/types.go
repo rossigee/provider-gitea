@@ -96,13 +96,13 @@ type OrganizationMemberObservation struct {
 
 // OrganizationMemberSpec defines the desired state of OrganizationMember
 type OrganizationMemberSpec struct {
-	xpv1.ResourceSpec `json:",inline"`
+	xpv1.ManagedResourceSpec `json:",inline"`
 	ForProvider       OrganizationMemberParameters `json:"forProvider"`
 }
 
 // OrganizationMemberStatus defines the observed state of OrganizationMember
 type OrganizationMemberStatus struct {
-	xpv1.ResourceStatus `json:",inline"`
+	xpv1.ManagedResourceStatus `json:",inline"`
 	AtProvider          OrganizationMemberObservation `json:"atProvider,omitempty"`
 }
 

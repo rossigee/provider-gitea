@@ -128,13 +128,13 @@ type RunnerObservation struct {
 
 // RunnerSpec defines the desired state of Runner
 type RunnerSpec struct {
-	xpv1.ResourceSpec `json:",inline"`
+	xpv1.ManagedResourceSpec `json:",inline"`
 	ForProvider       RunnerParameters `json:"forProvider"`
 }
 
 // RunnerStatus defines the observed state of Runner
 type RunnerStatus struct {
-	xpv1.ResourceStatus `json:",inline"`
+	xpv1.ManagedResourceStatus `json:",inline"`
 	AtProvider          RunnerObservation `json:"atProvider,omitempty"`
 }
 

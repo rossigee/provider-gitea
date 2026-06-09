@@ -95,13 +95,13 @@ type OrganizationObservation struct {
 
 // OrganizationSpec defines the desired state of Organization
 type OrganizationSpec struct {
-	xpv1.ResourceSpec `json:",inline"`
+	xpv1.ManagedResourceSpec `json:",inline"`
 	ForProvider       OrganizationParameters `json:"forProvider"`
 }
 
 // OrganizationStatus defines the observed state of Organization
 type OrganizationStatus struct {
-	xpv1.ResourceStatus `json:",inline"`
+	xpv1.ManagedResourceStatus `json:",inline"`
 	AtProvider          OrganizationObservation `json:"atProvider,omitempty"`
 }
 
