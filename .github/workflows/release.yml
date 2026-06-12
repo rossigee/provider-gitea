@@ -43,6 +43,9 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Vendor Dependencies
+        run: go mod vendor
+
       - name: Run code generation
         run: make generate
 
