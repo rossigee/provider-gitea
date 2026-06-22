@@ -1,10 +1,13 @@
 #!/usr/bin/env bash
 # uptest --setup-script: prepares the cluster for the e2e examples, against a
 # REAL Gitea (installed by scripts/e2e.sh via the gitea Helm chart):
-#   - mints an admin API token (the provider client authenticates with a token,
-#     not basic auth) via `gitea admin user generate-access-token` in the pod,
+#   - mints an admin API token (most controllers authenticate with this token
+#     via the ProviderConfig) via `gitea admin user generate-access-token`,
 #   - writes the token into the credentials Secret,
-#   - creates the password Secret the AdminUser example references,
+#   - creates the password Secrets the basic-auth examples reference: the admin
+#     password Secret (AccessToken authenticates as gitea_admin via HTTP basic
+#     auth — Gitea gates token CRUD on the owning user) and the User example's
+#     password Secret (read via passwordSecretRef),
 #   - applies the cluster-scoped ProviderConfig pointing at the in-cluster Gitea,
 #   - waits until the provider is Healthy.
 #
@@ -19,6 +22,9 @@ NS="${E2E_NS:-provider-gitea-e2e}"
 GITEA_NS="${GITEA_NS:-gitea}"
 GITEA_RELEASE="${GITEA_RELEASE:-gitea}"
 GITEA_ADMIN="${GITEA_ADMIN_USER:-gitea_admin}"
+# Must match the admin password scripts/e2e.sh sets on the Helm release, so the
+# AccessToken example can basic-auth as gitea_admin.
+GITEA_ADMIN_PASSWORD="${GITEA_ADMIN_PASSWORD:-Uptest-Admin-123}"
 
 ${KUBECTL} create namespace "$NS" --dry-run=client -o yaml | ${KUBECTL} apply -f - >/dev/null
 
@@ -35,10 +41,15 @@ echo "uptest-setup: credentials + password Secrets in ${NS}"
 ${KUBECTL} -n "$NS" create secret generic gitea-creds \
   --from-literal=token="$TOKEN" \
   --dry-run=client -o yaml | ${KUBECTL} apply -f -
+# gitea_admin's real password — the AccessToken example basic-auths with this.
 ${KUBECTL} -n "$NS" create secret generic uptest-admin-pw \
-  --from-literal=password=ChangeMe-123 \
+  --from-literal=password="$GITEA_ADMIN_PASSWORD" \
   --dry-run=client -o yaml | ${KUBECTL} apply -f -
-# Secret the RepositorySecret example's valueSecretRef points at.
+# Password for the User example (read via passwordSecretRef on create).
+${KUBECTL} -n "$NS" create secret generic uptest-user-password \
+  --from-literal=password=Uptest-User-123 \
+  --dry-run=client -o yaml | ${KUBECTL} apply -f -
+# Secret the RepositorySecret + OrganizationSecret examples' valueSecretRef point at.
 ${KUBECTL} -n "$NS" create secret generic uptest-secret-value \
   --from-literal=value=repo-secret-value \
   --dry-run=client -o yaml | ${KUBECTL} apply -f -

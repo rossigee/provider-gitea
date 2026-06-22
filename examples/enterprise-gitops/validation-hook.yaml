@@ -1,7 +1,8 @@
-apiVersion: githook.gitea.crossplane.io/v1alpha1
+apiVersion: githook.gitea.m.crossplane.io/v2
 kind: GitHook
 metadata:
   name: enterprise-validation-hook
+  namespace: default
   annotations:
     crossplane.io/external-name: acme-corp/platform-services/pre-receive
 spec:

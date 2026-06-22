@@ -1,191 +1,179 @@
 # Provider Gitea
 
-A v2-only Crossplane provider for declarative Gitea management: **23 namespaced
-resource kinds**, each with a working reconciler.
+A v2-only Crossplane provider for declarative Gitea management: **14 namespaced
+resource kinds**, each with a working reconciler proven end-to-end against a real
+Gitea server in CI.
 
 ## Overview
 
-This provider manages Gitea resources (repositories, organizations, teams,
-labels, webhooks, secrets, CI runners, branch protection, and more) as
-Kubernetes custom resources. Every kind has a full create/observe/update/delete
-controller, a unit test, and is exercised end-to-end on a kind cluster against a
-mock Gitea backend.
-
-## Status
-
-**Implemented:**
-- ✅ v2 API definitions, namespace-isolated (`*.gitea.m.crossplane.io`)
-- ✅ Comprehensive Gitea client library (typed HTTP-status error classification)
-- ✅ A reconciler for **all 23 resource kinds**, each unit-tested
-- ✅ Correct packaging: one multi-arch xpkg with the runtime embedded and CRDs
-  verified present before publish (`make xpkg-verify`)
-- ✅ Self-contained e2e: `scripts/e2e.sh` drives apply→Ready→delete on kind
-  against an in-cluster mock Gitea, wired into CI (`.github/workflows/e2e.yml`)
+This provider manages Gitea resources (repositories, organizations, users,
+teams, labels, webhooks, secrets, branch protection, and more) as Kubernetes
+custom resources. Every kind has a create/observe/update/delete controller, a
+unit test, and — for all but the immutable kinds — a full
+apply→Ready→update→import→delete run against a **real Gitea** (the official Helm
+chart) on a kind cluster, wired into CI.
 
 The controllers bake in the correctness lessons distilled in
 [`crossplane-provider-template`](https://github.com/mosabastion/crossplane-provider-template)
 `dev/docs/09-lessons-learned.md` — `Available()` set in `Observe`, not-found
 classified off the typed HTTP status, real drift detection, external-name as the
-authoritative identity for Observe/Update/Delete, a non-nil rate limiter, and a
-package that can't ship Healthy-but-CRD-less.
+authoritative identity for Observe/Update/Delete, a non-nil rate limiter, the v2
+managed-methodset, and a package that can't ship Healthy-but-CRD-less.
 
-## Core Features
+## Resource catalog
 
-### **Repository & Organization Management**
-- **Repository Management**: Full lifecycle management of Git repositories
-- **Organization Management**: Organizations, settings, and membership control  
-- **Team Management**: Advanced team collaboration and access control
-- **Label Management**: Issue and PR labeling automation
-- **Collaborator Management**: Repository collaboration workflows
+All kinds use the namespaced v2 group `<kind>.gitea.m.crossplane.io/v2` and must
+carry `metadata.namespace`.
 
-### **Enterprise Security** 🔒
-- **Branch Protection**: Enterprise-grade branch protection with approval workflows
-- **SSH Key Management**: User and repository SSH key lifecycle management  
-- **Access Token Management**: Scoped API token management with security controls
-- **Repository Secrets**: Secure CI/CD secret management with Kubernetes integration
-- **Organization Secrets**: Centralized secret management for enterprise workflows
-- **Git Hooks**: Server-side Git hook management for policy enforcement
+| Resource | Purpose | Example |
+|----------|---------|---------|
+| `Repository` | Git repository lifecycle | [repository.yaml](examples/e2e/repository.yaml) |
+| `Organization` | Organization lifecycle | [organization.yaml](examples/e2e/organization.yaml) |
+| `User` | User account lifecycle (admin API) | [user.yaml](examples/e2e/user.yaml) |
+| `Team` | Org team + access control | [team.yaml](examples/e2e/team.yaml) |
+| `Label` | Issue/PR labels | [label.yaml](examples/e2e/label.yaml) |
+| `Webhook` | Repository/org webhooks | [webhook.yaml](examples/e2e/webhook.yaml) |
+| `GitHook` | Server-side Git hooks | [githook.yaml](examples/e2e/githook.yaml) |
+| `BranchProtection` | Branch protection rules | [branchprotection.yaml](examples/e2e/branchprotection.yaml) |
+| `RepositoryKey` | Repository SSH (deploy) keys | [repositorykey.yaml](examples/e2e/repositorykey.yaml) |
+| `RepositoryCollaborator` | Repository access grants | [repositorycollaborator.yaml](examples/e2e/repositorycollaborator.yaml) |
+| `OrganizationSettings` | Organization policy | [organizationsettings.yaml](examples/e2e/organizationsettings.yaml) |
+| `RepositorySecret` 🔑 | Actions secret on a repo | [repositorysecret.yaml](examples/e2e/repositorysecret.yaml) |
+| `OrganizationSecret` 🔑 | Actions secret on an org | [organizationsecret.yaml](examples/e2e/organizationsecret.yaml) |
+| `AccessToken` 🔑 | Personal access token (PAT) | [accesstoken.yaml](examples/e2e/accesstoken.yaml) |
 
-### **CI/CD Integration** 🚀
-- **Actions Workflows**: Declarative CI/CD pipeline management
-- **Self-hosted Runners**: Multi-scope runner management (repository, organization, system)
-- **Complete DevOps Automation**: End-to-end development and deployment workflows
-- **Integrated Secret Management**: Seamless CI/CD secrets with Kubernetes
+🔑 = takes a secret value via a Secret reference — see [Working with secret-bearing
+resources](#working-with-secret-bearing-resources).
 
-### **Administrative Features** 👑
-- **Administrative Users**: Service account and admin user lifecycle management
-- **User Management**: Complete user lifecycle with privilege controls
-- **Organization Settings**: Enterprise-grade organizational policies
-- **Multi-tenant Support**: Organization and user isolation with proper access controls
+### What is intentionally NOT a resource
 
-### **V2-Only Architecture** ✨ (v0.8.2)
-- **Pure V2 Implementation**: Clean v2-only provider without legacy code burden
-- **Namespace Isolation**: All 23 resources use namespace-scoped `.m.` API groups
-- **Enhanced Multi-tenancy**: Complete namespace isolation and tenant separation
-- **Modern Architecture**: Built with Crossplane Runtime v2.0 patterns
-- **Connection References**: Advanced multi-tenant capabilities with enhanced connectivity
-- **No Backward Compatibility**: Clean slate implementation for optimal performance
+Some Gitea concepts don't fit a declarative managed-resource model and were
+deliberately excluded; modelling them would produce resources that can't
+reconcile:
 
-## Status
+| Concept | Why it's not a CRD |
+|---------|--------------------|
+| Action / workflow | A workflow is a file committed to `.gitea/workflows/` — git content, not an API object (Gitea has no create-workflow endpoint). |
+| Runner | Registration needs a one-time token and a live `act_runner` agent — runtime registration, not desired state. |
+| PullRequest | A transient event over two branches with divergent commits, not a managed resource. |
+| Issue / Release | Content/tickets/tagged artifacts — not infrastructure config. |
+| OrganizationMember | Gitea has no add-member endpoint; membership is a side-effect of team membership (use `Team`). |
 
-[![CI](https://github.com/crossplane-contrib/provider-gitea/workflows/CI/badge.svg)](https://github.com/crossplane-contrib/provider-gitea/actions)
-[![Coverage](https://codecov.io/gh/crossplane-contrib/provider-gitea/branch/master/graph/badge.svg)](https://codecov.io/gh/crossplane-contrib/provider-gitea)
-[![Go Report Card](https://goreportcard.com/badge/github.com/crossplane-contrib/provider-gitea)](https://goreportcard.com/report/github.com/crossplane-contrib/provider-gitea)
+Two kinds were merged/deduplicated rather than dropped:
+- **AdminUser** merged into **`User`** (both drove `/admin/users`); `User` carries
+  the union of fields (`maxRepoCreation`, `admin`, …).
+- **DeployKey** and **UserKey** were removed in favour of **`RepositoryKey`**
+  (DeployKey hit the identical `/repos/{owner}/{repo}/keys` endpoint).
 
-- **Resources**: 23 v2 resource kinds (namespace-isolated `.m.` API groups)
-- **Controllers**: a working reconciler for every kind, each unit-tested
-- **API Client**: complete Gitea API integration with typed error classification
-- **e2e**: all 23 kinds driven apply→Ready→delete on kind against a mock Gitea
-- **Registry**: `ghcr.io/rossigee/provider-gitea`
+## Lifecycle coverage
 
-## Complete Resource Catalog
+A green CI run is the "works by design" guarantee. `scripts/e2e.sh` installs a
+real Gitea via the official Helm chart on a kind cluster and drives every example
+through uptest:
 
-| **Resource Type** | **Purpose** | **Examples** |
-|-------------------|-------------|--------------|
-| `Repository` | Git repository management | [basic-repo.yaml](examples/repository/basic-repo.yaml) |
-| `Organization` | Organization lifecycle | [basic-org.yaml](examples/organization/basic-org.yaml) |
-| `User` | User account management | [basic-user.yaml](examples/user/basic-user.yaml) |
-| `Webhook` | Webhook configuration | [repo-webhook.yaml](examples/webhook/repo-webhook.yaml) |
-| `DeployKey` | SSH deploy key management | [basic-deploykey.yaml](examples/deploykey/basic-deploykey.yaml) |
-| `Team` | Team collaboration | [basic-team.yaml](examples/team/basic-team.yaml) |
-| `Label` | Issue/PR labels | [basic-labels.yaml](examples/label/basic-labels.yaml) |
-| `RepositoryCollaborator` | Repository access | [basic-collaborators.yaml](examples/repositorycollaborator/basic-collaborators.yaml) |
-| `OrganizationSettings` | Organization policies | [organizationsettings.yaml](examples/organizationsettings/organizationsettings.yaml) |
-| `GitHook` | Server-side Git hooks | [post-receive-hook.yaml](examples/githook/post-receive-hook.yaml) |
-| **Security Resources** | | |
-| `BranchProtection` | Branch protection rules | [enterprise-branch-protection.yaml](examples/branchprotection/enterprise-branch-protection.yaml) |
-| `RepositoryKey` | SSH key management | [deployment-key.yaml](examples/repositorykey/deployment-key.yaml) |
-| `AccessToken` | API token management | [ci-token.yaml](examples/accesstoken/ci-token.yaml) |
-| `RepositorySecret` | CI/CD secrets | [docker-registry-secret.yaml](examples/repositorysecret/docker-registry-secret.yaml) |
-| `UserKey` | User SSH keys | [developer-ssh-key.yaml](examples/userkey/developer-ssh-key.yaml) |
-| `OrganizationMember` | Organization membership | [team-membership.yaml](examples/organizationmember/team-membership.yaml) |
-| `OrganizationSecret` | Organization-wide secrets | [harbor-integration.yaml](examples/organizationsecret/harbor-integration.yaml) |
-| **CI/CD Resources** | | |
-| `Action` | CI/CD workflows | [ci-pipeline.yaml](examples/action/ci-pipeline.yaml) |
-| `Runner` | Self-hosted runners | [repository-runner.yaml](examples/runner/repository-runner.yaml) |
-| **Administrative Resources** | | |
-| `AdminUser` | Administrative users | [service-accounts.yaml](examples/adminuser/service-accounts.yaml) |
+| Stage | Coverage |
+|-------|----------|
+| Create / Observe / Import / Delete | **all 14 kinds**, against real Gitea |
+| Update | exercised live for the mutable kinds (`Repository`, `Organization`, `Label`, `Team`, `User`) via `uptest.upbound.io/update-parameter`; unit-tested for the rest |
 
-## Development Setup
+`RepositorySecret`, `OrganizationSecret`, `AccessToken`, and `RepositoryKey` have
+no meaningful in-place update (the value is write-only / the key is immutable), so
+their controllers treat the resource as up-to-date once it exists and skip the
+live update step.
 
-**Important**: After cloning this repository, install the git hooks to prevent large file commits:
+## Working with secret-bearing resources
 
-```bash
-./scripts/install-hooks.sh
+**Secret values are never set inline.** Every field that carries a credential is
+a Kubernetes Secret reference (`*SecretRef`), following the same convention as the
+rest of the platform's providers. The reference is a selector with `namespace`,
+`name`, and `key`:
+
+| Resource | Field | Holds |
+|----------|-------|-------|
+| `User` | `spec.forProvider.passwordSecretRef` | the user's password (required on create) |
+| `RepositorySecret` | `spec.forProvider.valueSecretRef` | the Actions secret value |
+| `OrganizationSecret` | `spec.forProvider.valueSecretRef` | the Actions secret value |
+| `AccessToken` | `spec.forProvider.passwordSecretRef` | the owning user's password (see below) |
+
+Example — a `User` whose password comes from a Secret:
+
+```yaml
+apiVersion: v1
+kind: Secret
+metadata: {name: alice-password, namespace: default}
+stringData: {password: "S3cure-Pass-123"}
+---
+apiVersion: user.gitea.m.crossplane.io/v2
+kind: User
+metadata: {name: alice, namespace: default}
+spec:
+  forProvider:
+    username: alice
+    email: alice@example.com
+    passwordSecretRef: {namespace: default, name: alice-password, key: password}
+  providerConfigRef: {name: default, kind: ProviderConfig}
 ```
 
-This installs a pre-commit hook that prevents:
-- Files larger than 10MB
-- Binary artifacts (*.xpkg, *.tar.gz, etc.)
-- Build artifacts (provider binaries, cache files)
+### AccessToken authenticates as the user (not the provider)
 
-## Quick Start
+`AccessToken` is special. Gitea's token API (`/users/{user}/tokens`) **rejects the
+ProviderConfig token and requires HTTP basic auth as the owning user**. So
+`AccessToken` does not use the ProviderConfig's credentials — it authenticates as
+`spec.forProvider.username` using the password in `passwordSecretRef`. Provide a
+Secret with that user's password; the provider basic-auths as them to mint, read,
+and revoke the token. The minted token value is written to the resource's
+connection secret (Gitea returns it exactly once). This basic-auth path is reusable
+for any future user-scoped resource.
+
+## Quick start
 
 1. Install the provider:
-```bash
-kubectl crossplane install provider ghcr.io/rossigee/provider-gitea:<tag>
-```
-
+   ```bash
+   kubectl crossplane install provider ghcr.io/rossigee/provider-gitea:<tag>
+   ```
 2. Confirm the CRDs registered:
-```bash
-kubectl get crds | grep gitea.m.crossplane.io
-```
-
-3. Create a ProviderConfig + apply a resource (see `examples/`):
-```bash
-kubectl apply -f examples/e2e/repository.yaml
-kubectl get repository.repository.gitea.m.crossplane.io -n <ns>
-```
+   ```bash
+   kubectl get crds | grep gitea.m.crossplane.io   # expect 14
+   ```
+3. Create a ProviderConfig + apply a resource (see `examples/e2e/`):
+   ```bash
+   kubectl apply -f examples/e2e/repository.yaml
+   kubectl get repository.repository.gitea.m.crossplane.io -n <ns>
+   ```
 
 ## Testing
 
 ```bash
 make test          # unit tests (offline, table-driven per controller)
-make e2e           # self-contained kind + mock-Gitea e2e (apply->Ready->delete)
+make validate      # the full static CI gate (build + test + lint + check-diff) — RUN BEFORE PUSHING
+make e2e           # self-contained kind + REAL Gitea e2e (apply->Ready->update->import->delete)
 make xpkg-verify   # assert the built package carries the Provider meta + all CRDs
 ```
 
 - Every controller has a unit test asserting the correctness invariants
   (Available on the exists path, typed not-found, drift, external-name identity,
   idempotent delete).
-- `make e2e` (and CI `e2e.yml`) drives all 23 kinds through their full lifecycle
-  on a throwaway kind cluster against an in-cluster mock Gitea — no external
-  dependency.
+- `make e2e` (and CI `e2e.yml`) install a real Gitea (latest, official Helm chart)
+  on a throwaway kind cluster and drive every example through its lifecycle — no
+  mock backend. See [docs/TESTING.md](docs/TESTING.md) for the harness details.
+- `make validate` reproduces the exact CI gate locally; run it before every push.
 
-### Test Infrastructure
+## Development setup
 
-The provider includes a shared test infrastructure at [`internal/controller/testing/`](internal/controller/testing/) that provides:
-
-- **TestFixtures** - Common test data and response builders
-- **MockClientBuilder** - Fluent interface for Gitea mock clients
-- **K8sSecretBuilder** - Kubernetes secret creation utilities
-- **TestSuite** - Test orchestration and assertion helpers
-
-See the [Test Infrastructure README](internal/controller/testing/README.md) for detailed usage examples.
-
-### Running Tests
+After cloning, install the git hooks (prevents large-file / binary-artifact
+commits):
 
 ```bash
-# Run all tests
-make test
-
-# Run with coverage
-make test-coverage
-
-# Run client library tests
-go test ./internal/clients/...
-
-# Lint code
-make lint
+./scripts/install-hooks.sh
 ```
 
 ## Documentation
 
+- [Testing harness](docs/TESTING.md)
 - [Configuration Guide](docs/CONFIGURATION.md)
 - [Development Guide](docs/DEVELOPMENT.md)
 - [Resource Reference](docs/RESOURCES.md)
-- [Test Infrastructure](internal/controller/testing/README.md)
 
-## Development
+## Registry
 
-See [DEVELOPMENT.md](docs/DEVELOPMENT.md) for development setup and contribution guidelines.
+`ghcr.io/rossigee/provider-gitea`

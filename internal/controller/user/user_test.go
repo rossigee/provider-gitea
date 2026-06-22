@@ -21,6 +21,10 @@ import (
 	"testing"
 
 	"github.com/pkg/errors"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	"github.com/crossplane/crossplane-runtime/v2/pkg/meta"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
@@ -63,11 +67,23 @@ func newCR(externalName string) *v2.User {
 	cr.SetName("my-user")
 	cr.Spec.ForProvider.Username = "my-user"
 	cr.Spec.ForProvider.Email = "u@example.com"
-	cr.Spec.ForProvider.Password = "s3cret"
+	cr.Spec.ForProvider.PasswordSecretRef = &xpv1.SecretKeySelector{
+		SecretReference: xpv1.SecretReference{Namespace: "default", Name: "user-password"},
+		Key:             "password",
+	}
 	if externalName != "" {
 		meta.SetExternalName(cr, externalName)
 	}
 	return cr
+}
+
+// kubeWithPassword is a fake kube client seeded with the Secret that
+// passwordSecretRef points at (Create reads the password from it).
+func kubeWithPassword() client.Client {
+	return fake.NewClientBuilder().WithObjects(&corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{Namespace: "default", Name: "user-password"},
+		Data:       map[string][]byte{"password": []byte("s3cret")},
+	}).Build()
 }
 
 func isAvailable(cr resource.Managed) bool {
@@ -119,7 +135,7 @@ func TestObserveAvailableAndUpToDate(t *testing.T) {
 
 func TestCreateSetsExternalNameFromBackend(t *testing.T) {
 	f := &fakeClient{createResp: &clients.User{ID: 7, Username: "my-user"}}
-	e := &external{client: f}
+	e := &external{client: f, kube: kubeWithPassword()}
 
 	cr := newCR("")
 	if _, err := e.Create(context.Background(), cr); err != nil {

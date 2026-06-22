@@ -1,7 +1,8 @@
-apiVersion: organizationsettings.gitea.crossplane.io/v1alpha1
+apiVersion: organizationsettings.gitea.m.crossplane.io/v2
 kind: OrganizationSettings
 metadata:
   name: enterprise-security-policy
+  namespace: default
   annotations:
     crossplane.io/external-name: acme-corp
 spec:

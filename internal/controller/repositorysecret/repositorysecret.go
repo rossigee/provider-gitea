@@ -25,7 +25,6 @@ import (
 	"context"
 
 	"github.com/pkg/errors"
-	corev1 "k8s.io/api/core/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -109,17 +108,16 @@ type external struct {
 
 // resolveValue reads the secret value from the referenced Kubernetes Secret.
 // Gitea requires a non-empty "data" on create/update (422 "[Data]: Required").
+// The value is never taken from the spec (secret-ref convention).
 func (e *external) resolveValue(ctx context.Context, cr *v2.RepositorySecret) (string, error) {
-	ref := cr.Spec.ForProvider.ValueSecretRef
-	var sec corev1.Secret
-	if err := e.kube.Get(ctx, client.ObjectKey{Namespace: ref.Namespace, Name: ref.Name}, &sec); err != nil {
+	if cr.Spec.ForProvider.ValueSecretRef == nil {
+		return "", errors.New(errGetValue + ": valueSecretRef is required")
+	}
+	v, err := clients.ResolveSecretValue(ctx, e.kube, cr.Spec.ForProvider.ValueSecretRef)
+	if err != nil {
 		return "", errors.Wrap(err, errGetValue)
 	}
-	v, ok := sec.Data[ref.Key]
-	if !ok {
-		return "", errors.Errorf("%s: key %q not found in secret %s/%s", errGetValue, ref.Key, ref.Namespace, ref.Name)
-	}
-	return string(v), nil
+	return v, nil
 }
 
 func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.ExternalObservation, error) {

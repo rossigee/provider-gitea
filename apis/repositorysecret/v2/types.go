@@ -36,9 +36,11 @@ type RepositorySecretParameters struct {
 	// +kubebuilder:validation:MaxLength=100
 	SecretName string `json:"secretName"`
 
-	// ValueSecretRef references a Kubernetes secret containing the secret value
+	// ValueSecretRef references the key in a Kubernetes Secret holding the secret
+	// value. The value is never set inline; it is always taken from a referenced
+	// Secret (secret-ref convention).
 	// +kubebuilder:validation:Required
-	ValueSecretRef xpv1.SecretKeySelector `json:"valueSecretRef"`
+	ValueSecretRef *xpv1.SecretKeySelector `json:"valueSecretRef,omitempty"`
 
 	// V2 Enhancement: Connection reference for multi-tenant support
 	// ConnectionRef specifies the Gitea connection to use

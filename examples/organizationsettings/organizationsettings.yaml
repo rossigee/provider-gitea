@@ -1,7 +1,8 @@
-apiVersion: organizationsettings.gitea.crossplane.io/v1alpha1
+apiVersion: organizationsettings.gitea.m.crossplane.io/v2
 kind: OrganizationSettings
 metadata:
   name: example-org-settings
+  namespace: default
 spec:
   forProvider:
     organization: example-org

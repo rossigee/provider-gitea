@@ -1,14 +1,18 @@
-apiVersion: user.gitea.crossplane.io/v1alpha1
+apiVersion: user.gitea.m.crossplane.io/v2
 kind: User
 metadata:
   name: example-user
+  namespace: default
   annotations:
     crossplane.io/external-name: johndoe
 spec:
   forProvider:
     username: johndoe
     email: john.doe@example.com
-    password: "SecurePassword123!"
+    passwordSecretRef:
+      namespace: default
+      name: example-user-password
+      key: password
     fullName: "John Doe"
     sendNotify: false
     mustChangePassword: true
@@ -16,3 +20,15 @@ spec:
     visibility: public
   providerConfigRef:
     name: default
+
+---
+# Supporting Kubernetes secret holding the user password
+apiVersion: v1
+kind: Secret
+metadata:
+  name: example-user-password
+  namespace: default
+type: Opaque
+data:
+  # base64-encoded password
+  password: "U2VjdXJlUGFzc3dvcmQxMjMh"

@@ -34,8 +34,16 @@ type UserParameters struct {
 	// +kubebuilder:validation:Format="email"
 	Email string `json:"email"`
 
-	// Password is the user's password (required for creation)
-	Password string `json:"password"`
+	// PasswordSecretRef references the key in a Kubernetes Secret that holds the
+	// user's password (required for creation). The password is never set inline;
+	// it is always taken from a referenced Secret (secret-ref convention).
+	// +kubebuilder:validation:Optional
+	PasswordSecretRef *xpv1.SecretKeySelector `json:"passwordSecretRef,omitempty"`
+
+	// MaxRepoCreation limits the number of repositories the user can create
+	// (-1 for unlimited). Applied on update.
+	// +kubebuilder:validation:Minimum=-1
+	MaxRepoCreation *int `json:"maxRepoCreation,omitempty"`
 
 	// FullName is the user's full name
 	FullName *string `json:"fullName,omitempty"`

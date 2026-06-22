@@ -5,13 +5,14 @@
 # BEFORE: v1alpha1 (cluster-scoped)
 # ========================================
 
-# OLD: Cluster-scoped repository (v1alpha1)
+# OLD: Cluster-scoped repository (v1alpha1) — shown here updated to the
+# current namespaced v2 API, since the v1alpha1 group no longer exists
 ---
-apiVersion: repository.gitea.crossplane.io/v1alpha1
+apiVersion: repository.gitea.m.crossplane.io/v2
 kind: Repository
 metadata:
   name: legacy-repo
-  # No namespace - cluster-scoped
+  namespace: default
   annotations:
     crossplane.io/external-name: "legacy-project"
 spec:

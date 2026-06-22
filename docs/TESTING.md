@@ -34,7 +34,7 @@ go test -race ./...
 
 The provider maintains comprehensive test coverage:
 
-- **23/23 controllers**: 100% test success rate
+- **14/14 controllers**: 100% test success rate
 - **184 passing tests** across all resource types
 - **Controller tests**: Complete CRUD operation coverage
 - **Mock integration**: Full Gitea API and Kubernetes client mocking
@@ -93,7 +93,7 @@ mockClient := testing.NewMockClient().
 Create Kubernetes secrets for testing controllers that need secret access:
 
 ```go
-// Password secret for AdminUser tests
+// Password secret for User tests
 passwordSecret := testing.NewSecret("user-password", "default").
     WithPasswordData("supersecret123").
     Build()
@@ -152,7 +152,7 @@ func TestRepository_Create_Successful(t *testing.T) {
 - **Reduced Duplication**: Shared fixtures eliminate repetitive test setup
 - **Improved Maintainability**: Centralized infrastructure makes updates easier
 - **Enhanced Readability**: Fluent interfaces provide clean, readable tests
-- **Comprehensive Coverage**: Supports all 23 controller types with unique patterns
+- **Comprehensive Coverage**: Supports all 14 controller types with unique patterns
 
 ## Client Layer Testing
 
@@ -163,8 +163,8 @@ The `internal/clients` package has comprehensive test coverage including:
 - ✅ **Organization Management**: Get, Create, Update, Delete  
 - ✅ **User Management**: Get, Create, Update, Delete
 - ✅ **Webhook Management**: Get, Create, Update, Delete (both repo and org)
-- ✅ **Deploy Key Management**: Get, Create, Delete
-- ✅ **Authentication**: Token-based authentication
+- ✅ **Repository Key Management**: Get, Create, Update, Delete
+- ✅ **Authentication**: token-based (ProviderConfig) and HTTP basic auth (AccessToken)
 - ✅ **Error Handling**: HTTP error responses, network failures
 
 ### Test Patterns
@@ -392,17 +392,33 @@ explicit (and that the code now reflects):
 - Editing a git hook is `PATCH /repos/{o}/{r}/hooks/git/{id}`, not `POST`.
 - `PATCH /admin/users/{username}` requires `login_name` + `source_id`.
 
-### Resources excluded from e2e (with citations in the example files)
+### Update step
 
-Some controllers cannot work against a real Gitea as written; their examples are
-committed as `*.yaml.disabled` with a comment explaining why, and they remain
-unit-tested:
+The e2e runs the uptest update step (no `--skip-update`). Each example carrying a
+`uptest.upbound.io/update-parameter` annotation is mutated and re-driven to Ready,
+exercising the Update path against real Gitea. The annotated kinds are
+`Repository`, `Organization`, `Label`, `Team`, and `User`. Immutable / write-only
+kinds (`RepositorySecret`, `OrganizationSecret`, `AccessToken`, `RepositoryKey`)
+carry no annotation and skip the live update step (their Observe always reports
+up-to-date once the resource exists).
 
-- **accesstoken** — `POST /users/{user}/tokens` requires HTTP basic auth; this
-  provider authenticates with a token (401).
-- **action** — Gitea has no "create workflow" REST endpoint; workflows are files
-  committed to `.gitea/workflows/` (405).
-- **organizationmember** — Gitea has no add-member endpoint; membership is via
-  teams (405).
-- **pullrequest** — needs two real branches with a divergent commit history.
-- **runner** — needs a registration token + a running act_runner agent.
+### Kinds that are no longer modelled
+
+The provider was trimmed to the 14 kinds that fit a declarative model. The
+following were **removed** (not disabled) because they cannot reconcile as managed
+resources, and modelling them produced controllers that fail against real Gitea:
+
+- **Action** — no "create workflow" endpoint; workflows are files in
+  `.gitea/workflows/` (405).
+- **Runner** — needs a one-time registration token + a live act_runner agent.
+- **PullRequest** — a transient event over two branches with divergent commits.
+- **Issue / Release** — content/tickets/tagged artifacts, not config.
+- **OrganizationMember** — no add-member endpoint; membership is via `Team` (405).
+- **AdminUser** — merged into `User` (both drove `/admin/users`).
+- **DeployKey / UserKey** — removed in favour of `RepositoryKey` (DeployKey hit
+  the identical `/repos/{owner}/{repo}/keys` endpoint).
+
+**AccessToken is now fully e2e-tested.** `POST /users/{user}/tokens` requires HTTP
+basic auth as the owning user, so the controller authenticates as
+`spec.forProvider.username` with the password from `passwordSecretRef` instead of
+the ProviderConfig token (see the README's secret-bearing-resources section).

@@ -98,12 +98,13 @@ func (c *connector) Connect(ctx context.Context, mg resource.Managed) (managed.E
 		return nil, err
 	}
 
-	return &external{client: conn}, nil
+	return &external{client: conn, kube: c.kube}, nil
 }
 
 // external observes/creates/updates/deletes the backend user.
 type external struct {
 	client clients.Client
+	kube   client.Client
 }
 
 func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.ExternalObservation, error) {
@@ -196,10 +197,20 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 	}
 	cr.SetConditions(xpv1.Creating())
 
+	// The password is required for creation and is only ever read from the
+	// referenced Secret — never from the spec (secret-ref convention).
+	if cr.Spec.ForProvider.PasswordSecretRef == nil {
+		return managed.ExternalCreation{}, errors.New("passwordSecretRef is required to create a user")
+	}
+	password, err := clients.ResolveSecretValue(ctx, e.kube, cr.Spec.ForProvider.PasswordSecretRef)
+	if err != nil {
+		return managed.ExternalCreation{}, errors.Wrap(err, errCreateUser)
+	}
+
 	createReq := &clients.CreateUserRequest{
 		Username: cr.Spec.ForProvider.Username,
 		Email:    cr.Spec.ForProvider.Email,
-		Password: cr.Spec.ForProvider.Password,
+		Password: password,
 	}
 	if cr.Spec.ForProvider.FullName != nil {
 		createReq.FullName = *cr.Spec.ForProvider.FullName
@@ -261,6 +272,7 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 		Location:                cr.Spec.ForProvider.Location,
 		Description:             cr.Spec.ForProvider.Description,
 		Visibility:              cr.Spec.ForProvider.Visibility,
+		MaxRepoCreation:         cr.Spec.ForProvider.MaxRepoCreation,
 	}
 	if cr.Spec.ForProvider.Email != "" {
 		updateReq.Email = &cr.Spec.ForProvider.Email

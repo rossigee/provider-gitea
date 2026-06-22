@@ -94,7 +94,19 @@ func (c *connector) Connect(ctx context.Context, mg resource.Managed) (managed.E
 		return nil, errors.Wrap(err, errGetProviderConfig)
 	}
 
-	conn, err := clients.NewClient(ctx, &pc, c.kube)
+	// Access-token CRUD is gated by Gitea on the owning user's credentials, not
+	// the ProviderConfig token. Authenticate with HTTP basic auth as that user,
+	// reading the password from the referenced Secret (secret-ref convention).
+	if cr.Spec.ForProvider.PasswordSecretRef == nil {
+		return nil, errors.New("passwordSecretRef is required for AccessToken")
+	}
+	password, err := clients.ResolveSecretValue(ctx, c.kube, cr.Spec.ForProvider.PasswordSecretRef)
+	if err != nil {
+		return nil, err
+	}
+
+	insecure := pc.Spec.Insecure != nil && *pc.Spec.Insecure
+	conn, err := clients.NewBasicAuthClient(pc.Spec.BaseURL, cr.Spec.ForProvider.Username, password, insecure)
 	if err != nil {
 		return nil, err
 	}

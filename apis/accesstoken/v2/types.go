@@ -41,6 +41,15 @@ type AccessTokenParameters struct {
 	// +kubebuilder:validation:MinItems=1
 	Scopes []string `json:"scopes"`
 
+	// PasswordSecretRef references the key in a Kubernetes Secret holding the
+	// password of the user named in Username. Gitea's access-token API rejects
+	// token auth and requires HTTP basic auth as the owning user, so this
+	// resource authenticates with these credentials instead of the
+	// ProviderConfig token. The password is never set inline (secret-ref
+	// convention).
+	// +kubebuilder:validation:Optional
+	PasswordSecretRef *xpv1.SecretKeySelector `json:"passwordSecretRef,omitempty"`
+
 	// V2 Enhancement: Connection reference for multi-tenant support
 	// ConnectionRef specifies the Gitea connection to use
 	ConnectionRef *xpv1.Reference `json:"connectionRef,omitempty"`

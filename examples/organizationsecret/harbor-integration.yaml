@@ -1,7 +1,8 @@
-apiVersion: organizationsecret.gitea.crossplane.io/v1alpha1
+apiVersion: organizationsecret.gitea.m.crossplane.io/v2
 kind: OrganizationSecret
 metadata:
   name: harbor-registry-secret
+  namespace: default
   annotations:
     crossplane.io/external-name: HARBOR_REGISTRY_URL
     description: "Harbor container registry URL for CI/CD pipelines"
@@ -9,14 +10,18 @@ spec:
   forProvider:
     organization: infrastructure
     secretName: HARBOR_REGISTRY_URL
-    data: "harbor.infra.golder.lan"
+    valueSecretRef:
+      namespace: default
+      name: harbor-registry-url-value
+      key: value
   providerConfigRef:
     name: default
 ---
-apiVersion: organizationsecret.gitea.crossplane.io/v1alpha1
+apiVersion: organizationsecret.gitea.m.crossplane.io/v2
 kind: OrganizationSecret
 metadata:
   name: harbor-robot-credentials
+  namespace: default
   annotations:
     crossplane.io/external-name: HARBOR_ROBOT_TOKEN
     description: "Harbor robot account credentials for automated pushes"
@@ -24,18 +29,18 @@ spec:
   forProvider:
     organization: infrastructure
     secretName: HARBOR_ROBOT_TOKEN
-    dataFrom:
-      secretKeyRef:
-        name: harbor-robot-credentials
-        namespace: gitea-secrets
-        key: robot-token
+    valueSecretRef:
+      namespace: gitea-secrets
+      name: harbor-robot-credentials
+      key: robot-token
   providerConfigRef:
     name: default
 ---
-apiVersion: organizationsecret.gitea.crossplane.io/v1alpha1
+apiVersion: organizationsecret.gitea.m.crossplane.io/v2
 kind: OrganizationSecret
 metadata:
   name: harbor-project-name
+  namespace: default
   annotations:
     crossplane.io/external-name: HARBOR_PROJECT
     description: "Harbor project name for container images"
@@ -43,6 +48,31 @@ spec:
   forProvider:
     organization: infrastructure
     secretName: HARBOR_PROJECT
-    data: "crossplane-providers"
+    valueSecretRef:
+      namespace: default
+      name: harbor-project-value
+      key: value
   providerConfigRef:
     name: default
+---
+# Supporting Kubernetes secret holding the registry URL value
+apiVersion: v1
+kind: Secret
+metadata:
+  name: harbor-registry-url-value
+  namespace: default
+type: Opaque
+data:
+  # base64-encoded "harbor.infra.golder.lan"
+  value: "aGFyYm9yLmluZnJhLmdvbGRlci5sYW4="
+---
+# Supporting Kubernetes secret holding the project name value
+apiVersion: v1
+kind: Secret
+metadata:
+  name: harbor-project-value
+  namespace: default
+type: Opaque
+data:
+  # base64-encoded "crossplane-providers"
+  value: "Y3Jvc3NwbGFuZS1wcm92aWRlcnM="

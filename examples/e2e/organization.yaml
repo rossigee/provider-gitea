@@ -1,6 +1,6 @@
 apiVersion: organization.gitea.m.crossplane.io/v2
 kind: Organization
-metadata: {name: uptest-org, namespace: provider-gitea-e2e, annotations: {meta.upbound.io/example-id: organization/v2/organization}}
+metadata: {name: uptest-org, namespace: provider-gitea-e2e, annotations: {meta.upbound.io/example-id: organization/v2/organization, uptest.upbound.io/update-parameter: '{"visibility":"limited"}'}}
 spec:
   forProvider: {username: uptest-org, visibility: public}
   providerConfigRef: {name: e2e, kind: ProviderConfig}

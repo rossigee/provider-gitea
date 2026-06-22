@@ -28,11 +28,12 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	corev1 "k8s.io/api/core/v1"
+
+	xpv1 "github.com/crossplane/crossplane/apis/v2/core/v2"
 
 	"github.com/rossigee/provider-gitea/apis/v1beta1"
 )
@@ -75,11 +76,6 @@ type Client interface {
 	CreateOrganizationWebhook(ctx context.Context, org string, req *CreateWebhookRequest) (*Webhook, error)
 	UpdateOrganizationWebhook(ctx context.Context, org string, id int64, req *UpdateWebhookRequest) (*Webhook, error)
 	DeleteOrganizationWebhook(ctx context.Context, org string, id int64) error
-
-	// Deploy Key operations
-	GetDeployKey(ctx context.Context, owner, repo string, id int64) (*DeployKey, error)
-	CreateDeployKey(ctx context.Context, owner, repo string, req *CreateDeployKeyRequest) (*DeployKey, error)
-	DeleteDeployKey(ctx context.Context, owner, repo string, id int64) error
 
 	// Organization Secret operations
 	GetOrganizationSecret(ctx context.Context, org, secretName string) (*OrganizationSecret, error)
@@ -141,60 +137,6 @@ type Client interface {
 	CreateRepositorySecret(ctx context.Context, repository, secretName string, req *CreateRepositorySecretRequest) error
 	UpdateRepositorySecret(ctx context.Context, repository, secretName string, req *UpdateRepositorySecretRequest) error
 	DeleteRepositorySecret(ctx context.Context, repository, secretName string) error
-
-	// User Key operations
-	GetUserKey(ctx context.Context, username string, keyID int64) (*UserKey, error)
-	CreateUserKey(ctx context.Context, username string, req *CreateUserKeyRequest) (*UserKey, error)
-	UpdateUserKey(ctx context.Context, username string, keyID int64, req *UpdateUserKeyRequest) (*UserKey, error)
-	DeleteUserKey(ctx context.Context, username string, keyID int64) error
-
-	// Issue operations
-	GetIssue(ctx context.Context, owner, repo string, number int64) (*Issue, error)
-	CreateIssue(ctx context.Context, owner, repo string, req *CreateIssueOptions) (*Issue, error)
-	UpdateIssue(ctx context.Context, owner, repo string, number int64, req *UpdateIssueOptions) (*Issue, error)
-	DeleteIssue(ctx context.Context, owner, repo string, number int64) error
-
-	// PullRequest operations
-	GetPullRequest(ctx context.Context, owner, repo string, number int64) (*PullRequest, error)
-	CreatePullRequest(ctx context.Context, owner, repo string, req *CreatePullRequestOptions) (*PullRequest, error)
-	UpdatePullRequest(ctx context.Context, owner, repo string, number int64, req *UpdatePullRequestOptions) (*PullRequest, error)
-	DeletePullRequest(ctx context.Context, owner, repo string, number int64) error
-	MergePullRequest(ctx context.Context, owner, repo string, number int64, req *MergePullRequestOptions) (*PullRequest, error)
-
-	// Release operations
-	GetRelease(ctx context.Context, owner, repo string, id int64) (*Release, error)
-	GetReleaseByTag(ctx context.Context, owner, repo, tag string) (*Release, error)
-	CreateRelease(ctx context.Context, owner, repo string, req *CreateReleaseOptions) (*Release, error)
-	UpdateRelease(ctx context.Context, owner, repo string, id int64, req *UpdateReleaseOptions) (*Release, error)
-	DeleteRelease(ctx context.Context, owner, repo string, id int64) error
-	CreateReleaseAttachment(ctx context.Context, owner, repo string, releaseID int64, filename, contentType string, content []byte) (*ReleaseAttachment, error)
-	DeleteReleaseAttachment(ctx context.Context, owner, repo string, releaseID, attachmentID int64) error
-
-	// Organization Member operations
-	GetOrganizationMember(ctx context.Context, org, username string) (*OrganizationMember, error)
-	AddOrganizationMember(ctx context.Context, org, username string, req *AddOrganizationMemberRequest) (*OrganizationMember, error)
-	UpdateOrganizationMember(ctx context.Context, org, username string, req *UpdateOrganizationMemberRequest) (*OrganizationMember, error)
-	RemoveOrganizationMember(ctx context.Context, org, username string) error
-
-	// Action operations
-	GetAction(ctx context.Context, repository, workflowName string) (*Action, error)
-	CreateAction(ctx context.Context, repository string, req *CreateActionRequest) (*Action, error)
-	UpdateAction(ctx context.Context, repository, workflowName string, req *UpdateActionRequest) (*Action, error)
-	DeleteAction(ctx context.Context, repository, workflowName string) error
-	EnableAction(ctx context.Context, repository, workflowName string) error
-	DisableAction(ctx context.Context, repository, workflowName string) error
-
-	// Runner operations
-	GetRunner(ctx context.Context, scope, scopeValue string, runnerID int64) (*Runner, error)
-	CreateRunner(ctx context.Context, scope, scopeValue string, req *CreateRunnerRequest) (*Runner, error)
-	UpdateRunner(ctx context.Context, scope, scopeValue string, runnerID int64, req *UpdateRunnerRequest) (*Runner, error)
-	DeleteRunner(ctx context.Context, scope, scopeValue string, runnerID int64) error
-
-	// Admin User operations
-	GetAdminUser(ctx context.Context, username string) (*AdminUser, error)
-	CreateAdminUser(ctx context.Context, req *CreateAdminUserRequest) (*AdminUser, error)
-	UpdateAdminUser(ctx context.Context, username string, req *UpdateAdminUserRequest) (*AdminUser, error)
-	DeleteAdminUser(ctx context.Context, username string) error
 }
 
 // giteaClient implements the Client interface
@@ -202,6 +144,11 @@ type giteaClient struct {
 	httpClient *http.Client
 	baseURL    string
 	token      string
+
+	// basicUser/basicPass, when set, switch authentication from the
+	// ProviderConfig token to HTTP basic auth as a specific user (see doRequest).
+	basicUser string
+	basicPass string
 }
 
 // NewClient creates a new Gitea API client
@@ -236,6 +183,52 @@ func NewClient(ctx context.Context, cfg *v1beta1.ProviderConfig, kube client.Cli
 		baseURL:    baseURL,
 		token:      token,
 	}, nil
+}
+
+// NewBasicAuthClient builds a client that authenticates with HTTP basic auth as
+// a specific user instead of the ProviderConfig token. It is required for
+// endpoints Gitea gates on the owning user's credentials (e.g. access-token
+// CRUD) and is reusable by any future user-context resource.
+func NewBasicAuthClient(baseURL, username, password string, insecure bool) (Client, error) {
+	if baseURL == "" {
+		return nil, errors.New("baseURL is required")
+	}
+	if username == "" || password == "" {
+		return nil, errors.New("username and password are required for basic auth")
+	}
+
+	httpClient := &http.Client{Timeout: defaultTimeout}
+	if insecure {
+		httpClient.Transport = &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		}
+	}
+
+	return &giteaClient{
+		httpClient: httpClient,
+		baseURL:    strings.TrimSuffix(baseURL, "/") + apiPath,
+		basicUser:  username,
+		basicPass:  password,
+	}, nil
+}
+
+// ResolveSecretValue reads a single value from the Kubernetes Secret referenced
+// by a SecretKeySelector. It is the one canonical way every controller turns a
+// `*SecretRef` field into a plaintext value — secrets are NEVER taken from the
+// spec directly (see the secret-ref rule in the provider template).
+func ResolveSecretValue(ctx context.Context, kube client.Client, sel *xpv1.SecretKeySelector) (string, error) {
+	if sel == nil {
+		return "", errors.New("secret reference is not set")
+	}
+	var sec corev1.Secret
+	if err := kube.Get(ctx, client.ObjectKey{Namespace: sel.Namespace, Name: sel.Name}, &sec); err != nil {
+		return "", errors.Wrap(err, "failed to read referenced secret")
+	}
+	v, ok := sec.Data[sel.Key]
+	if !ok {
+		return "", errors.Errorf("key %q not found in secret %s/%s", sel.Key, sel.Namespace, sel.Name)
+	}
+	return string(v), nil
 }
 
 // Repository represents a Gitea repository
@@ -391,179 +384,7 @@ type UpdateUserRequest struct {
 	Location                *string `json:"location,omitempty"`
 	Description             *string `json:"description,omitempty"`
 	Visibility              *string `json:"visibility,omitempty"`
-}
-
-// Issue represents a Gitea issue
-type Issue struct {
-	ID        int64        `json:"id"`
-	Number    int64        `json:"number"`
-	Title     string       `json:"title"`
-	Body      string       `json:"body"`
-	State     string       `json:"state"`
-	HTMLURL   string       `json:"html_url"`
-	Comments  int          `json:"comments"`
-	User      *User        `json:"user"`
-	Labels    []*Label     `json:"labels"`
-	Assignees []*User      `json:"assignees"`
-	Milestone *Milestone   `json:"milestone,omitempty"`
-	CreatedAt *metav1.Time `json:"created_at,omitempty"`
-	UpdatedAt *metav1.Time `json:"updated_at,omitempty"`
-	ClosedAt  *metav1.Time `json:"closed_at,omitempty"`
-}
-
-// Milestone represents a Gitea milestone
-type Milestone struct {
-	ID           int64  `json:"id"`
-	Title        string `json:"title"`
-	Description  string `json:"description"`
-	State        string `json:"state"`
-	OpenIssues   int    `json:"open_issues"`
-	ClosedIssues int    `json:"closed_issues"`
-}
-
-// CreateIssueOptions represents the options for creating an issue
-type CreateIssueOptions struct {
-	Title     string   `json:"title"`
-	Body      *string  `json:"body,omitempty"`
-	Assignees []string `json:"assignees,omitempty"`
-	Labels    []string `json:"labels,omitempty"`
-	Milestone *string  `json:"milestone,omitempty"`
-}
-
-// UpdateIssueOptions represents the options for updating an issue
-type UpdateIssueOptions struct {
-	Title     *string  `json:"title,omitempty"`
-	Body      *string  `json:"body,omitempty"`
-	State     *string  `json:"state,omitempty"`
-	Assignees []string `json:"assignees,omitempty"`
-	Labels    []string `json:"labels,omitempty"`
-	Milestone *string  `json:"milestone,omitempty"`
-}
-
-// PullRequest represents a Gitea pull request
-type PullRequest struct {
-	ID                 int64        `json:"id"`
-	Number             int64        `json:"number"`
-	Title              string       `json:"title"`
-	Body               string       `json:"body"`
-	State              string       `json:"state"`
-	HTMLURL            string       `json:"html_url"`
-	DiffURL            string       `json:"diff_url"`
-	PatchURL           string       `json:"patch_url"`
-	Mergeable          *bool        `json:"mergeable,omitempty"`
-	Merged             bool         `json:"merged"`
-	Comments           int          `json:"comments"`
-	ReviewComments     int          `json:"review_comments"`
-	Additions          int          `json:"additions"`
-	Deletions          int          `json:"deletions"`
-	ChangedFiles       int          `json:"changed_files"`
-	Draft              bool         `json:"draft"`
-	User               *User        `json:"user"`
-	Head               *Branch      `json:"head"`
-	Base               *Branch      `json:"base"`
-	Labels             []*Label     `json:"labels"`
-	Assignees          []*User      `json:"assignees"`
-	RequestedReviewers []*User      `json:"requested_reviewers"`
-	Milestone          *Milestone   `json:"milestone,omitempty"`
-	CreatedAt          *metav1.Time `json:"created_at,omitempty"`
-	UpdatedAt          *metav1.Time `json:"updated_at,omitempty"`
-	ClosedAt           *metav1.Time `json:"closed_at,omitempty"`
-	MergedAt           *metav1.Time `json:"merged_at,omitempty"`
-}
-
-// Branch represents a git branch reference in a pull request
-type Branch struct {
-	Ref  string      `json:"ref"`
-	SHA  string      `json:"sha"`
-	Repo *Repository `json:"repo"`
-}
-
-// CreatePullRequestOptions represents the options for creating a pull request
-type CreatePullRequestOptions struct {
-	Title         string   `json:"title"`
-	Body          *string  `json:"body,omitempty"`
-	Head          string   `json:"head"`
-	Base          string   `json:"base"`
-	Assignees     []string `json:"assignees,omitempty"`
-	Reviewers     []string `json:"reviewers,omitempty"`
-	TeamReviewers []string `json:"team_reviewers,omitempty"`
-	Labels        []string `json:"labels,omitempty"`
-	Milestone     *string  `json:"milestone,omitempty"`
-	Draft         *bool    `json:"draft,omitempty"`
-}
-
-// UpdatePullRequestOptions represents the options for updating a pull request
-type UpdatePullRequestOptions struct {
-	Title     *string  `json:"title,omitempty"`
-	Body      *string  `json:"body,omitempty"`
-	State     *string  `json:"state,omitempty"`
-	Base      *string  `json:"base,omitempty"`
-	Assignees []string `json:"assignees,omitempty"`
-	Labels    []string `json:"labels,omitempty"`
-	Milestone *string  `json:"milestone,omitempty"`
-	Draft     *bool    `json:"draft,omitempty"`
-}
-
-// MergePullRequestOptions represents the options for merging a pull request
-type MergePullRequestOptions struct {
-	DoMerge           bool   `json:"Do"`
-	MergeMessageField string `json:"MergeMessageField,omitempty"`
-	MergeTitleField   string `json:"MergeTitleField,omitempty"`
-	MergeWhen         string `json:"MergeWhen,omitempty"`
-}
-
-// Release represents a Gitea release
-type Release struct {
-	ID              int64               `json:"id"`
-	TagName         string              `json:"tag_name"`
-	TargetCommitish string              `json:"target_commitish"`
-	Name            string              `json:"name"`
-	Body            string              `json:"body"`
-	URL             string              `json:"url"`
-	HTMLURL         string              `json:"html_url"`
-	TarballURL      string              `json:"tarball_url"`
-	ZipballURL      string              `json:"zipball_url"`
-	UploadURL       string              `json:"upload_url"`
-	Draft           bool                `json:"draft"`
-	Prerelease      bool                `json:"prerelease"`
-	CreatedAt       *metav1.Time        `json:"created_at,omitempty"`
-	PublishedAt     *metav1.Time        `json:"published_at,omitempty"`
-	Author          *User               `json:"author,omitempty"`
-	Assets          []ReleaseAttachment `json:"assets,omitempty"`
-}
-
-// ReleaseAttachment represents a release asset/attachment
-type ReleaseAttachment struct {
-	ID                 int64        `json:"id"`
-	Name               string       `json:"name"`
-	Size               int64        `json:"size"`
-	DownloadCount      int64        `json:"download_count"`
-	ContentType        string       `json:"content_type"`
-	BrowserDownloadURL string       `json:"browser_download_url"`
-	CreatedAt          *metav1.Time `json:"created_at,omitempty"`
-	UpdatedAt          *metav1.Time `json:"updated_at,omitempty"`
-}
-
-// CreateReleaseOptions represents the options for creating a release
-type CreateReleaseOptions struct {
-	TagName         string `json:"tag_name"`
-	TargetCommitish string `json:"target_commitish,omitempty"`
-	Name            string `json:"name,omitempty"`
-	Body            string `json:"body,omitempty"`
-	Draft           bool   `json:"draft"`
-	Prerelease      bool   `json:"prerelease"`
-	GenerateNotes   bool   `json:"generate_notes,omitempty"`
-}
-
-// UpdateReleaseOptions represents the options for updating a release
-type UpdateReleaseOptions struct {
-	TagName         *string `json:"tag_name,omitempty"`
-	TargetCommitish *string `json:"target_commitish,omitempty"`
-	Name            *string `json:"name,omitempty"`
-	Body            *string `json:"body,omitempty"`
-	Draft           *bool   `json:"draft,omitempty"`
-	Prerelease      *bool   `json:"prerelease,omitempty"`
-	GenerateNotes   *bool   `json:"generate_notes,omitempty"`
+	MaxRepoCreation         *int    `json:"max_repo_creation,omitempty"`
 }
 
 // Webhook represents a Gitea webhook
@@ -1012,212 +833,6 @@ type CreateRepositorySecretRequest struct {
 // UpdateRepositorySecretRequest represents the request body for updating a repository secret
 type UpdateRepositorySecretRequest struct {
 	Data string `json:"data"`
-}
-
-// UserKey represents a user SSH key
-type UserKey struct {
-	ID          int64  `json:"id"`
-	Key         string `json:"key"`
-	URL         string `json:"url"`
-	Title       string `json:"title"`
-	Fingerprint string `json:"fingerprint"`
-	CreatedAt   string `json:"created_at"`
-	ReadOnly    bool   `json:"read_only"`
-}
-
-// CreateUserKeyRequest represents the request body for creating a user key
-type CreateUserKeyRequest struct {
-	Key      string `json:"key"`
-	Title    string `json:"title"`
-	ReadOnly *bool  `json:"read_only,omitempty"`
-}
-
-// UpdateUserKeyRequest represents the request body for updating a user key
-type UpdateUserKeyRequest struct {
-	Title    *string `json:"title,omitempty"`
-	ReadOnly *bool   `json:"read_only,omitempty"`
-}
-
-// OrganizationMember represents an organization member
-type OrganizationMember struct {
-	Username   string `json:"username"`
-	FullName   string `json:"full_name"`
-	Email      string `json:"email"`
-	AvatarURL  string `json:"avatar_url"`
-	Role       string `json:"role"`       // owner, admin, member
-	Visibility string `json:"visibility"` // public, private
-	IsPublic   bool   `json:"is_public"`
-}
-
-// AddOrganizationMemberRequest represents the request body for adding an organization member
-type AddOrganizationMemberRequest struct {
-	Role string `json:"role"` // owner, admin, member
-}
-
-// UpdateOrganizationMemberRequest represents the request body for updating an organization member
-type UpdateOrganizationMemberRequest struct {
-	Role       *string `json:"role,omitempty"`       // owner, admin, member
-	Visibility *string `json:"visibility,omitempty"` // public, private
-}
-
-// Action represents a Gitea Actions workflow
-type Action struct {
-	WorkflowName string             `json:"workflow_name"`
-	State        string             `json:"state"` // active, disabled
-	Badge        string             `json:"badge_url"`
-	CreatedAt    string             `json:"created_at"`
-	UpdatedAt    string             `json:"updated_at"`
-	WorkflowFile ActionWorkflowFile `json:"workflow_file"`
-	LastRun      *ActionLastRun     `json:"last_run,omitempty"`
-}
-
-// ActionWorkflowFile represents the workflow file details
-type ActionWorkflowFile struct {
-	Path    string `json:"path"`
-	Content string `json:"content"`
-	Size    int64  `json:"size"`
-}
-
-// ActionLastRun represents the last workflow run information
-type ActionLastRun struct {
-	ID         int64  `json:"id"`
-	Number     int64  `json:"number"`
-	Status     string `json:"status"`     // success, failure, pending, cancelled
-	Conclusion string `json:"conclusion"` // success, failure, cancelled, skipped
-	Event      string `json:"event"`      // push, pull_request, manual, etc.
-	Branch     string `json:"branch"`
-	Commit     string `json:"commit"`
-	StartedAt  string `json:"started_at"`
-	UpdatedAt  string `json:"updated_at"`
-}
-
-// CreateActionRequest represents the request body for creating an action workflow
-type CreateActionRequest struct {
-	WorkflowName string `json:"workflow_name"`
-	WorkflowFile string `json:"workflow_file"` // YAML content
-	Path         string `json:"path"`          // .github/workflows/name.yml
-	Message      string `json:"message,omitempty"`
-	Branch       string `json:"branch,omitempty"`
-}
-
-// UpdateActionRequest represents the request body for updating an action workflow
-type UpdateActionRequest struct {
-	WorkflowFile *string `json:"workflow_file,omitempty"` // YAML content
-	Message      *string `json:"message,omitempty"`
-	Branch       *string `json:"branch,omitempty"`
-}
-
-// Runner represents a Gitea Actions runner
-type Runner struct {
-	ID              int64           `json:"id"`
-	UUID            string          `json:"uuid"`
-	Name            string          `json:"name"`
-	Status          string          `json:"status"` // online, offline, idle, active
-	LastOnline      string          `json:"last_online"`
-	CreatedAt       string          `json:"created_at"`
-	UpdatedAt       string          `json:"updated_at"`
-	Labels          []string        `json:"labels"`
-	Description     string          `json:"description"`
-	Scope           string          `json:"scope"`       // repository, organization, system
-	ScopeValue      string          `json:"scope_value"` // repo name or org name
-	RunnerGroup     *RunnerGroupRef `json:"runner_group,omitempty"`
-	Version         string          `json:"version"`
-	Architecture    string          `json:"architecture"`
-	OperatingSystem string          `json:"operating_system"`
-	TokenExpiresAt  string          `json:"token_expires_at"`
-}
-
-// RunnerGroupRef represents a reference to a runner group
-type RunnerGroupRef struct {
-	ID        int64  `json:"id"`
-	Name      string `json:"name"`
-	IsDefault bool   `json:"is_default"`
-}
-
-// CreateRunnerRequest represents the request body for creating a runner
-type CreateRunnerRequest struct {
-	Name          string   `json:"name"`
-	Labels        []string `json:"labels"`
-	Description   string   `json:"description,omitempty"`
-	RunnerGroupID *int64   `json:"runner_group_id,omitempty"`
-}
-
-// UpdateRunnerRequest represents the request body for updating a runner
-type UpdateRunnerRequest struct {
-	Name          *string  `json:"name,omitempty"`
-	Labels        []string `json:"labels,omitempty"`
-	Description   *string  `json:"description,omitempty"`
-	RunnerGroupID *int64   `json:"runner_group_id,omitempty"`
-}
-
-// AdminUser represents a Gitea administrative user
-type AdminUser struct {
-	ID              int64           `json:"id"`
-	Username        string          `json:"username"`
-	Email           string          `json:"email"`
-	FullName        string          `json:"full_name"`
-	AvatarURL       string          `json:"avatar_url"`
-	IsAdmin         bool            `json:"is_admin"`
-	IsActive        bool            `json:"is_active"`
-	IsRestricted    bool            `json:"is_restricted"`
-	ProhibitLogin   bool            `json:"prohibit_login"`
-	Visibility      string          `json:"visibility"` // public, private, limited
-	CreatedAt       string          `json:"created_at"`
-	LastLogin       string          `json:"last_login"`
-	Language        string          `json:"language"`
-	MaxRepoCreation int             `json:"max_repo_creation"`
-	Website         string          `json:"website"`
-	Location        string          `json:"location"`
-	Description     string          `json:"description"`
-	UserStats       *AdminUserStats `json:"user_stats,omitempty"`
-}
-
-// AdminUserStats represents user statistics
-type AdminUserStats struct {
-	Repositories int `json:"repositories"`
-	PublicRepos  int `json:"public_repos"`
-	Followers    int `json:"followers"`
-	Following    int `json:"following"`
-	StarredRepos int `json:"starred_repos"`
-}
-
-// CreateAdminUserRequest represents the request body for creating an admin user
-type CreateAdminUserRequest struct {
-	Username           string `json:"username"`
-	Email              string `json:"email"`
-	Password           string `json:"password"`
-	FullName           string `json:"full_name,omitempty"`
-	IsAdmin            bool   `json:"is_admin,omitempty"`
-	MustChangePassword bool   `json:"must_change_password,omitempty"`
-	SendNotify         bool   `json:"send_notify,omitempty"`
-	Visibility         string `json:"visibility,omitempty"`
-	IsActive           bool   `json:"is_active,omitempty"`
-	IsRestricted       bool   `json:"is_restricted,omitempty"`
-	MaxRepoCreation    int    `json:"max_repo_creation,omitempty"`
-	ProhibitLogin      bool   `json:"prohibit_login,omitempty"`
-	Website            string `json:"website,omitempty"`
-	Location           string `json:"location,omitempty"`
-	Description        string `json:"description,omitempty"`
-}
-
-// UpdateAdminUserRequest represents the request body for updating an admin user
-type UpdateAdminUserRequest struct {
-	// Gitea's PATCH /admin/users/{username} REQUIRES login_name + source_id
-	// together (422 "[LoginName]: Required" otherwise). For local users
-	// source_id is 0 and login_name is the username.
-	LoginName       *string `json:"login_name,omitempty"`
-	SourceID        *int64  `json:"source_id,omitempty"`
-	Email           *string `json:"email,omitempty"`
-	FullName        *string `json:"full_name,omitempty"`
-	IsAdmin         *bool   `json:"is_admin,omitempty"`
-	Visibility      *string `json:"visibility,omitempty"`
-	IsActive        *bool   `json:"is_active,omitempty"`
-	IsRestricted    *bool   `json:"is_restricted,omitempty"`
-	MaxRepoCreation *int    `json:"max_repo_creation,omitempty"`
-	ProhibitLogin   *bool   `json:"prohibit_login,omitempty"`
-	Website         *string `json:"website,omitempty"`
-	Location        *string `json:"location,omitempty"`
-	Description     *string `json:"description,omitempty"`
 }
 
 // Label API methods
@@ -1819,689 +1434,6 @@ func (c *giteaClient) DeleteRepositorySecret(ctx context.Context, repository, se
 	return handleResponse(resp, nil)
 }
 
-// User Key API methods
-func (c *giteaClient) GetUserKey(ctx context.Context, username string, keyID int64) (*UserKey, error) {
-	// Gitea has no GET /users/{username}/keys/{id} (404); list the user's keys
-	// and match by id.
-	path := fmt.Sprintf("/users/%s/keys", username)
-	resp, err := c.doRequest(ctx, "GET", path, nil)
-	if err != nil {
-		return nil, err
-	}
-	var list []UserKey
-	if err := handleResponse(resp, &list); err != nil {
-		return nil, err
-	}
-	for i := range list {
-		if list[i].ID == keyID {
-			return &list[i], nil
-		}
-	}
-	return nil, NewNotFoundError("user key", fmt.Sprintf("%d", keyID))
-}
-
-func (c *giteaClient) CreateUserKey(ctx context.Context, username string, req *CreateUserKeyRequest) (*UserKey, error) {
-	// Adding a key for an arbitrary user requires the admin endpoint; the bare
-	// /users/{username}/keys is read-only (405 on POST).
-	path := fmt.Sprintf("/admin/users/%s/keys", username)
-	resp, err := c.doRequest(ctx, "POST", path, req)
-	if err != nil {
-		return nil, err
-	}
-
-	var key UserKey
-	if err := handleResponse(resp, &key); err != nil {
-		return nil, err
-	}
-
-	return &key, nil
-}
-
-func (c *giteaClient) UpdateUserKey(ctx context.Context, username string, keyID int64, req *UpdateUserKeyRequest) (*UserKey, error) {
-	path := fmt.Sprintf("/users/%s/keys/%d", username, keyID)
-	resp, err := c.doRequest(ctx, "PATCH", path, req)
-	if err != nil {
-		return nil, err
-	}
-
-	var key UserKey
-	if err := handleResponse(resp, &key); err != nil {
-		return nil, err
-	}
-
-	return &key, nil
-}
-
-func (c *giteaClient) DeleteUserKey(ctx context.Context, username string, keyID int64) error {
-	// Deleting another user's key requires the admin endpoint; the bare
-	// /users/{username}/keys/{id} is read-only.
-	path := fmt.Sprintf("/admin/users/%s/keys/%d", username, keyID)
-	resp, err := c.doRequest(ctx, "DELETE", path, nil)
-	if err != nil {
-		return err
-	}
-
-	return handleResponse(resp, nil)
-}
-
-// Organization Member API methods
-func (c *giteaClient) GetOrganizationMember(ctx context.Context, org, username string) (*OrganizationMember, error) {
-	path := fmt.Sprintf("/orgs/%s/members/%s", org, username)
-	resp, err := c.doRequest(ctx, "GET", path, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	if resp.StatusCode == http.StatusNotFound {
-		return nil, &APIError{StatusCode: http.StatusNotFound, Body: "organization member not found"}
-	}
-
-	var member OrganizationMember
-	if err := handleResponse(resp, &member); err != nil {
-		return nil, err
-	}
-
-	return &member, nil
-}
-
-func (c *giteaClient) AddOrganizationMember(ctx context.Context, org, username string, req *AddOrganizationMemberRequest) (*OrganizationMember, error) {
-	path := fmt.Sprintf("/orgs/%s/members/%s", org, username)
-	resp, err := c.doRequest(ctx, "PUT", path, req)
-	if err != nil {
-		return nil, err
-	}
-
-	var member OrganizationMember
-	if err := handleResponse(resp, &member); err != nil {
-		return nil, err
-	}
-
-	return &member, nil
-}
-
-func (c *giteaClient) UpdateOrganizationMember(ctx context.Context, org, username string, req *UpdateOrganizationMemberRequest) (*OrganizationMember, error) {
-	path := fmt.Sprintf("/orgs/%s/members/%s", org, username)
-	resp, err := c.doRequest(ctx, "PATCH", path, req)
-	if err != nil {
-		return nil, err
-	}
-
-	var member OrganizationMember
-	if err := handleResponse(resp, &member); err != nil {
-		return nil, err
-	}
-
-	return &member, nil
-}
-
-func (c *giteaClient) RemoveOrganizationMember(ctx context.Context, org, username string) error {
-	path := fmt.Sprintf("/orgs/%s/members/%s", org, username)
-	resp, err := c.doRequest(ctx, "DELETE", path, nil)
-	if err != nil {
-		return err
-	}
-
-	return handleResponse(resp, nil)
-}
-
-// Action API methods
-func (c *giteaClient) GetAction(ctx context.Context, repository, workflowName string) (*Action, error) {
-	// Parse repository format "owner/repo"
-	parts := strings.Split(repository, "/")
-	if len(parts) != 2 {
-		return nil, errors.New("repository must be in format 'owner/repo'")
-	}
-	owner, repo := parts[0], parts[1]
-
-	path := fmt.Sprintf("/repos/%s/%s/actions/workflows/%s", owner, repo, workflowName)
-	resp, err := c.doRequest(ctx, "GET", path, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	if resp.StatusCode == http.StatusNotFound {
-		return nil, &APIError{StatusCode: http.StatusNotFound, Body: "action workflow not found"}
-	}
-
-	var action Action
-	if err := handleResponse(resp, &action); err != nil {
-		return nil, err
-	}
-
-	return &action, nil
-}
-
-func (c *giteaClient) CreateAction(ctx context.Context, repository string, req *CreateActionRequest) (*Action, error) {
-	// Parse repository format "owner/repo"
-	parts := strings.Split(repository, "/")
-	if len(parts) != 2 {
-		return nil, errors.New("repository must be in format 'owner/repo'")
-	}
-	owner, repo := parts[0], parts[1]
-
-	// For Gitea, creating a workflow typically involves creating a file in .github/workflows/
-	// This is a conceptual implementation - actual API might differ
-	path := fmt.Sprintf("/repos/%s/%s/actions/workflows", owner, repo)
-	resp, err := c.doRequest(ctx, "POST", path, req)
-	if err != nil {
-		return nil, err
-	}
-
-	var action Action
-	if err := handleResponse(resp, &action); err != nil {
-		return nil, err
-	}
-
-	return &action, nil
-}
-
-func (c *giteaClient) UpdateAction(ctx context.Context, repository, workflowName string, req *UpdateActionRequest) (*Action, error) {
-	// Parse repository format "owner/repo"
-	parts := strings.Split(repository, "/")
-	if len(parts) != 2 {
-		return nil, errors.New("repository must be in format 'owner/repo'")
-	}
-	owner, repo := parts[0], parts[1]
-
-	path := fmt.Sprintf("/repos/%s/%s/actions/workflows/%s", owner, repo, workflowName)
-	resp, err := c.doRequest(ctx, "PATCH", path, req)
-	if err != nil {
-		return nil, err
-	}
-
-	var action Action
-	if err := handleResponse(resp, &action); err != nil {
-		return nil, err
-	}
-
-	return &action, nil
-}
-
-func (c *giteaClient) DeleteAction(ctx context.Context, repository, workflowName string) error {
-	// Parse repository format "owner/repo"
-	parts := strings.Split(repository, "/")
-	if len(parts) != 2 {
-		return errors.New("repository must be in format 'owner/repo'")
-	}
-	owner, repo := parts[0], parts[1]
-
-	path := fmt.Sprintf("/repos/%s/%s/actions/workflows/%s", owner, repo, workflowName)
-	resp, err := c.doRequest(ctx, "DELETE", path, nil)
-	if err != nil {
-		return err
-	}
-
-	return handleResponse(resp, nil)
-}
-
-func (c *giteaClient) EnableAction(ctx context.Context, repository, workflowName string) error {
-	// Parse repository format "owner/repo"
-	parts := strings.Split(repository, "/")
-	if len(parts) != 2 {
-		return errors.New("repository must be in format 'owner/repo'")
-	}
-	owner, repo := parts[0], parts[1]
-
-	path := fmt.Sprintf("/repos/%s/%s/actions/workflows/%s/enable", owner, repo, workflowName)
-	resp, err := c.doRequest(ctx, "PUT", path, nil)
-	if err != nil {
-		return err
-	}
-
-	return handleResponse(resp, nil)
-}
-
-func (c *giteaClient) DisableAction(ctx context.Context, repository, workflowName string) error {
-	// Parse repository format "owner/repo"
-	parts := strings.Split(repository, "/")
-	if len(parts) != 2 {
-		return errors.New("repository must be in format 'owner/repo'")
-	}
-	owner, repo := parts[0], parts[1]
-
-	path := fmt.Sprintf("/repos/%s/%s/actions/workflows/%s/disable", owner, repo, workflowName)
-	resp, err := c.doRequest(ctx, "PUT", path, nil)
-	if err != nil {
-		return err
-	}
-
-	return handleResponse(resp, nil)
-}
-
-// Runner API methods
-func (c *giteaClient) GetRunner(ctx context.Context, scope, scopeValue string, runnerID int64) (*Runner, error) {
-	var path string
-	switch scope {
-	case "repository":
-		// Parse repository format "owner/repo"
-		parts := strings.Split(scopeValue, "/")
-		if len(parts) != 2 {
-			return nil, errors.New("scopeValue must be in format 'owner/repo' for repository scope")
-		}
-		owner, repo := parts[0], parts[1]
-		path = fmt.Sprintf("/repos/%s/%s/actions/runners/%d", owner, repo, runnerID)
-	case "organization":
-		path = fmt.Sprintf("/orgs/%s/actions/runners/%d", scopeValue, runnerID)
-	case "system":
-		path = fmt.Sprintf("/admin/actions/runners/%d", runnerID)
-	default:
-		return nil, errors.New("scope must be one of: repository, organization, system")
-	}
-
-	resp, err := c.doRequest(ctx, "GET", path, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	if resp.StatusCode == http.StatusNotFound {
-		return nil, &APIError{StatusCode: http.StatusNotFound, Body: "runner not found"}
-	}
-
-	var runner Runner
-	if err := handleResponse(resp, &runner); err != nil {
-		return nil, err
-	}
-
-	return &runner, nil
-}
-
-func (c *giteaClient) CreateRunner(ctx context.Context, scope, scopeValue string, req *CreateRunnerRequest) (*Runner, error) {
-	var path string
-	switch scope {
-	case "repository":
-		// Parse repository format "owner/repo"
-		parts := strings.Split(scopeValue, "/")
-		if len(parts) != 2 {
-			return nil, errors.New("scopeValue must be in format 'owner/repo' for repository scope")
-		}
-		owner, repo := parts[0], parts[1]
-		path = fmt.Sprintf("/repos/%s/%s/actions/runners", owner, repo)
-	case "organization":
-		path = fmt.Sprintf("/orgs/%s/actions/runners", scopeValue)
-	case "system":
-		path = "/admin/actions/runners"
-	default:
-		return nil, errors.New("scope must be one of: repository, organization, system")
-	}
-
-	resp, err := c.doRequest(ctx, "POST", path, req)
-	if err != nil {
-		return nil, err
-	}
-
-	var runner Runner
-	if err := handleResponse(resp, &runner); err != nil {
-		return nil, err
-	}
-
-	return &runner, nil
-}
-
-func (c *giteaClient) UpdateRunner(ctx context.Context, scope, scopeValue string, runnerID int64, req *UpdateRunnerRequest) (*Runner, error) {
-	var path string
-	switch scope {
-	case "repository":
-		// Parse repository format "owner/repo"
-		parts := strings.Split(scopeValue, "/")
-		if len(parts) != 2 {
-			return nil, errors.New("scopeValue must be in format 'owner/repo' for repository scope")
-		}
-		owner, repo := parts[0], parts[1]
-		path = fmt.Sprintf("/repos/%s/%s/actions/runners/%d", owner, repo, runnerID)
-	case "organization":
-		path = fmt.Sprintf("/orgs/%s/actions/runners/%d", scopeValue, runnerID)
-	case "system":
-		path = fmt.Sprintf("/admin/actions/runners/%d", runnerID)
-	default:
-		return nil, errors.New("scope must be one of: repository, organization, system")
-	}
-
-	resp, err := c.doRequest(ctx, "PATCH", path, req)
-	if err != nil {
-		return nil, err
-	}
-
-	var runner Runner
-	if err := handleResponse(resp, &runner); err != nil {
-		return nil, err
-	}
-
-	return &runner, nil
-}
-
-func (c *giteaClient) DeleteRunner(ctx context.Context, scope, scopeValue string, runnerID int64) error {
-	var path string
-	switch scope {
-	case "repository":
-		// Parse repository format "owner/repo"
-		parts := strings.Split(scopeValue, "/")
-		if len(parts) != 2 {
-			return errors.New("scopeValue must be in format 'owner/repo' for repository scope")
-		}
-		owner, repo := parts[0], parts[1]
-		path = fmt.Sprintf("/repos/%s/%s/actions/runners/%d", owner, repo, runnerID)
-	case "organization":
-		path = fmt.Sprintf("/orgs/%s/actions/runners/%d", scopeValue, runnerID)
-	case "system":
-		path = fmt.Sprintf("/admin/actions/runners/%d", runnerID)
-	default:
-		return errors.New("scope must be one of: repository, organization, system")
-	}
-
-	resp, err := c.doRequest(ctx, "DELETE", path, nil)
-	if err != nil {
-		return err
-	}
-
-	return handleResponse(resp, nil)
-}
-
-// Admin User API methods
-func (c *giteaClient) GetAdminUser(ctx context.Context, username string) (*AdminUser, error) {
-	// Gitea has no GET /admin/users/{username} (405). Read via the public user
-	// endpoint — it returns the same user object (incl. is_admin).
-	path := fmt.Sprintf("/users/%s", username)
-	resp, err := c.doRequest(ctx, "GET", path, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	if resp.StatusCode == http.StatusNotFound {
-		return nil, &APIError{StatusCode: http.StatusNotFound, Body: "admin user not found"}
-	}
-
-	var user AdminUser
-	if err := handleResponse(resp, &user); err != nil {
-		return nil, err
-	}
-
-	return &user, nil
-}
-
-func (c *giteaClient) CreateAdminUser(ctx context.Context, req *CreateAdminUserRequest) (*AdminUser, error) {
-	path := "/admin/users"
-	resp, err := c.doRequest(ctx, "POST", path, req)
-	if err != nil {
-		return nil, err
-	}
-
-	var user AdminUser
-	if err := handleResponse(resp, &user); err != nil {
-		return nil, err
-	}
-
-	return &user, nil
-}
-
-func (c *giteaClient) UpdateAdminUser(ctx context.Context, username string, req *UpdateAdminUserRequest) (*AdminUser, error) {
-	path := fmt.Sprintf("/admin/users/%s", username)
-	resp, err := c.doRequest(ctx, "PATCH", path, req)
-	if err != nil {
-		return nil, err
-	}
-
-	var user AdminUser
-	if err := handleResponse(resp, &user); err != nil {
-		return nil, err
-	}
-
-	return &user, nil
-}
-
-func (c *giteaClient) DeleteAdminUser(ctx context.Context, username string) error {
-	path := fmt.Sprintf("/admin/users/%s", username)
-	resp, err := c.doRequest(ctx, "DELETE", path, nil)
-	if err != nil {
-		return err
-	}
-
-	return handleResponse(resp, nil)
-}
-
-// Issue API methods
-func (c *giteaClient) GetIssue(ctx context.Context, owner, repo string, number int64) (*Issue, error) {
-	path := fmt.Sprintf("/repos/%s/%s/issues/%d", owner, repo, number)
-	resp, err := c.doRequest(ctx, "GET", path, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	if resp.StatusCode == http.StatusNotFound {
-		return nil, NewNotFoundError("issue", fmt.Sprintf("%d", number))
-	}
-
-	var issue Issue
-	if err := handleResponse(resp, &issue); err != nil {
-		return nil, err
-	}
-
-	return &issue, nil
-}
-
-func (c *giteaClient) CreateIssue(ctx context.Context, owner, repo string, req *CreateIssueOptions) (*Issue, error) {
-	path := fmt.Sprintf("/repos/%s/%s/issues", owner, repo)
-	resp, err := c.doRequest(ctx, "POST", path, req)
-	if err != nil {
-		return nil, err
-	}
-
-	var issue Issue
-	if err := handleResponse(resp, &issue); err != nil {
-		return nil, err
-	}
-
-	return &issue, nil
-}
-
-func (c *giteaClient) UpdateIssue(ctx context.Context, owner, repo string, number int64, req *UpdateIssueOptions) (*Issue, error) {
-	path := fmt.Sprintf("/repos/%s/%s/issues/%d", owner, repo, number)
-	resp, err := c.doRequest(ctx, "PATCH", path, req)
-	if err != nil {
-		return nil, err
-	}
-
-	var issue Issue
-	if err := handleResponse(resp, &issue); err != nil {
-		return nil, err
-	}
-
-	return &issue, nil
-}
-
-func (c *giteaClient) DeleteIssue(ctx context.Context, owner, repo string, number int64) error {
-	// In Gitea, we typically close issues instead of deleting them
-	// This method will close the issue
-	req := &UpdateIssueOptions{
-		State: func() *string { s := "closed"; return &s }(),
-	}
-
-	_, err := c.UpdateIssue(ctx, owner, repo, number, req)
-	return err
-}
-
-// PullRequest operations implementation
-func (c *giteaClient) GetPullRequest(ctx context.Context, owner, repo string, number int64) (*PullRequest, error) {
-	path := fmt.Sprintf("/repos/%s/%s/pulls/%d", owner, repo, number)
-	resp, err := c.doRequest(ctx, "GET", path, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	if resp.StatusCode == http.StatusNotFound {
-		return nil, NewNotFoundError("pull request", fmt.Sprintf("%d", number))
-	}
-
-	var pr PullRequest
-	if err := handleResponse(resp, &pr); err != nil {
-		return nil, err
-	}
-
-	return &pr, nil
-}
-
-func (c *giteaClient) CreatePullRequest(ctx context.Context, owner, repo string, req *CreatePullRequestOptions) (*PullRequest, error) {
-	path := fmt.Sprintf("/repos/%s/%s/pulls", owner, repo)
-	resp, err := c.doRequest(ctx, "POST", path, req)
-	if err != nil {
-		return nil, err
-	}
-
-	var pr PullRequest
-	if err := handleResponse(resp, &pr); err != nil {
-		return nil, err
-	}
-
-	return &pr, nil
-}
-
-func (c *giteaClient) UpdatePullRequest(ctx context.Context, owner, repo string, number int64, req *UpdatePullRequestOptions) (*PullRequest, error) {
-	path := fmt.Sprintf("/repos/%s/%s/pulls/%d", owner, repo, number)
-	resp, err := c.doRequest(ctx, "PATCH", path, req)
-	if err != nil {
-		return nil, err
-	}
-
-	var pr PullRequest
-	if err := handleResponse(resp, &pr); err != nil {
-		return nil, err
-	}
-
-	return &pr, nil
-}
-
-func (c *giteaClient) DeletePullRequest(ctx context.Context, owner, repo string, number int64) error {
-	// In Gitea, we typically close pull requests instead of deleting them
-	// This method will close the pull request
-	req := &UpdatePullRequestOptions{
-		State: func() *string { s := "closed"; return &s }(),
-	}
-
-	_, err := c.UpdatePullRequest(ctx, owner, repo, number, req)
-	return err
-}
-
-func (c *giteaClient) MergePullRequest(ctx context.Context, owner, repo string, number int64, req *MergePullRequestOptions) (*PullRequest, error) {
-	path := fmt.Sprintf("/repos/%s/%s/pulls/%d/merge", owner, repo, number)
-	resp, err := c.doRequest(ctx, "POST", path, req)
-	if err != nil {
-		return nil, err
-	}
-
-	var pr PullRequest
-	if err := handleResponse(resp, &pr); err != nil {
-		return nil, err
-	}
-
-	return &pr, nil
-}
-
-// Release API implementations
-
-func (c *giteaClient) GetRelease(ctx context.Context, owner, repo string, id int64) (*Release, error) {
-	path := fmt.Sprintf("/repos/%s/%s/releases/%d", owner, repo, id)
-	resp, err := c.doRequest(ctx, "GET", path, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	var release Release
-	if err := handleResponse(resp, &release); err != nil {
-		return nil, err
-	}
-
-	return &release, nil
-}
-
-func (c *giteaClient) GetReleaseByTag(ctx context.Context, owner, repo, tag string) (*Release, error) {
-	path := fmt.Sprintf("/repos/%s/%s/releases/tags/%s", owner, repo, tag)
-	resp, err := c.doRequest(ctx, "GET", path, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	var release Release
-	if err := handleResponse(resp, &release); err != nil {
-		return nil, err
-	}
-
-	return &release, nil
-}
-
-func (c *giteaClient) CreateRelease(ctx context.Context, owner, repo string, req *CreateReleaseOptions) (*Release, error) {
-	path := fmt.Sprintf("/repos/%s/%s/releases", owner, repo)
-	resp, err := c.doRequest(ctx, "POST", path, req)
-	if err != nil {
-		return nil, err
-	}
-
-	var release Release
-	if err := handleResponse(resp, &release); err != nil {
-		return nil, err
-	}
-
-	return &release, nil
-}
-
-func (c *giteaClient) UpdateRelease(ctx context.Context, owner, repo string, id int64, req *UpdateReleaseOptions) (*Release, error) {
-	path := fmt.Sprintf("/repos/%s/%s/releases/%d", owner, repo, id)
-	resp, err := c.doRequest(ctx, "PATCH", path, req)
-	if err != nil {
-		return nil, err
-	}
-
-	var release Release
-	if err := handleResponse(resp, &release); err != nil {
-		return nil, err
-	}
-
-	return &release, nil
-}
-
-func (c *giteaClient) DeleteRelease(ctx context.Context, owner, repo string, id int64) error {
-	path := fmt.Sprintf("/repos/%s/%s/releases/%d", owner, repo, id)
-	resp, err := c.doRequest(ctx, "DELETE", path, nil)
-	if err != nil {
-		return err
-	}
-
-	return handleResponse(resp, nil)
-}
-
-func (c *giteaClient) CreateReleaseAttachment(ctx context.Context, owner, repo string, releaseID int64, filename, contentType string, content []byte) (*ReleaseAttachment, error) {
-	// For simplicity, we'll implement a basic version
-	// In a full implementation, this would handle multipart file uploads
-	path := fmt.Sprintf("/repos/%s/%s/releases/%d/assets", owner, repo, releaseID)
-
-	// This is a simplified implementation - real implementation would use multipart upload
-	req := map[string]interface{}{
-		"name":         filename,
-		"content_type": contentType,
-		// Note: Real implementation would handle file upload differently
-	}
-
-	resp, err := c.doRequest(ctx, "POST", path, req)
-	if err != nil {
-		return nil, err
-	}
-
-	var attachment ReleaseAttachment
-	if err := handleResponse(resp, &attachment); err != nil {
-		return nil, err
-	}
-
-	return &attachment, nil
-}
-
-func (c *giteaClient) DeleteReleaseAttachment(ctx context.Context, owner, repo string, releaseID, attachmentID int64) error {
-	path := fmt.Sprintf("/repos/%s/%s/releases/%d/assets/%d", owner, repo, releaseID, attachmentID)
-	resp, err := c.doRequest(ctx, "DELETE", path, nil)
-	if err != nil {
-		return err
-	}
-
-	return handleResponse(resp, nil)
-}
-
 // getTokenFromSecret extracts the API token from the provider config's secret
 func getTokenFromSecret(ctx context.Context, cfg *v1beta1.ProviderConfig, kube client.Client) (string, error) {
 	if cfg.Spec.Credentials.Source != "Secret" {
@@ -2551,7 +1483,15 @@ func (c *giteaClient) doRequest(ctx context.Context, method, path string, body i
 		return nil, errors.Wrap(err, "failed to create request")
 	}
 
-	req.Header.Set("Authorization", "token "+c.token)
+	// Some Gitea endpoints (notably user access-token CRUD under
+	// /users/{user}/tokens) reject token auth and REQUIRE HTTP basic auth as the
+	// owning user. A client built with NewBasicAuthClient carries those creds;
+	// the default client authenticates with the ProviderConfig token.
+	if c.basicUser != "" {
+		req.SetBasicAuth(c.basicUser, c.basicPass)
+	} else {
+		req.Header.Set("Authorization", "token "+c.token)
+	}
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json")
 

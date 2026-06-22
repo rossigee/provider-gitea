@@ -20,6 +20,11 @@ import (
 	"context"
 	"testing"
 
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/client/fake"
+
 	"github.com/crossplane/crossplane-runtime/v2/pkg/meta"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
 	xpv1 "github.com/crossplane/crossplane/apis/v2/core/v2"
@@ -63,10 +68,23 @@ func newCR(externalName string) *v2.OrganizationSecret {
 	cr.SetName("my-secret")
 	cr.Spec.ForProvider.Organization = "acme"
 	cr.Spec.ForProvider.SecretName = "MY_SECRET"
+	cr.Spec.ForProvider.ValueSecretRef = &xpv1.SecretKeySelector{
+		SecretReference: xpv1.SecretReference{Namespace: "default", Name: "secret-value"},
+		Key:             "value",
+	}
 	if externalName != "" {
 		meta.SetExternalName(cr, externalName)
 	}
 	return cr
+}
+
+// kubeWithValue is a fake kube client seeded with the Secret that
+// valueSecretRef points at (Create/Update read the secret value from it).
+func kubeWithValue() client.Client {
+	return fake.NewClientBuilder().WithObjects(&corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{Namespace: "default", Name: "secret-value"},
+		Data:       map[string][]byte{"value": []byte("s3cret")},
+	}).Build()
 }
 
 func isAvailable(cr resource.Managed) bool {
@@ -118,7 +136,7 @@ func TestObserveAvailableAndUpToDate(t *testing.T) {
 
 func TestCreateSetsExternalName(t *testing.T) {
 	f := &fakeClient{}
-	e := &external{client: f}
+	e := &external{client: f, kube: kubeWithValue()}
 
 	cr := newCR("")
 	if _, err := e.Create(context.Background(), cr); err != nil {

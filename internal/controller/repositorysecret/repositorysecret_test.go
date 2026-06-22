@@ -69,9 +69,10 @@ func newCR(externalName string) *v2.RepositorySecret {
 	cr.SetName("my-secret")
 	cr.Spec.ForProvider.Repository = "acme/my-repo"
 	cr.Spec.ForProvider.SecretName = "MY_SECRET"
-	cr.Spec.ForProvider.ValueSecretRef.Namespace = "default"
-	cr.Spec.ForProvider.ValueSecretRef.Name = "secret-value"
-	cr.Spec.ForProvider.ValueSecretRef.Key = "value"
+	cr.Spec.ForProvider.ValueSecretRef = &xpv1.SecretKeySelector{
+		SecretReference: xpv1.SecretReference{Namespace: "default", Name: "secret-value"},
+		Key:             "value",
+	}
 	if externalName != "" {
 		meta.SetExternalName(cr, externalName)
 	}

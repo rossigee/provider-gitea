@@ -2,10 +2,11 @@
 # These create test resources that can be easily cleaned up
 
 # 1. Create a test organization first
-apiVersion: organization.gitea.crossplane.io/v1alpha1
+apiVersion: organization.gitea.m.crossplane.io/v2
 kind: Organization
 metadata:
   name: test-org-fixtures
+  namespace: default
   annotations:
     crossplane.io/external-name: crossplane-test
 spec:
@@ -22,17 +23,33 @@ spec:
     name: default
 
 ---
-# 2. Test OrganizationSecret with direct data
-apiVersion: organizationsecret.gitea.crossplane.io/v1alpha1
+# 2. Test OrganizationSecret with a referenced value
+apiVersion: organizationsecret.gitea.m.crossplane.io/v2
 kind: OrganizationSecret
 metadata:
   name: test-secret-direct
+  namespace: default
   annotations:
     crossplane.io/external-name: TEST_SECRET_DIRECT
 spec:
   forProvider:
     organization: crossplane-test
     secretName: TEST_SECRET_DIRECT
-    data: "test-secret-value-direct"
+    valueSecretRef:
+      namespace: default
+      name: test-secret-direct-value
+      key: value
   providerConfigRef:
     name: default
+
+---
+# Supporting Kubernetes secret holding the value
+apiVersion: v1
+kind: Secret
+metadata:
+  name: test-secret-direct-value
+  namespace: default
+type: Opaque
+data:
+  # base64-encoded "test-secret-value-direct"
+  value: "dGVzdC1zZWNyZXQtdmFsdWUtZGlyZWN0"

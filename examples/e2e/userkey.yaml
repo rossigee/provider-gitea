@@ -1,6 +1,0 @@
-apiVersion: userkey.gitea.m.crossplane.io/v2
-kind: UserKey
-metadata: {name: uptest-userkey, namespace: provider-gitea-e2e, annotations: {meta.upbound.io/example-id: userkey/v2/userkey}}
-spec:
-  forProvider: {username: gitea_admin, title: uptest-userkey, key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGVyK3Sg62y2sWzJADB+tkTnBEl6Rvq/ohh0Oaj0RhfO uptest-userkey@e2e"}
-  providerConfigRef: {name: e2e, kind: ProviderConfig}

@@ -96,11 +96,21 @@ func (c *connector) Connect(ctx context.Context, mg resource.Managed) (managed.E
 		return nil, err
 	}
 
-	return &external{client: conn}, nil
+	return &external{client: conn, kube: c.kube}, nil
 }
 
 type external struct {
 	client clients.Client
+	kube   client.Client
+}
+
+// resolveValue reads the secret value from the referenced Kubernetes Secret.
+// The value is never taken from the spec (secret-ref convention).
+func (e *external) resolveValue(ctx context.Context, cr *v2.OrganizationSecret) (string, error) {
+	if cr.Spec.ForProvider.ValueSecretRef == nil {
+		return "", errors.New("valueSecretRef is required")
+	}
+	return clients.ResolveSecretValue(ctx, e.kube, cr.Spec.ForProvider.ValueSecretRef)
 }
 
 func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.ExternalObservation, error) {
@@ -151,10 +161,11 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 	}
 	cr.SetConditions(xpv1.Creating())
 
-	req := &clients.CreateOrganizationSecretRequest{}
-	if cr.Spec.ForProvider.Data != nil {
-		req.Data = *cr.Spec.ForProvider.Data
+	value, err := e.resolveValue(ctx, cr)
+	if err != nil {
+		return managed.ExternalCreation{}, errors.Wrap(err, errCreateOrganizationSecret)
 	}
+	req := &clients.CreateOrganizationSecretRequest{Data: value}
 	if err := e.client.CreateOrganizationSecret(ctx, cr.Spec.ForProvider.Organization, cr.Spec.ForProvider.SecretName, req); err != nil {
 		return managed.ExternalCreation{}, errors.Wrap(err, errCreateOrganizationSecret)
 	}
@@ -176,10 +187,11 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalUpdate{}, errors.New(errExternalName)
 	}
 
-	req := &clients.CreateOrganizationSecretRequest{}
-	if cr.Spec.ForProvider.Data != nil {
-		req.Data = *cr.Spec.ForProvider.Data
+	value, err := e.resolveValue(ctx, cr)
+	if err != nil {
+		return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateOrganizationSecret)
 	}
+	req := &clients.CreateOrganizationSecretRequest{Data: value}
 	if err := e.client.UpdateOrganizationSecret(ctx, cr.Spec.ForProvider.Organization, secretName, req); err != nil {
 		return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateOrganizationSecret)
 	}

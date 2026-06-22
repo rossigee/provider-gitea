@@ -7,6 +7,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### 🔻 API surface trimmed to 14 reconcilable kinds
+- **Removed** kinds that cannot reconcile as managed resources (they modelled
+  git content or runtime/imperative operations): `Action`, `Runner`,
+  `PullRequest`, `Issue`, `Release`, `OrganizationMember`.
+- **Merged** `AdminUser` into `User` (both drove `/admin/users`); `User` gains
+  the union of fields (`maxRepoCreation`).
+- **Deduplicated** SSH keys: removed `DeployKey` and `UserKey` in favour of
+  `RepositoryKey` (DeployKey hit the identical `/repos/{owner}/{repo}/keys`).
+- Pruned the now-dead client methods, request/response types, the mock client,
+  and their CRDs. Result: **14 kinds**, all registered.
+
+### 🔐 Secrets always via Secret reference (never inline)
+- `User.passwordSecretRef`, `OrganizationSecret.valueSecretRef`,
+  `RepositorySecret.valueSecretRef`, and `AccessToken.passwordSecretRef` are now
+  `*xpv1.SecretKeySelector`, matching the platform-wide secret-ref convention
+  (provider-harbor). Removed the plaintext `User.password`,
+  `OrganizationSecret.data`/`dataFrom`, and the locally-redefined
+  `SecretKeySelector`. A shared `clients.ResolveSecretValue` is the one place a
+  `*SecretRef` becomes a value.
+
+### 🔑 AccessToken authenticates as the owning user
+- Gitea's `/users/{user}/tokens` API requires HTTP basic auth as the user, not
+  the ProviderConfig token. Added `clients.NewBasicAuthClient`; the AccessToken
+  controller now basic-auths as `spec.forProvider.username` with the password
+  from `passwordSecretRef`. Reusable for any future user-scoped resource.
+
+### ✅ e2e now covers Update against real Gitea
+- Dropped `--skip-update`; mutable examples (`Repository`, `Organization`,
+  `Label`, `Team`, `User`) carry `uptest.upbound.io/update-parameter` and are
+  driven create→Ready→**update**→import→delete. The setup script seeds the admin
+  + user password Secrets the basic-auth/secret-ref examples need. `AccessToken`
+  is no longer disabled — it runs in the suite.
+
 ### ✨ Controllers for every resource kind
 - Implemented working reconcilers for **all 23 v2 resource kinds** (previously
   only `repository`, partially). Each has create/observe/update/delete plus a

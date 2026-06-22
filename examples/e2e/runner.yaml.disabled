@@ -1,9 +1,0 @@
-# DISABLED for e2e: registering a Gitea Actions runner requires a registration
-# token and a running act_runner agent; not reproducible via a declarative apply
-# alone. Covered by unit tests. Re-enable with a runner-registration seed.
-apiVersion: runner.gitea.m.crossplane.io/v2
-kind: Runner
-metadata: {name: uptest-runner, namespace: provider-gitea-e2e, annotations: {meta.upbound.io/example-id: runner/v2/runner}}
-spec:
-  forProvider: {scope: repository, scopeValue: gitea_admin/uptest-repo, name: uptest-runner, labels: ["self-hosted","linux"]}
-  providerConfigRef: {name: e2e, kind: ProviderConfig}

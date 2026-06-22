@@ -9,9 +9,10 @@
 # in-cluster (sqlite, no persistence). uptest-setup.sh mints an admin API token.
 #
 # This is the "works by design" guarantee: a green run proves every example MR
-# reaches Ready and deletes cleanly against a real Gitea — which enforces real
-# ids, 404s, SSH-key validation, dependencies and auth. The update step is
-# skipped (--skip-update); drift logic is covered by the controller unit tests.
+# reaches Ready, updates, and deletes cleanly against a real Gitea — which
+# enforces real ids, 404s, SSH-key validation, dependencies and auth. The update
+# step mutates every example carrying a uptest.upbound.io/update-parameter
+# annotation and re-waits Ready (create/observe/update/import/delete all proven).
 #
 # Env knobs (optional, defaults from scripts/lib.sh):
 #   KIND_CLUSTER (provider-gitea-dev)  PROVIDER (provider-gitea)
@@ -145,8 +146,10 @@ ok "installed: Healthy + ${got}/${want} CRDs registered"
 #    + level queue, no bundled postgresql-ha/valkey-cluster, no persistence.
 GITEA_NS="${GITEA_NS:-gitea}"
 GITEA_RELEASE="${GITEA_RELEASE:-gitea}"
-GITEA_ADMIN_USER="${GITEA_ADMIN_USER:-gitea_admin}"
-GITEA_ADMIN_PASSWORD="${GITEA_ADMIN_PASSWORD:-Uptest-Admin-123}"
+# Exported so the uptest --setup-script subprocess seeds the matching admin
+# password Secret (the AccessToken example basic-auths as this user).
+export GITEA_ADMIN_USER="${GITEA_ADMIN_USER:-gitea_admin}"
+export GITEA_ADMIN_PASSWORD="${GITEA_ADMIN_PASSWORD:-Uptest-Admin-123}"
 log "installing Gitea (chart gitea-charts/gitea) in ns ${GITEA_NS}"
 helm repo add gitea-charts https://dl.gitea.com/charts/ >/dev/null 2>&1 || true
 helm repo update gitea-charts >/dev/null 2>&1
@@ -170,7 +173,11 @@ helm upgrade --install "$GITEA_RELEASE" gitea-charts/gitea -n "$GITEA_NS" \
 kubectl -n "$GITEA_NS" rollout status deploy/"$GITEA_RELEASE" --timeout=300s
 ok "Gitea ready at ${GITEA_RELEASE}-http.${GITEA_NS}.svc:3000 (admin ${GITEA_ADMIN_USER})"
 
-# 4. run uptest over the examples (apply -> Ready -> import -> delete).
+# 4. run uptest over the examples (apply -> Ready -> update -> import -> delete).
+# The update step mutates each example that carries a
+# uptest.upbound.io/update-parameter annotation (repository/organization/label/
+# team/user) and re-waits Ready, exercising the Update path end-to-end; examples
+# without the annotation (immutable/write-only kinds) just skip update.
 log "running uptest e2e against the real Gitea backend"
 LIST="$(ls examples/e2e/*.yaml | paste -sd, -)"
 
@@ -178,7 +185,7 @@ rc=0
 KUBECTL="$(command -v kubectl)" CHAINSAW="$CHAINSAW" E2E_NS="$E2E_NS" \
   "$UPTEST" e2e "$LIST" \
   --setup-script="test/e2e/uptest-setup.sh" \
-  --default-conditions=Ready --skip-update --default-timeout=600s || rc=$?
+  --default-conditions=Ready --default-timeout=600s || rc=$?
 
 [ "$rc" -eq 0 ] && ok "e2e PASSED" || warn "e2e FAILED (rc=$rc) — re-run with KEEP=true to inspect"
 exit $rc

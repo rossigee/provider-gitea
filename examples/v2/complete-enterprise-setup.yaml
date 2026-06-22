@@ -116,23 +116,6 @@ spec:
   deletionPolicy: Delete
 
 ---
-# Deploy Key for CI/CD Access
-apiVersion: deploykey.gitea.m.crossplane.io/v2
-kind: DeployKey
-metadata:
-  name: ci-deploy-key
-  namespace: enterprise-git
-spec:
-  forProvider:
-    repository: platform-engineering/infrastructure-core
-    title: "CI/CD Deploy Key"
-    key: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC..." # Your public key
-    readOnly: true
-    providerConfigRef:
-      name: enterprise-gitea
-  deletionPolicy: Delete
-
----
 # Team for Repository Access
 apiVersion: team.gitea.m.crossplane.io/v2
 kind: Team
@@ -163,11 +146,10 @@ spec:
   forProvider:
     repository: platform-engineering/infrastructure-core
     secretName: "DOCKER_REGISTRY_TOKEN"
-    data:
-      secretKeyRef:
-        namespace: enterprise-git
-        name: docker-registry-credentials
-        key: token
+    valueSecretRef:
+      namespace: enterprise-git
+      name: docker-registry-credentials
+      key: token
     providerConfigRef:
       name: enterprise-gitea
   deletionPolicy: Delete
@@ -183,65 +165,10 @@ spec:
   forProvider:
     organization: platform-engineering
     secretName: "AWS_ACCESS_KEY_ID"
-    data:
-      secretKeyRef:
-        namespace: enterprise-git
-        name: aws-credentials
-        key: access-key-id
-    providerConfigRef:
-      name: enterprise-gitea
-  deletionPolicy: Delete
-
----
-# Action/Workflow Configuration
-apiVersion: action.gitea.m.crossplane.io/v2
-kind: Action
-metadata:
-  name: infrastructure-ci
-  namespace: enterprise-git
-spec:
-  forProvider:
-    repository: platform-engineering/infrastructure-core
-    workflowName: "ci.yml"
-    branch: "main"
-    content: |
-      name: Infrastructure CI
-      on:
-        push:
-          branches: [main]
-        pull_request:
-          branches: [main]
-      jobs:
-        test:
-          runs-on: ubuntu-latest
-          steps:
-            - uses: actions/checkout@v3
-            - name: Terraform Validate
-              run: terraform validate
-            - name: Security Scan
-              run: checkov -f .
-            - name: Deploy
-              if: github.ref == 'refs/heads/main'
-              run: terraform apply -auto-approve
-    enabled: true
-    providerConfigRef:
-      name: enterprise-gitea
-  deletionPolicy: Delete
-
----
-# Self-hosted Runner
-apiVersion: runner.gitea.m.crossplane.io/v2
-kind: Runner
-metadata:
-  name: enterprise-runner
-  namespace: enterprise-git
-spec:
-  forProvider:
-    scope: "organization"
-    scopeInfo: "platform-engineering"
-    name: "enterprise-runner-01"
-    description: "Enterprise self-hosted runner for secure workloads"
-    labels: ["enterprise", "secure", "terraform"]
+    valueSecretRef:
+      namespace: enterprise-git
+      name: aws-credentials
+      key: access-key-id
     providerConfigRef:
       name: enterprise-gitea
   deletionPolicy: Delete
