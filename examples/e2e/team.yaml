@@ -1,0 +1,17 @@
+# Team: created under an org, then keyed by backend numeric id.
+apiVersion: team.gitea.m.crossplane.io/v2
+kind: Team
+metadata:
+  name: uptest-team
+  namespace: provider-gitea-e2e
+  annotations:
+    meta.upbound.io/example-id: team/v2/team
+spec:
+  forProvider:
+    name: uptest-team
+    organization: uptest-org
+    description: created by provider-gitea e2e
+    permission: read
+  providerConfigRef:
+    name: e2e
+    kind: ProviderConfig

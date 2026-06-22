@@ -76,13 +76,13 @@ type TeamObservation struct {
 // TeamSpec defines the desired state of Team
 type TeamSpec struct {
 	xpv1.ManagedResourceSpec `json:",inline"`
-	ForProvider       TeamParameters `json:"forProvider"`
+	ForProvider              TeamParameters `json:"forProvider"`
 }
 
 // TeamStatus defines the observed state of Team
 type TeamStatus struct {
 	xpv1.ManagedResourceStatus `json:",inline"`
-	AtProvider          TeamObservation `json:"atProvider,omitempty"`
+	AtProvider                 TeamObservation `json:"atProvider,omitempty"`
 }
 
 // +kubebuilder:object:root=true
@@ -119,7 +119,6 @@ var (
 	TeamKindAPIVersion   = TeamKind + "." + SchemeGroupVersion.String()
 	TeamGroupVersionKind = SchemeGroupVersion.WithKind(TeamKind)
 )
-
 
 // GetCondition returns the condition for the given ConditionType if it exists, otherwise returns nil.
 func (r *Team) GetCondition(ct xpv1.ConditionType) xpv1.Condition {

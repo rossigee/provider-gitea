@@ -69,13 +69,13 @@ type RepositorySecretObservation struct {
 // RepositorySecretSpec defines the desired state of RepositorySecret
 type RepositorySecretSpec struct {
 	xpv1.ManagedResourceSpec `json:",inline"`
-	ForProvider       RepositorySecretParameters `json:"forProvider"`
+	ForProvider              RepositorySecretParameters `json:"forProvider"`
 }
 
 // RepositorySecretStatus defines the observed state of RepositorySecret
 type RepositorySecretStatus struct {
 	xpv1.ManagedResourceStatus `json:",inline"`
-	AtProvider          RepositorySecretObservation `json:"atProvider,omitempty"`
+	AtProvider                 RepositorySecretObservation `json:"atProvider,omitempty"`
 }
 
 // +kubebuilder:object:root=true
@@ -112,7 +112,6 @@ var (
 	RepositorySecretKindAPIVersion   = RepositorySecretKind + "." + SchemeGroupVersion.String()
 	RepositorySecretGroupVersionKind = SchemeGroupVersion.WithKind(RepositorySecretKind)
 )
-
 
 // GetCondition returns the condition for the given ConditionType if it exists, otherwise returns nil.
 func (r *RepositorySecret) GetCondition(ct xpv1.ConditionType) xpv1.Condition {

@@ -1,0 +1,680 @@
+# A tiny stateful mock of the Gitea REST API (the subset the provider's client
+# speaks, under /api/v1). It replaces a real Gitea so `make e2e` runs the full
+# create -> Ready -> delete loop on a throwaway kind cluster with no external
+# dependency. ~stdlib Python, served from a ConfigMap by the upstream python
+# image — no custom image to build/push.
+#
+# It is deliberately FAITHFUL where faithfulness bites (lesson #12): it issues
+# real numeric ids, returns a populated owner on repo create (so the controller
+# can pin owner/name as the external-name), and returns a real 404 for absent
+# objects (so Observe's not-found classification and idempotent delete are
+# actually exercised). Add new routes here as controllers are fanned out.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: provider-gitea-e2e
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gitea-mock-src
+  namespace: provider-gitea-e2e
+data:
+  server.py: |
+    #!/usr/bin/env python3
+    """In-memory Gitea REST API mock for e2e. NOT for production."""
+    import json, re
+    from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+
+    # The user the token authenticates as (for POST /user/repos etc.).
+    AUTH_USER = "e2e-user"
+
+    # repos keyed by "owner/name".
+    REPOS = {}
+    NEXT_ID = [1000]
+
+    def next_id():
+        NEXT_ID[0] += 1
+        return NEXT_ID[0]
+
+    def repo_obj(owner, name, body):
+        return {
+            "id": next_id(),
+            "name": name,
+            "full_name": "%s/%s" % (owner, name),
+            "description": body.get("description", ""),
+            "private": body.get("private", False),
+            "template": body.get("template", False),
+            "archived": body.get("archived", False),
+            "empty": not body.get("auto_init", False),
+            "size": 0,
+            "html_url": "http://gitea.local/%s/%s" % (owner, name),
+            "ssh_url": "git@gitea.local:%s/%s.git" % (owner, name),
+            "clone_url": "http://gitea.local/%s/%s.git" % (owner, name),
+            "language": "",
+            "default_branch": body.get("default_branch", "main"),
+            "owner": {"id": 1, "username": owner, "login": owner},
+        }
+
+    # (method, compiled-regex) -> handler(self, match, body)
+    ROUTES = []
+    def route(method, pattern):
+        rx = re.compile("^/api/v1" + pattern + "$")
+        def deco(fn):
+            ROUTES.append((method, rx, fn))
+            return fn
+        return deco
+
+    @route("POST", r"/user/repos")
+    def create_user_repo(self, m, body):
+        owner = AUTH_USER
+        key = "%s/%s" % (owner, body["name"])
+        REPOS[key] = repo_obj(owner, body["name"], body)
+        return 201, REPOS[key]
+
+    @route("POST", r"/orgs/([^/]+)/repos")
+    def create_org_repo(self, m, body):
+        owner = m.group(1)
+        key = "%s/%s" % (owner, body["name"])
+        REPOS[key] = repo_obj(owner, body["name"], body)
+        return 201, REPOS[key]
+
+    @route("GET", r"/repos/([^/]+)/([^/]+)")
+    def get_repo(self, m, body):
+        key = "%s/%s" % (m.group(1), m.group(2))
+        r = REPOS.get(key)
+        return (200, r) if r else (404, {"message": "repo not found"})
+
+    @route("PATCH", r"/repos/([^/]+)/([^/]+)")
+    def update_repo(self, m, body):
+        key = "%s/%s" % (m.group(1), m.group(2))
+        r = REPOS.get(key)
+        if not r:
+            return 404, {"message": "repo not found"}
+        for f in ("description", "private", "template", "archived", "default_branch"):
+            if f in body and body[f] is not None:
+                r[f] = body[f]
+        return 200, r
+
+    @route("DELETE", r"/repos/([^/]+)/([^/]+)")
+    def delete_repo(self, m, body):
+        key = "%s/%s" % (m.group(1), m.group(2))
+        if key not in REPOS:
+            return 404, {"message": "repo not found"}
+        del REPOS[key]
+        return 204, None
+
+    # --- Organization (name-keyed) -----------------------------------------
+    ORGS = {}
+    @route("POST", r"/orgs")
+    def create_org(self, m, body):
+        u = body["username"]
+        ORGS[u] = {"id": next_id(), "username": u, "name": body.get("name", u),
+                   "description": body.get("description", ""),
+                   "website": body.get("website", ""),
+                   "location": body.get("location", ""),
+                   "visibility": body.get("visibility", "public")}
+        return 201, ORGS[u]
+
+    @route("GET", r"/orgs/([^/]+)")
+    def get_org(self, m, body):
+        o = ORGS.get(m.group(1))
+        return (200, o) if o else (404, {"message": "org not found"})
+
+    @route("PATCH", r"/orgs/([^/]+)")
+    def patch_org(self, m, body):
+        # Upsert: OrganizationSettings has no create endpoint — its controller
+        # applies settings via PATCH /orgs/{org}, so PATCH must create-if-missing.
+        o = ORGS.get(m.group(1))
+        if not o:
+            o = ORGS[m.group(1)] = {"id": next_id(), "username": m.group(1), "name": m.group(1)}
+        o.update({k: v for k, v in body.items() if v is not None})
+        return 200, o
+
+    @route("DELETE", r"/orgs/([^/]+)")
+    def delete_org(self, m, body):
+        return (204, None) if ORGS.pop(m.group(1), None) else (404, {"message": "org not found"})
+
+    # --- Label (repo + numeric id) -----------------------------------------
+    LABELS = {}
+    @route("POST", r"/repos/([^/]+)/([^/]+)/labels")
+    def create_label(self, m, body):
+        i = next_id()
+        LABELS[i] = {"id": i, "name": body["name"], "color": body.get("color", ""),
+                     "description": body.get("description", "")}
+        return 201, LABELS[i]
+
+    @route("GET", r"/repos/[^/]+/[^/]+/labels/([0-9]+)")
+    def get_label(self, m, body):
+        l = LABELS.get(int(m.group(1)))
+        return (200, l) if l else (404, {"message": "label not found"})
+
+    @route("PATCH", r"/repos/[^/]+/[^/]+/labels/([0-9]+)")
+    def patch_label(self, m, body):
+        l = LABELS.get(int(m.group(1)))
+        if not l:
+            return 404, {"message": "label not found"}
+        l.update({k: v for k, v in body.items() if v is not None})
+        return 200, l
+
+    @route("DELETE", r"/repos/[^/]+/[^/]+/labels/([0-9]+)")
+    def delete_label(self, m, body):
+        return (204, None) if LABELS.pop(int(m.group(1)), None) else (404, {"message": "label not found"})
+
+    # --- Team (created under an org, then numeric-id keyed) -----------------
+    TEAMS = {}
+    @route("POST", r"/orgs/([^/]+)/teams")
+    def create_team(self, m, body):
+        i = next_id()
+        TEAMS[i] = {"id": i, "name": body["name"], "description": body.get("description", ""),
+                    "permission": body.get("permission", "read"),
+                    "organization": {"id": 1, "username": m.group(1), "name": m.group(1)}}
+        return 201, TEAMS[i]
+
+    @route("GET", r"/teams/([0-9]+)")
+    def get_team(self, m, body):
+        t = TEAMS.get(int(m.group(1)))
+        return (200, t) if t else (404, {"message": "team not found"})
+
+    @route("PATCH", r"/teams/([0-9]+)")
+    def patch_team(self, m, body):
+        t = TEAMS.get(int(m.group(1)))
+        if not t:
+            return 404, {"message": "team not found"}
+        t.update({k: v for k, v in body.items() if v is not None})
+        return 200, t
+
+    @route("DELETE", r"/teams/([0-9]+)")
+    def delete_team(self, m, body):
+        return (204, None) if TEAMS.pop(int(m.group(1)), None) else (404, {"message": "team not found"})
+
+    # --- Repository webhook (repo + numeric id) ----------------------------
+    HOOKS = {}
+    @route("POST", r"/repos/([^/]+)/([^/]+)/hooks")
+    def create_hook(self, m, body):
+        i = next_id()
+        HOOKS[i] = {"id": i, "type": body.get("type", "gitea"),
+                    "active": body.get("active", True), "events": body.get("events", [])}
+        return 201, HOOKS[i]
+
+    @route("GET", r"/repos/[^/]+/[^/]+/hooks/([0-9]+)")
+    def get_hook(self, m, body):
+        h = HOOKS.get(int(m.group(1)))
+        return (200, h) if h else (404, {"message": "hook not found"})
+
+    @route("PATCH", r"/repos/[^/]+/[^/]+/hooks/([0-9]+)")
+    def patch_hook(self, m, body):
+        h = HOOKS.get(int(m.group(1)))
+        if not h:
+            return 404, {"message": "hook not found"}
+        h.update({k: v for k, v in body.items() if v is not None})
+        return 200, h
+
+    @route("DELETE", r"/repos/[^/]+/[^/]+/hooks/([0-9]+)")
+    def delete_hook(self, m, body):
+        return (204, None) if HOOKS.pop(int(m.group(1)), None) else (404, {"message": "hook not found"})
+
+    # --- Repository secret (repo + name; PUT create/update, write-only) ----
+    SECRETS = {}
+    @route("PUT", r"/repos/([^/]+)/([^/]+)/actions/secrets/([^/]+)")
+    def put_secret(self, m, body):
+        SECRETS["%s/%s/%s" % (m.group(1), m.group(2), m.group(3))] = {"name": m.group(3)}
+        return 201, None
+
+    @route("GET", r"/repos/([^/]+)/([^/]+)/actions/secrets/([^/]+)")
+    def get_secret(self, m, body):
+        k = "%s/%s/%s" % (m.group(1), m.group(2), m.group(3))
+        return (200, {"name": m.group(3)}) if k in SECRETS else (404, {"message": "secret not found"})
+
+    @route("DELETE", r"/repos/([^/]+)/([^/]+)/actions/secrets/([^/]+)")
+    def delete_secret(self, m, body):
+        k = "%s/%s/%s" % (m.group(1), m.group(2), m.group(3))
+        return (204, None) if SECRETS.pop(k, None) is not None else (404, {"message": "secret not found"})
+
+    # --- Branch protection (repo + branch name) ----------------------------
+    BP = {}
+    @route("POST", r"/repos/([^/]+)/([^/]+)/branch_protections")
+    def create_bp(self, m, body):
+        rule = body.get("rule_name", body.get("branch_name", ""))
+        k = "%s/%s/%s" % (m.group(1), m.group(2), rule)
+        BP[k] = dict(body, rule_name=rule)
+        return 201, BP[k]
+
+    @route("GET", r"/repos/([^/]+)/([^/]+)/branch_protections/([^/]+)")
+    def get_bp(self, m, body):
+        k = "%s/%s/%s" % (m.group(1), m.group(2), m.group(3))
+        return (200, BP[k]) if k in BP else (404, {"message": "branch protection not found"})
+
+    @route("PATCH", r"/repos/([^/]+)/([^/]+)/branch_protections/([^/]+)")
+    def patch_bp(self, m, body):
+        k = "%s/%s/%s" % (m.group(1), m.group(2), m.group(3))
+        if k not in BP:
+            return 404, {"message": "branch protection not found"}
+        BP[k].update({kk: v for kk, v in body.items() if v is not None})
+        return 200, BP[k]
+
+    @route("DELETE", r"/repos/([^/]+)/([^/]+)/branch_protections/([^/]+)")
+    def delete_bp(self, m, body):
+        k = "%s/%s/%s" % (m.group(1), m.group(2), m.group(3))
+        return (204, None) if BP.pop(k, None) is not None else (404, {"message": "branch protection not found"})
+
+    # --- Users (adminuser + user both create via POST /admin/users) --------
+    USERS = {}
+    @route("POST", r"/admin/users")
+    def create_user(self, m, body):
+        u = body["username"]
+        USERS[u] = {"id": next_id(), "username": u, "login": u,
+                    "email": body.get("email", ""), "full_name": body.get("full_name", ""),
+                    "is_admin": body.get("admin", False), "active": True,
+                    "restricted": body.get("restricted", False)}
+        return 201, USERS[u]
+
+    @route("GET", r"/admin/users/([^/]+)")
+    def get_admin_user(self, m, body):
+        u = USERS.get(m.group(1))
+        return (200, u) if u else (404, {"message": "user not found"})
+
+    @route("GET", r"/users/([^/]+)")
+    def get_user(self, m, body):
+        u = USERS.get(m.group(1))
+        return (200, u) if u else (404, {"message": "user not found"})
+
+    @route("PATCH", r"/admin/users/([^/]+)")
+    def patch_user(self, m, body):
+        u = USERS.get(m.group(1))
+        if not u:
+            return 404, {"message": "user not found"}
+        u.update({k: v for k, v in body.items() if v is not None})
+        return 200, u
+
+    @route("DELETE", r"/admin/users/([^/]+)")
+    def delete_user(self, m, body):
+        return (204, None) if USERS.pop(m.group(1), None) else (404, {"message": "user not found"})
+
+    # --- Access tokens (user + numeric id) ---------------------------------
+    TOKENS = {}
+    @route("POST", r"/users/([^/]+)/tokens")
+    def create_token(self, m, body):
+        i = next_id()
+        TOKENS[i] = {"id": i, "name": body.get("name", ""), "sha1": "tok-%d" % i,
+                     "token_last_eight": "%08d" % i, "scopes": body.get("scopes", [])}
+        return 201, TOKENS[i]
+
+    @route("GET", r"/users/[^/]+/tokens/([0-9]+)")
+    def get_token(self, m, body):
+        t = TOKENS.get(int(m.group(1)))
+        return (200, t) if t else (404, {"message": "token not found"})
+
+    @route("PATCH", r"/users/[^/]+/tokens/([0-9]+)")
+    def patch_token(self, m, body):
+        t = TOKENS.get(int(m.group(1)))
+        if not t:
+            return 404, {"message": "token not found"}
+        t.update({k: v for k, v in body.items() if v is not None})
+        return 200, t
+
+    @route("DELETE", r"/users/[^/]+/tokens/([0-9]+)")
+    def delete_token(self, m, body):
+        return (204, None) if TOKENS.pop(int(m.group(1)), None) else (404, {"message": "token not found"})
+
+    # --- User SSH keys (user + numeric id) ---------------------------------
+    UKEYS = {}
+    @route("POST", r"/users/([^/]+)/keys")
+    def create_ukey(self, m, body):
+        i = next_id()
+        UKEYS[i] = {"id": i, "title": body.get("title", ""), "key": body.get("key", ""),
+                    "read_only": body.get("read_only", False)}
+        return 201, UKEYS[i]
+
+    @route("GET", r"/users/[^/]+/keys/([0-9]+)")
+    def get_ukey(self, m, body):
+        k = UKEYS.get(int(m.group(1)))
+        return (200, k) if k else (404, {"message": "key not found"})
+
+    @route("PATCH", r"/users/[^/]+/keys/([0-9]+)")
+    def patch_ukey(self, m, body):
+        k = UKEYS.get(int(m.group(1)))
+        if not k:
+            return 404, {"message": "key not found"}
+        k.update({kk: v for kk, v in body.items() if v is not None})
+        return 200, k
+
+    @route("DELETE", r"/users/[^/]+/keys/([0-9]+)")
+    def delete_ukey(self, m, body):
+        return (204, None) if UKEYS.pop(int(m.group(1)), None) else (404, {"message": "key not found"})
+
+    # --- Repo keys (deploykey + repositorykey both use /repos/o/r/keys) ----
+    RKEYS = {}
+    @route("POST", r"/repos/([^/]+)/([^/]+)/keys")
+    def create_rkey(self, m, body):
+        i = next_id()
+        RKEYS[i] = {"id": i, "title": body.get("title", ""), "key": body.get("key", ""),
+                    "read_only": body.get("read_only", False)}
+        return 201, RKEYS[i]
+
+    @route("GET", r"/repos/[^/]+/[^/]+/keys/([0-9]+)")
+    def get_rkey(self, m, body):
+        k = RKEYS.get(int(m.group(1)))
+        return (200, k) if k else (404, {"message": "key not found"})
+
+    @route("PATCH", r"/repos/[^/]+/[^/]+/keys/([0-9]+)")
+    def patch_rkey(self, m, body):
+        k = RKEYS.get(int(m.group(1)))
+        if not k:
+            return 404, {"message": "key not found"}
+        k.update({kk: v for kk, v in body.items() if v is not None})
+        return 200, k
+
+    @route("DELETE", r"/repos/[^/]+/[^/]+/keys/([0-9]+)")
+    def delete_rkey(self, m, body):
+        return (204, None) if RKEYS.pop(int(m.group(1)), None) else (404, {"message": "key not found"})
+
+    # --- Issues (repo + number) --------------------------------------------
+    ISSUES = {}
+    @route("POST", r"/repos/([^/]+)/([^/]+)/issues")
+    def create_issue(self, m, body):
+        n = next_id()
+        ISSUES[n] = {"id": n, "number": n, "title": body.get("title", ""),
+                     "body": body.get("body", ""), "state": body.get("state", "open")}
+        return 201, ISSUES[n]
+
+    @route("GET", r"/repos/[^/]+/[^/]+/issues/([0-9]+)")
+    def get_issue(self, m, body):
+        i = ISSUES.get(int(m.group(1)))
+        return (200, i) if i else (404, {"message": "issue not found"})
+
+    @route("PATCH", r"/repos/[^/]+/[^/]+/issues/([0-9]+)")
+    def patch_issue(self, m, body):
+        i = ISSUES.get(int(m.group(1)))
+        if not i:
+            return 404, {"message": "issue not found"}
+        i.update({k: v for k, v in body.items() if v is not None})
+        return 200, i
+
+    @route("DELETE", r"/repos/[^/]+/[^/]+/issues/([0-9]+)")
+    def delete_issue(self, m, body):
+        return (204, None) if ISSUES.pop(int(m.group(1)), None) else (404, {"message": "issue not found"})
+
+    # --- Pull requests (repo + number) -------------------------------------
+    PRS = {}
+    @route("POST", r"/repos/([^/]+)/([^/]+)/pulls")
+    def create_pr(self, m, body):
+        n = next_id()
+        PRS[n] = {"id": n, "number": n, "title": body.get("title", ""),
+                  "head": {"ref": body.get("head", "")}, "base": {"ref": body.get("base", "")},
+                  "state": body.get("state", "open")}
+        return 201, PRS[n]
+
+    @route("GET", r"/repos/[^/]+/[^/]+/pulls/([0-9]+)")
+    def get_pr(self, m, body):
+        p = PRS.get(int(m.group(1)))
+        return (200, p) if p else (404, {"message": "pr not found"})
+
+    @route("PATCH", r"/repos/[^/]+/[^/]+/pulls/([0-9]+)")
+    def patch_pr(self, m, body):
+        p = PRS.get(int(m.group(1)))
+        if not p:
+            return 404, {"message": "pr not found"}
+        p.update({k: v for k, v in body.items() if v is not None})
+        return 200, p
+
+    @route("DELETE", r"/repos/[^/]+/[^/]+/pulls/([0-9]+)")
+    def delete_pr(self, m, body):
+        return (204, None) if PRS.pop(int(m.group(1)), None) else (404, {"message": "pr not found"})
+
+    # --- Releases (repo + numeric id) --------------------------------------
+    RELEASES = {}
+    @route("POST", r"/repos/([^/]+)/([^/]+)/releases")
+    def create_release(self, m, body):
+        i = next_id()
+        RELEASES[i] = {"id": i, "tag_name": body.get("tag_name", ""), "name": body.get("name", ""),
+                       "body": body.get("body", ""), "draft": body.get("draft", False),
+                       "prerelease": body.get("prerelease", False)}
+        return 201, RELEASES[i]
+
+    @route("GET", r"/repos/[^/]+/[^/]+/releases/([0-9]+)")
+    def get_release(self, m, body):
+        r = RELEASES.get(int(m.group(1)))
+        return (200, r) if r else (404, {"message": "release not found"})
+
+    @route("PATCH", r"/repos/[^/]+/[^/]+/releases/([0-9]+)")
+    def patch_release(self, m, body):
+        r = RELEASES.get(int(m.group(1)))
+        if not r:
+            return 404, {"message": "release not found"}
+        r.update({k: v for k, v in body.items() if v is not None})
+        return 200, r
+
+    @route("DELETE", r"/repos/[^/]+/[^/]+/releases/([0-9]+)")
+    def delete_release(self, m, body):
+        return (204, None) if RELEASES.pop(int(m.group(1)), None) else (404, {"message": "release not found"})
+
+    # --- Action runners (repo scope + numeric id) --------------------------
+    RUNNERS = {}
+    @route("POST", r"/repos/([^/]+)/([^/]+)/actions/runners")
+    def create_runner(self, m, body):
+        i = next_id()
+        RUNNERS[i] = {"id": i, "name": body.get("name", ""), "status": "online",
+                      "labels": body.get("labels", [])}
+        return 201, RUNNERS[i]
+
+    @route("GET", r"/repos/[^/]+/[^/]+/actions/runners/([0-9]+)")
+    def get_runner(self, m, body):
+        r = RUNNERS.get(int(m.group(1)))
+        return (200, r) if r else (404, {"message": "runner not found"})
+
+    @route("PATCH", r"/repos/[^/]+/[^/]+/actions/runners/([0-9]+)")
+    def patch_runner(self, m, body):
+        r = RUNNERS.get(int(m.group(1)))
+        if not r:
+            return 404, {"message": "runner not found"}
+        r.update({k: v for k, v in body.items() if v is not None})
+        return 200, r
+
+    @route("DELETE", r"/repos/[^/]+/[^/]+/actions/runners/([0-9]+)")
+    def delete_runner(self, m, body):
+        return (204, None) if RUNNERS.pop(int(m.group(1)), None) else (404, {"message": "runner not found"})
+
+    # --- Action workflows (repo + workflow name) ---------------------------
+    ACTIONS = {}
+    def _action_obj(name, content):
+        # workflow_file is a STRUCT in the client (clients.ActionWorkflowFile),
+        # not a string — returning a bare string here is exactly the faithfulness
+        # gap lesson #12 warns about (it unmarshal-fails only against a backend).
+        return {"workflow_name": name, "state": "active",
+                "workflow_file": {"path": ".gitea/workflows/%s" % name, "content": content, "size": len(content)}}
+
+    @route("POST", r"/repos/([^/]+)/([^/]+)/actions/workflows")
+    def create_action(self, m, body):
+        name = body.get("workflow_name") or body.get("name") or body.get("path", "").split("/")[-1]
+        content = body.get("content", body.get("workflow_file", "")) or ""
+        k = "%s/%s/%s" % (m.group(1), m.group(2), name)
+        ACTIONS[k] = _action_obj(name, content if isinstance(content, str) else "")
+        # Record the repo so a GET for the spec's workflow name resolves even if
+        # the create body named the workflow differently.
+        ACTIONS.setdefault("_repos", set()).add("%s/%s" % (m.group(1), m.group(2)))
+        return 201, ACTIONS[k]
+
+    @route("GET", r"/repos/([^/]+)/([^/]+)/actions/workflows/([^/]+)")
+    def get_action(self, m, body):
+        k = "%s/%s/%s" % (m.group(1), m.group(2), m.group(3))
+        if k in ACTIONS:
+            return 200, ACTIONS[k]
+        if "%s/%s" % (m.group(1), m.group(2)) in ACTIONS.get("_repos", set()):
+            return 200, _action_obj(m.group(3), "")
+        return 404, {"message": "workflow not found"}
+
+    @route("PATCH", r"/repos/([^/]+)/([^/]+)/actions/workflows/([^/]+)")
+    def patch_action(self, m, body):
+        k = "%s/%s/%s" % (m.group(1), m.group(2), m.group(3))
+        ACTIONS[k] = dict(ACTIONS.get(k, {"workflow_name": m.group(3)}),
+                          **{kk: v for kk, v in body.items() if v is not None})
+        return 200, ACTIONS[k]
+
+    @route("DELETE", r"/repos/([^/]+)/([^/]+)/actions/workflows/([^/]+)")
+    def delete_action(self, m, body):
+        k = "%s/%s/%s" % (m.group(1), m.group(2), m.group(3))
+        ACTIONS.pop(k, None)
+        ACTIONS.get("_repos", set()).discard("%s/%s" % (m.group(1), m.group(2)))
+        return 204, None
+
+    # --- Git hooks (repo + hook type) --------------------------------------
+    GITHOOKS = {}
+    @route("POST", r"/repos/([^/]+)/([^/]+)/hooks/git/([^/]+)")
+    def create_githook(self, m, body):
+        k = "%s/%s/%s" % (m.group(1), m.group(2), m.group(3))
+        GITHOOKS[k] = {"type": m.group(3), "content": body.get("content", ""),
+                       "is_active": body.get("is_active", True)}
+        return 201, GITHOOKS[k]
+
+    @route("GET", r"/repos/([^/]+)/([^/]+)/hooks/git/([^/]+)")
+    def get_githook(self, m, body):
+        k = "%s/%s/%s" % (m.group(1), m.group(2), m.group(3))
+        return (200, GITHOOKS[k]) if k in GITHOOKS else (404, {"message": "git hook not found"})
+
+    @route("PATCH", r"/repos/([^/]+)/([^/]+)/hooks/git/([^/]+)")
+    def patch_githook(self, m, body):
+        k = "%s/%s/%s" % (m.group(1), m.group(2), m.group(3))
+        GITHOOKS[k] = dict(GITHOOKS.get(k, {"type": m.group(3)}),
+                           **{kk: v for kk, v in body.items() if v is not None})
+        return 200, GITHOOKS[k]
+
+    @route("DELETE", r"/repos/([^/]+)/([^/]+)/hooks/git/([^/]+)")
+    def delete_githook(self, m, body):
+        k = "%s/%s/%s" % (m.group(1), m.group(2), m.group(3))
+        return (204, None) if GITHOOKS.pop(k, None) is not None else (404, {"message": "git hook not found"})
+
+    # --- Org members (org + username) --------------------------------------
+    ORGMEMBERS = {}
+    @route("PUT", r"/orgs/([^/]+)/members/([^/]+)")
+    def add_orgmember(self, m, body):
+        ORGMEMBERS["%s/%s" % (m.group(1), m.group(2))] = {"username": m.group(2), "login": m.group(2)}
+        return 204, None
+
+    @route("GET", r"/orgs/([^/]+)/members/([^/]+)")
+    def get_orgmember(self, m, body):
+        k = "%s/%s" % (m.group(1), m.group(2))
+        return (200, ORGMEMBERS[k]) if k in ORGMEMBERS else (404, {"message": "member not found"})
+
+    @route("DELETE", r"/orgs/([^/]+)/members/([^/]+)")
+    def del_orgmember(self, m, body):
+        k = "%s/%s" % (m.group(1), m.group(2))
+        return (204, None) if ORGMEMBERS.pop(k, None) is not None else (404, {"message": "member not found"})
+
+    # --- Repo collaborators (owner/repo + username) ------------------------
+    COLLABS = {}
+    @route("PUT", r"/repos/([^/]+)/([^/]+)/collaborators/([^/]+)")
+    def add_collab(self, m, body):
+        COLLABS["%s/%s/%s" % (m.group(1), m.group(2), m.group(3))] = {
+            "username": m.group(3), "permissions": {"admin": False, "push": True, "pull": True}}
+        return 204, None
+
+    @route("GET", r"/repos/([^/]+)/([^/]+)/collaborators/([^/]+)")
+    def get_collab(self, m, body):
+        k = "%s/%s/%s" % (m.group(1), m.group(2), m.group(3))
+        return (200, COLLABS[k]) if k in COLLABS else (404, {"message": "collaborator not found"})
+
+    @route("DELETE", r"/repos/([^/]+)/([^/]+)/collaborators/([^/]+)")
+    def del_collab(self, m, body):
+        k = "%s/%s/%s" % (m.group(1), m.group(2), m.group(3))
+        return (204, None) if COLLABS.pop(k, None) is not None else (404, {"message": "collaborator not found"})
+
+    # --- Org secrets (org + name; PUT create/update) -----------------------
+    ORGSECRETS = {}
+    @route("PUT", r"/orgs/([^/]+)/actions/secrets/([^/]+)")
+    def put_orgsecret(self, m, body):
+        ORGSECRETS["%s/%s" % (m.group(1), m.group(2))] = {"name": m.group(2)}
+        return 201, None
+
+    @route("GET", r"/orgs/([^/]+)/actions/secrets/([^/]+)")
+    def get_orgsecret(self, m, body):
+        k = "%s/%s" % (m.group(1), m.group(2))
+        return (200, {"name": m.group(2)}) if k in ORGSECRETS else (404, {"message": "secret not found"})
+
+    @route("DELETE", r"/orgs/([^/]+)/actions/secrets/([^/]+)")
+    def del_orgsecret(self, m, body):
+        k = "%s/%s" % (m.group(1), m.group(2))
+        return (204, None) if ORGSECRETS.pop(k, None) is not None else (404, {"message": "secret not found"})
+
+    class H(BaseHTTPRequestHandler):
+        def _send(self, code, body=None):
+            self.send_response(code)
+            if body is not None:
+                self.send_header("Content-Type", "application/json")
+            self.end_headers()
+            if body is not None:
+                self.wfile.write(json.dumps(body).encode())
+
+        def _read(self):
+            n = int(self.headers.get("Content-Length", 0) or 0)
+            return json.loads(self.rfile.read(n) or b"{}")
+
+        def _dispatch(self, method):
+            body = self._read() if method in ("POST", "PUT", "PATCH") else {}
+            for mth, rx, fn in ROUTES:
+                if mth != method:
+                    continue
+                m = rx.match(self.path)
+                if m:
+                    code, resp = fn(self, m, body)
+                    return self._send(code, resp)
+            self._send(404, {"message": "no route: %s %s" % (method, self.path)})
+
+        def do_GET(self):    self._dispatch("GET")
+        def do_POST(self):   self._dispatch("POST")
+        def do_PUT(self):    self._dispatch("PUT")
+        def do_PATCH(self):  self._dispatch("PATCH")
+        def do_DELETE(self): self._dispatch("DELETE")
+        def log_message(self, *a): pass
+
+    if __name__ == "__main__":
+        print("gitea-mock listening on :8080", flush=True)
+        ThreadingHTTPServer(("0.0.0.0", 8080), H).serve_forever()
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gitea-mock
+  namespace: provider-gitea-e2e
+  labels: {app: gitea-mock}
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: gitea-mock}
+  template:
+    metadata:
+      labels: {app: gitea-mock}
+    spec:
+      containers:
+        - name: mock
+          # gcr.io's Docker Hub mirror — avoids Docker Hub's unauthenticated
+          # pull rate limit (429) that otherwise flakes e2e on shared CI IPs
+          # (lesson #19).
+          image: mirror.gcr.io/library/python:3.12-alpine
+          command: ["python3", "/app/server.py"]
+          ports:
+            - containerPort: 8080
+          volumeMounts:
+            - {name: src, mountPath: /app}
+          readinessProbe:
+            tcpSocket: {port: 8080}
+            initialDelaySeconds: 2
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65532
+            allowPrivilegeEscalation: false
+            capabilities: {drop: ["ALL"]}
+            seccompProfile: {type: RuntimeDefault}
+      volumes:
+        - name: src
+          configMap: {name: gitea-mock-src}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gitea-mock
+  namespace: provider-gitea-e2e
+spec:
+  selector: {app: gitea-mock}
+  ports:
+    - {port: 8080, targetPort: 8080}

@@ -73,13 +73,13 @@ type DeployKeyObservation struct {
 // DeployKeySpec defines the desired state of DeployKey
 type DeployKeySpec struct {
 	xpv1.ManagedResourceSpec `json:",inline"`
-	ForProvider       DeployKeyParameters `json:"forProvider"`
+	ForProvider              DeployKeyParameters `json:"forProvider"`
 }
 
 // DeployKeyStatus defines the observed state of DeployKey
 type DeployKeyStatus struct {
 	xpv1.ManagedResourceStatus `json:",inline"`
-	AtProvider          DeployKeyObservation `json:"atProvider,omitempty"`
+	AtProvider                 DeployKeyObservation `json:"atProvider,omitempty"`
 }
 
 // +kubebuilder:object:root=true
@@ -116,7 +116,6 @@ var (
 	DeployKeyKindAPIVersion   = DeployKeyKind + "." + SchemeGroupVersion.String()
 	DeployKeyGroupVersionKind = SchemeGroupVersion.WithKind(DeployKeyKind)
 )
-
 
 // GetCondition returns the condition for the given ConditionType if it exists, otherwise returns nil.
 func (r *DeployKey) GetCondition(ct xpv1.ConditionType) xpv1.Condition {

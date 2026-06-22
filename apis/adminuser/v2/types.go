@@ -173,13 +173,13 @@ type AdminUserObservation struct {
 // AdminUserSpec defines the desired state of AdminUser
 type AdminUserSpec struct {
 	xpv1.ManagedResourceSpec `json:",inline"`
-	ForProvider       AdminUserParameters `json:"forProvider"`
+	ForProvider              AdminUserParameters `json:"forProvider"`
 }
 
 // AdminUserStatus defines the observed state of AdminUser
 type AdminUserStatus struct {
 	xpv1.ManagedResourceStatus `json:",inline"`
-	AtProvider          AdminUserObservation `json:"atProvider,omitempty"`
+	AtProvider                 AdminUserObservation `json:"atProvider,omitempty"`
 }
 
 // +kubebuilder:object:root=true
@@ -216,7 +216,6 @@ var (
 	AdminUserKindAPIVersion   = AdminUserKind + "." + SchemeGroupVersion.String()
 	AdminUserGroupVersionKind = SchemeGroupVersion.WithKind(AdminUserKind)
 )
-
 
 // GetCondition returns the condition for the given ConditionType if it exists, otherwise returns nil.
 func (r *AdminUser) GetCondition(ct xpv1.ConditionType) xpv1.Condition {

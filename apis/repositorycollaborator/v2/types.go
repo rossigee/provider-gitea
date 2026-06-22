@@ -81,13 +81,13 @@ type RepositoryCollaboratorObservation struct {
 // RepositoryCollaboratorSpec defines the desired state of RepositoryCollaborator
 type RepositoryCollaboratorSpec struct {
 	xpv1.ManagedResourceSpec `json:",inline"`
-	ForProvider       RepositoryCollaboratorParameters `json:"forProvider"`
+	ForProvider              RepositoryCollaboratorParameters `json:"forProvider"`
 }
 
 // RepositoryCollaboratorStatus defines the observed state of RepositoryCollaborator
 type RepositoryCollaboratorStatus struct {
 	xpv1.ManagedResourceStatus `json:",inline"`
-	AtProvider          RepositoryCollaboratorObservation `json:"atProvider,omitempty"`
+	AtProvider                 RepositoryCollaboratorObservation `json:"atProvider,omitempty"`
 }
 
 // +kubebuilder:object:root=true
@@ -124,7 +124,6 @@ var (
 	RepositoryCollaboratorKindAPIVersion   = RepositoryCollaboratorKind + "." + SchemeGroupVersion.String()
 	RepositoryCollaboratorGroupVersionKind = SchemeGroupVersion.WithKind(RepositoryCollaboratorKind)
 )
-
 
 // GetCondition returns the condition for the given ConditionType if it exists, otherwise returns nil.
 func (r *RepositoryCollaborator) GetCondition(ct xpv1.ConditionType) xpv1.Condition {

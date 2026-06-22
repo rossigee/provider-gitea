@@ -91,13 +91,13 @@ type WebhookObservation struct {
 // WebhookSpec defines the desired state of Webhook
 type WebhookSpec struct {
 	xpv1.ManagedResourceSpec `json:",inline"`
-	ForProvider       WebhookParameters `json:"forProvider"`
+	ForProvider              WebhookParameters `json:"forProvider"`
 }
 
 // WebhookStatus defines the observed state of Webhook
 type WebhookStatus struct {
 	xpv1.ManagedResourceStatus `json:",inline"`
-	AtProvider          WebhookObservation `json:"atProvider,omitempty"`
+	AtProvider                 WebhookObservation `json:"atProvider,omitempty"`
 }
 
 // +kubebuilder:object:root=true
@@ -134,7 +134,6 @@ var (
 	WebhookKindAPIVersion   = WebhookKind + "." + SchemeGroupVersion.String()
 	WebhookGroupVersionKind = SchemeGroupVersion.WithKind(WebhookKind)
 )
-
 
 // GetCondition returns the condition for the given ConditionType if it exists, otherwise returns nil.
 func (r *Webhook) GetCondition(ct xpv1.ConditionType) xpv1.Condition {

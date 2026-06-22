@@ -117,13 +117,13 @@ type OrganizationSettingsObservation struct {
 // OrganizationSettingsSpec defines the desired state of OrganizationSettings
 type OrganizationSettingsSpec struct {
 	xpv1.ManagedResourceSpec `json:",inline"`
-	ForProvider       OrganizationSettingsParameters `json:"forProvider"`
+	ForProvider              OrganizationSettingsParameters `json:"forProvider"`
 }
 
 // OrganizationSettingsStatus defines the observed state of OrganizationSettings
 type OrganizationSettingsStatus struct {
 	xpv1.ManagedResourceStatus `json:",inline"`
-	AtProvider          OrganizationSettingsObservation `json:"atProvider,omitempty"`
+	AtProvider                 OrganizationSettingsObservation `json:"atProvider,omitempty"`
 }
 
 // +kubebuilder:object:root=true
@@ -160,7 +160,6 @@ var (
 	OrganizationSettingsKindAPIVersion   = OrganizationSettingsKind + "." + SchemeGroupVersion.String()
 	OrganizationSettingsGroupVersionKind = SchemeGroupVersion.WithKind(OrganizationSettingsKind)
 )
-
 
 // GetCondition returns the condition for the given ConditionType if it exists, otherwise returns nil.
 func (r *OrganizationSettings) GetCondition(ct xpv1.ConditionType) xpv1.Condition {

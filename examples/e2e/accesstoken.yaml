@@ -1,0 +1,9 @@
+apiVersion: accesstoken.gitea.m.crossplane.io/v2
+kind: AccessToken
+metadata: {name: uptest-token, namespace: provider-gitea-e2e, annotations: {meta.upbound.io/example-id: accesstoken/v2/accesstoken}}
+spec:
+  forProvider:
+    username: e2e-user
+    name: uptest-token
+    scopes: ["read:repository"]
+  providerConfigRef: {name: e2e, kind: ProviderConfig}

@@ -1,0 +1,10 @@
+apiVersion: runner.gitea.m.crossplane.io/v2
+kind: Runner
+metadata: {name: uptest-runner, namespace: provider-gitea-e2e, annotations: {meta.upbound.io/example-id: runner/v2/runner}}
+spec:
+  forProvider:
+    scope: repository
+    scopeValue: e2e-user/uptest-repo
+    name: uptest-runner
+    labels: ["self-hosted", "linux"]
+  providerConfigRef: {name: e2e, kind: ProviderConfig}

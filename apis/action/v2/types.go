@@ -126,13 +126,13 @@ type ActionObservation struct {
 // ActionSpec defines the desired state of Action
 type ActionSpec struct {
 	xpv1.ManagedResourceSpec `json:",inline"`
-	ForProvider       ActionParameters `json:"forProvider"`
+	ForProvider              ActionParameters `json:"forProvider"`
 }
 
 // ActionStatus defines the observed state of Action
 type ActionStatus struct {
 	xpv1.ManagedResourceStatus `json:",inline"`
-	AtProvider          ActionObservation `json:"atProvider,omitempty"`
+	AtProvider                 ActionObservation `json:"atProvider,omitempty"`
 }
 
 // +kubebuilder:object:root=true
@@ -169,7 +169,6 @@ var (
 	ActionKindAPIVersion   = ActionKind + "." + SchemeGroupVersion.String()
 	ActionGroupVersionKind = SchemeGroupVersion.WithKind(ActionKind)
 )
-
 
 // GetCondition returns the condition for the given ConditionType if it exists, otherwise returns nil.
 func (r *Action) GetCondition(ct xpv1.ConditionType) xpv1.Condition {

@@ -36,36 +36,69 @@ spec:
     name: v2
     schema:
       openAPIV3Schema:
+        description: OrganizationSettings is the Schema for the organizationsettingss
+          API v2 (namespaced)
         properties:
           apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
             type: string
           kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
             type: string
           metadata:
             type: object
           spec:
+            description: OrganizationSettingsSpec defines the desired state of OrganizationSettings
             properties:
               forProvider:
                 properties:
                   allowCustomGitHooks:
                     default: false
+                    description: AllowCustomGitHooks controls whether custom Git hooks
+                      are allowed
                     type: boolean
                   allowGitHooks:
                     default: false
+                    description: AllowGitHooks controls whether Git hooks are allowed
+                      in organization repositories
                     type: boolean
                   connectionRef:
+                    description: |-
+                      V2 Enhancement: Connection reference for multi-tenant support
+                      ConnectionRef specifies the Gitea connection to use
                     properties:
                       name:
+                        description: Name of the referenced object.
                         type: string
                       policy:
+                        description: Policies for referencing.
                         properties:
                           resolution:
                             default: Required
+                            description: |-
+                              Resolution specifies whether resolution of this reference is required.
+                              The default is 'Required', which means the reconcile will fail if the
+                              reference cannot be resolved. 'Optional' means this reference will be
+                              a no-op if it cannot be resolved.
                             enum:
                             - Required
                             - Optional
                             type: string
                           resolve:
+                            description: |-
+                              Resolve specifies when this reference should be resolved. The default
+                              is 'IfNotPresent', which will attempt to resolve the reference only when
+                              the corresponding field is not present. Use 'Always' to resolve the
+                              reference on every reconcile.
                             enum:
                             - Always
                             - IfNotPresent
@@ -76,6 +109,8 @@ spec:
                     type: object
                   defaultRepoPermission:
                     default: read
+                    description: DefaultRepoPermission is the default permission for
+                      organization members on new repositories
                     enum:
                     - read
                     - write
@@ -83,6 +118,8 @@ spec:
                     type: string
                   defaultRepoVisibility:
                     default: public
+                    description: DefaultRepoVisibility is the default visibility for
+                      new repositories
                     enum:
                     - public
                     - private
@@ -90,41 +127,71 @@ spec:
                     type: string
                   enableDependencyGraph:
                     default: false
+                    description: EnableDependencyGraph controls whether dependency
+                      graph is enabled
                     type: boolean
                   membersCanCreateInternal:
                     default: true
+                    description: MembersCanCreateInternal controls whether organization
+                      members can create internal repositories
                     type: boolean
                   membersCanCreatePages:
                     default: true
+                    description: MembersCanCreatePages controls whether organization
+                      members can create GitHub Pages
                     type: boolean
                   membersCanCreatePrivate:
                     default: true
+                    description: MembersCanCreatePrivate controls whether organization
+                      members can create private repositories
                     type: boolean
                   membersCanCreateRepos:
                     default: true
+                    description: MembersCanCreateRepos controls whether organization
+                      members can create repositories
                     type: boolean
                   membersCanDeleteRepos:
                     default: false
+                    description: MembersCanDeleteRepos controls whether organization
+                      members can delete repositories
                     type: boolean
                   membersCanFork:
                     default: true
+                    description: MembersCanFork controls whether organization members
+                      can fork repositories
                     type: boolean
                   organization:
+                    description: Organization is the organization name to configure
                     minLength: 1
                     type: string
                   providerConfigRef:
+                    description: |-
+                      V2 Enhancement: Namespace-scoped provider config
+                      ProviderConfigRef references a ProviderConfig resource in the same namespace
                     properties:
                       name:
+                        description: Name of the referenced object.
                         type: string
                       policy:
+                        description: Policies for referencing.
                         properties:
                           resolution:
                             default: Required
+                            description: |-
+                              Resolution specifies whether resolution of this reference is required.
+                              The default is 'Required', which means the reconcile will fail if the
+                              reference cannot be resolved. 'Optional' means this reference will be
+                              a no-op if it cannot be resolved.
                             enum:
                             - Required
                             - Optional
                             type: string
                           resolve:
+                            description: |-
+                              Resolve specifies when this reference should be resolved. The default
+                              is 'IfNotPresent', which will attempt to resolve the reference only when
+                              the corresponding field is not present. Use 'Always' to resolve the
+                              reference on every reconcile.
                             enum:
                             - Always
                             - IfNotPresent
@@ -135,6 +202,8 @@ spec:
                     type: object
                   requireSignedCommits:
                     default: false
+                    description: RequireSignedCommits controls whether signed commits
+                      are required
                     type: boolean
                 required:
                 - organization
@@ -142,7 +211,17 @@ spec:
               managementPolicies:
                 default:
                 - '*'
+                description: |-
+                  THIS IS A BETA FIELD. It is on by default but can be opted out
+                  through a Crossplane feature flag.
+                  ManagementPolicies specify the array of actions Crossplane is allowed to
+                  take on the managed and external resources.
+                  See the design doc for more information: https://github.com/crossplane/crossplane/blob/499895a25d1a1a0ba1604944ef98ac7a1a71f197/design/design-doc-observe-only-resources.md?plain=1#L223
+                  and this one: https://github.com/crossplane/crossplane/blob/444267e84783136daa93568b364a5f01228cacbe/design/one-pager-ignore-changes.md
                 items:
+                  description: |-
+                    A ManagementAction represents an action that the Crossplane controllers
+                    can take on an external resource.
                   enum:
                   - Observe
                   - Create
@@ -156,18 +235,30 @@ spec:
                 default:
                   kind: ClusterProviderConfig
                   name: default
+                description: |-
+                  ProviderConfigReference specifies how the provider that will be used to
+                  create, observe, update, and delete this managed resource should be
+                  configured.
                 properties:
                   kind:
+                    description: Kind of the referenced object.
                     type: string
                   name:
+                    description: Name of the referenced object.
                     type: string
                 required:
                 - kind
                 - name
                 type: object
               writeConnectionSecretToRef:
+                description: |-
+                  WriteConnectionSecretToReference specifies the namespace and name of a
+                  Secret to which any connection details for this managed resource should
+                  be written. Connection details frequently include the endpoint, username,
+                  and password required to connect to the managed resource.
                 properties:
                   name:
+                    description: Name of the secret.
                     type: string
                 required:
                 - name
@@ -176,40 +267,67 @@ spec:
             - forProvider
             type: object
           status:
+            description: OrganizationSettingsStatus defines the observed state of
+              OrganizationSettings
             properties:
               atProvider:
                 properties:
                   appliedSettings:
+                    description: Applied settings (current state)
                     properties:
                       description:
+                        description: Description is the applied organization description
                         type: string
                       location:
+                        description: Location is the applied organization location
                         type: string
                       website:
+                        description: Website is the applied organization website
                         type: string
                     type: object
                   lastUpdated:
+                    description: LastUpdated timestamp
                     type: string
                   organizationId:
+                    description: OrganizationID is the organization ID
                     format: int64
                     type: integer
                 type: object
               conditions:
+                description: Conditions of the resource.
                 items:
+                  description: A Condition that may apply to a resource.
                   properties:
                     lastTransitionTime:
+                      description: |-
+                        LastTransitionTime is the last time this condition transitioned from one
+                        status to another.
                       format: date-time
                       type: string
                     message:
+                      description: |-
+                        A Message containing details about this condition's last transition from
+                        one status to another, if any.
                       type: string
                     observedGeneration:
+                      description: |-
+                        ObservedGeneration represents the .metadata.generation that the condition was set based upon.
+                        For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date
+                        with respect to the current state of the instance.
                       format: int64
                       type: integer
                     reason:
+                      description: A Reason for this condition's last transition from
+                        one status to another.
                       type: string
                     status:
+                      description: Status of this condition; is it currently True,
+                        False, or Unknown?
                       type: string
                     type:
+                      description: |-
+                        Type of this condition. At most one of each condition type may apply to
+                        a resource at any point in time.
                       type: string
                   required:
                   - lastTransitionTime
@@ -222,8 +340,17 @@ spec:
                 - type
                 x-kubernetes-list-type: map
               lastHandledReconcileAt:
+                description: |-
+                  LastHandledReconcileAt holds the value of the most recent
+                  reconcile-requested-at annotation token that the controller has
+                  processed. Users can compare this to the annotation to determine
+                  whether a reconcile request has been handled.
                 type: string
               observedGeneration:
+                description: |-
+                  ObservedGeneration is the latest metadata.generation
+                  which resulted in either a ready state, or stalled due to error
+                  it can not recover from without human intervention.
                 format: int64
                 type: integer
             type: object

@@ -1,22 +1,33 @@
 # Provider Gitea
 
-A v2-only Crossplane provider framework for Gitea management with complete API definitions and client libraries. **Note**: Controller implementations required for actual resource management functionality.
+A v2-only Crossplane provider for declarative Gitea management: **23 namespaced
+resource kinds**, each with a working reconciler.
 
 ## Overview
 
-This provider framework includes **22 v2 resource type definitions** for declarative Gitea management. It provides complete API definitions, client libraries, and testing infrastructure. **Controller implementations are required to enable actual resource management functionality.**
+This provider manages Gitea resources (repositories, organizations, teams,
+labels, webhooks, secrets, CI runners, branch protection, and more) as
+Kubernetes custom resources. Every kind has a full create/observe/update/delete
+controller, a unit test, and is exercised end-to-end on a kind cluster against a
+mock Gitea backend.
 
-## ⚠️ Current Status: Framework Ready
+## Status
 
-**What's Included:**
-- ✅ Complete v2 API definitions with namespace isolation
-- ✅ Gitea client library with comprehensive API coverage
-- ✅ Provider infrastructure that builds and packages successfully
-- ✅ Testing framework and mock clients
+**Implemented:**
+- ✅ v2 API definitions, namespace-isolated (`*.gitea.m.crossplane.io`)
+- ✅ Comprehensive Gitea client library (typed HTTP-status error classification)
+- ✅ A reconciler for **all 23 resource kinds**, each unit-tested
+- ✅ Correct packaging: one multi-arch xpkg with the runtime embedded and CRDs
+  verified present before publish (`make xpkg-verify`)
+- ✅ Self-contained e2e: `scripts/e2e.sh` drives apply→Ready→delete on kind
+  against an in-cluster mock Gitea, wired into CI (`.github/workflows/e2e.yml`)
 
-**What's Missing:**
-- ❌ Controller implementations for resource lifecycle management
-- ❌ Actual Gitea resource synchronization and management
+The controllers bake in the correctness lessons distilled in
+[`crossplane-provider-template`](https://github.com/mosabastion/crossplane-provider-template)
+`dev/docs/09-lessons-learned.md` — `Available()` set in `Observe`, not-found
+classified off the typed HTTP status, real drift detection, external-name as the
+authoritative identity for Observe/Update/Delete, a non-nil rate limiter, and a
+package that can't ship Healthy-but-CRD-less.
 
 ## Core Features
 
@@ -49,7 +60,7 @@ This provider framework includes **22 v2 resource type definitions** for declara
 
 ### **V2-Only Architecture** ✨ (v0.8.2)
 - **Pure V2 Implementation**: Clean v2-only provider without legacy code burden
-- **Namespace Isolation**: All 22 resources use namespace-scoped `.m.` API groups
+- **Namespace Isolation**: All 23 resources use namespace-scoped `.m.` API groups
 - **Enhanced Multi-tenancy**: Complete namespace isolation and tenant separation
 - **Modern Architecture**: Built with Crossplane Runtime v2.0 patterns
 - **Connection References**: Advanced multi-tenant capabilities with enhanced connectivity
@@ -61,11 +72,11 @@ This provider framework includes **22 v2 resource type definitions** for declara
 [![Coverage](https://codecov.io/gh/crossplane-contrib/provider-gitea/branch/master/graph/badge.svg)](https://codecov.io/gh/crossplane-contrib/provider-gitea)
 [![Go Report Card](https://goreportcard.com/badge/github.com/crossplane-contrib/provider-gitea)](https://goreportcard.com/report/github.com/crossplane-contrib/provider-gitea)
 
-- **Version**: v0.8.2 (v2-only provider framework)
-- **Resources**: 22 v2 resource type definitions with namespace isolation
-- **API Client**: Complete Gitea API integration with 19.7% test coverage
-- **Controller Status**: Framework ready - controller implementations required
-- **Registry**: `ghcr.io/rossigee/provider-gitea:v0.8.2`
+- **Resources**: 23 v2 resource kinds (namespace-isolated `.m.` API groups)
+- **Controllers**: a working reconciler for every kind, each unit-tested
+- **API Client**: complete Gitea API integration with typed error classification
+- **e2e**: all 23 kinds driven apply→Ready→delete on kind against a mock Gitea
+- **Registry**: `ghcr.io/rossigee/provider-gitea`
 
 ## Complete Resource Catalog
 
@@ -108,54 +119,38 @@ This installs a pre-commit hook that prevents:
 - Binary artifacts (*.xpkg, *.tar.gz, etc.)
 - Build artifacts (provider binaries, cache files)
 
-## Quick Start (Framework Installation)
+## Quick Start
 
-⚠️ **Note**: This installs the provider framework with API definitions. Controller implementations are required for actual resource management.
-
-1. Install the v2-only provider framework:
+1. Install the provider:
 ```bash
-# Install v2-only framework
-kubectl crossplane install provider ghcr.io/rossigee/provider-gitea:v0.8.2
+kubectl crossplane install provider ghcr.io/rossigee/provider-gitea:<tag>
 ```
 
-2. View available v2 resource definitions:
+2. Confirm the CRDs registered:
 ```bash
 kubectl get crds | grep gitea.m.crossplane.io
 ```
 
-3. Example v2 resource definition (requires controller implementation):
+3. Create a ProviderConfig + apply a resource (see `examples/`):
 ```bash
-kubectl apply -f examples/v2/repository-namespaced.yaml
-# Note: Resource will be created but not reconciled until controllers are implemented
+kubectl apply -f examples/e2e/repository.yaml
+kubectl get repository.repository.gitea.m.crossplane.io -n <ns>
 ```
-
-## Framework Development
-
-This v2-only provider framework includes complete API definitions and examples for enterprise Gitea management:
-
-```bash
-# View all available v2 resource examples
-ls examples/v2/
-
-# View enterprise feature examples (require controller implementation)
-ls examples/adminuser/ examples/branchprotection/ examples/action/
-```
-
-**Enterprise capabilities when controllers are implemented**:
-- 🔒 **Enterprise Security**: Branch protection, SSH keys, access tokens
-- 🚀 **CI/CD Integration**: Actions workflows and self-hosted runners
-- 👑 **Administrative Control**: Service accounts and administrative users
-- 🏢 **Organization Management**: Complete organizational policies
 
 ## Testing
 
-This provider framework includes solid test coverage for its current scope:
+```bash
+make test          # unit tests (offline, table-driven per controller)
+make e2e           # self-contained kind + mock-Gitea e2e (apply->Ready->delete)
+make xpkg-verify   # assert the built package carries the Provider meta + all CRDs
+```
 
-- **Test Success Rate**: 100% - all tests pass
-- **Client Library**: 19.7% coverage across all major Gitea API operations
-- **Test Infrastructure**: 8.4% coverage for shared testing utilities
-- **Overall Coverage**: 4.8% (appropriate for framework with no controllers)
-- **Mock Clients**: Ready for controller development and testing
+- Every controller has a unit test asserting the correctness invariants
+  (Available on the exists path, typed not-found, drift, external-name identity,
+  idempotent delete).
+- `make e2e` (and CI `e2e.yml`) drives all 23 kinds through their full lifecycle
+  on a throwaway kind cluster against an in-cluster mock Gitea — no external
+  dependency.
 
 ### Test Infrastructure
 

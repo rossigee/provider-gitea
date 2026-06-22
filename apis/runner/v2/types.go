@@ -54,7 +54,6 @@ type RunnerParameters struct {
 
 	// Labels are the labels assigned to this runner for job targeting
 	// +kubebuilder:validation:MinItems=1
-	// +kubebuilder:validation:UniqueItems=true
 	Labels []string `json:"labels"`
 
 	// Description is an optional description for the runner
@@ -129,13 +128,13 @@ type RunnerObservation struct {
 // RunnerSpec defines the desired state of Runner
 type RunnerSpec struct {
 	xpv1.ManagedResourceSpec `json:",inline"`
-	ForProvider       RunnerParameters `json:"forProvider"`
+	ForProvider              RunnerParameters `json:"forProvider"`
 }
 
 // RunnerStatus defines the observed state of Runner
 type RunnerStatus struct {
 	xpv1.ManagedResourceStatus `json:",inline"`
-	AtProvider          RunnerObservation `json:"atProvider,omitempty"`
+	AtProvider                 RunnerObservation `json:"atProvider,omitempty"`
 }
 
 // +kubebuilder:object:root=true
@@ -172,7 +171,6 @@ var (
 	RunnerKindAPIVersion   = RunnerKind + "." + SchemeGroupVersion.String()
 	RunnerGroupVersionKind = SchemeGroupVersion.WithKind(RunnerKind)
 )
-
 
 // GetCondition returns the condition for the given ConditionType if it exists, otherwise returns nil.
 func (r *Runner) GetCondition(ct xpv1.ConditionType) xpv1.Condition {

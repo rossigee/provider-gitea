@@ -1,0 +1,24 @@
+# uptest input: a Repository the e2e suite applies, waits Ready on, then deletes.
+# It lives in the same namespace as the in-cluster mock backend + creds Secret
+# (created by test/e2e/uptest-setup.sh) and references the cluster-scoped
+# ProviderConfig that setup also creates.
+#
+# No owner is set, so the provider creates it under the mock's authenticated
+# user (e2e-user); Create pins the external-name to "e2e-user/uptest-repo" from
+# the backend response, and Observe flips Ready=Available once it exists.
+apiVersion: repository.gitea.m.crossplane.io/v2
+kind: Repository
+metadata:
+  name: uptest-repo
+  namespace: provider-gitea-e2e
+  annotations:
+    meta.upbound.io/example-id: repository/v2/repository
+spec:
+  forProvider:
+    name: uptest-repo
+    description: created by provider-gitea e2e
+    private: true
+    autoInit: true
+  providerConfigRef:
+    name: e2e
+    kind: ProviderConfig

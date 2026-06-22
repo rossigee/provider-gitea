@@ -133,3 +133,37 @@ test.e2e:
 	@$(INFO) Running provider-gitea e2e tests (requires Kubernetes cluster)
 	@go test -v ./test/e2e/... -timeout 1h
 	@$(OK) provider-gitea e2e tests
+
+# ====================================================================================
+# Self-contained packaging + e2e (no build submodule needed). See scripts/.
+
+# Regenerate deepcopy + CRDs (clean) + managed methodsets.
+.PHONY: generate.local
+generate.local:
+	@bash scripts/generate.sh
+
+# Build a correct xpkg (embedded runtime) for the host arch.
+.PHONY: xpkg
+xpkg:
+	@bash scripts/build-xpkg.sh amd64
+
+# Assert the built package.yaml carries the Provider meta + all CRDs (lesson #5).
+.PHONY: xpkg-verify
+xpkg-verify:
+	@bash scripts/verify-xpkg.sh
+
+# Build + verify + push a multi-arch package index (needs VERSION + GHCR login).
+.PHONY: publish.local
+publish.local:
+	@bash scripts/publish.sh
+
+# Self-contained uptest e2e on a throwaway kind cluster (mock Gitea backend;
+# apply->Ready->delete over examples/e2e/*).
+.PHONY: e2e
+e2e:
+	@bash scripts/e2e.sh
+
+# Same as e2e but keep the kind cluster afterwards for debugging.
+.PHONY: e2e-keep
+e2e-keep:
+	@KEEP=true bash scripts/e2e.sh

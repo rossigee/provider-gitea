@@ -1,0 +1,19 @@
+# Webhook: repo-scoped, backend-assigned numeric id (external-name = id).
+apiVersion: webhook.gitea.m.crossplane.io/v2
+kind: Webhook
+metadata:
+  name: uptest-webhook
+  namespace: provider-gitea-e2e
+  annotations:
+    meta.upbound.io/example-id: webhook/v2/webhook
+spec:
+  forProvider:
+    owner: e2e-user
+    repository: uptest-repo
+    url: http://example.com/hook
+    type: gitea
+    events:
+      - push
+  providerConfigRef:
+    name: e2e
+    kind: ProviderConfig

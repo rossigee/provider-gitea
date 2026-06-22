@@ -41,24 +41,26 @@ import (
 
 func main() {
 	var (
-		app            = kingpin.New(filepath.Base(os.Args[0]), "Gitea Crossplane provider").DefaultEnvars()
-		debug          = app.Flag("debug", "Run with debug logging.").Short('d').Bool()
-		syncInterval   = app.Flag("sync", "Sync interval controls how often all resources will be double checked for drift.").Short('s').Default("1h").Duration()
-		pollInterval   = app.Flag("poll", "Poll interval controls how often an individual resource should be checked for drift.").Default("1m").Duration()
-		leaderElection = app.Flag("leader-election", "Use leader election for the controller manager.").Short('l').Default("false").Bool()
+		app              = kingpin.New(filepath.Base(os.Args[0]), "Gitea Crossplane provider").DefaultEnvars()
+		debug            = app.Flag("debug", "Run with debug logging.").Short('d').Bool()
+		syncInterval     = app.Flag("sync", "Sync interval controls how often all resources will be double checked for drift.").Short('s').Default("1h").Duration()
+		pollInterval     = app.Flag("poll", "Poll interval controls how often an individual resource should be checked for drift.").Default("1m").Duration()
+		leaderElection   = app.Flag("leader-election", "Use leader election for the controller manager.").Short('l').Default("false").Bool()
 		maxReconcileRate = app.Flag("max-reconcile-rate", "The global maximum rate per second at which resources may checked for drift from the desired state.").Default("100").Int()
-		_ = app.Flag("namespace", "Namespace used to set as default scope in default secret store config.").Default("crossplane-system").Envar("POD_NAMESPACE").String()
+		_                = app.Flag("namespace", "Namespace used to set as default scope in default secret store config.").Default("crossplane-system").Envar("POD_NAMESPACE").String()
 	)
 	kingpin.MustParse(app.Parse(os.Args[1:]))
 
 	zl := zap.New(zap.UseDevMode(*debug))
 	log := logging.NewLogrLogger(zl.WithName("provider-gitea"))
-	if *debug {
-		// The controller-runtime runs with a no-op logger by default. It is
-		// *very* verbose even at info level, so we only provide it a real
-		// logger when we're running in debug mode.
-		ctrl.SetLogger(zl)
-	}
+	// Set controller-runtime's root logger unconditionally. Setting it only
+	// under --debug means that in normal operation the root logger is never
+	// set; controller-runtime then prints a one-time "log.SetLogger(...) was
+	// never called" warning with an alarming-looking goroutine stack and
+	// silently drops its own framework logs. Verbosity is controlled via the
+	// zap dev-mode level above, not by withholding the logger.
+	// See crossplane-provider-template dev/docs/09-lessons-learned.md #4.
+	ctrl.SetLogger(zl)
 
 	log.Info("Provider starting up",
 		"provider", "provider-gitea",

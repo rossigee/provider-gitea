@@ -1,0 +1,10 @@
+apiVersion: release.gitea.m.crossplane.io/v2
+kind: Release
+metadata: {name: uptest-release, namespace: provider-gitea-e2e, annotations: {meta.upbound.io/example-id: release/v2/release}}
+spec:
+  forProvider:
+    owner: e2e-user
+    repository: uptest-repo
+    name: v0.0.1
+    tagName: v0.0.1
+  providerConfigRef: {name: e2e, kind: ProviderConfig}

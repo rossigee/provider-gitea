@@ -125,13 +125,13 @@ type UserObservation struct {
 // UserSpec defines the desired state of User
 type UserSpec struct {
 	xpv1.ManagedResourceSpec `json:",inline"`
-	ForProvider       UserParameters `json:"forProvider"`
+	ForProvider              UserParameters `json:"forProvider"`
 }
 
 // UserStatus defines the observed state of User
 type UserStatus struct {
 	xpv1.ManagedResourceStatus `json:",inline"`
-	AtProvider          UserObservation `json:"atProvider,omitempty"`
+	AtProvider                 UserObservation `json:"atProvider,omitempty"`
 }
 
 // +kubebuilder:object:root=true
@@ -168,7 +168,6 @@ var (
 	UserKindAPIVersion   = UserKind + "." + SchemeGroupVersion.String()
 	UserGroupVersionKind = SchemeGroupVersion.WithKind(UserKind)
 )
-
 
 // GetCondition returns the condition for the given ConditionType if it exists, otherwise returns nil.
 func (r *User) GetCondition(ct xpv1.ConditionType) xpv1.Condition {

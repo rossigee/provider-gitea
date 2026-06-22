@@ -395,30 +395,30 @@ type UpdateUserRequest struct {
 
 // Issue represents a Gitea issue
 type Issue struct {
-	ID          int64      `json:"id"`
-	Number      int64      `json:"number"`
-	Title       string     `json:"title"`
-	Body        string     `json:"body"`
-	State       string     `json:"state"`
-	HTMLURL     string     `json:"html_url"`
-	Comments    int        `json:"comments"`
-	User        *User      `json:"user"`
-	Labels      []*Label   `json:"labels"`
-	Assignees   []*User    `json:"assignees"`
-	Milestone   *Milestone `json:"milestone,omitempty"`
-	CreatedAt   *metav1.Time `json:"created_at,omitempty"`
-	UpdatedAt   *metav1.Time `json:"updated_at,omitempty"`
-	ClosedAt    *metav1.Time `json:"closed_at,omitempty"`
+	ID        int64        `json:"id"`
+	Number    int64        `json:"number"`
+	Title     string       `json:"title"`
+	Body      string       `json:"body"`
+	State     string       `json:"state"`
+	HTMLURL   string       `json:"html_url"`
+	Comments  int          `json:"comments"`
+	User      *User        `json:"user"`
+	Labels    []*Label     `json:"labels"`
+	Assignees []*User      `json:"assignees"`
+	Milestone *Milestone   `json:"milestone,omitempty"`
+	CreatedAt *metav1.Time `json:"created_at,omitempty"`
+	UpdatedAt *metav1.Time `json:"updated_at,omitempty"`
+	ClosedAt  *metav1.Time `json:"closed_at,omitempty"`
 }
 
 // Milestone represents a Gitea milestone
 type Milestone struct {
-	ID          int64  `json:"id"`
-	Title       string `json:"title"`
-	Description string `json:"description"`
-	State       string `json:"state"`
-	OpenIssues  int    `json:"open_issues"`
-	ClosedIssues int   `json:"closed_issues"`
+	ID           int64  `json:"id"`
+	Title        string `json:"title"`
+	Description  string `json:"description"`
+	State        string `json:"state"`
+	OpenIssues   int    `json:"open_issues"`
+	ClosedIssues int    `json:"closed_issues"`
 }
 
 // CreateIssueOptions represents the options for creating an issue
@@ -442,33 +442,33 @@ type UpdateIssueOptions struct {
 
 // PullRequest represents a Gitea pull request
 type PullRequest struct {
-	ID             int64         `json:"id"`
-	Number         int64         `json:"number"`
-	Title          string        `json:"title"`
-	Body           string        `json:"body"`
-	State          string        `json:"state"`
-	HTMLURL        string        `json:"html_url"`
-	DiffURL        string        `json:"diff_url"`
-	PatchURL       string        `json:"patch_url"`
-	Mergeable      *bool         `json:"mergeable,omitempty"`
-	Merged         bool          `json:"merged"`
-	Comments       int           `json:"comments"`
-	ReviewComments int           `json:"review_comments"`
-	Additions      int           `json:"additions"`
-	Deletions      int           `json:"deletions"`
-	ChangedFiles   int           `json:"changed_files"`
-	Draft          bool          `json:"draft"`
-	User           *User         `json:"user"`
-	Head           *Branch       `json:"head"`
-	Base           *Branch       `json:"base"`
-	Labels         []*Label      `json:"labels"`
-	Assignees      []*User       `json:"assignees"`
-	RequestedReviewers []*User   `json:"requested_reviewers"`
-	Milestone      *Milestone    `json:"milestone,omitempty"`
-	CreatedAt      *metav1.Time  `json:"created_at,omitempty"`
-	UpdatedAt      *metav1.Time  `json:"updated_at,omitempty"`
-	ClosedAt       *metav1.Time  `json:"closed_at,omitempty"`
-	MergedAt       *metav1.Time  `json:"merged_at,omitempty"`
+	ID                 int64        `json:"id"`
+	Number             int64        `json:"number"`
+	Title              string       `json:"title"`
+	Body               string       `json:"body"`
+	State              string       `json:"state"`
+	HTMLURL            string       `json:"html_url"`
+	DiffURL            string       `json:"diff_url"`
+	PatchURL           string       `json:"patch_url"`
+	Mergeable          *bool        `json:"mergeable,omitempty"`
+	Merged             bool         `json:"merged"`
+	Comments           int          `json:"comments"`
+	ReviewComments     int          `json:"review_comments"`
+	Additions          int          `json:"additions"`
+	Deletions          int          `json:"deletions"`
+	ChangedFiles       int          `json:"changed_files"`
+	Draft              bool         `json:"draft"`
+	User               *User        `json:"user"`
+	Head               *Branch      `json:"head"`
+	Base               *Branch      `json:"base"`
+	Labels             []*Label     `json:"labels"`
+	Assignees          []*User      `json:"assignees"`
+	RequestedReviewers []*User      `json:"requested_reviewers"`
+	Milestone          *Milestone   `json:"milestone,omitempty"`
+	CreatedAt          *metav1.Time `json:"created_at,omitempty"`
+	UpdatedAt          *metav1.Time `json:"updated_at,omitempty"`
+	ClosedAt           *metav1.Time `json:"closed_at,omitempty"`
+	MergedAt           *metav1.Time `json:"merged_at,omitempty"`
 }
 
 // Branch represents a git branch reference in a pull request
@@ -480,16 +480,16 @@ type Branch struct {
 
 // CreatePullRequestOptions represents the options for creating a pull request
 type CreatePullRequestOptions struct {
-	Title     string   `json:"title"`
-	Body      *string  `json:"body,omitempty"`
-	Head      string   `json:"head"`
-	Base      string   `json:"base"`
-	Assignees []string `json:"assignees,omitempty"`
-	Reviewers []string `json:"reviewers,omitempty"`
+	Title         string   `json:"title"`
+	Body          *string  `json:"body,omitempty"`
+	Head          string   `json:"head"`
+	Base          string   `json:"base"`
+	Assignees     []string `json:"assignees,omitempty"`
+	Reviewers     []string `json:"reviewers,omitempty"`
 	TeamReviewers []string `json:"team_reviewers,omitempty"`
-	Labels    []string `json:"labels,omitempty"`
-	Milestone *string  `json:"milestone,omitempty"`
-	Draft     *bool    `json:"draft,omitempty"`
+	Labels        []string `json:"labels,omitempty"`
+	Milestone     *string  `json:"milestone,omitempty"`
+	Draft         *bool    `json:"draft,omitempty"`
 }
 
 // UpdatePullRequestOptions represents the options for updating a pull request
@@ -506,7 +506,7 @@ type UpdatePullRequestOptions struct {
 
 // MergePullRequestOptions represents the options for merging a pull request
 type MergePullRequestOptions struct {
-	DoMerge        bool   `json:"Do"`
+	DoMerge           bool   `json:"Do"`
 	MergeMessageField string `json:"MergeMessageField,omitempty"`
 	MergeTitleField   string `json:"MergeTitleField,omitempty"`
 	MergeWhen         string `json:"MergeWhen,omitempty"`
@@ -514,22 +514,22 @@ type MergePullRequestOptions struct {
 
 // Release represents a Gitea release
 type Release struct {
-	ID              int64                     `json:"id"`
-	TagName         string                    `json:"tag_name"`
-	TargetCommitish string                    `json:"target_commitish"`
-	Name            string                    `json:"name"`
-	Body            string                    `json:"body"`
-	URL             string                    `json:"url"`
-	HTMLURL         string                    `json:"html_url"`
-	TarballURL      string                    `json:"tarball_url"`
-	ZipballURL      string                    `json:"zipball_url"`
-	UploadURL       string                    `json:"upload_url"`
-	Draft           bool                      `json:"draft"`
-	Prerelease      bool                      `json:"prerelease"`
-	CreatedAt       *metav1.Time              `json:"created_at,omitempty"`
-	PublishedAt     *metav1.Time              `json:"published_at,omitempty"`
-	Author          *User                     `json:"author,omitempty"`
-	Assets          []ReleaseAttachment       `json:"assets,omitempty"`
+	ID              int64               `json:"id"`
+	TagName         string              `json:"tag_name"`
+	TargetCommitish string              `json:"target_commitish"`
+	Name            string              `json:"name"`
+	Body            string              `json:"body"`
+	URL             string              `json:"url"`
+	HTMLURL         string              `json:"html_url"`
+	TarballURL      string              `json:"tarball_url"`
+	ZipballURL      string              `json:"zipball_url"`
+	UploadURL       string              `json:"upload_url"`
+	Draft           bool                `json:"draft"`
+	Prerelease      bool                `json:"prerelease"`
+	CreatedAt       *metav1.Time        `json:"created_at,omitempty"`
+	PublishedAt     *metav1.Time        `json:"published_at,omitempty"`
+	Author          *User               `json:"author,omitempty"`
+	Assets          []ReleaseAttachment `json:"assets,omitempty"`
 }
 
 // ReleaseAttachment represents a release asset/attachment
@@ -614,7 +614,7 @@ func (c *giteaClient) GetOrganizationSecret(ctx context.Context, org, secretName
 	}
 
 	if resp.StatusCode == http.StatusNotFound {
-		return nil, errors.New("organization secret not found")
+		return nil, &APIError{StatusCode: http.StatusNotFound, Body: "organization secret not found"}
 	}
 
 	var secret OrganizationSecret
@@ -695,7 +695,7 @@ func (c *giteaClient) GetTeam(ctx context.Context, teamID int64) (*Team, error) 
 	}
 
 	if resp.StatusCode == http.StatusNotFound {
-		return nil, errors.New("team not found")
+		return nil, &APIError{StatusCode: http.StatusNotFound, Body: "team not found"}
 	}
 
 	var team Team
@@ -1224,7 +1224,7 @@ func (c *giteaClient) GetLabel(ctx context.Context, owner, repo string, labelID 
 	}
 
 	if resp.StatusCode == http.StatusNotFound {
-		return nil, errors.New("label not found")
+		return nil, &APIError{StatusCode: http.StatusNotFound, Body: "label not found"}
 	}
 
 	var label Label
@@ -1299,7 +1299,7 @@ func (c *giteaClient) GetRepositoryCollaborator(ctx context.Context, owner, repo
 	}
 
 	if resp.StatusCode == http.StatusNotFound {
-		return nil, errors.New("collaborator not found")
+		return nil, &APIError{StatusCode: http.StatusNotFound, Body: "collaborator not found"}
 	}
 
 	var collaborator RepositoryCollaborator
@@ -1422,7 +1422,7 @@ func (c *giteaClient) GetGitHook(ctx context.Context, repository, hookType strin
 	}
 
 	if resp.StatusCode == http.StatusNotFound {
-		return nil, errors.New("git hook not found")
+		return nil, &APIError{StatusCode: http.StatusNotFound, Body: "git hook not found"}
 	}
 
 	var hook GitHook
@@ -1510,7 +1510,7 @@ func (c *giteaClient) GetBranchProtection(ctx context.Context, repository, branc
 	}
 
 	if resp.StatusCode == http.StatusNotFound {
-		return nil, errors.New("branch protection not found")
+		return nil, &APIError{StatusCode: http.StatusNotFound, Body: "branch protection not found"}
 	}
 
 	var protection BranchProtection
@@ -1598,7 +1598,7 @@ func (c *giteaClient) GetRepositoryKey(ctx context.Context, repository string, k
 	}
 
 	if resp.StatusCode == http.StatusNotFound {
-		return nil, errors.New("repository key not found")
+		return nil, &APIError{StatusCode: http.StatusNotFound, Body: "repository key not found"}
 	}
 
 	var key RepositoryKey
@@ -1679,7 +1679,7 @@ func (c *giteaClient) GetAccessToken(ctx context.Context, username string, token
 	}
 
 	if resp.StatusCode == http.StatusNotFound {
-		return nil, errors.New("access token not found")
+		return nil, &APIError{StatusCode: http.StatusNotFound, Body: "access token not found"}
 	}
 
 	var token AccessToken
@@ -1746,7 +1746,7 @@ func (c *giteaClient) GetRepositorySecret(ctx context.Context, repository, secre
 	}
 
 	if resp.StatusCode == http.StatusNotFound {
-		return nil, errors.New("repository secret not found")
+		return nil, &APIError{StatusCode: http.StatusNotFound, Body: "repository secret not found"}
 	}
 
 	var secret RepositorySecret
@@ -1817,7 +1817,7 @@ func (c *giteaClient) GetUserKey(ctx context.Context, username string, keyID int
 	}
 
 	if resp.StatusCode == http.StatusNotFound {
-		return nil, errors.New("user key not found")
+		return nil, &APIError{StatusCode: http.StatusNotFound, Body: "user key not found"}
 	}
 
 	var key UserKey
@@ -1877,7 +1877,7 @@ func (c *giteaClient) GetOrganizationMember(ctx context.Context, org, username s
 	}
 
 	if resp.StatusCode == http.StatusNotFound {
-		return nil, errors.New("organization member not found")
+		return nil, &APIError{StatusCode: http.StatusNotFound, Body: "organization member not found"}
 	}
 
 	var member OrganizationMember
@@ -1944,7 +1944,7 @@ func (c *giteaClient) GetAction(ctx context.Context, repository, workflowName st
 	}
 
 	if resp.StatusCode == http.StatusNotFound {
-		return nil, errors.New("action workflow not found")
+		return nil, &APIError{StatusCode: http.StatusNotFound, Body: "action workflow not found"}
 	}
 
 	var action Action
@@ -2078,7 +2078,7 @@ func (c *giteaClient) GetRunner(ctx context.Context, scope, scopeValue string, r
 	}
 
 	if resp.StatusCode == http.StatusNotFound {
-		return nil, errors.New("runner not found")
+		return nil, &APIError{StatusCode: http.StatusNotFound, Body: "runner not found"}
 	}
 
 	var runner Runner
@@ -2189,7 +2189,7 @@ func (c *giteaClient) GetAdminUser(ctx context.Context, username string) (*Admin
 	}
 
 	if resp.StatusCode == http.StatusNotFound {
-		return nil, errors.New("admin user not found")
+		return nil, &APIError{StatusCode: http.StatusNotFound, Body: "admin user not found"}
 	}
 
 	var user AdminUser
@@ -2296,7 +2296,7 @@ func (c *giteaClient) DeleteIssue(ctx context.Context, owner, repo string, numbe
 	req := &UpdateIssueOptions{
 		State: func() *string { s := "closed"; return &s }(),
 	}
-	
+
 	_, err := c.UpdateIssue(ctx, owner, repo, number, req)
 	return err
 }
@@ -2357,7 +2357,7 @@ func (c *giteaClient) DeletePullRequest(ctx context.Context, owner, repo string,
 	req := &UpdatePullRequestOptions{
 		State: func() *string { s := "closed"; return &s }(),
 	}
-	
+
 	_, err := c.UpdatePullRequest(ctx, owner, repo, number, req)
 	return err
 }
@@ -2453,14 +2453,14 @@ func (c *giteaClient) CreateReleaseAttachment(ctx context.Context, owner, repo s
 	// For simplicity, we'll implement a basic version
 	// In a full implementation, this would handle multipart file uploads
 	path := fmt.Sprintf("/repos/%s/%s/releases/%d/assets", owner, repo, releaseID)
-	
+
 	// This is a simplified implementation - real implementation would use multipart upload
 	req := map[string]interface{}{
-		"name": filename,
+		"name":         filename,
 		"content_type": contentType,
 		// Note: Real implementation would handle file upload differently
 	}
-	
+
 	resp, err := c.doRequest(ctx, "POST", path, req)
 	if err != nil {
 		return nil, err
@@ -2545,6 +2545,34 @@ func (c *giteaClient) doRequest(ctx context.Context, method, path string, body i
 	return resp, nil
 }
 
+// APIError is a typed error carrying the HTTP status code of a failed Gitea API
+// request. Controllers must classify not-found (and other) conditions off the
+// status code via IsNotFound/StatusCode, never by string-matching the message
+// (which is brittle: "404" matches "40456" and misses "(status 404)").
+// See crossplane-provider-template dev/docs/09-lessons-learned.md #3.
+type APIError struct {
+	// StatusCode is the HTTP status returned by Gitea.
+	StatusCode int
+	// Body is the (possibly empty) response body, retained for diagnostics.
+	Body string
+}
+
+// Error preserves the historical message format so existing string assertions
+// and logs keep working; classification, however, should use StatusCode.
+func (e *APIError) Error() string {
+	return fmt.Sprintf("API request failed with status %d: %s", e.StatusCode, e.Body)
+}
+
+// StatusCode returns the HTTP status of the first APIError in err's chain, or 0
+// if err is not (or does not wrap) an APIError.
+func StatusCode(err error) int {
+	var apiErr *APIError
+	if errors.As(err, &apiErr) {
+		return apiErr.StatusCode
+	}
+	return 0
+}
+
 // handleResponse handles the HTTP response and unmarshals JSON if needed
 func handleResponse(resp *http.Response, target interface{}) error {
 	defer func() {
@@ -2553,7 +2581,7 @@ func handleResponse(resp *http.Response, target interface{}) error {
 
 	if resp.StatusCode >= 400 {
 		body, _ := io.ReadAll(resp.Body)
-		return errors.Errorf("API request failed with status %d: %s", resp.StatusCode, string(body))
+		return &APIError{StatusCode: resp.StatusCode, Body: string(body)}
 	}
 
 	if target != nil && resp.StatusCode != http.StatusNoContent {
@@ -2565,16 +2593,16 @@ func handleResponse(resp *http.Response, target interface{}) error {
 	return nil
 }
 
-// IsNotFound checks if an error represents a "not found" response
+// IsNotFound reports whether err represents an HTTP 404, classified off the
+// typed status code (works through pkg/errors Wrap chains).
 func IsNotFound(err error) bool {
-	if err == nil {
-		return false
-	}
-	// Check if the error message contains status 404
-	return strings.Contains(err.Error(), "status 404")
+	return StatusCode(err) == http.StatusNotFound
 }
 
-// NewNotFoundError creates a new not found error
+// NewNotFoundError creates a new typed not-found (404) error.
 func NewNotFoundError(resourceType, identifier string) error {
-	return errors.Errorf("API request failed with status 404: %s '%s' not found", resourceType, identifier)
+	return &APIError{
+		StatusCode: http.StatusNotFound,
+		Body:       fmt.Sprintf("%s '%s' not found", resourceType, identifier),
+	}
 }

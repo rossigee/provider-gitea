@@ -76,13 +76,13 @@ type UserKeyObservation struct {
 // UserKeySpec defines the desired state of UserKey
 type UserKeySpec struct {
 	xpv1.ManagedResourceSpec `json:",inline"`
-	ForProvider       UserKeyParameters `json:"forProvider"`
+	ForProvider              UserKeyParameters `json:"forProvider"`
 }
 
 // UserKeyStatus defines the observed state of UserKey
 type UserKeyStatus struct {
 	xpv1.ManagedResourceStatus `json:",inline"`
-	AtProvider          UserKeyObservation `json:"atProvider,omitempty"`
+	AtProvider                 UserKeyObservation `json:"atProvider,omitempty"`
 }
 
 // +kubebuilder:object:root=true
@@ -119,7 +119,6 @@ var (
 	UserKeyKindAPIVersion   = UserKeyKind + "." + SchemeGroupVersion.String()
 	UserKeyGroupVersionKind = SchemeGroupVersion.WithKind(UserKeyKind)
 )
-
 
 // GetCondition returns the condition for the given ConditionType if it exists, otherwise returns nil.
 func (r *UserKey) GetCondition(ct xpv1.ConditionType) xpv1.Condition {

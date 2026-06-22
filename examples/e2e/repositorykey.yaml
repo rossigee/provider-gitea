@@ -1,0 +1,9 @@
+apiVersion: repositorykey.gitea.m.crossplane.io/v2
+kind: RepositoryKey
+metadata: {name: uptest-repokey, namespace: provider-gitea-e2e, annotations: {meta.upbound.io/example-id: repositorykey/v2/repositorykey}}
+spec:
+  forProvider:
+    repository: e2e-user/uptest-repo
+    title: uptest-repokey
+    key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIuptestrepokey uptest@e2e"
+  providerConfigRef: {name: e2e, kind: ProviderConfig}

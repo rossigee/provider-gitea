@@ -1,0 +1,16 @@
+# BranchProtection: repo + branch-name identity (external-name = branch).
+apiVersion: branchprotection.gitea.m.crossplane.io/v2
+kind: BranchProtection
+metadata:
+  name: uptest-bp
+  namespace: provider-gitea-e2e
+  annotations:
+    meta.upbound.io/example-id: branchprotection/v2/branchprotection
+spec:
+  forProvider:
+    repository: e2e-user/uptest-repo
+    branch: main
+    ruleName: main
+  providerConfigRef:
+    name: e2e
+    kind: ProviderConfig

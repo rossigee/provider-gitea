@@ -39,7 +39,6 @@ type AccessTokenParameters struct {
 	// Scopes defines the permissions granted to this token
 	// +kubebuilder:validation:Required
 	// +kubebuilder:validation:MinItems=1
-	// +kubebuilder:validation:UniqueItems=true
 	Scopes []string `json:"scopes"`
 
 	// V2 Enhancement: Connection reference for multi-tenant support
@@ -80,13 +79,13 @@ type AccessTokenObservation struct {
 // AccessTokenSpec defines the desired state of AccessToken
 type AccessTokenSpec struct {
 	xpv1.ManagedResourceSpec `json:",inline"`
-	ForProvider       AccessTokenParameters `json:"forProvider"`
+	ForProvider              AccessTokenParameters `json:"forProvider"`
 }
 
 // AccessTokenStatus defines the observed state of AccessToken
 type AccessTokenStatus struct {
 	xpv1.ManagedResourceStatus `json:",inline"`
-	AtProvider          AccessTokenObservation `json:"atProvider,omitempty"`
+	AtProvider                 AccessTokenObservation `json:"atProvider,omitempty"`
 }
 
 // +kubebuilder:object:root=true
@@ -123,7 +122,6 @@ var (
 	AccessTokenKindAPIVersion   = AccessTokenKind + "." + SchemeGroupVersion.String()
 	AccessTokenGroupVersionKind = SchemeGroupVersion.WithKind(AccessTokenKind)
 )
-
 
 // GetCondition returns the condition for the given ConditionType if it exists, otherwise returns nil.
 func (r *AccessToken) GetCondition(ct xpv1.ConditionType) xpv1.Condition {

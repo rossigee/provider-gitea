@@ -1,0 +1,9 @@
+apiVersion: adminuser.gitea.m.crossplane.io/v2
+kind: AdminUser
+metadata: {name: uptest-admin, namespace: provider-gitea-e2e, annotations: {meta.upbound.io/example-id: adminuser/v2/adminuser}}
+spec:
+  forProvider:
+    username: uptest-admin
+    email: uptest-admin@example.com
+    passwordSecretRef: {namespace: provider-gitea-e2e, name: uptest-admin-pw, key: password}
+  providerConfigRef: {name: e2e, kind: ProviderConfig}

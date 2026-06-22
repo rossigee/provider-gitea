@@ -1,0 +1,9 @@
+apiVersion: repositorycollaborator.gitea.m.crossplane.io/v2
+kind: RepositoryCollaborator
+metadata: {name: uptest-collab, namespace: provider-gitea-e2e, annotations: {meta.upbound.io/example-id: repositorycollaborator/v2/repositorycollaborator}}
+spec:
+  forProvider:
+    repository: e2e-user/uptest-repo
+    username: collab-user
+    permission: write
+  providerConfigRef: {name: e2e, kind: ProviderConfig}

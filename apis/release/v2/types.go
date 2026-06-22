@@ -173,13 +173,13 @@ type ReleaseObservation struct {
 // ReleaseSpec defines the desired state of Release
 type ReleaseSpec struct {
 	xpv1.ManagedResourceSpec `json:",inline"`
-	ForProvider       ReleaseParameters `json:"forProvider"`
+	ForProvider              ReleaseParameters `json:"forProvider"`
 }
 
 // ReleaseStatus defines the observed state of Release
 type ReleaseStatus struct {
 	xpv1.ManagedResourceStatus `json:",inline"`
-	AtProvider          ReleaseObservation `json:"atProvider,omitempty"`
+	AtProvider                 ReleaseObservation `json:"atProvider,omitempty"`
 }
 
 // +kubebuilder:object:root=true
@@ -216,7 +216,6 @@ var (
 	ReleaseKindAPIVersion   = ReleaseKind + "." + SchemeGroupVersion.String()
 	ReleaseGroupVersionKind = SchemeGroupVersion.WithKind(ReleaseKind)
 )
-
 
 // GetCondition returns the condition for the given ConditionType if it exists, otherwise returns nil.
 func (r *Release) GetCondition(ct xpv1.ConditionType) xpv1.Condition {

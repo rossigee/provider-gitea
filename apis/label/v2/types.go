@@ -70,13 +70,13 @@ type LabelObservation struct {
 // LabelSpec defines the desired state of Label
 type LabelSpec struct {
 	xpv1.ManagedResourceSpec `json:",inline"`
-	ForProvider       LabelParameters `json:"forProvider"`
+	ForProvider              LabelParameters `json:"forProvider"`
 }
 
 // LabelStatus defines the observed state of Label
 type LabelStatus struct {
 	xpv1.ManagedResourceStatus `json:",inline"`
-	AtProvider          LabelObservation `json:"atProvider,omitempty"`
+	AtProvider                 LabelObservation `json:"atProvider,omitempty"`
 }
 
 // +kubebuilder:object:root=true
@@ -113,7 +113,6 @@ var (
 	LabelKindAPIVersion   = LabelKind + "." + SchemeGroupVersion.String()
 	LabelGroupVersionKind = SchemeGroupVersion.WithKind(LabelKind)
 )
-
 
 // GetCondition returns the condition for the given ConditionType if it exists, otherwise returns nil.
 func (r *Label) GetCondition(ct xpv1.ConditionType) xpv1.Condition {

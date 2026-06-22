@@ -68,13 +68,13 @@ type GitHookObservation struct {
 // GitHookSpec defines the desired state of GitHook
 type GitHookSpec struct {
 	xpv1.ManagedResourceSpec `json:",inline"`
-	ForProvider       GitHookParameters `json:"forProvider"`
+	ForProvider              GitHookParameters `json:"forProvider"`
 }
 
 // GitHookStatus defines the observed state of GitHook
 type GitHookStatus struct {
 	xpv1.ManagedResourceStatus `json:",inline"`
-	AtProvider          GitHookObservation `json:"atProvider,omitempty"`
+	AtProvider                 GitHookObservation `json:"atProvider,omitempty"`
 }
 
 // +kubebuilder:object:root=true
@@ -111,7 +111,6 @@ var (
 	GitHookKindAPIVersion   = GitHookKind + "." + SchemeGroupVersion.String()
 	GitHookGroupVersionKind = SchemeGroupVersion.WithKind(GitHookKind)
 )
-
 
 // GetCondition returns the condition for the given ConditionType if it exists, otherwise returns nil.
 func (r *GitHook) GetCondition(ct xpv1.ConditionType) xpv1.Condition {
