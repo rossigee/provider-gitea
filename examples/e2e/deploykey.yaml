@@ -2,10 +2,5 @@ apiVersion: deploykey.gitea.m.crossplane.io/v2
 kind: DeployKey
 metadata: {name: uptest-deploykey, namespace: provider-gitea-e2e, annotations: {meta.upbound.io/example-id: deploykey/v2/deploykey}}
 spec:
-  forProvider:
-    owner: e2e-user
-    repository: uptest-repo
-    title: uptest-deploykey
-    key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIuptestdeploykey uptest@e2e"
-    readOnly: true
+  forProvider: {owner: gitea_admin, repository: uptest-repo, title: uptest-deploykey, key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDuNMN+eEXFMQYQvq6/amzkaNWFCyJvu2I05npA+6Fm8 uptest-deploykey@e2e", readOnly: true}
   providerConfigRef: {name: e2e, kind: ProviderConfig}

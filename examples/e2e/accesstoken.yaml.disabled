@@ -1,0 +1,11 @@
+apiVersion: accesstoken.gitea.m.crossplane.io/v2
+kind: AccessToken
+metadata: {name: uptest-token, namespace: provider-gitea-e2e, annotations: {meta.upbound.io/example-id: accesstoken/v2/accesstoken}}
+spec:
+  forProvider: {username: gitea_admin, name: uptest-token, scopes: ["read:repository"]}
+  providerConfigRef: {name: e2e, kind: ProviderConfig}
+# DISABLED for e2e: Gitea's POST /users/{user}/tokens REQUIRES HTTP basic auth
+# (username+password); it rejects token-based auth with 401 "auth required".
+# This provider authenticates with a token, so it cannot mint access tokens
+# against a real Gitea. Covered by unit tests; needs a basic-auth credential
+# path in the client to work for real.

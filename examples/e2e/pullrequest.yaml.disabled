@@ -1,0 +1,9 @@
+# DISABLED for e2e: a Gitea pull request requires two real branches with a
+# divergent commit history; a flat apply can't create that without pushing
+# git content. Covered by unit tests. Re-enable once the suite seeds branches.
+apiVersion: pullrequest.gitea.m.crossplane.io/v2
+kind: PullRequest
+metadata: {name: uptest-pr, namespace: provider-gitea-e2e, annotations: {meta.upbound.io/example-id: pullrequest/v2/pullrequest}}
+spec:
+  forProvider: {owner: gitea_admin, repository: uptest-repo, title: uptest pr, head: feature, base: main}
+  providerConfigRef: {name: e2e, kind: ProviderConfig}

@@ -124,9 +124,11 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		return managed.ExternalObservation{}, errors.New(errNotRepositoryCollaborator)
 	}
 
-	// Identity is the external-name (the username), authoritative for
-	// Observe/Update/Delete (lesson #14). Empty -> not created, no GET.
-	username := meta.GetExternalName(cr)
+	// The collaborator's username is an immutable required spec field, so it is
+	// the identity — resolve it from spec, not the external-name annotation
+	// (which defaults to metadata.name before Create runs and would query the
+	// wrong user). Create still pins external-name to it for the record.
+	username := cr.Spec.ForProvider.Username
 	if username == "" {
 		return managed.ExternalObservation{ResourceExists: false}, nil
 	}
@@ -214,7 +216,9 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalUpdate{}, errors.New(errNotRepositoryCollaborator)
 	}
 
-	username := meta.GetExternalName(cr)
+	// Identity is the immutable spec.Username (see Observe) — not the
+	// external-name annotation, which defaults to metadata.name.
+	username := cr.Spec.ForProvider.Username
 	if username == "" {
 		return managed.ExternalUpdate{}, errors.New(errExternalName)
 	}
@@ -239,7 +243,7 @@ func (e *external) Delete(ctx context.Context, mg resource.Managed) (managed.Ext
 	}
 	cr.SetConditions(xpv1.Deleting())
 
-	username := meta.GetExternalName(cr)
+	username := cr.Spec.ForProvider.Username
 	if username == "" {
 		return managed.ExternalDelete{}, errors.New(errExternalName)
 	}

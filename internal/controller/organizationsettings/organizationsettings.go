@@ -245,12 +245,10 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalUpdate{}, errors.New(errNotOrganizationSettings)
 	}
 
-	// Identity is the org name; prefer the external-name annotation set in
-	// Create, fall back to spec.
-	org := meta.GetExternalName(cr)
-	if org == "" {
-		org = cr.Spec.ForProvider.Organization
-	}
+	// The org is the immutable identity from spec — use it directly. (The
+	// external-name annotation defaults to metadata.name, which is NOT the org,
+	// so keying Update off it 404s with "GetOrgByName <metadata.name>".)
+	org := cr.Spec.ForProvider.Organization
 
 	if _, err := e.client.UpdateOrganizationSettings(ctx, org, buildUpdateRequest(cr)); err != nil {
 		return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateSettings)

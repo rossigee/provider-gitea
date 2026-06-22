@@ -1,9 +1,0 @@
-apiVersion: action.gitea.m.crossplane.io/v2
-kind: Action
-metadata: {name: uptest-action, namespace: provider-gitea-e2e, annotations: {meta.upbound.io/example-id: action/v2/action}}
-spec:
-  forProvider:
-    repository: e2e-user/uptest-repo
-    workflowName: ci.yaml
-    content: "name: ci\non: [push]\njobs: {}\n"
-  providerConfigRef: {name: e2e, kind: ProviderConfig}

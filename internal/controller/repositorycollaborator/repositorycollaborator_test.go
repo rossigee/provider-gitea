@@ -80,15 +80,20 @@ func isAvailable(cr resource.Managed) bool {
 }
 
 func TestObserveNotCreated(t *testing.T) {
+	// Identity is spec.Username (not the external-name). With no username there
+	// is nothing to GET -> not created.
 	f := &fakeClient{getErr: errors.New("GET should not be called")}
 	e := &external{client: f}
 
-	obs, err := e.Observe(context.Background(), newCR(""))
+	cr := newCR("")
+	cr.Spec.ForProvider.Username = ""
+
+	obs, err := e.Observe(context.Background(), cr)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	if obs.ResourceExists {
-		t.Fatalf("expected ResourceExists=false for empty external-name")
+		t.Fatalf("expected ResourceExists=false when spec.username is empty")
 	}
 }
 

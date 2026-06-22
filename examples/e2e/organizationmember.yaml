@@ -1,9 +1,0 @@
-apiVersion: organizationmember.gitea.m.crossplane.io/v2
-kind: OrganizationMember
-metadata: {name: uptest-orgmember, namespace: provider-gitea-e2e, annotations: {meta.upbound.io/example-id: organizationmember/v2/organizationmember}}
-spec:
-  forProvider:
-    organization: uptest-org
-    username: member-user
-    role: member
-  providerConfigRef: {name: e2e, kind: ProviderConfig}

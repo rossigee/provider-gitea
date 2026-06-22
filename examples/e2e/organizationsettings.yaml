@@ -2,6 +2,5 @@ apiVersion: organizationsettings.gitea.m.crossplane.io/v2
 kind: OrganizationSettings
 metadata: {name: uptest-orgsettings, namespace: provider-gitea-e2e, annotations: {meta.upbound.io/example-id: organizationsettings/v2/organizationsettings}}
 spec:
-  forProvider:
-    organization: uptest-settings-org
+  forProvider: {organization: uptest-org}
   providerConfigRef: {name: e2e, kind: ProviderConfig}

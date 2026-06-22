@@ -297,7 +297,13 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalUpdate{}, errors.New(errExternalName)
 	}
 
+	// Gitea's admin-user PATCH requires login_name + source_id together (422
+	// otherwise). For a local user, login_name is the username and source_id 0.
+	loginName := username
+	var sourceID int64
 	updateReq := &clients.UpdateAdminUserRequest{
+		LoginName:       &loginName,
+		SourceID:        &sourceID,
 		FullName:        cr.Spec.ForProvider.FullName,
 		IsAdmin:         cr.Spec.ForProvider.IsAdmin,
 		Visibility:      cr.Spec.ForProvider.Visibility,

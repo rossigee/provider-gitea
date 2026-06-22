@@ -364,3 +364,45 @@ The CI pipeline includes:
 ### Coverage Reporting
 
 Coverage results are automatically uploaded to Codecov for tracking trends and ensuring quality standards.
+
+## End-to-end against a real Gitea (`make e2e`)
+
+`scripts/e2e.sh` stands up a throwaway kind cluster, installs Crossplane + the
+provider package + **a real Gitea** (latest, via the official `gitea-charts/gitea`
+Helm chart; sqlite, no persistence, admin user), then drives every example in
+`examples/e2e/*.yaml` through apply → Ready → delete with uptest.
+`test/e2e/uptest-setup.sh` mints an admin API token (`gitea admin user
+generate-access-token`) and writes the cluster-scoped `ProviderConfig`.
+
+Running against a real Gitea — not a mock — is deliberate: it enforces real ids,
+404s, SSH-key validation, resource dependencies and auth. It is what catches the
+bugs unit tests and `helm template` cannot.
+
+### Validate client calls against the Gitea OpenAPI spec FIRST
+
+Before adding or changing a client call, check the path/verb/required-fields
+against the Gitea OpenAPI (Swagger 2.0) spec —
+<https://docs.gitea.com/redocusaurus/plugin-redoc-4.yaml> — rather than
+discovering mismatches one 405/422 at a time. Real-Gitea facts the spec made
+explicit (and that the code now reflects):
+
+- `GET /admin/users/{username}` does not exist → read via `GET /users/{username}`.
+- `POST /users/{username}/keys` is 405 → create user keys via `POST /admin/users/{username}/keys`.
+- There is no `GET` for a single repo/org **secret** (405) → list and match by name.
+- Editing a git hook is `PATCH /repos/{o}/{r}/hooks/git/{id}`, not `POST`.
+- `PATCH /admin/users/{username}` requires `login_name` + `source_id`.
+
+### Resources excluded from e2e (with citations in the example files)
+
+Some controllers cannot work against a real Gitea as written; their examples are
+committed as `*.yaml.disabled` with a comment explaining why, and they remain
+unit-tested:
+
+- **accesstoken** — `POST /users/{user}/tokens` requires HTTP basic auth; this
+  provider authenticates with a token (401).
+- **action** — Gitea has no "create workflow" REST endpoint; workflows are files
+  committed to `.gitea/workflows/` (405).
+- **organizationmember** — Gitea has no add-member endpoint; membership is via
+  teams (405).
+- **pullrequest** — needs two real branches with a divergent commit history.
+- **runner** — needs a registration token + a running act_runner agent.

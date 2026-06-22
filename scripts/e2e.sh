@@ -1,17 +1,17 @@
 #!/usr/bin/env bash
 # Self-contained e2e for provider-gitea on KIND, driven by uptest.
 #
-# Stands up (idempotently): a kind cluster -> Crossplane -> the in-cluster mock
-# Gitea backend -> the provider package -> then runs uptest v2 (apply -> Ready
-# -> import -> delete) over examples/e2e/*. The mock backend
-# (test/e2e/mock-gitea.yaml) replaces a real Gitea, so the whole loop runs on a
-# throwaway kind cluster with NO external dependency and NO registry creds: the
-# provider package is built locally and served from a throwaway local registry.
+# Stands up (idempotently): a kind cluster -> Crossplane -> the provider package
+# -> a REAL Gitea (latest, via the official gitea Helm chart) -> then runs uptest
+# v2 (apply -> Ready -> import -> delete) over examples/e2e/*. The whole loop runs
+# on a throwaway kind cluster with NO external dependency: the provider package
+# is built locally and served from a throwaway local registry, and Gitea runs
+# in-cluster (sqlite, no persistence). uptest-setup.sh mints an admin API token.
 #
 # This is the "works by design" guarantee: a green run proves every example MR
-# reaches Ready and deletes cleanly against a faithful backend. The update step
-# is skipped (--skip-update); drift logic is covered by the controller unit
-# tests.
+# reaches Ready and deletes cleanly against a real Gitea — which enforces real
+# ids, 404s, SSH-key validation, dependencies and auth. The update step is
+# skipped (--skip-update); drift logic is covered by the controller unit tests.
 #
 # Env knobs (optional, defaults from scripts/lib.sh):
 #   KIND_CLUSTER (provider-gitea-dev)  PROVIDER (provider-gitea)
@@ -139,8 +139,39 @@ got="$(kubectl get crd -o name 2>/dev/null | grep -c 'gitea' || true)"
 [ "$got" -eq "$want" ] || die "provider Healthy but only ${got}/${want} gitea CRDs registered — a CRD failed to install (check provider logs for 'no matches for kind')"
 ok "installed: Healthy + ${got}/${want} CRDs registered"
 
-# 3. run uptest over the examples (apply -> Ready -> import -> delete).
-log "running uptest e2e against the mock Gitea backend"
+# 3. install a REAL Gitea (latest, via the official chart) for the e2e to drive
+#    — far stronger than a mock: it enforces real ids, 404s, key validation,
+#    dependencies and auth. Lightweight config: sqlite + in-memory cache/session
+#    + level queue, no bundled postgresql-ha/valkey-cluster, no persistence.
+GITEA_NS="${GITEA_NS:-gitea}"
+GITEA_RELEASE="${GITEA_RELEASE:-gitea}"
+GITEA_ADMIN_USER="${GITEA_ADMIN_USER:-gitea_admin}"
+GITEA_ADMIN_PASSWORD="${GITEA_ADMIN_PASSWORD:-Uptest-Admin-123}"
+log "installing Gitea (chart gitea-charts/gitea) in ns ${GITEA_NS}"
+helm repo add gitea-charts https://dl.gitea.com/charts/ >/dev/null 2>&1 || true
+helm repo update gitea-charts >/dev/null 2>&1
+kubectl create namespace "$GITEA_NS" --dry-run=client -o yaml | kubectl apply -f - >/dev/null
+helm upgrade --install "$GITEA_RELEASE" gitea-charts/gitea -n "$GITEA_NS" \
+  --set postgresql-ha.enabled=false \
+  --set valkey-cluster.enabled=false \
+  --set valkey.enabled=false \
+  --set persistence.enabled=false \
+  --set gitea.config.database.DB_TYPE=sqlite3 \
+  --set gitea.config.session.PROVIDER=memory \
+  --set gitea.config.cache.ADAPTER=memory \
+  --set gitea.config.queue.TYPE=level \
+  --set gitea.config.repository.DEFAULT_BRANCH=main \
+  --set gitea.config.actions.ENABLED=true \
+  --set gitea.config.security.DISABLE_GIT_HOOKS=false \
+  --set gitea.admin.username="$GITEA_ADMIN_USER" \
+  --set gitea.admin.password="$GITEA_ADMIN_PASSWORD" \
+  --set gitea.admin.email=gitea@local.domain \
+  --wait --timeout 10m >/dev/null
+kubectl -n "$GITEA_NS" rollout status deploy/"$GITEA_RELEASE" --timeout=300s
+ok "Gitea ready at ${GITEA_RELEASE}-http.${GITEA_NS}.svc:3000 (admin ${GITEA_ADMIN_USER})"
+
+# 4. run uptest over the examples (apply -> Ready -> import -> delete).
+log "running uptest e2e against the real Gitea backend"
 LIST="$(ls examples/e2e/*.yaml | paste -sd, -)"
 
 rc=0

@@ -607,22 +607,22 @@ type CreateOrganizationSecretRequest struct {
 
 // Organization Secret API methods
 func (c *giteaClient) GetOrganizationSecret(ctx context.Context, org, secretName string) (*OrganizationSecret, error) {
-	path := "/orgs/" + org + "/actions/secrets/" + secretName
+	// Gitea has no GET single secret (405). List org secrets and match by name.
+	path := "/orgs/" + org + "/actions/secrets"
 	resp, err := c.doRequest(ctx, "GET", path, nil)
 	if err != nil {
 		return nil, err
 	}
-
-	if resp.StatusCode == http.StatusNotFound {
-		return nil, &APIError{StatusCode: http.StatusNotFound, Body: "organization secret not found"}
-	}
-
-	var secret OrganizationSecret
-	if err := handleResponse(resp, &secret); err != nil {
+	var list []OrganizationSecret
+	if err := handleResponse(resp, &list); err != nil {
 		return nil, err
 	}
-
-	return &secret, nil
+	for i := range list {
+		if strings.EqualFold(list[i].Name, secretName) {
+			return &list[i], nil
+		}
+	}
+	return nil, NewNotFoundError("organization secret", secretName)
 }
 
 func (c *giteaClient) CreateOrganizationSecret(ctx context.Context, org, secretName string, req *CreateOrganizationSecretRequest) error {
@@ -1202,6 +1202,11 @@ type CreateAdminUserRequest struct {
 
 // UpdateAdminUserRequest represents the request body for updating an admin user
 type UpdateAdminUserRequest struct {
+	// Gitea's PATCH /admin/users/{username} REQUIRES login_name + source_id
+	// together (422 "[LoginName]: Required" otherwise). For local users
+	// source_id is 0 and login_name is the username.
+	LoginName       *string `json:"login_name,omitempty"`
+	SourceID        *int64  `json:"source_id,omitempty"`
 	Email           *string `json:"email,omitempty"`
 	FullName        *string `json:"full_name,omitempty"`
 	IsAdmin         *bool   `json:"is_admin,omitempty"`
@@ -1298,7 +1303,10 @@ func (c *giteaClient) GetRepositoryCollaborator(ctx context.Context, owner, repo
 		return nil, err
 	}
 
-	if resp.StatusCode == http.StatusNotFound {
+	// 404 = not a collaborator; 422 = the user does not exist yet (a transient
+	// during parallel apply). Both mean "no such collaborator" — return typed
+	// not-found so Observe reports not-created cleanly instead of erroring.
+	if resp.StatusCode == http.StatusNotFound || resp.StatusCode == http.StatusUnprocessableEntity {
 		return nil, &APIError{StatusCode: http.StatusNotFound, Body: "collaborator not found"}
 	}
 
@@ -1441,8 +1449,10 @@ func (c *giteaClient) CreateGitHook(ctx context.Context, repository string, req 
 	}
 	owner, repo := parts[0], parts[1]
 
+	// Gitea git hooks pre-exist (pre-receive/update/post-receive); there is no
+	// POST to create one (405) — you EDIT the hook's script via PATCH.
 	path := fmt.Sprintf("/repos/%s/%s/hooks/git/%s", owner, repo, req.HookType)
-	resp, err := c.doRequest(ctx, "POST", path, req)
+	resp, err := c.doRequest(ctx, "PATCH", path, req)
 	if err != nil {
 		return nil, err
 	}
@@ -1739,22 +1749,23 @@ func (c *giteaClient) GetRepositorySecret(ctx context.Context, repository, secre
 	}
 	owner, repo := parts[0], parts[1]
 
-	path := fmt.Sprintf("/repos/%s/%s/actions/secrets/%s", owner, repo, secretName)
+	// Gitea has no GET single secret (405) and never returns secret VALUES.
+	// List the repo's secrets and match by name (Gitea upper-cases secret names).
+	path := fmt.Sprintf("/repos/%s/%s/actions/secrets", owner, repo)
 	resp, err := c.doRequest(ctx, "GET", path, nil)
 	if err != nil {
 		return nil, err
 	}
-
-	if resp.StatusCode == http.StatusNotFound {
-		return nil, &APIError{StatusCode: http.StatusNotFound, Body: "repository secret not found"}
-	}
-
-	var secret RepositorySecret
-	if err := handleResponse(resp, &secret); err != nil {
+	var list []RepositorySecret
+	if err := handleResponse(resp, &list); err != nil {
 		return nil, err
 	}
-
-	return &secret, nil
+	for i := range list {
+		if strings.EqualFold(list[i].Name, secretName) {
+			return &list[i], nil
+		}
+	}
+	return nil, NewNotFoundError("repository secret", secretName)
 }
 
 func (c *giteaClient) CreateRepositorySecret(ctx context.Context, repository, secretName string, req *CreateRepositorySecretRequest) error {
@@ -1810,26 +1821,29 @@ func (c *giteaClient) DeleteRepositorySecret(ctx context.Context, repository, se
 
 // User Key API methods
 func (c *giteaClient) GetUserKey(ctx context.Context, username string, keyID int64) (*UserKey, error) {
-	path := fmt.Sprintf("/users/%s/keys/%d", username, keyID)
+	// Gitea has no GET /users/{username}/keys/{id} (404); list the user's keys
+	// and match by id.
+	path := fmt.Sprintf("/users/%s/keys", username)
 	resp, err := c.doRequest(ctx, "GET", path, nil)
 	if err != nil {
 		return nil, err
 	}
-
-	if resp.StatusCode == http.StatusNotFound {
-		return nil, &APIError{StatusCode: http.StatusNotFound, Body: "user key not found"}
-	}
-
-	var key UserKey
-	if err := handleResponse(resp, &key); err != nil {
+	var list []UserKey
+	if err := handleResponse(resp, &list); err != nil {
 		return nil, err
 	}
-
-	return &key, nil
+	for i := range list {
+		if list[i].ID == keyID {
+			return &list[i], nil
+		}
+	}
+	return nil, NewNotFoundError("user key", fmt.Sprintf("%d", keyID))
 }
 
 func (c *giteaClient) CreateUserKey(ctx context.Context, username string, req *CreateUserKeyRequest) (*UserKey, error) {
-	path := fmt.Sprintf("/users/%s/keys", username)
+	// Adding a key for an arbitrary user requires the admin endpoint; the bare
+	// /users/{username}/keys is read-only (405 on POST).
+	path := fmt.Sprintf("/admin/users/%s/keys", username)
 	resp, err := c.doRequest(ctx, "POST", path, req)
 	if err != nil {
 		return nil, err
@@ -1859,7 +1873,9 @@ func (c *giteaClient) UpdateUserKey(ctx context.Context, username string, keyID 
 }
 
 func (c *giteaClient) DeleteUserKey(ctx context.Context, username string, keyID int64) error {
-	path := fmt.Sprintf("/users/%s/keys/%d", username, keyID)
+	// Deleting another user's key requires the admin endpoint; the bare
+	// /users/{username}/keys/{id} is read-only.
+	path := fmt.Sprintf("/admin/users/%s/keys/%d", username, keyID)
 	resp, err := c.doRequest(ctx, "DELETE", path, nil)
 	if err != nil {
 		return err
@@ -2182,7 +2198,9 @@ func (c *giteaClient) DeleteRunner(ctx context.Context, scope, scopeValue string
 
 // Admin User API methods
 func (c *giteaClient) GetAdminUser(ctx context.Context, username string) (*AdminUser, error) {
-	path := fmt.Sprintf("/admin/users/%s", username)
+	// Gitea has no GET /admin/users/{username} (405). Read via the public user
+	// endpoint — it returns the same user object (incl. is_admin).
+	path := fmt.Sprintf("/users/%s", username)
 	resp, err := c.doRequest(ctx, "GET", path, nil)
 	if err != nil {
 		return nil, err

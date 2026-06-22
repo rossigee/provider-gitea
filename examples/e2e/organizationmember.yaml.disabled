@@ -1,0 +1,10 @@
+apiVersion: organizationmember.gitea.m.crossplane.io/v2
+kind: OrganizationMember
+metadata: {name: uptest-orgmember, namespace: provider-gitea-e2e, annotations: {meta.upbound.io/example-id: organizationmember/v2/organizationmember}}
+spec:
+  forProvider: {organization: uptest-org, username: uptest-user, role: member}
+  providerConfigRef: {name: e2e, kind: ProviderConfig}
+# DISABLED for e2e: Gitea has no "add organization member" endpoint
+# (PUT /orgs/{org}/members/{user} -> 405). Membership is granted by adding the
+# user to a team. The OrganizationMember controller's add call cannot work
+# against a real Gitea as written.

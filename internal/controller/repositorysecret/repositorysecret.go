@@ -25,6 +25,7 @@ import (
 	"context"
 
 	"github.com/pkg/errors"
+	corev1 "k8s.io/api/core/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -49,6 +50,7 @@ const (
 	errDeleteRepositorySecret = "failed to delete repositorysecret"
 	errGetProviderConfig      = "failed to get provider config"
 	errExternalName           = "invalid external-name, expected secret name"
+	errGetValue               = "failed to read secret value from valueSecretRef"
 )
 
 // Setup adds a controller that reconciles RepositorySecret managed resources.
@@ -97,11 +99,27 @@ func (c *connector) Connect(ctx context.Context, mg resource.Managed) (managed.E
 		return nil, err
 	}
 
-	return &external{client: conn}, nil
+	return &external{client: conn, kube: c.kube}, nil
 }
 
 type external struct {
 	client clients.Client
+	kube   client.Client
+}
+
+// resolveValue reads the secret value from the referenced Kubernetes Secret.
+// Gitea requires a non-empty "data" on create/update (422 "[Data]: Required").
+func (e *external) resolveValue(ctx context.Context, cr *v2.RepositorySecret) (string, error) {
+	ref := cr.Spec.ForProvider.ValueSecretRef
+	var sec corev1.Secret
+	if err := e.kube.Get(ctx, client.ObjectKey{Namespace: ref.Namespace, Name: ref.Name}, &sec); err != nil {
+		return "", errors.Wrap(err, errGetValue)
+	}
+	v, ok := sec.Data[ref.Key]
+	if !ok {
+		return "", errors.Errorf("%s: key %q not found in secret %s/%s", errGetValue, ref.Key, ref.Namespace, ref.Name)
+	}
+	return string(v), nil
 }
 
 func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.ExternalObservation, error) {
@@ -153,7 +171,11 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 	}
 	cr.SetConditions(xpv1.Creating())
 
-	req := &clients.CreateRepositorySecretRequest{}
+	value, err := e.resolveValue(ctx, cr)
+	if err != nil {
+		return managed.ExternalCreation{}, err
+	}
+	req := &clients.CreateRepositorySecretRequest{Data: value}
 	if err := e.client.CreateRepositorySecret(ctx, cr.Spec.ForProvider.Repository, cr.Spec.ForProvider.SecretName, req); err != nil {
 		return managed.ExternalCreation{}, errors.Wrap(err, errCreateRepositorySecret)
 	}
@@ -175,7 +197,11 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalUpdate{}, errors.New(errExternalName)
 	}
 
-	req := &clients.UpdateRepositorySecretRequest{}
+	value, err := e.resolveValue(ctx, cr)
+	if err != nil {
+		return managed.ExternalUpdate{}, err
+	}
+	req := &clients.UpdateRepositorySecretRequest{Data: value}
 	if err := e.client.UpdateRepositorySecret(ctx, cr.Spec.ForProvider.Repository, secretName, req); err != nil {
 		return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateRepositorySecret)
 	}

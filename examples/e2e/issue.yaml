@@ -2,8 +2,5 @@ apiVersion: issue.gitea.m.crossplane.io/v2
 kind: Issue
 metadata: {name: uptest-issue, namespace: provider-gitea-e2e, annotations: {meta.upbound.io/example-id: issue/v2/issue}}
 spec:
-  forProvider:
-    owner: e2e-user
-    repository: uptest-repo
-    title: uptest issue
+  forProvider: {owner: gitea_admin, repository: uptest-repo, title: uptest issue}
   providerConfigRef: {name: e2e, kind: ProviderConfig}

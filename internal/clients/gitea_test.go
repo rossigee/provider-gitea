@@ -692,10 +692,10 @@ func TestOrganizationSecretOperations(t *testing.T) {
 	// Create test server
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch {
-		case r.Method == "GET" && strings.Contains(r.URL.Path, "/orgs/testorg/actions/secrets/testsecret"):
-			// Gitea returns 405 for GET operations on organization secrets
-			w.Header().Set("Allow", "PUT, DELETE")
-			w.WriteHeader(http.StatusMethodNotAllowed)
+		case r.Method == "GET" && strings.HasSuffix(r.URL.Path, "/orgs/testorg/actions/secrets"):
+			// Gitea has no GET single secret; the client lists and matches by name.
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(`[{"name":"TESTSECRET","created_at":"2024-01-01T00:00:00Z"}]`))
 
 		case r.Method == "PUT" && strings.Contains(r.URL.Path, "/orgs/testorg/actions/secrets/testsecret"):
 			// Verify request body
@@ -730,12 +730,17 @@ func TestOrganizationSecretOperations(t *testing.T) {
 
 	ctx := context.Background()
 
-	t.Run("GetOrganizationSecret_Returns405", func(t *testing.T) {
-		// Test that Gitea API returns 405 for GET operations
+	t.Run("GetOrganizationSecret_ListsAndMatches", func(t *testing.T) {
+		// Gitea has no GET single secret; the client lists and matches by name
+		// (case-insensitive — Gitea upper-cases secret names).
 		secret, err := c.GetOrganizationSecret(ctx, "testorg", "testsecret")
-		assert.Error(t, err)
-		assert.Nil(t, secret)
-		assert.Contains(t, err.Error(), "405")
+		require.NoError(t, err)
+		require.NotNil(t, secret)
+		assert.Equal(t, "TESTSECRET", secret.Name)
+
+		missing, err := c.GetOrganizationSecret(ctx, "testorg", "nope")
+		assert.True(t, IsNotFound(err))
+		assert.Nil(t, missing)
 	})
 
 	t.Run("CreateOrganizationSecret", func(t *testing.T) {
