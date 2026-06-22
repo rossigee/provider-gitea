@@ -155,13 +155,13 @@ type BranchProtectionObservation struct {
 // BranchProtectionSpec defines the desired state of BranchProtection
 type BranchProtectionSpec struct {
 	xpv1.ManagedResourceSpec `json:",inline"`
-	ForProvider       BranchProtectionParameters `json:"forProvider"`
+	ForProvider              BranchProtectionParameters `json:"forProvider"`
 }
 
 // BranchProtectionStatus defines the observed state of BranchProtection
 type BranchProtectionStatus struct {
 	xpv1.ManagedResourceStatus `json:",inline"`
-	AtProvider          BranchProtectionObservation `json:"atProvider,omitempty"`
+	AtProvider                 BranchProtectionObservation `json:"atProvider,omitempty"`
 }
 
 // +kubebuilder:object:root=true
@@ -198,7 +198,6 @@ var (
 	BranchProtectionKindAPIVersion   = BranchProtectionKind + "." + SchemeGroupVersion.String()
 	BranchProtectionGroupVersionKind = SchemeGroupVersion.WithKind(BranchProtectionKind)
 )
-
 
 // GetCondition returns the condition for the given ConditionType if it exists, otherwise returns nil.
 func (r *BranchProtection) GetCondition(ct xpv1.ConditionType) xpv1.Condition {

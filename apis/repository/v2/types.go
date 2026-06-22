@@ -111,13 +111,13 @@ type RepositoryObservation struct {
 // RepositorySpec defines the desired state of Repository
 type RepositorySpec struct {
 	xpv1.ManagedResourceSpec `json:",inline"`
-	ForProvider       RepositoryParameters `json:"forProvider"`
+	ForProvider              RepositoryParameters `json:"forProvider"`
 }
 
 // RepositoryStatus defines the observed state of Repository
 type RepositoryStatus struct {
 	xpv1.ManagedResourceStatus `json:",inline"`
-	AtProvider          RepositoryObservation `json:"atProvider,omitempty"`
+	AtProvider                 RepositoryObservation `json:"atProvider,omitempty"`
 }
 
 // +kubebuilder:object:root=true

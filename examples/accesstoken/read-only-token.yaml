@@ -1,9 +1,10 @@
 # Read-only API token for monitoring and reporting
 # This example creates a limited token for read-only operations
-apiVersion: accesstoken.gitea.crossplane.io/v1alpha1
+apiVersion: accesstoken.gitea.m.crossplane.io/v2
 kind: AccessToken
 metadata:
   name: monitoring-token
+  namespace: default
   annotations:
     crossplane.io/external-name: "monitoring-service"
 spec:

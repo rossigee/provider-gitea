@@ -34,8 +34,16 @@ type UserParameters struct {
 	// +kubebuilder:validation:Format="email"
 	Email string `json:"email"`
 
-	// Password is the user's password (required for creation)
-	Password string `json:"password"`
+	// PasswordSecretRef references the key in a Kubernetes Secret that holds the
+	// user's password (required for creation). The password is never set inline;
+	// it is always taken from a referenced Secret (secret-ref convention).
+	// +kubebuilder:validation:Optional
+	PasswordSecretRef *xpv1.SecretKeySelector `json:"passwordSecretRef,omitempty"`
+
+	// MaxRepoCreation limits the number of repositories the user can create
+	// (-1 for unlimited). Applied on update.
+	// +kubebuilder:validation:Minimum=-1
+	MaxRepoCreation *int `json:"maxRepoCreation,omitempty"`
 
 	// FullName is the user's full name
 	FullName *string `json:"fullName,omitempty"`
@@ -125,13 +133,13 @@ type UserObservation struct {
 // UserSpec defines the desired state of User
 type UserSpec struct {
 	xpv1.ManagedResourceSpec `json:",inline"`
-	ForProvider       UserParameters `json:"forProvider"`
+	ForProvider              UserParameters `json:"forProvider"`
 }
 
 // UserStatus defines the observed state of User
 type UserStatus struct {
 	xpv1.ManagedResourceStatus `json:",inline"`
-	AtProvider          UserObservation `json:"atProvider,omitempty"`
+	AtProvider                 UserObservation `json:"atProvider,omitempty"`
 }
 
 // +kubebuilder:object:root=true
@@ -168,7 +176,6 @@ var (
 	UserKindAPIVersion   = UserKind + "." + SchemeGroupVersion.String()
 	UserGroupVersionKind = SchemeGroupVersion.WithKind(UserKind)
 )
-
 
 // GetCondition returns the condition for the given ConditionType if it exists, otherwise returns nil.
 func (r *User) GetCondition(ct xpv1.ConditionType) xpv1.Condition {

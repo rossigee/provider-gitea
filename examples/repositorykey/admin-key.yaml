@@ -1,9 +1,10 @@
 # Repository SSH key with write access for administrators
 # This example creates a write-enabled SSH key for repository management
-apiVersion: repositorykey.gitea.crossplane.io/v1alpha1
+apiVersion: repositorykey.gitea.m.crossplane.io/v2
 kind: RepositoryKey
 metadata:
   name: admin-repo-key
+  namespace: default
   annotations:
     crossplane.io/external-name: "myorg/internal-tools"
 spec:

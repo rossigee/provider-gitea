@@ -72,6 +72,19 @@ spec:
                     maxLength: 100
                     minLength: 1
                     type: string
+                  passwordSecretRef:
+                    properties:
+                      key:
+                        type: string
+                      name:
+                        type: string
+                      namespace:
+                        type: string
+                    required:
+                    - key
+                    - name
+                    - namespace
+                    type: object
                   providerConfigRef:
                     properties:
                       name:
@@ -98,7 +111,6 @@ spec:
                       type: string
                     minItems: 1
                     type: array
-                    uniqueItems: true
                   username:
                     maxLength: 40
                     minLength: 1

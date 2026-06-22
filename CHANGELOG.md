@@ -7,6 +7,74 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### 🔻 API surface trimmed to 14 reconcilable kinds
+- **Removed** kinds that cannot reconcile as managed resources (they modelled
+  git content or runtime/imperative operations): `Action`, `Runner`,
+  `PullRequest`, `Issue`, `Release`, `OrganizationMember`.
+- **Merged** `AdminUser` into `User` (both drove `/admin/users`); `User` gains
+  the union of fields (`maxRepoCreation`).
+- **Deduplicated** SSH keys: removed `DeployKey` and `UserKey` in favour of
+  `RepositoryKey` (DeployKey hit the identical `/repos/{owner}/{repo}/keys`).
+- Pruned the now-dead client methods, request/response types, the mock client,
+  and their CRDs. Result: **14 kinds**, all registered.
+
+### 🔐 Secrets always via Secret reference (never inline)
+- `User.passwordSecretRef`, `OrganizationSecret.valueSecretRef`,
+  `RepositorySecret.valueSecretRef`, and `AccessToken.passwordSecretRef` are now
+  `*xpv1.SecretKeySelector`, matching the platform-wide secret-ref convention
+  (provider-harbor). Removed the plaintext `User.password`,
+  `OrganizationSecret.data`/`dataFrom`, and the locally-redefined
+  `SecretKeySelector`. A shared `clients.ResolveSecretValue` is the one place a
+  `*SecretRef` becomes a value.
+
+### 🔑 AccessToken authenticates as the owning user
+- Gitea's `/users/{user}/tokens` API requires HTTP basic auth as the user, not
+  the ProviderConfig token. Added `clients.NewBasicAuthClient`; the AccessToken
+  controller now basic-auths as `spec.forProvider.username` with the password
+  from `passwordSecretRef`. Reusable for any future user-scoped resource.
+
+### ✅ e2e now covers Update against real Gitea
+- Dropped `--skip-update`; mutable examples (`Repository`, `Organization`,
+  `Label`, `Team`, `User`) carry `uptest.upbound.io/update-parameter` and are
+  driven create→Ready→**update**→import→delete. The setup script seeds the admin
+  + user password Secrets the basic-auth/secret-ref examples need. `AccessToken`
+  is no longer disabled — it runs in the suite.
+
+### ✨ Controllers for every resource kind
+- Implemented working reconcilers for **all 23 v2 resource kinds** (previously
+  only `repository`, partially). Each has create/observe/update/delete plus a
+  unit test. Registered all in `internal/controller/controller.go`.
+
+### 🐛 Correctness fixes (crossplane-provider-template lessons)
+- **Readiness**: `Observe` now sets `xpv1.Available()` — crossplane-runtime v2
+  no longer sets it for us, so MRs previously stuck `Ready=Creating` forever.
+- **Not-found classification**: the client returns a typed `*APIError` carrying
+  the HTTP status; `IsNotFound` matches on the code, not a brittle `"404"`
+  string. All `Get*` methods now return the typed error.
+- **Drift detection**: `Observe` compares desired vs observed instead of
+  hard-coding `ResourceUpToDate: true`.
+- **Identity**: Observe/Update/Delete key off `crossplane.io/external-name`;
+  delete is idempotent on 404.
+- **Managed methodset**: hand-wrote the missing `GetProviderConfigReference` /
+  `GetWriteConnectionSecretToReference` accessors on every v2 type — without them
+  the runtime failed every reconcile with "managed resource does not implement
+  connection details".
+- **Rate limiter / options**: controllers use `ratelimiter.NewReconciler` with a
+  non-nil global limiter and `WithOptions(o.ForControllerRuntime())`.
+- **Logger**: `ctrl.SetLogger` is set unconditionally (not only under `--debug`).
+
+### 📦 Packaging & CI
+- Release now builds a single multi-arch xpkg with the runtime **embedded** and a
+  hard gate (`scripts/verify-xpkg.sh`) that `package.yaml` carries the Provider
+  meta + all CRDs — replacing the old runtime-image-only release that shipped a
+  CRD-less, Healthy-but-broken package.
+- Removed stale/duplicate CRDs (legacy `*.gitea.crossplane.io` + empty-group
+  `_*.yaml`); `package/crds` now holds only the 23 v2 namespaced CRDs + 2
+  ProviderConfig CRDs. Dropped the invalid `uniqueItems` markers that made the
+  `accesstoken`/`runner` CRDs fail to install.
+- Added a self-contained kind + mock-Gitea e2e (`scripts/e2e.sh`, `make e2e`,
+  `.github/workflows/e2e.yml`) that proves apply→Ready→delete per resource.
+
 ## [0.8.2] - 2025-10-30
 
 ### 🔧 **Build & CI/CD Improvements**

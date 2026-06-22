@@ -22,27 +22,18 @@ import (
 
 	// v2 APIs (namespaced with .m. API group) - v2-only provider
 	accesstokenv2 "github.com/rossigee/provider-gitea/apis/accesstoken/v2"
-	actionv2 "github.com/rossigee/provider-gitea/apis/action/v2"
-	adminuserv2 "github.com/rossigee/provider-gitea/apis/adminuser/v2"
 	branchprotectionv2 "github.com/rossigee/provider-gitea/apis/branchprotection/v2"
-	deploykeyv2 "github.com/rossigee/provider-gitea/apis/deploykey/v2"
 	githookv2 "github.com/rossigee/provider-gitea/apis/githook/v2"
-	issuev2 "github.com/rossigee/provider-gitea/apis/issue/v2"
 	labelv2 "github.com/rossigee/provider-gitea/apis/label/v2"
 	orgv2 "github.com/rossigee/provider-gitea/apis/organization/v2"
-	organizationmemberv2 "github.com/rossigee/provider-gitea/apis/organizationmember/v2"
 	orgsecretv2 "github.com/rossigee/provider-gitea/apis/organizationsecret/v2"
 	organizationsettingsv2 "github.com/rossigee/provider-gitea/apis/organizationsettings/v2"
-	pullrequestv2 "github.com/rossigee/provider-gitea/apis/pullrequest/v2"
-	releasev2 "github.com/rossigee/provider-gitea/apis/release/v2"
 	giteav2 "github.com/rossigee/provider-gitea/apis/repository/v2"
 	repositorycollaboratorv2 "github.com/rossigee/provider-gitea/apis/repositorycollaborator/v2"
 	repositorykeyv2 "github.com/rossigee/provider-gitea/apis/repositorykey/v2"
 	repositorysecretv2 "github.com/rossigee/provider-gitea/apis/repositorysecret/v2"
-	runnerv2 "github.com/rossigee/provider-gitea/apis/runner/v2"
 	teamv2 "github.com/rossigee/provider-gitea/apis/team/v2"
 	userv2 "github.com/rossigee/provider-gitea/apis/user/v2"
-	userkeyv2 "github.com/rossigee/provider-gitea/apis/userkey/v2"
 	webhookv2 "github.com/rossigee/provider-gitea/apis/webhook/v2"
 
 	// Provider configuration APIs
@@ -63,24 +54,15 @@ func init() {
 		orgsecretv2.SchemeBuilder.AddToScheme,
 		userv2.SchemeBuilder.AddToScheme,
 		webhookv2.SchemeBuilder.AddToScheme,
-		deploykeyv2.SchemeBuilder.AddToScheme,
 		teamv2.SchemeBuilder.AddToScheme,
 		labelv2.SchemeBuilder.AddToScheme,
 		repositorycollaboratorv2.SchemeBuilder.AddToScheme,
 		organizationsettingsv2.SchemeBuilder.AddToScheme,
 		githookv2.SchemeBuilder.AddToScheme,
-		issuev2.SchemeBuilder.AddToScheme,
-		pullrequestv2.SchemeBuilder.AddToScheme,
-		releasev2.SchemeBuilder.AddToScheme,
 		branchprotectionv2.SchemeBuilder.AddToScheme,
 		repositorykeyv2.SchemeBuilder.AddToScheme,
 		accesstokenv2.SchemeBuilder.AddToScheme,
 		repositorysecretv2.SchemeBuilder.AddToScheme,
-		userkeyv2.SchemeBuilder.AddToScheme,
-		organizationmemberv2.SchemeBuilder.AddToScheme,
-		actionv2.SchemeBuilder.AddToScheme,
-		adminuserv2.SchemeBuilder.AddToScheme,
-		runnerv2.SchemeBuilder.AddToScheme,
 	)
 }
 

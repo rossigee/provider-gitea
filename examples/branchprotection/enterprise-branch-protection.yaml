@@ -1,9 +1,10 @@
 # Enterprise-grade branch protection configuration
 # This example demonstrates comprehensive branch protection rules for a production repository
-apiVersion: branchprotection.gitea.crossplane.io/v1alpha1
+apiVersion: branchprotection.gitea.m.crossplane.io/v2
 kind: BranchProtection
 metadata:
   name: main-branch-protection
+  namespace: default
   annotations:
     crossplane.io/external-name: "example-org/critical-app/main"
 spec:

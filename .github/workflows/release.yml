@@ -1,114 +1,65 @@
 name: Release
 
+# Canonical release path. Builds a multi-arch Crossplane package and pushes it
+# as a SINGLE OCI index, with a hard gate that package.yaml carries the Provider
+# meta + every CRD (scripts/verify-xpkg.sh). This deliberately REPLACES the old
+# release.yml that pushed a plain runtime Docker image to the provider tag — that
+# shipped a package with zero CRDs, so the provider installed Healthy yet every
+# MR failed with "no matches for kind" (crossplane-provider-template lesson #5).
+#
+# It runs scripts/publish.sh so a local `make publish` and a tagged release
+# produce identical artifacts.
+
 on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "OCI tag to publish (semver, e.g. v0.9.0)"
+        required: true
   push:
     tags:
       - 'v*'
 
 env:
-  REGISTRY_ORGS: ghcr.io/rossigee
-  GO_REQUIRED_VERSION: 1.26.4
-
-permissions:
-  packages: write
-  contents: write
+  GO_VERSION: '1.26.4'
+  CROSSPLANE_CLI_VERSION: 'v2.3.2'
 
 jobs:
   release:
     runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: write
     steps:
       - uses: actions/checkout@v4
-        with:
-          submodules: true
-          fetch-depth: 0
-
       - uses: actions/setup-go@v6
         with:
-          go-version: ${{ env.GO_REQUIRED_VERSION }}
+          go-version: ${{ env.GO_VERSION }}
 
-      - name: Extract version from tag
-        id: version
+      - name: Resolve version
+        id: v
         run: |
-          VERSION=${GITHUB_REF#refs/tags/}
-          echo "version=${VERSION}" >> $GITHUB_OUTPUT
-          echo "Version: ${VERSION}"
+          if [ "${{ github.event_name }}" = "push" ]; then
+            echo "version=${GITHUB_REF#refs/tags/}" >> "$GITHUB_OUTPUT"
+          else
+            echo "version=${{ inputs.version }}" >> "$GITHUB_OUTPUT"
+          fi
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v4
+      - name: Regenerate CRDs (the package must carry them)
+        run: bash scripts/generate.sh
 
-      - name: Log in to Container Registry
-        uses: docker/login-action@v4
+      - name: Set up QEMU (cross-arch runtime images)
+        uses: docker/setup-qemu-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Vendor Dependencies
-        run: go mod vendor
-
-      - name: Run code generation
-        run: make generate
-
-      - name: Check go.mod is up to date
-        run: |
-          go mod tidy
-          git diff --exit-code
-
-      - name: Run unit tests
-        run: make test
-
-      - name: Run linting
-        run: make lint
-
-      - name: Build provider binary
-        run: |
-          mkdir -p _output/bin/linux_amd64
-          VERSION="${{ steps.version.outputs.version }}" \
-          go build -v -o _output/bin/linux_amd64/provider \
-            -ldflags "-X github.com/rossigee/provider-gitea/internal/version.Version=${{ steps.version.outputs.version }}" \
-            ./cmd/provider
-
-      - name: Build and push Docker image (amd64)
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: ./cluster/images/provider-gitea/Dockerfile
-          build-args: |
-            TARGETOS=linux
-            TARGETARCH=amd64
-          tags: |
-            ${{ env.REGISTRY_ORGS }}/provider-gitea:${{ steps.version.outputs.version }}
-            ${{ env.REGISTRY_ORGS }}/provider-gitea:latest
-          push: true
-
-      - name: Create GitHub Release
-        uses: ncipollo/release-action@v1
-        with:
-          tag: ${{ steps.version.outputs.version }}
-          name: Release ${{ steps.version.outputs.version }}
-          body: |
-            ## Provider Image
-            Published to: `${{ env.REGISTRY_ORGS }}/provider-gitea:${{ steps.version.outputs.version }}`
-
-            ## Crossplane Installation
-            ```bash
-            kubectl apply -f - <<EOF
-            apiVersion: pkg.crossplane.io/v1
-            kind: Provider
-            metadata:
-              name: provider-gitea
-            spec:
-              package: ${{ env.REGISTRY_ORGS }}/provider-gitea:${{ steps.version.outputs.version }}
-            EOF
-            ```
-
-            ## Documentation
-            See the [README](https://github.com/rossigee/provider-gitea) for installation and usage instructions.
-          draft: false
-          prerelease: false
-
-      - name: Verify published artifacts
-        run: |
-          echo "Verifying published artifacts..."
-          docker pull ${{ env.REGISTRY_ORGS }}/provider-gitea:${{ steps.version.outputs.version }} && echo "✓ Docker image published" || echo "✗ Docker image not found"
-          echo "Release complete: ${{ steps.version.outputs.version }}"
+      - name: Build + verify + push multi-arch package
+        run: bash scripts/publish.sh
+        env:
+          VERSION: ${{ steps.v.outputs.version }}
+          REGISTRY: ghcr.io/${{ github.repository_owner }}

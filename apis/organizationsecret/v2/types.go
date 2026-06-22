@@ -23,27 +23,6 @@ import (
 	xpv1 "github.com/crossplane/crossplane/apis/v2/core/v2"
 )
 
-// DataFromSource represents the source of secret data
-type DataFromSource struct {
-	// SecretKeyRef is a reference to a key in a Secret
-	SecretKeyRef *SecretKeySelector `json:"secretKeyRef,omitempty"`
-
-	// Value is the direct value of the secret
-	Value *string `json:"value,omitempty"`
-}
-
-// SecretKeySelector selects a key from a Secret
-type SecretKeySelector struct {
-	// Name of the secret
-	Name string `json:"name"`
-
-	// Namespace of the secret
-	Namespace string `json:"namespace"`
-
-	// Key within the secret
-	Key string `json:"key"`
-}
-
 type OrganizationSecretParameters struct {
 	// Organization is the organization name that owns the secret
 	// +kubebuilder:validation:Required
@@ -58,15 +37,11 @@ type OrganizationSecretParameters struct {
 	// +kubebuilder:validation:Pattern="^[a-zA-Z_][a-zA-Z0-9_]*$"
 	SecretName string `json:"secretName"`
 
-	// Data is the secret value (plaintext, will be encrypted by Gitea)
-	// Either Data or DataFrom must be specified, but not both
-	// +kubebuilder:validation:Optional
-	Data *string `json:"data,omitempty"`
-
-	// DataFrom specifies a reference to get the secret value from a Kubernetes secret
-	// Either Data or DataFrom must be specified, but not both
-	// +kubebuilder:validation:Optional
-	DataFrom *DataFromSource `json:"dataFrom,omitempty"`
+	// ValueSecretRef references the key in a Kubernetes Secret holding the secret
+	// value (encrypted by Gitea on write). The value is never set inline; it is
+	// always taken from a referenced Secret (secret-ref convention).
+	// +kubebuilder:validation:Required
+	ValueSecretRef *xpv1.SecretKeySelector `json:"valueSecretRef,omitempty"`
 
 	// V2 Enhancement: Connection reference for multi-tenant support
 	// ConnectionRef specifies the Gitea connection to use
@@ -91,13 +66,13 @@ type OrganizationSecretObservation struct {
 // OrganizationSecretSpec defines the desired state of OrganizationSecret
 type OrganizationSecretSpec struct {
 	xpv1.ManagedResourceSpec `json:",inline"`
-	ForProvider       OrganizationSecretParameters `json:"forProvider"`
+	ForProvider              OrganizationSecretParameters `json:"forProvider"`
 }
 
 // OrganizationSecretStatus defines the observed state of OrganizationSecret
 type OrganizationSecretStatus struct {
 	xpv1.ManagedResourceStatus `json:",inline"`
-	AtProvider          OrganizationSecretObservation `json:"atProvider,omitempty"`
+	AtProvider                 OrganizationSecretObservation `json:"atProvider,omitempty"`
 }
 
 // +kubebuilder:object:root=true
@@ -134,7 +109,6 @@ var (
 	OrganizationSecretKindAPIVersion   = OrganizationSecretKind + "." + SchemeGroupVersion.String()
 	OrganizationSecretGroupVersionKind = SchemeGroupVersion.WithKind(OrganizationSecretKind)
 )
-
 
 // GetCondition returns the condition for the given ConditionType if it exists, otherwise returns nil.
 func (r *OrganizationSecret) GetCondition(ct xpv1.ConditionType) xpv1.Condition {

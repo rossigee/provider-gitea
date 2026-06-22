@@ -1,0 +1,6 @@
+apiVersion: githook.gitea.m.crossplane.io/v2
+kind: GitHook
+metadata: {name: uptest-githook, namespace: provider-gitea-e2e, annotations: {meta.upbound.io/example-id: githook/v2/githook}}
+spec:
+  forProvider: {repository: gitea_admin/uptest-repo, hookType: pre-receive, content: "#!/bin/sh\nexit 0\n"}
+  providerConfigRef: {name: e2e, kind: ProviderConfig}

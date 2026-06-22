@@ -1,0 +1,12 @@
+apiVersion: accesstoken.gitea.m.crossplane.io/v2
+kind: AccessToken
+metadata: {name: uptest-token, namespace: provider-gitea-e2e, annotations: {meta.upbound.io/example-id: accesstoken/v2/accesstoken}}
+spec:
+  forProvider:
+    # Gitea gates token CRUD on the owning user's credentials, so the provider
+    # authenticates as this user via HTTP basic auth (password from a Secret).
+    username: gitea_admin
+    passwordSecretRef: {namespace: provider-gitea-e2e, name: uptest-admin-pw, key: password}
+    name: uptest-token
+    scopes: ["read:repository"]
+  providerConfigRef: {name: e2e, kind: ProviderConfig}

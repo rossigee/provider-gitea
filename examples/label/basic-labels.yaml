@@ -1,9 +1,10 @@
 ---
 # Bug label with red color
-apiVersion: label.gitea.crossplane.io/v1alpha1
+apiVersion: label.gitea.m.crossplane.io/v2
 kind: Label
 metadata:
   name: bug-label
+  namespace: default
 spec:
   forProvider:
     name: bug
@@ -15,10 +16,11 @@ spec:
     name: default
 ---
 # Enhancement label with green color
-apiVersion: label.gitea.crossplane.io/v1alpha1
+apiVersion: label.gitea.m.crossplane.io/v2
 kind: Label
 metadata:
   name: enhancement-label
+  namespace: default
 spec:
   forProvider:
     name: enhancement
@@ -30,10 +32,11 @@ spec:
     name: default
 ---
 # Priority scoped labels (exclusive)
-apiVersion: label.gitea.crossplane.io/v1alpha1
+apiVersion: label.gitea.m.crossplane.io/v2
 kind: Label
 metadata:
   name: priority-high-label
+  namespace: default
 spec:
   forProvider:
     name: "priority/high"
@@ -44,10 +47,11 @@ spec:
   providerConfigRef:
     name: default
 ---
-apiVersion: label.gitea.crossplane.io/v1alpha1
+apiVersion: label.gitea.m.crossplane.io/v2
 kind: Label
 metadata:
   name: priority-medium-label
+  namespace: default
 spec:
   forProvider:
     name: "priority/medium"
@@ -58,10 +62,11 @@ spec:
   providerConfigRef:
     name: default
 ---
-apiVersion: label.gitea.crossplane.io/v1alpha1
+apiVersion: label.gitea.m.crossplane.io/v2
 kind: Label
 metadata:
   name: priority-low-label
+  namespace: default
 spec:
   forProvider:
     name: "priority/low"

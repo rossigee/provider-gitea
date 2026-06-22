@@ -36,9 +36,11 @@ type RepositorySecretParameters struct {
 	// +kubebuilder:validation:MaxLength=100
 	SecretName string `json:"secretName"`
 
-	// ValueSecretRef references a Kubernetes secret containing the secret value
+	// ValueSecretRef references the key in a Kubernetes Secret holding the secret
+	// value. The value is never set inline; it is always taken from a referenced
+	// Secret (secret-ref convention).
 	// +kubebuilder:validation:Required
-	ValueSecretRef xpv1.SecretKeySelector `json:"valueSecretRef"`
+	ValueSecretRef *xpv1.SecretKeySelector `json:"valueSecretRef,omitempty"`
 
 	// V2 Enhancement: Connection reference for multi-tenant support
 	// ConnectionRef specifies the Gitea connection to use
@@ -69,13 +71,13 @@ type RepositorySecretObservation struct {
 // RepositorySecretSpec defines the desired state of RepositorySecret
 type RepositorySecretSpec struct {
 	xpv1.ManagedResourceSpec `json:",inline"`
-	ForProvider       RepositorySecretParameters `json:"forProvider"`
+	ForProvider              RepositorySecretParameters `json:"forProvider"`
 }
 
 // RepositorySecretStatus defines the observed state of RepositorySecret
 type RepositorySecretStatus struct {
 	xpv1.ManagedResourceStatus `json:",inline"`
-	AtProvider          RepositorySecretObservation `json:"atProvider,omitempty"`
+	AtProvider                 RepositorySecretObservation `json:"atProvider,omitempty"`
 }
 
 // +kubebuilder:object:root=true
@@ -112,7 +114,6 @@ var (
 	RepositorySecretKindAPIVersion   = RepositorySecretKind + "." + SchemeGroupVersion.String()
 	RepositorySecretGroupVersionKind = SchemeGroupVersion.WithKind(RepositorySecretKind)
 )
-
 
 // GetCondition returns the condition for the given ConditionType if it exists, otherwise returns nil.
 func (r *RepositorySecret) GetCondition(ct xpv1.ConditionType) xpv1.Condition {

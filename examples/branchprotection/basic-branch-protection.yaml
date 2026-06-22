@@ -1,9 +1,10 @@
 # Basic branch protection for small teams
 # Minimal configuration for protecting main branch
-apiVersion: branchprotection.gitea.crossplane.io/v1alpha1
+apiVersion: branchprotection.gitea.m.crossplane.io/v2
 kind: BranchProtection
 metadata:
   name: basic-main-protection
+  namespace: default
   annotations:
     crossplane.io/external-name: "myorg/myapp/main"
 spec:

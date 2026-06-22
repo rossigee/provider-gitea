@@ -14,34 +14,61 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+// Package repositorysecret implements the Crossplane managed-resource reconciler
+// for the Gitea RepositorySecret resource. It mirrors the canonical reference
+// controller (internal/controller/repository/repository.go): Available() in
+// Observe, typed not-found classification, external-name-as-identity, a non-nil
+// rate limiter. See crossplane-provider-template dev/docs/09-lessons-learned.md.
 package repositorysecret
 
 import (
 	"context"
-	"strings"
 
 	"github.com/pkg/errors"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	xpv1 "github.com/crossplane/crossplane-runtime/v2/pkg/controller"
+	"github.com/crossplane/crossplane-runtime/v2/pkg/controller"
+	"github.com/crossplane/crossplane-runtime/v2/pkg/event"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/meta"
+	"github.com/crossplane/crossplane-runtime/v2/pkg/ratelimiter"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
+	xpv1 "github.com/crossplane/crossplane/apis/v2/core/v2"
 
-	"github.com/rossigee/provider-gitea/apis/repositorysecret/v2"
+	v2 "github.com/rossigee/provider-gitea/apis/repositorysecret/v2"
 	"github.com/rossigee/provider-gitea/apis/v1beta1"
 	"github.com/rossigee/provider-gitea/internal/clients"
 )
 
 const (
-	errNotRepositorySecret         = "managed resource is not a RepositorySecret custom resource"
-	errGetRepositorySecret         = "failed to get repositorysecret"
-	errCreateRepositorySecret      = "failed to create repositorysecret"
-	errUpdateRepositorySecret      = "failed to update repositorysecret"
-	errDeleteRepositorySecret      = "failed to delete repositorysecret"
-	errGetProviderConfig = "failed to get provider config"
+	errNotRepositorySecret    = "managed resource is not a RepositorySecret custom resource"
+	errGetRepositorySecret    = "failed to get repositorysecret"
+	errCreateRepositorySecret = "failed to create repositorysecret"
+	errUpdateRepositorySecret = "failed to update repositorysecret"
+	errDeleteRepositorySecret = "failed to delete repositorysecret"
+	errGetProviderConfig      = "failed to get provider config"
+	errExternalName           = "invalid external-name, expected secret name"
+	errGetValue               = "failed to read secret value from valueSecretRef"
 )
+
+// Setup adds a controller that reconciles RepositorySecret managed resources.
+func Setup(mgr ctrl.Manager, o controller.Options) error {
+	name := managed.ControllerName(v2.RepositorySecretKind)
+
+	r := managed.NewReconciler(mgr,
+		resource.ManagedKind(v2.RepositorySecretGroupVersionKind),
+		managed.WithExternalConnector(&connector{kube: mgr.GetClient()}),
+		managed.WithLogger(o.Logger.WithValues("controller", name)),
+		managed.WithPollInterval(o.PollInterval),
+		managed.WithRecorder(event.NewAPIRecorder(mgr.GetEventRecorderFor(name))))
+
+	return ctrl.NewControllerManagedBy(mgr).
+		Named(name).
+		WithOptions(o.ForControllerRuntime()).
+		For(&v2.RepositorySecret{}).
+		Complete(ratelimiter.NewReconciler(name, r, o.GlobalRateLimiter))
+}
 
 type connector struct {
 	kube client.Client
@@ -71,101 +98,135 @@ func (c *connector) Connect(ctx context.Context, mg resource.Managed) (managed.E
 		return nil, err
 	}
 
-	return &externalClient{client: conn}, nil
+	return &external{client: conn, kube: c.kube}, nil
 }
 
-type externalClient struct {
+type external struct {
 	client clients.Client
+	kube   client.Client
 }
 
-func (e *externalClient) Observe(ctx context.Context, mg resource.Managed) (managed.ExternalObservation, error) {
+// resolveValue reads the secret value from the referenced Kubernetes Secret.
+// Gitea requires a non-empty "data" on create/update (422 "[Data]: Required").
+// The value is never taken from the spec (secret-ref convention).
+func (e *external) resolveValue(ctx context.Context, cr *v2.RepositorySecret) (string, error) {
+	if cr.Spec.ForProvider.ValueSecretRef == nil {
+		return "", errors.New(errGetValue + ": valueSecretRef is required")
+	}
+	v, err := clients.ResolveSecretValue(ctx, e.kube, cr.Spec.ForProvider.ValueSecretRef)
+	if err != nil {
+		return "", errors.Wrap(err, errGetValue)
+	}
+	return v, nil
+}
+
+func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.ExternalObservation, error) {
 	cr, ok := mg.(*v2.RepositorySecret)
 	if !ok {
 		return managed.ExternalObservation{}, errors.New(errNotRepositorySecret)
 	}
 
-	externalID := meta.GetExternalName(cr)
-	if externalID == "" {
+	// Identity is the external-name (the secret name); the parent repository is
+	// read from spec every reconcile (lesson #14). Empty external-name -> not
+	// created yet; don't issue a GET.
+	secretName := meta.GetExternalName(cr)
+	if secretName == "" {
 		return managed.ExternalObservation{ResourceExists: false}, nil
 	}
 
-	parts := strings.Split(cr.Spec.ForProvider.Repository, "/")
-	if len(parts) != 2 {
-		return managed.ExternalObservation{}, errors.New("invalid repository format")
-	}
-
-	_, err := e.client.GetRepositorySecret(ctx, cr.Spec.ForProvider.Repository, externalID)
+	_, err := e.client.GetRepositorySecret(ctx, cr.Spec.ForProvider.Repository, secretName)
 	if err != nil {
-		if strings.Contains(err.Error(), "404") {
+		// Classify not-found off the typed HTTP status, never a string match
+		// (lesson #3). A real failure (auth/network/5xx) must surface.
+		if clients.IsNotFound(err) {
 			return managed.ExternalObservation{ResourceExists: false}, nil
 		}
 		return managed.ExternalObservation{}, errors.Wrap(err, errGetRepositorySecret)
 	}
 
-	return managed.ExternalObservation{ResourceExists: true, ResourceUpToDate: true}, nil
+	cr.Status.AtProvider = v2.RepositorySecretObservation{
+		SecretName: &secretName,
+		Repository: &cr.Spec.ForProvider.Repository,
+	}
+
+	// crossplane-runtime v2 no longer auto-sets Available() (lesson #2/#6); set
+	// it on the exists path.
+	cr.SetConditions(xpv1.Available())
+
+	// The secret VALUE is write-only — Gitea never returns it on GET — so it
+	// cannot be diffed for drift. Treat the secret as always up-to-date; the
+	// only mutable field (the value) is pushed unconditionally on Update.
+	return managed.ExternalObservation{
+		ResourceExists:   true,
+		ResourceUpToDate: true,
+	}, nil
 }
 
-func (e *externalClient) Create(ctx context.Context, mg resource.Managed) (managed.ExternalCreation, error) {
+func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.ExternalCreation, error) {
 	cr, ok := mg.(*v2.RepositorySecret)
 	if !ok {
 		return managed.ExternalCreation{}, errors.New(errNotRepositorySecret)
 	}
+	cr.SetConditions(xpv1.Creating())
 
-	createReq := &clients.CreateRepositorySecretRequest{
-		Data: "",
-	}
-
-	err := e.client.CreateRepositorySecret(ctx, cr.Spec.ForProvider.Repository, cr.Spec.ForProvider.SecretName, createReq)
+	value, err := e.resolveValue(ctx, cr)
 	if err != nil {
+		return managed.ExternalCreation{}, err
+	}
+	req := &clients.CreateRepositorySecretRequest{Data: value}
+	if err := e.client.CreateRepositorySecret(ctx, cr.Spec.ForProvider.Repository, cr.Spec.ForProvider.SecretName, req); err != nil {
 		return managed.ExternalCreation{}, errors.Wrap(err, errCreateRepositorySecret)
 	}
 
+	// For this resource the name IS the identity; pin it from spec after a
+	// successful create so Observe/Update/Delete resolve from the annotation.
 	meta.SetExternalName(cr, cr.Spec.ForProvider.SecretName)
 	return managed.ExternalCreation{}, nil
 }
 
-func (e *externalClient) Update(ctx context.Context, mg resource.Managed) (managed.ExternalUpdate, error) {
+func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.ExternalUpdate, error) {
 	cr, ok := mg.(*v2.RepositorySecret)
 	if !ok {
 		return managed.ExternalUpdate{}, errors.New(errNotRepositorySecret)
 	}
 
-	updateReq := &clients.UpdateRepositorySecretRequest{}
+	secretName := meta.GetExternalName(cr)
+	if secretName == "" {
+		return managed.ExternalUpdate{}, errors.New(errExternalName)
+	}
 
-	err := e.client.UpdateRepositorySecret(ctx, cr.Spec.ForProvider.Repository, cr.Spec.ForProvider.SecretName, updateReq)
+	value, err := e.resolveValue(ctx, cr)
 	if err != nil {
+		return managed.ExternalUpdate{}, err
+	}
+	req := &clients.UpdateRepositorySecretRequest{Data: value}
+	if err := e.client.UpdateRepositorySecret(ctx, cr.Spec.ForProvider.Repository, secretName, req); err != nil {
 		return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateRepositorySecret)
 	}
 
 	return managed.ExternalUpdate{}, nil
 }
 
-func (e *externalClient) Delete(ctx context.Context, mg resource.Managed) (managed.ExternalDelete, error) {
+func (e *external) Delete(ctx context.Context, mg resource.Managed) (managed.ExternalDelete, error) {
 	cr, ok := mg.(*v2.RepositorySecret)
 	if !ok {
 		return managed.ExternalDelete{}, errors.New(errNotRepositorySecret)
 	}
+	cr.SetConditions(xpv1.Deleting())
 
-	externalID := meta.GetExternalName(cr)
-	err := e.client.DeleteRepositorySecret(ctx, cr.Spec.ForProvider.Repository, externalID)
+	secretName := meta.GetExternalName(cr)
+	if secretName == "" {
+		return managed.ExternalDelete{}, errors.New(errExternalName)
+	}
+
+	err := e.client.DeleteRepositorySecret(ctx, cr.Spec.ForProvider.Repository, secretName)
+	// An already-absent secret is a successful delete (idempotent, lesson #16).
+	if err != nil && clients.IsNotFound(err) {
+		return managed.ExternalDelete{}, nil
+	}
 	return managed.ExternalDelete{}, errors.Wrap(err, errDeleteRepositorySecret)
 }
 
-func (e *externalClient) Disconnect(ctx context.Context) error {
+func (e *external) Disconnect(_ context.Context) error {
 	return nil
-}
-
-func Setup(mgr ctrl.Manager, o xpv1.Options) error {
-	name := managed.ControllerName(v2.RepositorySecretKind)
-
-	r := managed.NewReconciler(mgr,
-		resource.ManagedKind(v2.RepositorySecretGroupVersionKind),
-		managed.WithExternalConnector(&connector{kube: mgr.GetClient()}),
-		managed.WithLogger(o.Logger.WithValues("controller", name)),
-	)
-
-	return ctrl.NewControllerManagedBy(mgr).
-		Named(name).
-		For(&v2.RepositorySecret{}).
-		Complete(r)
 }

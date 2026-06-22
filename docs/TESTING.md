@@ -34,7 +34,7 @@ go test -race ./...
 
 The provider maintains comprehensive test coverage:
 
-- **23/23 controllers**: 100% test success rate
+- **14/14 controllers**: 100% test success rate
 - **184 passing tests** across all resource types
 - **Controller tests**: Complete CRUD operation coverage
 - **Mock integration**: Full Gitea API and Kubernetes client mocking
@@ -93,7 +93,7 @@ mockClient := testing.NewMockClient().
 Create Kubernetes secrets for testing controllers that need secret access:
 
 ```go
-// Password secret for AdminUser tests
+// Password secret for User tests
 passwordSecret := testing.NewSecret("user-password", "default").
     WithPasswordData("supersecret123").
     Build()
@@ -152,7 +152,7 @@ func TestRepository_Create_Successful(t *testing.T) {
 - **Reduced Duplication**: Shared fixtures eliminate repetitive test setup
 - **Improved Maintainability**: Centralized infrastructure makes updates easier
 - **Enhanced Readability**: Fluent interfaces provide clean, readable tests
-- **Comprehensive Coverage**: Supports all 23 controller types with unique patterns
+- **Comprehensive Coverage**: Supports all 14 controller types with unique patterns
 
 ## Client Layer Testing
 
@@ -163,8 +163,8 @@ The `internal/clients` package has comprehensive test coverage including:
 - ✅ **Organization Management**: Get, Create, Update, Delete  
 - ✅ **User Management**: Get, Create, Update, Delete
 - ✅ **Webhook Management**: Get, Create, Update, Delete (both repo and org)
-- ✅ **Deploy Key Management**: Get, Create, Delete
-- ✅ **Authentication**: Token-based authentication
+- ✅ **Repository Key Management**: Get, Create, Update, Delete
+- ✅ **Authentication**: token-based (ProviderConfig) and HTTP basic auth (AccessToken)
 - ✅ **Error Handling**: HTTP error responses, network failures
 
 ### Test Patterns
@@ -364,3 +364,61 @@ The CI pipeline includes:
 ### Coverage Reporting
 
 Coverage results are automatically uploaded to Codecov for tracking trends and ensuring quality standards.
+
+## End-to-end against a real Gitea (`make e2e`)
+
+`scripts/e2e.sh` stands up a throwaway kind cluster, installs Crossplane + the
+provider package + **a real Gitea** (latest, via the official `gitea-charts/gitea`
+Helm chart; sqlite, no persistence, admin user), then drives every example in
+`examples/e2e/*.yaml` through apply → Ready → delete with uptest.
+`test/e2e/uptest-setup.sh` mints an admin API token (`gitea admin user
+generate-access-token`) and writes the cluster-scoped `ProviderConfig`.
+
+Running against a real Gitea — not a mock — is deliberate: it enforces real ids,
+404s, SSH-key validation, resource dependencies and auth. It is what catches the
+bugs unit tests and `helm template` cannot.
+
+### Validate client calls against the Gitea OpenAPI spec FIRST
+
+Before adding or changing a client call, check the path/verb/required-fields
+against the Gitea OpenAPI (Swagger 2.0) spec —
+<https://docs.gitea.com/redocusaurus/plugin-redoc-4.yaml> — rather than
+discovering mismatches one 405/422 at a time. Real-Gitea facts the spec made
+explicit (and that the code now reflects):
+
+- `GET /admin/users/{username}` does not exist → read via `GET /users/{username}`.
+- `POST /users/{username}/keys` is 405 → create user keys via `POST /admin/users/{username}/keys`.
+- There is no `GET` for a single repo/org **secret** (405) → list and match by name.
+- Editing a git hook is `PATCH /repos/{o}/{r}/hooks/git/{id}`, not `POST`.
+- `PATCH /admin/users/{username}` requires `login_name` + `source_id`.
+
+### Update step
+
+The e2e runs the uptest update step (no `--skip-update`). Each example carrying a
+`uptest.upbound.io/update-parameter` annotation is mutated and re-driven to Ready,
+exercising the Update path against real Gitea. The annotated kinds are
+`Repository`, `Organization`, `Label`, `Team`, and `User`. Immutable / write-only
+kinds (`RepositorySecret`, `OrganizationSecret`, `AccessToken`, `RepositoryKey`)
+carry no annotation and skip the live update step (their Observe always reports
+up-to-date once the resource exists).
+
+### Kinds that are no longer modelled
+
+The provider was trimmed to the 14 kinds that fit a declarative model. The
+following were **removed** (not disabled) because they cannot reconcile as managed
+resources, and modelling them produced controllers that fail against real Gitea:
+
+- **Action** — no "create workflow" endpoint; workflows are files in
+  `.gitea/workflows/` (405).
+- **Runner** — needs a one-time registration token + a live act_runner agent.
+- **PullRequest** — a transient event over two branches with divergent commits.
+- **Issue / Release** — content/tickets/tagged artifacts, not config.
+- **OrganizationMember** — no add-member endpoint; membership is via `Team` (405).
+- **AdminUser** — merged into `User` (both drove `/admin/users`).
+- **DeployKey / UserKey** — removed in favour of `RepositoryKey` (DeployKey hit
+  the identical `/repos/{owner}/{repo}/keys` endpoint).
+
+**AccessToken is now fully e2e-tested.** `POST /users/{user}/tokens` requires HTTP
+basic auth as the owning user, so the controller authenticates as
+`spec.forProvider.username` with the password from `passwordSecretRef` instead of
+the ProviderConfig token (see the README's secret-bearing-resources section).

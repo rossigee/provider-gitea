@@ -1,0 +1,11 @@
+apiVersion: team.gitea.m.crossplane.io/v2
+kind: Team
+metadata: {name: uptest-team, namespace: provider-gitea-e2e, annotations: {meta.upbound.io/example-id: team/v2/team, uptest.upbound.io/update-parameter: '{"description":"updated by provider-gitea e2e"}'}}
+spec:
+  forProvider:
+    name: uptest-team
+    organization: uptest-org
+    description: e2e
+    permission: read
+    units: ["repo.code", "repo.issues", "repo.pulls", "repo.releases", "repo.wiki"]
+  providerConfigRef: {name: e2e, kind: ProviderConfig}

@@ -526,74 +526,6 @@ func TestUserOperations(t *testing.T) {
 	})
 }
 
-func TestDeployKeyOperations(t *testing.T) {
-	// Create test server
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		switch {
-		case r.Method == "GET" && r.URL.Path == "/api/v1/repos/testorg/testrepo/keys/1":
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusOK)
-			_, _ = w.Write([]byte(`{
-				"id": 1,
-				"key": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC...",
-				"title": "test-key",
-				"read_only": true,
-				"created_at": "2024-01-01T00:00:00Z"
-			}`))
-		case r.Method == "POST" && r.URL.Path == "/api/v1/repos/testorg/testrepo/keys":
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusCreated)
-			_, _ = w.Write([]byte(`{
-				"id": 2,
-				"key": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQD...",
-				"title": "new-key",
-				"read_only": false
-			}`))
-		case r.Method == "DELETE" && r.URL.Path == "/api/v1/repos/testorg/testrepo/keys/1":
-			w.WriteHeader(http.StatusNoContent)
-		default:
-			w.WriteHeader(http.StatusNotFound)
-		}
-	}))
-	defer server.Close()
-
-	// Create test client
-	c := &giteaClient{
-		httpClient: &http.Client{},
-		baseURL:    server.URL + "/api/v1",
-		token:      "test-token",
-	}
-
-	ctx := context.Background()
-
-	t.Run("GetDeployKey", func(t *testing.T) {
-		key, err := c.GetDeployKey(ctx, "testorg", "testrepo", 1)
-		require.NoError(t, err)
-		assert.Equal(t, int64(1), key.ID)
-		assert.Equal(t, "test-key", key.Title)
-		assert.True(t, key.ReadOnly)
-		assert.Contains(t, key.Key, "ssh-rsa")
-	})
-
-	t.Run("CreateDeployKey", func(t *testing.T) {
-		req := &CreateDeployKeyRequest{
-			Title:    "new-key",
-			Key:      "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQD...",
-			ReadOnly: false,
-		}
-		key, err := c.CreateDeployKey(ctx, "testorg", "testrepo", req)
-		require.NoError(t, err)
-		assert.Equal(t, int64(2), key.ID)
-		assert.Equal(t, "new-key", key.Title)
-		assert.False(t, key.ReadOnly)
-	})
-
-	t.Run("DeleteDeployKey", func(t *testing.T) {
-		err := c.DeleteDeployKey(ctx, "testorg", "testrepo", 1)
-		require.NoError(t, err)
-	})
-}
-
 func TestOrganizationWebhookOperations(t *testing.T) {
 	// Create test server
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -692,10 +624,10 @@ func TestOrganizationSecretOperations(t *testing.T) {
 	// Create test server
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch {
-		case r.Method == "GET" && strings.Contains(r.URL.Path, "/orgs/testorg/actions/secrets/testsecret"):
-			// Gitea returns 405 for GET operations on organization secrets
-			w.Header().Set("Allow", "PUT, DELETE")
-			w.WriteHeader(http.StatusMethodNotAllowed)
+		case r.Method == "GET" && strings.HasSuffix(r.URL.Path, "/orgs/testorg/actions/secrets"):
+			// Gitea has no GET single secret; the client lists and matches by name.
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(`[{"name":"TESTSECRET","created_at":"2024-01-01T00:00:00Z"}]`))
 
 		case r.Method == "PUT" && strings.Contains(r.URL.Path, "/orgs/testorg/actions/secrets/testsecret"):
 			// Verify request body
@@ -730,12 +662,17 @@ func TestOrganizationSecretOperations(t *testing.T) {
 
 	ctx := context.Background()
 
-	t.Run("GetOrganizationSecret_Returns405", func(t *testing.T) {
-		// Test that Gitea API returns 405 for GET operations
+	t.Run("GetOrganizationSecret_ListsAndMatches", func(t *testing.T) {
+		// Gitea has no GET single secret; the client lists and matches by name
+		// (case-insensitive — Gitea upper-cases secret names).
 		secret, err := c.GetOrganizationSecret(ctx, "testorg", "testsecret")
-		assert.Error(t, err)
-		assert.Nil(t, secret)
-		assert.Contains(t, err.Error(), "405")
+		require.NoError(t, err)
+		require.NotNil(t, secret)
+		assert.Equal(t, "TESTSECRET", secret.Name)
+
+		missing, err := c.GetOrganizationSecret(ctx, "testorg", "nope")
+		assert.True(t, IsNotFound(err))
+		assert.Nil(t, missing)
 	})
 
 	t.Run("CreateOrganizationSecret", func(t *testing.T) {

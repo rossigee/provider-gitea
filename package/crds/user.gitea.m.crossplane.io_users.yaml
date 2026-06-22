@@ -89,11 +89,25 @@ spec:
                     type: string
                   loginName:
                     type: string
+                  maxRepoCreation:
+                    minimum: -1
+                    type: integer
                   mustChangePassword:
                     default: false
                     type: boolean
-                  password:
-                    type: string
+                  passwordSecretRef:
+                    properties:
+                      key:
+                        type: string
+                      name:
+                        type: string
+                      namespace:
+                        type: string
+                    required:
+                    - key
+                    - name
+                    - namespace
+                    type: object
                   prohibitLogin:
                     type: boolean
                   providerConfigRef:
@@ -140,7 +154,6 @@ spec:
                     type: string
                 required:
                 - email
-                - password
                 - username
                 type: object
               managementPolicies:

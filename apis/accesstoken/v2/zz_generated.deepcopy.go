@@ -142,6 +142,11 @@ func (in *AccessTokenParameters) DeepCopyInto(out *AccessTokenParameters) {
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}
+	if in.PasswordSecretRef != nil {
+		in, out := &in.PasswordSecretRef, &out.PasswordSecretRef
+		*out = new(corev2.SecretKeySelector)
+		**out = **in
+	}
 	if in.ConnectionRef != nil {
 		in, out := &in.ConnectionRef, &out.ConnectionRef
 		*out = new(corev2.Reference)

@@ -1,7 +1,8 @@
-apiVersion: githook.gitea.crossplane.io/v1alpha1
+apiVersion: githook.gitea.m.crossplane.io/v2
 kind: GitHook
 metadata:
   name: example-post-receive-hook
+  namespace: default
 spec:
   forProvider:
     repository: example-org/my-repo
