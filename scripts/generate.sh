@@ -1,33 +1,21 @@
 #!/usr/bin/env bash
-# Generate the code/manifests Crossplane providers don't hand-write:
-#   - deepcopy methods (controller-gen object)
-#   - CRDs -> package/crds (controller-gen crd)
-#   - managed-resource methodsets (angryjet)
-# The tools are pinned in tools.go, fetched via `go run`. This regenerates a
-# CLEAN package/crds containing ONLY the CRDs the Go types actually define (the
-# v2 *.gitea.m.crossplane.io namespaced groups + the v1beta1 ProviderConfig) —
-# the stale legacy *.gitea.crossplane.io and the broken empty-group `_*.yaml`
-# artefacts are deliberately wiped first.
+# Generate the code/manifests Crossplane providers don't hand-write (deepcopy,
+# CRDs, managed methodsets) by running the canonical `go generate` directives in
+# apis/generate.go — the SAME ones the crossplane build submodule's `make
+# reviewable` runs in CI. Using `go generate` (rather than a bespoke
+# controller-gen invocation) keeps this script's output byte-identical to CI, so
+# the check-diff job stays green. The directives use crd:maxDescLen=0; do not
+# substitute different flags here or you will reintroduce package/crds drift.
 source "$(dirname "$0")/lib.sh"
 require_cmd go
 cd "$ROOT"
 
-HDR="hack/boilerplate.go.txt"
-[ -f "$HDR" ] || die "missing license header $HDR"
-
-log "deepcopy (controller-gen)"
-go run -mod=mod sigs.k8s.io/controller-tools/cmd/controller-gen \
-  object:headerFile="$HDR" paths=./apis/...
-
-log "wiping package/crds and regenerating from ./apis/..."
+# Wipe package/crds first so a renamed/removed kind can't leave a stale CRD
+# behind (go generate overwrites, but does not delete).
+log "wiping package/crds"
 rm -f package/crds/*.yaml
-go run -mod=mod sigs.k8s.io/controller-tools/cmd/controller-gen \
-  crd:allowDangerousTypes=true,crdVersions=v1 paths=./apis/... \
-  output:crd:artifacts:config=./package/crds
 
-log "managed methodsets (angryjet)"
-go run -mod=mod github.com/crossplane/crossplane-tools/cmd/angryjet \
-  generate-methodsets --header-file="$HDR" ./apis/... 2>/dev/null || \
-  warn "angryjet methodset generation skipped/failed (v2 namespaced methods are hand-written)"
+log "go generate ./... (deepcopy + CRDs + managed methodsets)"
+go generate ./...
 
 ok "generation complete — review git diff under apis/ and package/crds/"

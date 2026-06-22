@@ -1,0 +1,46 @@
+# golangci-lint v2 config (schema "version: 2"). v2 enables a sensible default
+# linter set (incl. govet, staticcheck, ineffassign); only the extras are listed
+# under linters.enable, and formatters (gofmt/goimports) live in their own block.
+# Run via `make lint` / `scripts/lint.sh` (pins v2; `golangci-lint migrate`
+# converts a v1 config). Tune to taste for your real provider.
+version: "2"
+linters:
+  enable:
+    - misspell
+    - unconvert
+    - unparam
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    rules:
+      # event.NewAPIRecorder needs the legacy record.EventRecorder; the
+      # non-deprecated mgr.GetEventRecorder returns the incompatible newer
+      # events.EventRecorder in controller-runtime — forced choice, not a bug.
+      - linters:
+          - staticcheck
+        text: SA1019.*GetEventRecorderFor
+      # Generated files: don't lint.
+      - linters:
+          - govet
+          - staticcheck
+          - unconvert
+          - unparam
+        path: zz_generated\..*\.go
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+formatters:
+  enable:
+    - gofmt
+    - goimports
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$

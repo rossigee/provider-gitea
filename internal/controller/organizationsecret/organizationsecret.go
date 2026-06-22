@@ -35,7 +35,7 @@ import (
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
 	xpv1 "github.com/crossplane/crossplane/apis/v2/core/v2"
 
-	"github.com/rossigee/provider-gitea/apis/organizationsecret/v2"
+	v2 "github.com/rossigee/provider-gitea/apis/organizationsecret/v2"
 	"github.com/rossigee/provider-gitea/apis/v1beta1"
 	"github.com/rossigee/provider-gitea/internal/clients"
 )

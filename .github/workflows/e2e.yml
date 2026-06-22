@@ -50,5 +50,5 @@ jobs:
           # NB: it's `crossplane version --client`, not `crossplane --version`.
           "$BIN/crossplane" version --client; "$BIN/kind" --version; "$BIN/helm" version --short; "$BIN/chainsaw" version
 
-      - name: Run e2e on kind (self-contained: local xpkg + local registry + mock backend)
+      - name: "Run e2e on kind (local xpkg + local registry + real Gitea)"
         run: bash scripts/e2e.sh
