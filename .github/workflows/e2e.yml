@@ -1,4 +1,4 @@
-name: E2E (kind + mock Gitea)
+name: E2E (kind + real Gitea)
 
 # The "works by design" gate. On every PR and merge to the default branch, this
 # stands up a throwaway kind cluster, builds + installs the provider PACKAGE (the
