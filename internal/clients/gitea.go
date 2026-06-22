@@ -1297,22 +1297,24 @@ func (c *giteaClient) DeleteRepositoryKey(ctx context.Context, repository string
 
 // Access Token API methods
 func (c *giteaClient) GetAccessToken(ctx context.Context, username string, tokenID int64) (*AccessToken, error) {
-	path := fmt.Sprintf("/users/%s/tokens/%d", username, tokenID)
+	// Gitea has no GET for a single token (GET /users/{u}/tokens/{id} is 404);
+	// list the user's tokens and match by id (same shape as the secret GETs).
+	path := fmt.Sprintf("/users/%s/tokens", username)
 	resp, err := c.doRequest(ctx, "GET", path, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	if resp.StatusCode == http.StatusNotFound {
-		return nil, &APIError{StatusCode: http.StatusNotFound, Body: "access token not found"}
-	}
-
-	var token AccessToken
-	if err := handleResponse(resp, &token); err != nil {
+	var tokens []AccessToken
+	if err := handleResponse(resp, &tokens); err != nil {
 		return nil, err
 	}
-
-	return &token, nil
+	for i := range tokens {
+		if tokens[i].ID == tokenID {
+			return &tokens[i], nil
+		}
+	}
+	return nil, &APIError{StatusCode: http.StatusNotFound, Body: "access token not found"}
 }
 
 func (c *giteaClient) CreateAccessToken(ctx context.Context, username string, req *CreateAccessTokenRequest) (*AccessToken, error) {
