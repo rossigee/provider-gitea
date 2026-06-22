@@ -137,6 +137,12 @@ test.e2e:
 # ====================================================================================
 # Self-contained packaging + e2e (no build submodule needed). See scripts/.
 
+# The full static gate CI runs (build + test + lint + check-diff + workflow
+# YAML). RUN THIS BEFORE PUSHING.
+.PHONY: validate
+validate:
+	@bash scripts/validate.sh
+
 # Regenerate deepcopy + CRDs (clean) + managed methodsets.
 .PHONY: generate.local
 generate.local:
