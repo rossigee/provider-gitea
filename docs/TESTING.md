@@ -34,8 +34,8 @@ go test -race ./...
 
 The provider maintains comprehensive test coverage:
 
-- **14/14 controllers**: 100% test success rate
-- **184 passing tests** across all resource types
+- **15/15 controllers**: each has unit tests
+- **Table-driven unit tests** across all resource types
 - **Controller tests**: Complete CRUD operation coverage
 - **Mock integration**: Full Gitea API and Kubernetes client mocking
 - **Target**: 80%+ code coverage maintained
@@ -152,7 +152,7 @@ func TestRepository_Create_Successful(t *testing.T) {
 - **Reduced Duplication**: Shared fixtures eliminate repetitive test setup
 - **Improved Maintainability**: Centralized infrastructure makes updates easier
 - **Enhanced Readability**: Fluent interfaces provide clean, readable tests
-- **Comprehensive Coverage**: Supports all 14 controller types with unique patterns
+- **Comprehensive Coverage**: Supports all 15 controller types with unique patterns
 
 ## Client Layer Testing
 
@@ -404,7 +404,7 @@ up-to-date once the resource exists).
 
 ### Kinds that are no longer modelled
 
-The provider was trimmed to the 14 kinds that fit a declarative model. The
+The provider was trimmed to the kinds that fit a declarative model. The
 following were **removed** (not disabled) because they cannot reconcile as managed
 resources, and modelling them produced controllers that fail against real Gitea:
 

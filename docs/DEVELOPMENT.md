@@ -1,6 +1,6 @@
 # Development Guide
 
-This guide covers how to develop and contribute to the enterprise-grade Gitea provider with 22 managed resource types and comprehensive testing infrastructure.
+This guide covers how to develop and contribute to the Gitea provider with 15 managed resource types and comprehensive testing infrastructure.
 
 ## Prerequisites
 
@@ -15,7 +15,7 @@ This guide covers how to develop and contribute to the enterprise-grade Gitea pr
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/crossplane-contrib/provider-gitea.git
+git clone https://github.com/mosabastion/provider-gitea.git
 cd provider-gitea
 ```
 
@@ -63,6 +63,19 @@ make xpkg.build
 make test
 ```
 
+### Run the full CI gate:
+```bash
+make validate
+```
+
+### Run end-to-end tests (uptest on kind against a real Gitea):
+```bash
+make e2e          # spin up, run, tear down
+make e2e-keep     # keep the kind cluster + Gitea running afterwards
+```
+
+These targets are driven by `scripts/e2e.sh`.
+
 ### Run with a local Gitea instance:
 
 1. Start a local Gitea instance with Docker:
@@ -86,30 +99,44 @@ make run
 
 ```
 provider-gitea/
-├── apis/                           # API definitions (22 resource types)
-│   ├── repository/v1alpha1/        # Repository management
-│   ├── organization/v1alpha1/      # Organization management  
-│   ├── user/v1alpha1/              # User management
-│   ├── webhook/v1alpha1/           # Webhook configuration
-│   ├── branchprotection/v1alpha1/  # Branch protection rules
-│   ├── accesstoken/v1alpha1/       # API token management
-│   ├── repositorysecret/v1alpha1/  # CI/CD secrets
-│   ├── action/v1alpha1/            # Actions/workflows
-│   ├── runner/v1alpha1/            # Self-hosted runners
-│   ├── adminuser/v1alpha1/         # Administrative users
-│   ├── [+12 more enterprise resources]
-│   └── v1beta1/                    # Provider configuration
+├── apis/                           # API definitions (15 resource types, v2 namespaced)
+│   ├── accesstoken/                # API token management
+│   ├── branchprotection/           # Branch protection rules
+│   ├── githook/                    # Server-side Git hooks
+│   ├── label/                      # Issue/PR labels
+│   ├── organization/               # Organization management
+│   ├── organizationsecret/         # Organization-wide CI/CD secrets
+│   ├── organizationsettings/       # Organization settings
+│   ├── repository/                 # Repository management
+│   ├── repositorycollaborator/     # Repository collaborators
+│   ├── repositorykey/              # Repository deploy keys
+│   ├── repositorysecret/           # Repository CI/CD secrets
+│   ├── team/                       # Organization teams
+│   ├── user/                       # User management
+│   ├── webhook/                    # Webhook configuration
+│   └── v1beta1/                    # Provider configuration (cluster-scoped)
 ├── cmd/provider/                   # Main entry point
 ├── internal/
-│   ├── clients/                    # Gitea API clients (60+ methods)
-│   ├── controller/                 # Resource controllers (22 controllers)
+│   ├── clients/                    # Gitea API clients
+│   ├── controller/                 # Resource controllers (one per kind)
 │   │   ├── testing/                # Shared test infrastructure
-│   │   ├── repository/             # Repository controller
-│   │   ├── organization/           # Organization controller
-│   │   └── [+20 more controllers]
+│   │   ├── accesstoken/
+│   │   ├── branchprotection/
+│   │   ├── githook/
+│   │   ├── label/
+│   │   ├── organization/
+│   │   ├── organizationsecret/
+│   │   ├── organizationsettings/
+│   │   ├── repository/
+│   │   ├── repositorycollaborator/
+│   │   ├── repositorykey/
+│   │   ├── repositorysecret/
+│   │   ├── team/
+│   │   ├── user/
+│   │   └── webhook/
 │   └── features/                   # Feature flags
 ├── package/                        # Crossplane package manifests
-├── examples/                       # Example manifests (100+ examples)
+├── examples/                       # Example manifests
 ├── docs/                           # Documentation
 ├── test/                           # Test utilities and mocks
 └── scripts/                        # Development scripts
@@ -117,7 +144,7 @@ provider-gitea/
 
 ## Adding New Resources
 
-1. Create the API definition in `apis/<resource>/v1alpha1/`:
+1. Create the API definition in `apis/<resource>/` (v2 namespaced, API group `<resource>.gitea.m.crossplane.io`):
    - `doc.go` - Package documentation
    - `register.go` - Scheme registration
    - `types.go` - Resource types
@@ -151,8 +178,7 @@ The provider includes comprehensive testing infrastructure at `internal/controll
 - **TestSuite**: Test orchestration and assertion helpers
 
 ### Test Coverage
-- **23/23 controllers** with 100% test success rate
-- **184 passing tests** across all resource types
+- Every controller has unit tests covering its CRUD operations
 - **Mock integration** for both Gitea API and Kubernetes clients
 - **Systematic patterns** for CRUD operations testing
 
@@ -163,10 +189,10 @@ See [Test Infrastructure README](../internal/controller/testing/README.md) for d
 Before submitting a PR:
 
 - [ ] Code builds successfully
-- [ ] All 184 tests pass (`make test`)
-- [ ] Lint checks pass (`make lint`)
+- [ ] Unit tests pass (`make test`)
+- [ ] Full CI gate passes (`make validate`)
 - [ ] Generated code is up to date (`make generate`)
-- [ ] Examples work with a real Gitea instance
+- [ ] End-to-end tests pass (`make e2e`)
 - [ ] Test infrastructure patterns followed for new controllers
 - [ ] Documentation is updated
 - [ ] Git hooks pass (no large files committed)

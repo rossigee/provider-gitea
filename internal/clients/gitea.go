@@ -88,21 +88,18 @@ type Client interface {
 	CreateTeam(ctx context.Context, org string, req *CreateTeamRequest) (*Team, error)
 	UpdateTeam(ctx context.Context, teamID int64, req *UpdateTeamRequest) (*Team, error)
 	DeleteTeam(ctx context.Context, teamID int64) error
-	ListOrganizationTeams(ctx context.Context, org string) ([]*Team, error)
 
 	// Label operations
 	GetLabel(ctx context.Context, owner, repo string, labelID int64) (*Label, error)
 	CreateLabel(ctx context.Context, owner, repo string, req *CreateLabelRequest) (*Label, error)
 	UpdateLabel(ctx context.Context, owner, repo string, labelID int64, req *UpdateLabelRequest) (*Label, error)
 	DeleteLabel(ctx context.Context, owner, repo string, labelID int64) error
-	ListRepositoryLabels(ctx context.Context, owner, repo string) ([]*Label, error)
 
 	// Repository Collaborator operations
 	GetRepositoryCollaborator(ctx context.Context, owner, repo, username string) (*RepositoryCollaborator, error)
 	AddRepositoryCollaborator(ctx context.Context, owner, repo, username string, req *AddCollaboratorRequest) error
 	UpdateRepositoryCollaborator(ctx context.Context, owner, repo, username string, req *UpdateCollaboratorRequest) error
 	RemoveRepositoryCollaborator(ctx context.Context, owner, repo, username string) error
-	ListRepositoryCollaborators(ctx context.Context, owner, repo string) ([]*RepositoryCollaborator, error)
 
 	// Organization Settings operations
 	GetOrganizationSettings(ctx context.Context, org string) (*OrganizationSettings, error)
@@ -705,21 +702,6 @@ func (c *giteaClient) DeleteTeam(ctx context.Context, teamID int64) error {
 	return handleResponse(resp, nil)
 }
 
-func (c *giteaClient) ListOrganizationTeams(ctx context.Context, org string) ([]*Team, error) {
-	path := "/orgs/" + org + "/teams"
-	resp, err := c.doRequest(ctx, "GET", path, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	var teams []*Team
-	if err := handleResponse(resp, &teams); err != nil {
-		return nil, err
-	}
-
-	return teams, nil
-}
-
 // Label represents a Gitea repository label
 type Label struct {
 	ID          int64  `json:"id"`
@@ -1033,21 +1015,6 @@ func (c *giteaClient) DeleteLabel(ctx context.Context, owner, repo string, label
 	return handleResponse(resp, nil)
 }
 
-func (c *giteaClient) ListRepositoryLabels(ctx context.Context, owner, repo string) ([]*Label, error) {
-	path := fmt.Sprintf("/repos/%s/%s/labels", owner, repo)
-	resp, err := c.doRequest(ctx, "GET", path, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	var labels []*Label
-	if err := handleResponse(resp, &labels); err != nil {
-		return nil, err
-	}
-
-	return labels, nil
-}
-
 // Organization Label API methods. Org labels mirror repo labels but live under
 // /orgs/{org}/labels; the org-label PATCH/DELETE endpoints are keyed by the
 // numeric label id, exactly like the repo variants.
@@ -1161,21 +1128,6 @@ func (c *giteaClient) RemoveRepositoryCollaborator(ctx context.Context, owner, r
 	}
 
 	return handleResponse(resp, nil)
-}
-
-func (c *giteaClient) ListRepositoryCollaborators(ctx context.Context, owner, repo string) ([]*RepositoryCollaborator, error) {
-	path := fmt.Sprintf("/repos/%s/%s/collaborators", owner, repo)
-	resp, err := c.doRequest(ctx, "GET", path, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	var collaborators []*RepositoryCollaborator
-	if err := handleResponse(resp, &collaborators); err != nil {
-		return nil, err
-	}
-
-	return collaborators, nil
 }
 
 // Organization Settings API methods

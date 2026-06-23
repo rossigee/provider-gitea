@@ -22,6 +22,7 @@ This project adheres to the [Crossplane Code of Conduct](https://github.com/cros
    ```bash
    git clone https://github.com/YOUR_USERNAME/provider-gitea.git
    cd provider-gitea
+   # upstream: https://github.com/mosabastion/provider-gitea
    ```
 
 2. **Set up pre-commit hooks** (recommended):
@@ -59,14 +60,11 @@ This project adheres to the [Crossplane Code of Conduct](https://github.com/cros
 
 3. **Run quality checks**:
    ```bash
-   # Run tests
+   # Run unit tests
    make test
    
-   # Run linting
-   make lint
-   
-   # Check generated code is up to date
-   make check-diff
+   # Run the full CI gate (build, lint, generate-diff, unit tests)
+   make validate
    
    # Run pre-commit hooks
    pre-commit run --all-files
@@ -130,7 +128,7 @@ When adding new resources:
    - Use proper Crossplane annotations
 
 2. **API Conventions**:
-   - Use `v1alpha1` for new resources
+   - Use the v2 namespaced API style (`<kind>.gitea.m.crossplane.io/v2`) for new resources
    - Use descriptive field names
    - Add proper validation tags
    - Include detailed field documentation
@@ -190,22 +188,20 @@ When adding new resources:
 # Unit tests
 make test
 
-# Integration tests (requires local Gitea)
-make test-integration
+# Full CI gate (build, lint, generate-diff, unit tests)
+make validate
 
-# E2E tests (requires Kubernetes cluster)
-make e2e-test
+# End-to-end tests (uptest on kind against a real Gitea, via scripts/e2e.sh)
+make e2e
 
-# Coverage report
-make test-coverage
+# End-to-end tests, keeping the cluster + Gitea afterwards
+make e2e-keep
 ```
 
 ### Test Coverage
 
-Current coverage: **74.1%** (target: 80%+)
-
-Areas needing more coverage:
-- Error handling paths in HTTP client
+Maintain high unit-test coverage. Areas that typically need attention:
+- Error handling paths in the HTTP client
 - Controller reconciliation logic
 - Edge cases in API validation
 
@@ -225,10 +221,9 @@ Note: Currently using GitHub Container Registry. Upbound registry integration pl
 
 ## Getting Help
 
-- **Questions**: Open a [Discussion](https://github.com/crossplane-contrib/provider-gitea/discussions)
-- **Bugs**: Open an [Issue](https://github.com/crossplane-contrib/provider-gitea/issues/new/choose)
-- **Security**: Email security@crossplane.io
-- **Slack**: Join [#crossplane-dev](https://crossplane.slack.com/channels/crossplane-dev)
+- **Questions**: Open a [Discussion](https://github.com/mosabastion/provider-gitea/discussions)
+- **Bugs**: Open an [Issue](https://github.com/mosabastion/provider-gitea/issues/new/choose)
+- **Security**: Report privately via the [security advisory page](https://github.com/mosabastion/provider-gitea/security/advisories/new)
 
 ## Recognition
 

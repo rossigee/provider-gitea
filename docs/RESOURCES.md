@@ -1,15 +1,16 @@
 # Resource Reference
 
-This document provides detailed information about all 22 managed resources provided by the enterprise-grade Gitea provider.
+This document provides detailed information about all 15 managed resources provided by the Gitea provider.
+
+All managed resources are Crossplane v2 namespaced resources. The API group pattern is `<kind>.gitea.m.crossplane.io/v2` and each resource is created within a namespace.
 
 ## Overview
 
-The Gitea provider supports comprehensive enterprise Git infrastructure management through four main categories:
+The Gitea provider supports comprehensive Git infrastructure management through the following resources:
 
-- **[Core Resources](#core-resources)** - Basic Git infrastructure (7 resources)
-- **[Security Resources](#security-resources)** - Enterprise security features (7 resources)
-- **[CI/CD Resources](#cicd-resources)** - DevOps automation (2 resources)
-- **[Administrative Resources](#administrative-resources)** - Enterprise administration (6 resources)
+- **[Core Resources](#core-resources)** - Basic Git infrastructure (repository, organization, user, webhook, team, label, repositorycollaborator, githook, variable)
+- **[Security Resources](#security-resources)** - Branch protection, SSH keys, tokens, secrets
+- **[Organization Resources](#organization-resources)** - Organization-wide settings and secrets
 
 ## Core Resources
 
@@ -58,7 +59,7 @@ Manages user accounts (admin privileges required).
 |-------|------|----------|-------------|
 | `username` | string | Yes | Username |
 | `email` | string | Yes | Email address |
-| `password` | string | Yes | User password |
+| `passwordSecretRef` | xpv1.SecretKeySelector | Yes | Reference to a Kubernetes Secret key holding the user password |
 | `fullName` | string | No | Full name |
 | `restricted` | bool | No | Restricted user account |
 | `admin` | bool | No | Admin privileges |
@@ -66,6 +67,8 @@ Manages user accounts (admin privileges required).
 | `website` | string | No | User website |
 | `location` | string | No | User location |
 | `description` | string | No | User description/bio |
+
+The password is always supplied via `passwordSecretRef`; plaintext passwords are not accepted.
 
 **Status Fields**: `id`, `avatarUrl`, `isAdmin`, `created`
 
@@ -130,10 +133,34 @@ Manages repository collaboration and access control.
 
 **Status Fields**: `id`, `fullName`, `email`
 
+### GitHook
+Manages server-side Git hooks for policy enforcement.
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `repository` | string | Yes | Repository name |
+| `owner` | string | Yes | Repository owner |
+| `hookType` | string | Yes | Hook type (pre-receive, post-receive, update) |
+| `content` | string | Yes | Hook script content |
+
+**Status Fields**: `lastUpdated`
+
+### Variable
+Manages Gitea Actions variables (non-secret). Exactly one scope must be set: `repository` (repo scope) or `organization` (org scope).
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `name` | string | Yes | Variable name |
+| `value` | string | Yes | Variable value (plain string — readable, NOT a Secret reference) |
+| `repository` | string | No | Repository (`owner/name`) for repo scope; mutually exclusive with `organization` |
+| `organization` | string | No | Organization for org scope; mutually exclusive with `repository` |
+
+Because the value is readable, the controller performs real drift detection against the live value (unlike secrets, which are write-only).
+
 ## Security Resources
 
 ### BranchProtection
-Enterprise-grade branch protection with approval workflows.
+Branch protection with approval workflows.
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
@@ -174,13 +201,14 @@ Manages SSH deployment keys for repositories.
 **Status Fields**: `id`, `fingerprint`, `createdAt`
 
 ### AccessToken
-Manages scoped API tokens for automation.
+Manages scoped API tokens for automation. The AccessToken authenticates to Gitea via HTTP basic auth using `spec.forProvider.username` together with `passwordSecretRef` (not the ProviderConfig token).
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | `name` | string | Yes | Token name |
 | `scopes` | []string | No | Token scopes |
-| `username` | string | Yes | Token owner username |
+| `username` | string | Yes | Token owner username (basic-auth user) |
+| `passwordSecretRef` | xpv1.SecretKeySelector | Yes | Reference to a Kubernetes Secret key holding the basic-auth password |
 
 **Status Fields**: `id`, `token`, `sha1`, `lastEight`
 
@@ -192,35 +220,13 @@ Manages CI/CD secrets with Kubernetes integration.
 | `repository` | string | Yes | Repository name |
 | `owner` | string | Yes | Repository owner |
 | `secretName` | string | Yes | Secret name |
-| `data` | string | No* | Direct secret value |
-| `secretRef` | SecretRef | No* | Kubernetes secret reference |
+| `valueSecretRef` | xpv1.SecretKeySelector | Yes | Reference to a Kubernetes Secret key holding the secret value |
 
-*Either `data` or `secretRef` must be specified.
+The secret value is always supplied via `valueSecretRef`; inline plaintext values are not accepted.
 
 **Status Fields**: `createdAt`, `updatedAt`
 
-### UserKey
-Manages SSH keys for user accounts.
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `title` | string | Yes | Key title/name |
-| `key` | string | Yes | SSH public key content |
-| `username` | string | Yes | Key owner username |
-| `readOnly` | bool | No | Read-only access |
-
-**Status Fields**: `id`, `fingerprint`, `createdAt`
-
-### OrganizationMember
-Manages organization membership and roles.
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `organization` | string | Yes | Organization name |
-| `username` | string | Yes | Member username |
-| `role` | string | No | Member role (member, admin, owner) |
-
-**Status Fields**: `state`, `url`, `organizationUrl`
+## Organization Resources
 
 ### OrganizationSecret
 Manages organization-wide CI/CD secrets.
@@ -229,68 +235,13 @@ Manages organization-wide CI/CD secrets.
 |-------|------|----------|-------------|
 | `organization` | string | Yes | Organization name |
 | `secretName` | string | Yes | Secret name |
-| `data` | string | No* | Direct secret value |
-| `secretRef` | SecretRef | No* | Kubernetes secret reference |
+| `valueSecretRef` | xpv1.SecretKeySelector | Yes | Reference to a Kubernetes Secret key holding the secret value |
 | `visibility` | string | No | Secret visibility (all, private, selected) |
 | `selectedRepositoryNames` | []string | No | Selected repositories (for selected visibility) |
 
-*Either `data` or `secretRef` must be specified.
+The secret value is always supplied via `valueSecretRef`; inline plaintext values are not accepted.
 
 **Status Fields**: `createdAt`, `updatedAt`
-
-## CI/CD Resources
-
-### Action
-Manages CI/CD workflows and pipeline automation.
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `repository` | string | Yes | Repository name |
-| `owner` | string | Yes | Repository owner |
-| `filename` | string | Yes | Workflow filename (e.g., ".gitea/workflows/ci.yaml") |
-| `content` | string | Yes | Workflow YAML content |
-| `active` | bool | No | Workflow is active (default: true) |
-
-**Status Fields**: `id`, `state`, `createdAt`, `updatedAt`
-
-### Runner
-Manages self-hosted runners for CI/CD execution.
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `name` | string | Yes | Runner name |
-| `repository` | string | No* | Repository name (for repo runners) |
-| `owner` | string | No* | Repository owner (for repo runners) |
-| `organization` | string | No* | Organization name (for org runners) |
-| `token` | string | Yes | Runner registration token |
-| `labels` | []string | No | Runner labels |
-| `description` | string | No | Runner description |
-
-*Specify either `repository`+`owner` for repo runners or `organization` for org runners.
-
-**Status Fields**: `id`, `uuid`, `status`, `lastOnline`
-
-## Administrative Resources
-
-### AdminUser
-Manages administrative users and service accounts.
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `username` | string | Yes | Username |
-| `email` | string | Yes | Email address |
-| `fullName` | string | No | Full name |
-| `loginName` | string | No | Login name |
-| `password` | string | No* | Direct password |
-| `passwordRef` | SecretRef | No* | Kubernetes secret reference for password |
-| `mustChangePassword` | bool | No | Force password change on first login |
-| `sendNotify` | bool | No | Send welcome email |
-| `admin` | bool | No | Grant admin privileges |
-| `restricted` | bool | No | Restricted account |
-
-*Either `password` or `passwordRef` must be specified.
-
-**Status Fields**: `id`, `avatarUrl`, `created`, `lastLogin`
 
 ### OrganizationSettings
 Manages organization-wide policies and settings.
@@ -307,67 +258,6 @@ Manages organization-wide policies and settings.
 | `repoAdminChangeTeamAccess` | bool | No | Allow repo admins to change team access |
 
 **Status Fields**: `updatedAt`
-
-### GitHook
-Manages server-side Git hooks for policy enforcement.
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `repository` | string | Yes | Repository name |
-| `owner` | string | Yes | Repository owner |
-| `hookType` | string | Yes | Hook type (pre-receive, post-receive, update) |
-| `content` | string | Yes | Hook script content |
-
-**Status Fields**: `lastUpdated`
-
-### Issue
-Manages repository issues and tracking.
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `repository` | string | Yes | Repository name |
-| `owner` | string | Yes | Repository owner |
-| `title` | string | Yes | Issue title |
-| `body` | string | No | Issue body/description |
-| `assignees` | []string | No | Assigned usernames |
-| `milestone` | int64 | No | Milestone ID |
-| `labels` | []string | No | Issue labels |
-| `closed` | bool | No | Issue is closed |
-
-**Status Fields**: `id`, `number`, `state`, `createdAt`, `updatedAt`
-
-### PullRequest
-Manages pull requests and code review workflows.
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `repository` | string | Yes | Repository name |
-| `owner` | string | Yes | Repository owner |
-| `title` | string | Yes | Pull request title |
-| `body` | string | No | Pull request description |
-| `head` | string | Yes | Head branch |
-| `base` | string | Yes | Base branch |
-| `assignees` | []string | No | Assigned reviewers |
-| `milestone` | int64 | No | Milestone ID |
-| `labels` | []string | No | Pull request labels |
-
-**Status Fields**: `id`, `number`, `state`, `mergeable`, `createdAt`, `updatedAt`
-
-### Release
-Manages repository releases and version tags.
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `repository` | string | Yes | Repository name |
-| `owner` | string | Yes | Repository owner |
-| `tagName` | string | Yes | Git tag name |
-| `name` | string | No | Release name |
-| `body` | string | No | Release notes |
-| `draft` | bool | No | Draft release |
-| `prerelease` | bool | No | Pre-release version |
-| `targetCommitish` | string | No | Target branch or commit |
-
-**Status Fields**: `id`, `url`, `assetsUrl`, `tarballUrl`, `zipballUrl`, `createdAt`, `publishedAt`
 
 ## Common Fields
 
@@ -393,37 +283,22 @@ All managed resources support these common fields:
 See the `examples/` directory for complete working examples of each resource type:
 
 - [Repository Examples](../examples/repository/)
-- [Security Examples](../examples/branchprotection/, ../examples/accesstoken/)
-- [CI/CD Examples](../examples/action/, ../examples/runner/)
-- [Administrative Examples](../examples/adminuser/, ../examples/organizationsettings/)
+- [Security Examples](../examples/branchprotection/) and [../examples/accesstoken/](../examples/accesstoken/)
+- [Organization Examples](../examples/organizationsettings/)
 
 ## Resource Relationships
 
-### Enterprise Security Workflow
 ```
-Organization -> OrganizationSettings -> OrganizationMember -> Team
-     |              |                       |                  |
-     v              v                       v                  v
+Organization -> OrganizationSettings -> Team
+     |              |                     |
+     v              v                     v
 Repository -> BranchProtection -> RepositoryCollaborator -> Label
-     |              |                       |                  |
-     v              v                       v                  v
+     |              |                     |                   |
+     v              v                     v                   v
 AccessToken -> RepositoryKey -> RepositorySecret -> GitHook
+                                       |
+                                       v
+                              OrganizationSecret
 ```
 
-### CI/CD Integration Workflow
-```
-Repository -> Action -> Runner
-    |           |        |
-    v           v        v
-OrganizationSecret -> RepositorySecret
-```
-
-### Administrative Workflow
-```
-AdminUser -> Organization -> OrganizationSettings
-    |            |                |
-    v            v                v
-User -> OrganizationMember -> Team
-```
-
-This comprehensive resource catalog enables complete enterprise Git infrastructure management through declarative Kubernetes manifests.
+This resource catalog enables comprehensive Git infrastructure management through declarative Kubernetes manifests.

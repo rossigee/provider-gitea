@@ -1,6 +1,6 @@
 # Provider Gitea
 
-A v2-only Crossplane provider for declarative Gitea management: **14 namespaced
+A v2-only Crossplane provider for declarative Gitea management: **15 namespaced
 resource kinds**, each with a working reconciler proven end-to-end against a real
 Gitea server in CI.
 
@@ -31,13 +31,14 @@ carry `metadata.namespace`.
 | `Organization` | Organization lifecycle | [organization.yaml](examples/e2e/organization.yaml) |
 | `User` | User account lifecycle (admin API) | [user.yaml](examples/e2e/user.yaml) |
 | `Team` | Org team + access control | [team.yaml](examples/e2e/team.yaml) |
-| `Label` | Issue/PR labels | [label.yaml](examples/e2e/label.yaml) |
+| `Label` | Issue/PR labels (repo- or org-scoped) | [label.yaml](examples/e2e/label.yaml) |
 | `Webhook` | Repository/org webhooks | [webhook.yaml](examples/e2e/webhook.yaml) |
 | `GitHook` | Server-side Git hooks | [githook.yaml](examples/e2e/githook.yaml) |
 | `BranchProtection` | Branch protection rules | [branchprotection.yaml](examples/e2e/branchprotection.yaml) |
 | `RepositoryKey` | Repository SSH (deploy) keys | [repositorykey.yaml](examples/e2e/repositorykey.yaml) |
 | `RepositoryCollaborator` | Repository access grants | [repositorycollaborator.yaml](examples/e2e/repositorycollaborator.yaml) |
 | `OrganizationSettings` | Organization policy | [organizationsettings.yaml](examples/e2e/organizationsettings.yaml) |
+| `Variable` | Actions variable (non-secret), repo- or org-scoped | [variable.yaml](examples/e2e/variable.yaml) |
 | `RepositorySecret` 🔑 | Actions secret on a repo | [repositorysecret.yaml](examples/e2e/repositorysecret.yaml) |
 | `OrganizationSecret` 🔑 | Actions secret on an org | [organizationsecret.yaml](examples/e2e/organizationsecret.yaml) |
 | `AccessToken` 🔑 | Personal access token (PAT) | [accesstoken.yaml](examples/e2e/accesstoken.yaml) |
@@ -73,7 +74,7 @@ through uptest:
 
 | Stage | Coverage |
 |-------|----------|
-| Create / Observe / Import / Delete | **all 14 kinds**, against real Gitea |
+| Create / Observe / Import / Delete | **all 15 kinds**, against real Gitea |
 | Update | exercised live for the mutable kinds (`Repository`, `Organization`, `Label`, `Team`, `User`) via `uptest.upbound.io/update-parameter`; unit-tested for the rest |
 
 `RepositorySecret`, `OrganizationSecret`, `AccessToken`, and `RepositoryKey` have
@@ -82,7 +83,7 @@ their controllers treat the resource as up-to-date once it exists and skip the
 live update step.
 
 Crossplane **management policies** (`spec.managementPolicies`) are honoured by all
-14 controllers — ObserveOnly, no-delete, pause, and partial-action modes — when
+15 controllers — ObserveOnly, no-delete, pause, and partial-action modes — when
 the provider is run with `--enable-management-policies`
 (`feature.EnableBetaManagementPolicies`). The flag defaults off.
 
@@ -134,11 +135,11 @@ for any future user-scoped resource.
 
 1. Install the provider:
    ```bash
-   kubectl crossplane install provider ghcr.io/rossigee/provider-gitea:<tag>
+   kubectl crossplane install provider ghcr.io/mosabastion/provider-gitea:<tag>
    ```
 2. Confirm the CRDs registered:
    ```bash
-   kubectl get crds | grep gitea.m.crossplane.io   # expect 14
+   kubectl get crds | grep gitea.m.crossplane.io   # expect 15
    ```
 3. Create a ProviderConfig + apply a resource (see `examples/e2e/`):
    ```bash
@@ -181,4 +182,4 @@ commits):
 
 ## Registry
 
-`ghcr.io/rossigee/provider-gitea`
+`ghcr.io/mosabastion/provider-gitea`

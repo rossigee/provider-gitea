@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed (repo cleanup — no runtime behaviour change)
+- Fork-migration scaffolding scripts (`create-v2-apis.sh`, `complete-v2-apis.sh`,
+  `enhance-v2-apis.sh`, `fix-*.sh`, `build-and-push.sh`) — referenced nowhere.
+- Stale fork-era docs: `CLAUDE.md`, `IMPLEMENTATION_GUIDE.md`,
+  `CONTROLLER_IMPLEMENTATION_GUIDE.md`, `DEPRECATED.md`,
+  `V2_3_2_INVESTIGATION.md`, `docs/UPBOUND_REGISTRY.md`.
+- Superseded testing docs (`test/README.md`, `test/TESTING_GUIDE.md`,
+  `test/TESTING_FRAMEWORK_SUMMARY.md`) — `docs/TESTING.md` is authoritative.
+- `deployments/` — an unreferenced, aspirational Helm chart + docs for deploying
+  the provider (Crossplane providers install via a `Provider` CR, not Helm).
+- Dead test/codegen: `test/mock/` (no importers; per-package fakes are used) and
+  `internal/tools/` (orphaned controller/interface generators referencing
+  removed kinds).
+- Unused client methods `ListOrganizationTeams`, `ListRepositoryLabels`,
+  `ListRepositoryCollaborators` (no callers).
+
+### Fixed
+- Documentation corrected to the real v2 surface: removed sections for deleted
+  kinds, dropped inline-secret fields (secret-ref only), fixed kind counts and
+  upstream URLs (`ghcr.io/mosabastion/...`).
+
 ## [0.11.0] - 2026-06-23
 
 ### Added
@@ -91,9 +112,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   is no longer disabled — it runs in the suite.
 
 ### ✨ Controllers for every resource kind
-- Implemented working reconcilers for **all 23 v2 resource kinds** (previously
-  only `repository`, partially). Each has create/observe/update/delete plus a
-  unit test. Registered all in `internal/controller/controller.go`.
+- Implemented working reconcilers for **all 14 v2 resource kinds**. Each has
+  create/observe/update/delete plus a unit test. Registered all in
+  `internal/controller/controller.go`.
 
 ### 🐛 Correctness fixes (crossplane-provider-template lessons)
 - **Readiness**: `Observe` now sets `xpv1.Available()` — crossplane-runtime v2
@@ -119,9 +140,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   meta + all CRDs — replacing the old runtime-image-only release that shipped a
   CRD-less, Healthy-but-broken package.
 - Removed stale/duplicate CRDs (legacy `*.gitea.crossplane.io` + empty-group
-  `_*.yaml`); `package/crds` now holds only the 23 v2 namespaced CRDs + 2
+  `_*.yaml`); `package/crds` now holds only the 14 v2 namespaced CRDs + 2
   ProviderConfig CRDs. Dropped the invalid `uniqueItems` markers that made the
-  `accesstoken`/`runner` CRDs fail to install.
+  `accesstoken` CRD fail to install.
 - Added a self-contained kind + mock-Gitea e2e (`scripts/e2e.sh`, `make e2e`,
   `.github/workflows/e2e.yml`) that proves apply→Ready→delete per resource.
 

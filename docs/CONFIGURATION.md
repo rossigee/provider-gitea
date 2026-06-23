@@ -41,7 +41,7 @@ spec:
 
 ## Enterprise Access Token Requirements
 
-For managing all 22 resource types, the access token must have comprehensive permissions:
+For managing all 15 resource types, the access token must have comprehensive permissions:
 
 ### **Core Repository & Organization Management**
 - **Repository management**: `repo` scope - Full repository access
@@ -56,20 +56,18 @@ For managing all 22 resource types, the access token must have comprehensive per
 - **Repository Secrets**: `repo` scope - CI/CD secret management
 - **Organization Secrets**: `admin:org` scope - Organization-wide secrets
 
-### **CI/CD Integration**
-- **Actions Workflows**: `repo`, `workflow` scopes - Workflow management
-- **Self-hosted Runners**: `admin:org`, `admin:user` scopes - Runner registration
+### **CI/CD and Keys**
+- **Repository Secrets**: `repo` scope - CI/CD secret management
 - **Repository Keys**: `repo` scope - Deployment key management
 
 ### **Administrative Features**
-- **Administrative Users**: `admin:user` scope - Service account management
 - **Organization Settings**: `admin:org` scope - Policy enforcement
 - **Git Hooks**: `admin:repo_hook` scope - Server-side hook management
 - **Team Management**: `admin:org` scope - Team and membership control
 
-### **Recommended Token Scopes for Enterprise Setup**
+### **Recommended Token Scopes**
 ```
-repo, admin:org, admin:user, admin:public_key, admin:repo_hook, admin:org_hook, admin:application, workflow
+repo, admin:org, admin:user, admin:public_key, admin:repo_hook, admin:org_hook, admin:application
 ```
 
 ## Multi-Environment Enterprise Setup
@@ -108,10 +106,11 @@ spec:
 ### Environment-Specific Resource Configuration
 
 ```yaml
-apiVersion: repository.gitea.crossplane.io/v1alpha1
+apiVersion: repository.gitea.m.crossplane.io/v2
 kind: Repository
 metadata:
   name: enterprise-app
+  namespace: default
 spec:
   forProvider:
     name: enterprise-app
@@ -120,10 +119,11 @@ spec:
   providerConfigRef:
     name: production
 ---
-apiVersion: branchprotection.gitea.crossplane.io/v1alpha1
+apiVersion: branchprotection.gitea.m.crossplane.io/v2
 kind: BranchProtection
 metadata:
   name: main-branch-protection
+  namespace: default
 spec:
   forProvider:
     repository: enterprise-app
@@ -191,7 +191,7 @@ kind: ClusterRole
 metadata:
   name: gitea-provider
 rules:
-- apiGroups: ["gitea.crossplane.io"]
+- apiGroups: ["gitea.m.crossplane.io"]
   resources: ["*"]
   verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
 ---
@@ -211,13 +211,14 @@ subjects:
 
 ## Advanced Configuration Patterns
 
-### CI/CD Integration
+### Repository with Secrets
 ```yaml
-# Repository with full CI/CD setup
-apiVersion: repository.gitea.crossplane.io/v1alpha1
+# Repository plus a CI/CD secret sourced from a Kubernetes Secret
+apiVersion: repository.gitea.m.crossplane.io/v2
 kind: Repository
 metadata:
   name: microservice-app
+  namespace: default
 spec:
   forProvider:
     name: microservice-app
@@ -226,37 +227,20 @@ spec:
     hasIssues: true
     hasPullRequests: true
 ---
-apiVersion: action.gitea.crossplane.io/v1alpha1
-kind: Action
+apiVersion: repositorysecret.gitea.m.crossplane.io/v2
+kind: RepositorySecret
 metadata:
-  name: ci-pipeline
+  name: registry-token
+  namespace: default
 spec:
   forProvider:
     repository: microservice-app
     owner: devops-org
-    filename: ".gitea/workflows/ci.yaml"
-    active: true
-    content: |
-      name: CI Pipeline
-      on: [push, pull_request]
-      jobs:
-        test:
-          runs-on: ubuntu-latest
-          steps:
-          - uses: actions/checkout@v3
-          - name: Run tests
-            run: make test
----
-apiVersion: runner.gitea.crossplane.io/v1alpha1
-kind: Runner
-metadata:
-  name: org-runner
-spec:
-  forProvider:
-    organization: devops-org
-    name: "Enterprise Runner"
-    token: "runner-registration-token"
-    labels: ["enterprise", "docker"]
+    secretName: REGISTRY_TOKEN
+    valueSecretRef:
+      namespace: default
+      name: registry-credentials
+      key: token
 ```
 
 ## Troubleshooting
@@ -299,12 +283,12 @@ kubectl get secret gitea-secret -n crossplane-system -o yaml
 
 ## Migration Guide
 
-### From Basic to Enterprise Setup
+### From Basic to Comprehensive Setup
 
-1. **Update Token Scopes**: Expand token permissions for enterprise features
+1. **Update Token Scopes**: Expand token permissions for the features you need
 2. **Add Security Resources**: Implement branch protection, SSH keys, access tokens
-3. **Configure CI/CD**: Set up actions, runners, and repository secrets
-4. **Enable Administrative Features**: Configure organization settings and admin users
+3. **Configure CI/CD Secrets**: Set up repository and organization secrets
+4. **Enable Organization Features**: Configure organization settings and teams
 
 ### Upgrade Checklist
 - [ ] Token has all required scopes
