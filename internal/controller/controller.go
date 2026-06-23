@@ -36,6 +36,7 @@ import (
 	"github.com/rossigee/provider-gitea/internal/controller/repositorysecret"
 	"github.com/rossigee/provider-gitea/internal/controller/team"
 	"github.com/rossigee/provider-gitea/internal/controller/user"
+	"github.com/rossigee/provider-gitea/internal/controller/variable"
 	"github.com/rossigee/provider-gitea/internal/controller/webhook"
 )
 
@@ -55,6 +56,7 @@ func Setup(mgr ctrl.Manager, o controller.Options) error {
 		repositorysecret.Setup,
 		team.Setup,
 		user.Setup,
+		variable.Setup,
 		webhook.Setup,
 	} {
 		if err := setup(mgr, o); err != nil {

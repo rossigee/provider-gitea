@@ -29,10 +29,22 @@ type LabelParameters struct {
 	// +kubebuilder:validation:Pattern="^[a-zA-Z0-9]([a-zA-Z0-9 ._-]*[a-zA-Z0-9])?$"
 	Name string `json:"name"`
 
-	// Repository is the repository that owns this label (owner/name format)
-	// +kubebuilder:validation:Required
+	// Scope selects whether this label is owned by a repository (repo) or an
+	// organization (org). It defaults to repo for backward compatibility, so
+	// existing repo-scoped labels need no spec change.
+	// +kubebuilder:validation:Enum=repo;org
+	// +kubebuilder:default=repo
+	Scope *string `json:"scope,omitempty"`
+
+	// Repository is the repository that owns this label (owner/name format).
+	// Required when scope is repo (the default); must be empty when scope is org.
 	// +kubebuilder:validation:Pattern="^[a-zA-Z0-9]([a-zA-Z0-9._-]*[a-zA-Z0-9])?/[a-zA-Z0-9]([a-zA-Z0-9._-]*[a-zA-Z0-9])?$"
-	Repository string `json:"repository"`
+	Repository string `json:"repository,omitempty"`
+
+	// Organization is the organization that owns this label. Required when scope
+	// is org; ignored when scope is repo.
+	// +kubebuilder:validation:Pattern="^[a-zA-Z0-9]([a-zA-Z0-9._-]*[a-zA-Z0-9])?$"
+	Organization *string `json:"organization,omitempty"`
 
 	// Color is the label color in hex format (without #)
 	// +kubebuilder:validation:Required

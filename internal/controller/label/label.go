@@ -55,6 +55,11 @@ const (
 	errGetProviderConfig = "failed to get provider config"
 	errExternalName      = "invalid external-name, expected a numeric label id"
 	errRepository        = "invalid repository, expected owner/name"
+	errOrganization      = "scope is org but forProvider.organization is empty"
+	errRepoSet           = "scope is org but forProvider.repository must be empty"
+
+	scopeOrg  = "org"
+	scopeRepo = "repo"
 )
 
 // Setup adds a controller that reconciles Label managed resources.
@@ -125,6 +130,26 @@ type external struct {
 	client clients.Client
 }
 
+// isOrgScoped reports whether the label is org-scoped (scope: org), validating
+// that the scope's required fields are present. scope defaults to repo, so an
+// unset scope is repo-scoped (backward compatible).
+func isOrgScoped(cr *v2.Label) (orgScoped bool, err error) {
+	scope := scopeRepo
+	if cr.Spec.ForProvider.Scope != nil && *cr.Spec.ForProvider.Scope != "" {
+		scope = *cr.Spec.ForProvider.Scope
+	}
+	if scope != scopeOrg {
+		return false, nil
+	}
+	if cr.Spec.ForProvider.Organization == nil || *cr.Spec.ForProvider.Organization == "" {
+		return true, errors.New(errOrganization)
+	}
+	if cr.Spec.ForProvider.Repository != "" {
+		return true, errors.New(errRepoSet)
+	}
+	return true, nil
+}
+
 // splitRepository parses the owner/name parent carried by the immutable
 // cr.Spec.ForProvider.Repository field. Unlike repository, the parent does NOT
 // come from the external-name (which holds the numeric label id).
@@ -134,6 +159,22 @@ func splitRepository(cr *v2.Label) (owner, repo string, ok bool) {
 		return "", "", false
 	}
 	return parts[0], parts[1], true
+}
+
+// getLabel fetches the live label from the scope-correct endpoint.
+func (e *external) getLabel(ctx context.Context, cr *v2.Label, id int64) (*clients.Label, error) {
+	orgScoped, err := isOrgScoped(cr)
+	if err != nil {
+		return nil, err
+	}
+	if orgScoped {
+		return e.client.GetOrganizationLabel(ctx, *cr.Spec.ForProvider.Organization, id)
+	}
+	owner, repo, ok := splitRepository(cr)
+	if !ok {
+		return nil, errors.New(errRepository)
+	}
+	return e.client.GetLabel(ctx, owner, repo, id)
 }
 
 // labelID parses the numeric backend id pinned in the external-name. An empty
@@ -162,12 +203,7 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		return managed.ExternalObservation{ResourceExists: false}, nil
 	}
 
-	owner, repo, ok := splitRepository(cr)
-	if !ok {
-		return managed.ExternalObservation{}, errors.New(errRepository)
-	}
-
-	label, err := e.client.GetLabel(ctx, owner, repo, id)
+	label, err := e.getLabel(ctx, cr, id)
 	if err != nil {
 		// Classify not-found off the typed HTTP status, never a string match
 		// (lesson #3). A real failure (auth/network/5xx) must surface so we
@@ -225,9 +261,9 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 	}
 	cr.SetConditions(xpv1.Creating())
 
-	owner, repo, ok := splitRepository(cr)
-	if !ok {
-		return managed.ExternalCreation{}, errors.New(errRepository)
+	orgScoped, err := isOrgScoped(cr)
+	if err != nil {
+		return managed.ExternalCreation{}, err
 	}
 
 	createReq := &clients.CreateLabelRequest{
@@ -241,7 +277,16 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 		createReq.Exclusive = *cr.Spec.ForProvider.Exclusive
 	}
 
-	label, err := e.client.CreateLabel(ctx, owner, repo, createReq)
+	var label *clients.Label
+	if orgScoped {
+		label, err = e.client.CreateOrganizationLabel(ctx, *cr.Spec.ForProvider.Organization, createReq)
+	} else {
+		owner, repo, ok := splitRepository(cr)
+		if !ok {
+			return managed.ExternalCreation{}, errors.New(errRepository)
+		}
+		label, err = e.client.CreateLabel(ctx, owner, repo, createReq)
+	}
 	if err != nil {
 		return managed.ExternalCreation{}, errors.Wrap(err, errCreateLabel)
 	}
@@ -265,9 +310,9 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalUpdate{}, errors.New(errExternalName)
 	}
 
-	owner, repo, ok := splitRepository(cr)
-	if !ok {
-		return managed.ExternalUpdate{}, errors.New(errRepository)
+	orgScoped, err := isOrgScoped(cr)
+	if err != nil {
+		return managed.ExternalUpdate{}, err
 	}
 
 	updateReq := &clients.UpdateLabelRequest{
@@ -277,7 +322,16 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 		Exclusive:   cr.Spec.ForProvider.Exclusive,
 	}
 
-	if _, err := e.client.UpdateLabel(ctx, owner, repo, id, updateReq); err != nil {
+	if orgScoped {
+		_, err = e.client.UpdateOrganizationLabel(ctx, *cr.Spec.ForProvider.Organization, id, updateReq)
+	} else {
+		owner, repo, ok := splitRepository(cr)
+		if !ok {
+			return managed.ExternalUpdate{}, errors.New(errRepository)
+		}
+		_, err = e.client.UpdateLabel(ctx, owner, repo, id, updateReq)
+	}
+	if err != nil {
 		return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateLabel)
 	}
 
@@ -296,12 +350,20 @@ func (e *external) Delete(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalDelete{}, errors.New(errExternalName)
 	}
 
-	owner, repo, ok := splitRepository(cr)
-	if !ok {
-		return managed.ExternalDelete{}, errors.New(errRepository)
+	orgScoped, err := isOrgScoped(cr)
+	if err != nil {
+		return managed.ExternalDelete{}, err
 	}
 
-	err := e.client.DeleteLabel(ctx, owner, repo, id)
+	if orgScoped {
+		err = e.client.DeleteOrganizationLabel(ctx, *cr.Spec.ForProvider.Organization, id)
+	} else {
+		owner, repo, ok := splitRepository(cr)
+		if !ok {
+			return managed.ExternalDelete{}, errors.New(errRepository)
+		}
+		err = e.client.DeleteLabel(ctx, owner, repo, id)
+	}
 	// Treat an already-absent label as a successful delete so the finalizer can
 	// release (idempotent delete, lesson #16).
 	if err != nil && clients.IsNotFound(err) {

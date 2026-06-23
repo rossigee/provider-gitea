@@ -482,3 +482,81 @@ func (m *Client) DeleteRepositorySecret(ctx context.Context, repository, secretN
 	args := m.Called(ctx, repository, secretName)
 	return args.Error(0)
 }
+
+// Organization Actions Variable operations
+func (m *Client) GetOrganizationVariable(ctx context.Context, org, name string) (*clients.Variable, error) {
+	args := m.Called(ctx, org, name)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*clients.Variable), args.Error(1)
+}
+
+func (m *Client) CreateOrganizationVariable(ctx context.Context, org, name string, req *clients.VariableRequest) error {
+	args := m.Called(ctx, org, name, req)
+	return args.Error(0)
+}
+
+func (m *Client) UpdateOrganizationVariable(ctx context.Context, org, name string, req *clients.VariableRequest) error {
+	args := m.Called(ctx, org, name, req)
+	return args.Error(0)
+}
+
+func (m *Client) DeleteOrganizationVariable(ctx context.Context, org, name string) error {
+	args := m.Called(ctx, org, name)
+	return args.Error(0)
+}
+
+// Repository Actions Variable operations
+func (m *Client) GetRepositoryVariable(ctx context.Context, owner, repo, name string) (*clients.Variable, error) {
+	args := m.Called(ctx, owner, repo, name)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*clients.Variable), args.Error(1)
+}
+
+func (m *Client) CreateRepositoryVariable(ctx context.Context, owner, repo, name string, req *clients.VariableRequest) error {
+	args := m.Called(ctx, owner, repo, name, req)
+	return args.Error(0)
+}
+
+func (m *Client) UpdateRepositoryVariable(ctx context.Context, owner, repo, name string, req *clients.VariableRequest) error {
+	args := m.Called(ctx, owner, repo, name, req)
+	return args.Error(0)
+}
+
+func (m *Client) DeleteRepositoryVariable(ctx context.Context, owner, repo, name string) error {
+	args := m.Called(ctx, owner, repo, name)
+	return args.Error(0)
+}
+
+// Organization Label operations
+func (m *Client) GetOrganizationLabel(ctx context.Context, org string, labelID int64) (*clients.Label, error) {
+	args := m.Called(ctx, org, labelID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*clients.Label), args.Error(1)
+}
+
+func (m *Client) CreateOrganizationLabel(ctx context.Context, org string, req *clients.CreateLabelRequest) (*clients.Label, error) {
+	args := m.Called(ctx, org, req)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*clients.Label), args.Error(1)
+}
+
+func (m *Client) UpdateOrganizationLabel(ctx context.Context, org string, labelID int64, req *clients.UpdateLabelRequest) (*clients.Label, error) {
+	args := m.Called(ctx, org, labelID, req)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*clients.Label), args.Error(1)
+}
+
+func (m *Client) DeleteOrganizationLabel(ctx context.Context, org string, labelID int64) error {
+	args := m.Called(ctx, org, labelID)
+	return args.Error(0)
+}

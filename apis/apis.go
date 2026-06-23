@@ -34,6 +34,7 @@ import (
 	repositorysecretv2 "github.com/rossigee/provider-gitea/apis/repositorysecret/v2"
 	teamv2 "github.com/rossigee/provider-gitea/apis/team/v2"
 	userv2 "github.com/rossigee/provider-gitea/apis/user/v2"
+	variablev2 "github.com/rossigee/provider-gitea/apis/variable/v2"
 	webhookv2 "github.com/rossigee/provider-gitea/apis/webhook/v2"
 
 	// Provider configuration APIs
@@ -63,6 +64,7 @@ func init() {
 		repositorykeyv2.SchemeBuilder.AddToScheme,
 		accesstokenv2.SchemeBuilder.AddToScheme,
 		repositorysecretv2.SchemeBuilder.AddToScheme,
+		variablev2.SchemeBuilder.AddToScheme,
 	)
 }
 

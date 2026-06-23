@@ -4,20 +4,20 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.20.0
-  name: labels.label.gitea.m.crossplane.io
+  name: variables.variable.gitea.m.crossplane.io
 spec:
-  group: label.gitea.m.crossplane.io
+  group: variable.gitea.m.crossplane.io
   names:
     categories:
     - crossplane
     - managed
     - gitea
-    kind: Label
-    listKind: LabelList
-    plural: labels
+    kind: Variable
+    listKind: VariableList
+    plural: variables
     shortNames:
-    - labe
-    singular: label
+    - giteavar
+    singular: variable
   scope: Namespaced
   versions:
   - additionalPrinterColumns:
@@ -47,9 +47,6 @@ spec:
             properties:
               forProvider:
                 properties:
-                  color:
-                    pattern: ^[0-9a-fA-F]{6}$
-                    type: string
                   connectionRef:
                     properties:
                       name:
@@ -71,13 +68,8 @@ spec:
                     required:
                     - name
                     type: object
-                  description:
-                    type: string
-                  exclusive:
-                    default: false
-                    type: boolean
                   name:
-                    pattern: ^[a-zA-Z0-9]([a-zA-Z0-9 ._-]*[a-zA-Z0-9])?$
+                    pattern: ^[a-zA-Z_][a-zA-Z0-9_]*$
                     type: string
                   organization:
                     pattern: ^[a-zA-Z0-9]([a-zA-Z0-9._-]*[a-zA-Z0-9])?$
@@ -106,15 +98,11 @@ spec:
                   repository:
                     pattern: ^[a-zA-Z0-9]([a-zA-Z0-9._-]*[a-zA-Z0-9])?/[a-zA-Z0-9]([a-zA-Z0-9._-]*[a-zA-Z0-9])?$
                     type: string
-                  scope:
-                    default: repo
-                    enum:
-                    - repo
-                    - org
+                  value:
                     type: string
                 required:
-                - color
                 - name
+                - value
                 type: object
               managementPolicies:
                 default:
@@ -156,10 +144,12 @@ spec:
             properties:
               atProvider:
                 properties:
+                  createdAt:
+                    type: string
                   id:
                     format: int64
                     type: integer
-                  url:
+                  updatedAt:
                     type: string
                 type: object
               conditions:

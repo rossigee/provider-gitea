@@ -31,6 +31,11 @@ import (
 	"github.com/rossigee/provider-gitea/internal/clients"
 )
 
+const (
+	scopeOrgVal  = "org"
+	scopeRepoVal = "repo"
+)
+
 // fakeClient is a hand-rolled clients.Client stub exposing only the label verbs
 // this controller uses; every other method panics (via the embedded nil
 // interface) so an accidental call is loud. It records the last request and
@@ -45,25 +50,72 @@ type fakeClient struct {
 	updated    *clients.UpdateLabelRequest
 	deleteErr  error
 	deleted    bool
+
+	// scope routing recorders: which endpoint family was hit.
+	repoGet, orgGet       bool
+	repoCreate, orgCreate bool
+	repoUpdate, orgUpdate bool
+	repoDelete, orgDelete bool
 }
 
 func (f *fakeClient) GetLabel(_ context.Context, _, _ string, _ int64) (*clients.Label, error) {
+	f.repoGet = true
 	return f.getLabel, f.getErr
 }
 
 func (f *fakeClient) CreateLabel(_ context.Context, _, _ string, req *clients.CreateLabelRequest) (*clients.Label, error) {
+	f.repoCreate = true
 	f.created = req
 	return f.createResp, f.createErr
 }
 
 func (f *fakeClient) UpdateLabel(_ context.Context, _, _ string, _ int64, req *clients.UpdateLabelRequest) (*clients.Label, error) {
+	f.repoUpdate = true
 	f.updated = req
 	return f.getLabel, nil
 }
 
 func (f *fakeClient) DeleteLabel(_ context.Context, _, _ string, _ int64) error {
+	f.repoDelete = true
 	f.deleted = true
 	return f.deleteErr
+}
+
+func (f *fakeClient) GetOrganizationLabel(_ context.Context, _ string, _ int64) (*clients.Label, error) {
+	f.orgGet = true
+	return f.getLabel, f.getErr
+}
+
+func (f *fakeClient) CreateOrganizationLabel(_ context.Context, _ string, req *clients.CreateLabelRequest) (*clients.Label, error) {
+	f.orgCreate = true
+	f.created = req
+	return f.createResp, f.createErr
+}
+
+func (f *fakeClient) UpdateOrganizationLabel(_ context.Context, _ string, _ int64, req *clients.UpdateLabelRequest) (*clients.Label, error) {
+	f.orgUpdate = true
+	f.updated = req
+	return f.getLabel, nil
+}
+
+func (f *fakeClient) DeleteOrganizationLabel(_ context.Context, _ string, _ int64) error {
+	f.orgDelete = true
+	f.deleted = true
+	return f.deleteErr
+}
+
+// orgCR builds an org-scoped label CR.
+func orgCR(externalName string) *v2.Label {
+	cr := &v2.Label{}
+	cr.SetName("my-label")
+	cr.Spec.ForProvider.Name = "bug"
+	cr.Spec.ForProvider.Color = "ff0000"
+	cr.Spec.ForProvider.Scope = ptr.To(scopeOrgVal)
+	cr.Spec.ForProvider.Organization = ptr.To("acme")
+	if externalName != "" {
+		meta.SetExternalName(cr, externalName)
+	}
+	return cr
 }
 
 func newCR(externalName string) *v2.Label {
@@ -187,5 +239,86 @@ func TestDeleteIdempotentOn404(t *testing.T) {
 	}
 	if !f.deleted {
 		t.Fatalf("expected DeleteLabel to have been called")
+	}
+}
+
+// TestRepoScopeDefaultRoutesRepoEndpoint: a CR with no scope (the default repo)
+// must hit the repository endpoints, unchanged from prior behavior.
+func TestRepoScopeDefaultRoutesRepoEndpoint(t *testing.T) {
+	f := &fakeClient{getLabel: &clients.Label{ID: 3, Name: "bug", Color: "ff0000"}}
+	e := &external{client: f}
+
+	cr := newCR("3") // no scope set -> defaults to repo
+	if _, err := e.Observe(context.Background(), cr); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !f.repoGet || f.orgGet {
+		t.Fatalf("expected repo GET, got repo=%v org=%v", f.repoGet, f.orgGet)
+	}
+}
+
+// TestOrgScopeRoutesOrgEndpoints: scope:org must route every verb to the
+// /orgs/{org}/labels endpoints, never the repo ones.
+func TestOrgScopeRoutesOrgEndpoints(t *testing.T) {
+	f := &fakeClient{
+		getLabel:   &clients.Label{ID: 9, Name: "bug", Color: "ff0000"},
+		createResp: &clients.Label{ID: 9, Name: "bug", Color: "ff0000"},
+	}
+	e := &external{client: f}
+
+	// Observe
+	if _, err := e.Observe(context.Background(), orgCR("9")); err != nil {
+		t.Fatalf("observe error: %v", err)
+	}
+	if !f.orgGet || f.repoGet {
+		t.Fatalf("expected org GET, got org=%v repo=%v", f.orgGet, f.repoGet)
+	}
+
+	// Create
+	cr := orgCR("")
+	if _, err := e.Create(context.Background(), cr); err != nil {
+		t.Fatalf("create error: %v", err)
+	}
+	if !f.orgCreate || f.repoCreate {
+		t.Fatalf("expected org Create, got org=%v repo=%v", f.orgCreate, f.repoCreate)
+	}
+	if got := meta.GetExternalName(cr); got != "9" {
+		t.Fatalf("expected external-name 9, got %q", got)
+	}
+
+	// Update
+	if _, err := e.Update(context.Background(), orgCR("9")); err != nil {
+		t.Fatalf("update error: %v", err)
+	}
+	if !f.orgUpdate || f.repoUpdate {
+		t.Fatalf("expected org Update, got org=%v repo=%v", f.orgUpdate, f.repoUpdate)
+	}
+
+	// Delete
+	if _, err := e.Delete(context.Background(), orgCR("9")); err != nil {
+		t.Fatalf("delete error: %v", err)
+	}
+	if !f.orgDelete || f.repoDelete {
+		t.Fatalf("expected org Delete, got org=%v repo=%v", f.orgDelete, f.repoDelete)
+	}
+}
+
+// TestOrgScopeMissingOrganization: scope:org with no organization must error.
+func TestOrgScopeMissingOrganization(t *testing.T) {
+	e := &external{client: &fakeClient{}}
+	cr := orgCR("9")
+	cr.Spec.ForProvider.Organization = nil
+	if _, err := e.Update(context.Background(), cr); err == nil {
+		t.Fatalf("expected error when scope:org but organization empty")
+	}
+}
+
+// TestOrgScopeRepositorySetRejected: scope:org with repository set must error.
+func TestOrgScopeRepositorySetRejected(t *testing.T) {
+	e := &external{client: &fakeClient{}}
+	cr := orgCR("9")
+	cr.Spec.ForProvider.Repository = "acme/repo"
+	if _, err := e.Update(context.Background(), cr); err == nil {
+		t.Fatalf("expected error when scope:org but repository is set")
 	}
 }

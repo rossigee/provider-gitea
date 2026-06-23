@@ -1,0 +1,29 @@
+---
+# Organization-scoped Actions variable (non-secret, value is readable).
+apiVersion: variable.gitea.m.crossplane.io/v2
+kind: Variable
+metadata:
+  name: org-registry-url
+  namespace: default
+spec:
+  forProvider:
+    name: REGISTRY_URL
+    value: "registry.example.com"
+    organization: my-example-org
+  providerConfigRef:
+    name: default
+---
+# Repository-scoped Actions variable. Setting repository (owner/name) selects
+# repo scope; organization must be omitted.
+apiVersion: variable.gitea.m.crossplane.io/v2
+kind: Variable
+metadata:
+  name: repo-deploy-env
+  namespace: default
+spec:
+  forProvider:
+    name: DEPLOY_ENV
+    value: "staging"
+    repository: my-example-org/my-repo
+  providerConfigRef:
+    name: default

@@ -137,6 +137,24 @@ type Client interface {
 	CreateRepositorySecret(ctx context.Context, repository, secretName string, req *CreateRepositorySecretRequest) error
 	UpdateRepositorySecret(ctx context.Context, repository, secretName string, req *UpdateRepositorySecretRequest) error
 	DeleteRepositorySecret(ctx context.Context, repository, secretName string) error
+
+	// Organization Actions Variable operations
+	GetOrganizationVariable(ctx context.Context, org, name string) (*Variable, error)
+	CreateOrganizationVariable(ctx context.Context, org, name string, req *VariableRequest) error
+	UpdateOrganizationVariable(ctx context.Context, org, name string, req *VariableRequest) error
+	DeleteOrganizationVariable(ctx context.Context, org, name string) error
+
+	// Repository Actions Variable operations
+	GetRepositoryVariable(ctx context.Context, owner, repo, name string) (*Variable, error)
+	CreateRepositoryVariable(ctx context.Context, owner, repo, name string, req *VariableRequest) error
+	UpdateRepositoryVariable(ctx context.Context, owner, repo, name string, req *VariableRequest) error
+	DeleteRepositoryVariable(ctx context.Context, owner, repo, name string) error
+
+	// Organization Labels operations
+	GetOrganizationLabel(ctx context.Context, org string, labelID int64) (*Label, error)
+	CreateOrganizationLabel(ctx context.Context, org string, req *CreateLabelRequest) (*Label, error)
+	UpdateOrganizationLabel(ctx context.Context, org string, labelID int64, req *UpdateLabelRequest) (*Label, error)
+	DeleteOrganizationLabel(ctx context.Context, org string, labelID int64) error
 }
 
 // giteaClient implements the Client interface
@@ -468,6 +486,121 @@ func (c *giteaClient) DeleteOrganizationSecret(ctx context.Context, org, secretN
 		return err
 	}
 
+	return handleResponse(resp, nil)
+}
+
+// Variable represents a Gitea Actions variable (org- or repo-scoped). Unlike a
+// secret, the value (Data) is readable back from a GET, enabling real drift
+// detection.
+type Variable struct {
+	ID      int64  `json:"id"`
+	Name    string `json:"name"`
+	Data    string `json:"data"`
+	OwnerID int64  `json:"owner_id"`
+	RepoID  int64  `json:"repo_id"`
+}
+
+// VariableRequest is the request body for creating/updating an Actions variable.
+type VariableRequest struct {
+	Value string `json:"value"`
+}
+
+// Organization Actions Variable API methods
+func (c *giteaClient) GetOrganizationVariable(ctx context.Context, org, name string) (*Variable, error) {
+	path := "/orgs/" + org + "/actions/variables/" + name
+	resp, err := c.doRequest(ctx, "GET", path, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.StatusCode == http.StatusNotFound {
+		return nil, &APIError{StatusCode: http.StatusNotFound, Body: "organization variable not found"}
+	}
+
+	var v Variable
+	if err := handleResponse(resp, &v); err != nil {
+		return nil, err
+	}
+	// Gitea returns the variable name in the path, not always in the body.
+	if v.Name == "" {
+		v.Name = name
+	}
+	return &v, nil
+}
+
+func (c *giteaClient) CreateOrganizationVariable(ctx context.Context, org, name string, req *VariableRequest) error {
+	path := "/orgs/" + org + "/actions/variables/" + name
+	resp, err := c.doRequest(ctx, "POST", path, req)
+	if err != nil {
+		return err
+	}
+	return handleResponse(resp, nil)
+}
+
+func (c *giteaClient) UpdateOrganizationVariable(ctx context.Context, org, name string, req *VariableRequest) error {
+	path := "/orgs/" + org + "/actions/variables/" + name
+	resp, err := c.doRequest(ctx, "PUT", path, req)
+	if err != nil {
+		return err
+	}
+	return handleResponse(resp, nil)
+}
+
+func (c *giteaClient) DeleteOrganizationVariable(ctx context.Context, org, name string) error {
+	path := "/orgs/" + org + "/actions/variables/" + name
+	resp, err := c.doRequest(ctx, "DELETE", path, nil)
+	if err != nil {
+		return err
+	}
+	return handleResponse(resp, nil)
+}
+
+// Repository Actions Variable API methods
+func (c *giteaClient) GetRepositoryVariable(ctx context.Context, owner, repo, name string) (*Variable, error) {
+	path := fmt.Sprintf("/repos/%s/%s/actions/variables/%s", owner, repo, name)
+	resp, err := c.doRequest(ctx, "GET", path, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.StatusCode == http.StatusNotFound {
+		return nil, &APIError{StatusCode: http.StatusNotFound, Body: "repository variable not found"}
+	}
+
+	var v Variable
+	if err := handleResponse(resp, &v); err != nil {
+		return nil, err
+	}
+	if v.Name == "" {
+		v.Name = name
+	}
+	return &v, nil
+}
+
+func (c *giteaClient) CreateRepositoryVariable(ctx context.Context, owner, repo, name string, req *VariableRequest) error {
+	path := fmt.Sprintf("/repos/%s/%s/actions/variables/%s", owner, repo, name)
+	resp, err := c.doRequest(ctx, "POST", path, req)
+	if err != nil {
+		return err
+	}
+	return handleResponse(resp, nil)
+}
+
+func (c *giteaClient) UpdateRepositoryVariable(ctx context.Context, owner, repo, name string, req *VariableRequest) error {
+	path := fmt.Sprintf("/repos/%s/%s/actions/variables/%s", owner, repo, name)
+	resp, err := c.doRequest(ctx, "PUT", path, req)
+	if err != nil {
+		return err
+	}
+	return handleResponse(resp, nil)
+}
+
+func (c *giteaClient) DeleteRepositoryVariable(ctx context.Context, owner, repo, name string) error {
+	path := fmt.Sprintf("/repos/%s/%s/actions/variables/%s", owner, repo, name)
+	resp, err := c.doRequest(ctx, "DELETE", path, nil)
+	if err != nil {
+		return err
+	}
 	return handleResponse(resp, nil)
 }
 
@@ -908,6 +1041,68 @@ func (c *giteaClient) ListRepositoryLabels(ctx context.Context, owner, repo stri
 	}
 
 	return labels, nil
+}
+
+// Organization Label API methods. Org labels mirror repo labels but live under
+// /orgs/{org}/labels; the org-label PATCH/DELETE endpoints are keyed by the
+// numeric label id, exactly like the repo variants.
+func (c *giteaClient) GetOrganizationLabel(ctx context.Context, org string, labelID int64) (*Label, error) {
+	path := fmt.Sprintf("/orgs/%s/labels/%d", org, labelID)
+	resp, err := c.doRequest(ctx, "GET", path, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.StatusCode == http.StatusNotFound {
+		return nil, &APIError{StatusCode: http.StatusNotFound, Body: "organization label not found"}
+	}
+
+	var label Label
+	if err := handleResponse(resp, &label); err != nil {
+		return nil, err
+	}
+
+	return &label, nil
+}
+
+func (c *giteaClient) CreateOrganizationLabel(ctx context.Context, org string, req *CreateLabelRequest) (*Label, error) {
+	path := fmt.Sprintf("/orgs/%s/labels", org)
+	resp, err := c.doRequest(ctx, "POST", path, req)
+	if err != nil {
+		return nil, err
+	}
+
+	var label Label
+	if err := handleResponse(resp, &label); err != nil {
+		return nil, err
+	}
+
+	return &label, nil
+}
+
+func (c *giteaClient) UpdateOrganizationLabel(ctx context.Context, org string, labelID int64, req *UpdateLabelRequest) (*Label, error) {
+	path := fmt.Sprintf("/orgs/%s/labels/%d", org, labelID)
+	resp, err := c.doRequest(ctx, "PATCH", path, req)
+	if err != nil {
+		return nil, err
+	}
+
+	var label Label
+	if err := handleResponse(resp, &label); err != nil {
+		return nil, err
+	}
+
+	return &label, nil
+}
+
+func (c *giteaClient) DeleteOrganizationLabel(ctx context.Context, org string, labelID int64) error {
+	path := fmt.Sprintf("/orgs/%s/labels/%d", org, labelID)
+	resp, err := c.doRequest(ctx, "DELETE", path, nil)
+	if err != nil {
+		return err
+	}
+
+	return handleResponse(resp, nil)
 }
 
 // Repository Collaborator API methods

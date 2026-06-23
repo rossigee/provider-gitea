@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-06-23
+
+### Added
+- New `Variable` managed resource (group `variable.gitea.m.crossplane.io`,
+  version `v2`, namespaced) for Gitea Actions **variables** (non-secret). It
+  supports both scopes via the spec: `repository` (owner/name) selects repo
+  scope (`/repos/{owner}/{repo}/actions/variables/{name}`), otherwise
+  `organization` selects org scope (`/orgs/{org}/actions/variables/{name}`) —
+  exactly one must be set. `name` and `value` are set inline (`value` is a plain
+  string, NOT a Secret reference, because variables are readable). Because the
+  value is readable, the controller performs **real drift detection** against
+  the live value (unlike secrets, which are write-only).
+- Org-scope support for the existing `Label` kind. A new `scope` field (enum
+  `repo|org`, **default `repo`**) plus an `organization` field. When
+  `scope: org`, `organization` is required, `repository` must be empty, and the
+  controller targets `/orgs/{org}/labels`. Existing repo-scoped Labels work
+  unchanged with no spec change.
+- New client methods: org/repo Actions variable CRUD and org-label CRUD.
+- Variable controller wires `managed.WithManagementPolicies()` behind the
+  `--enable-management-policies` flag, matching every other controller.
+
 ## [0.9.0] - 2026-06-23
 
 ### Added

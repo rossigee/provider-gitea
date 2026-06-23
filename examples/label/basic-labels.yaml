@@ -76,3 +76,20 @@ spec:
     exclusive: true
   providerConfigRef:
     name: default
+---
+# Organization-scoped label (scope: org). Targets /orgs/{org}/labels; repository
+# must be omitted. Without scope, labels default to repo scope (backward compat).
+apiVersion: label.gitea.m.crossplane.io/v2
+kind: Label
+metadata:
+  name: org-security-label
+  namespace: default
+spec:
+  forProvider:
+    name: security
+    scope: org
+    organization: my-example-org
+    color: "d73a4a"
+    description: "Security-related, applies org-wide"
+  providerConfigRef:
+    name: default
