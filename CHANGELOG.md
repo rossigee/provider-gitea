@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.11.0] - 2026-06-23
+
+### Added
+- `User` now rotates the Forgejo password when the referenced password Secret
+  changes — and only then. A new `status.atProvider.passwordHash` field holds a
+  sha256 hex digest of the password content the provider last applied. `Observe`
+  re-reads `passwordSecretRef` (resolving `{namespace,name,key}`, which may point
+  at a Secret in another namespace), recomputes the hash, and reports the
+  resource **not up-to-date** when the stored hash is empty or differs — driving
+  the managed reconciler to call `Update`. `Update` pushes the new password via
+  `PATCH /admin/users/{username}` (admin edit-user API) and persists the new
+  hash. When the hash matches, the password is omitted from the PATCH, so an
+  unchanged Secret produces no spurious password write on subsequent reconciles.
+  The create path and all other field drift handling are unchanged.
+
+### Changed
+- `UpdateUserRequest` gains an omitempty `password` field. When the controller
+  sets it, it also ensures `login_name` is present (defaulted to the username if
+  the spec did not pin one), as the admin edit-user API requires `login_name`
+  alongside `password`.
+
 ## [0.10.0] - 2026-06-23
 
 ### Added

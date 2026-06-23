@@ -43,6 +43,8 @@ type fakeClient struct {
 	createErr  error
 	deleteErr  error
 	deleted    bool
+	lastUpdate *clients.UpdateUserRequest
+	updateCnt  int
 }
 
 func (f *fakeClient) GetUser(_ context.Context, _ string) (*clients.User, error) {
@@ -53,7 +55,9 @@ func (f *fakeClient) CreateUser(_ context.Context, _ *clients.CreateUserRequest)
 	return f.createResp, f.createErr
 }
 
-func (f *fakeClient) UpdateUser(_ context.Context, _ string, _ *clients.UpdateUserRequest) (*clients.User, error) {
+func (f *fakeClient) UpdateUser(_ context.Context, _ string, req *clients.UpdateUserRequest) (*clients.User, error) {
+	f.lastUpdate = req
+	f.updateCnt++
 	return f.getUser, nil
 }
 
@@ -118,9 +122,13 @@ func TestObserveNotFound(t *testing.T) {
 
 func TestObserveAvailableAndUpToDate(t *testing.T) {
 	f := &fakeClient{getUser: &clients.User{ID: 7, Username: "my-user", Email: "u@example.com"}}
-	e := &external{client: f}
+	e := &external{client: f, kube: kubeWithPassword()}
 
 	cr := newCR("my-user")
+	// The provider has already applied the current Secret content -> no password drift.
+	h := hashPassword("s3cret")
+	cr.Status.AtProvider.PasswordHash = &h
+
 	obs, err := e.Observe(context.Background(), cr)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -130,6 +138,82 @@ func TestObserveAvailableAndUpToDate(t *testing.T) {
 	}
 	if !isAvailable(cr) {
 		t.Fatalf("Observe must set Available() on the exists path")
+	}
+}
+
+// A never-applied password (empty stored hash) must read as drift so the managed
+// reconciler calls Update to push it.
+func TestObservePasswordDriftWhenHashUnset(t *testing.T) {
+	f := &fakeClient{getUser: &clients.User{ID: 7, Username: "my-user", Email: "u@example.com"}}
+	e := &external{client: f, kube: kubeWithPassword()}
+
+	cr := newCR("my-user") // no PasswordHash in status
+	obs, err := e.Observe(context.Background(), cr)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if obs.ResourceUpToDate {
+		t.Fatalf("expected not-up-to-date when stored password hash is empty")
+	}
+}
+
+// A changed Secret (stored hash != current content) must read as drift.
+func TestObservePasswordDriftWhenSecretChanged(t *testing.T) {
+	f := &fakeClient{getUser: &clients.User{ID: 7, Username: "my-user", Email: "u@example.com"}}
+	e := &external{client: f, kube: kubeWithPassword()}
+
+	cr := newCR("my-user")
+	stale := hashPassword("old-password")
+	cr.Status.AtProvider.PasswordHash = &stale
+
+	obs, err := e.Observe(context.Background(), cr)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if obs.ResourceUpToDate {
+		t.Fatalf("expected not-up-to-date when Secret content differs from stored hash")
+	}
+}
+
+// Update with a changed/unset hash pushes the password and advances the stored hash.
+func TestUpdatePushesPasswordAndAdvancesHash(t *testing.T) {
+	f := &fakeClient{getUser: &clients.User{ID: 7, Username: "my-user"}}
+	e := &external{client: f, kube: kubeWithPassword()}
+
+	cr := newCR("my-user") // empty stored hash -> rotation
+	if _, err := e.Update(context.Background(), cr); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if f.lastUpdate == nil || f.lastUpdate.Password != "s3cret" {
+		t.Fatalf("expected Update to push the password, got %+v", f.lastUpdate)
+	}
+	// Admin edit-user API requires login_name alongside password.
+	if f.lastUpdate.LoginName == nil || *f.lastUpdate.LoginName != "my-user" {
+		t.Fatalf("expected login_name defaulted to username, got %+v", f.lastUpdate.LoginName)
+	}
+	want := hashPassword("s3cret")
+	if cr.Status.AtProvider.PasswordHash == nil || *cr.Status.AtProvider.PasswordHash != want {
+		t.Fatalf("expected stored hash to advance to %q, got %+v", want, cr.Status.AtProvider.PasswordHash)
+	}
+}
+
+// Update with a matching hash must not re-push the password (no spurious PATCH content).
+func TestUpdateDoesNotRePushWhenHashMatches(t *testing.T) {
+	f := &fakeClient{getUser: &clients.User{ID: 7, Username: "my-user"}}
+	e := &external{client: f, kube: kubeWithPassword()}
+
+	cr := newCR("my-user")
+	h := hashPassword("s3cret")
+	cr.Status.AtProvider.PasswordHash = &h
+
+	if _, err := e.Update(context.Background(), cr); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if f.lastUpdate == nil {
+		t.Fatalf("expected UpdateUser to be called for other-field drift handling")
+	}
+	if f.lastUpdate.Password != "" {
+		t.Fatalf("expected no password in PATCH when hash matches, got %q", f.lastUpdate.Password)
 	}
 }
 

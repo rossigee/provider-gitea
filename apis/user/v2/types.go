@@ -126,8 +126,13 @@ type UserObservation struct {
 	// Language is the user's preferred language
 	Language *string `json:"language,omitempty"`
 
-	// V2 Enhancement: Enhanced observability
-	// Additional fields can be added here for better monitoring
+	// PasswordHash is a stable sha256 hex digest of the password content that the
+	// provider last applied from passwordSecretRef. Observe recomputes the hash
+	// from the referenced Secret and compares it to this value; a mismatch (or an
+	// empty stored hash) marks the resource not-up-to-date so Update rotates the
+	// Forgejo password and re-persists the hash. The password itself is never
+	// stored here.
+	PasswordHash *string `json:"passwordHash,omitempty"`
 }
 
 // UserSpec defines the desired state of User

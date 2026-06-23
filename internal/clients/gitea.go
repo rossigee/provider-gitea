@@ -387,6 +387,11 @@ type CreateUserRequest struct {
 
 // UpdateUserRequest represents the request body for updating a user
 type UpdateUserRequest struct {
+	// Password rotates the user's password. The Gitea admin edit-user API
+	// (PATCH /admin/users/{username}) requires login_name (and source_id) to be
+	// present alongside password, so the controller always sets those when it
+	// pushes a rotation.
+	Password                string  `json:"password,omitempty"`
 	Email                   *string `json:"email,omitempty"`
 	FullName                *string `json:"full_name,omitempty"`
 	LoginName               *string `json:"login_name,omitempty"`

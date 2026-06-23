@@ -209,6 +209,8 @@ spec:
                     type: string
                   lastLogin:
                     type: string
+                  passwordHash:
+                    type: string
                 type: object
               conditions:
                 items:

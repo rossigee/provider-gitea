@@ -22,6 +22,8 @@ package user
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 
 	"github.com/pkg/errors"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -139,16 +141,36 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		return managed.ExternalObservation{}, errors.Wrap(err, errGetUser)
 	}
 
+	// Preserve the password hash persisted by a previous reconcile; rebuilding
+	// AtProvider from the GET response would otherwise drop it.
+	priorHash := cr.Status.AtProvider.PasswordHash
+
 	cr.Status.AtProvider = v2.UserObservation{
-		ID:        &user.ID,
-		AvatarURL: &user.AvatarURL,
-		IsAdmin:   &user.IsAdmin,
-		LastLogin: &user.LastLogin,
-		Created:   &user.Created,
-		Language:  &user.Language,
+		ID:           &user.ID,
+		AvatarURL:    &user.AvatarURL,
+		IsAdmin:      &user.IsAdmin,
+		LastLogin:    &user.LastLogin,
+		Created:      &user.Created,
+		Language:     &user.Language,
+		PasswordHash: priorHash,
 	}
 
-	upToDate := userUpToDate(cr, user)
+	// Password-rotation drift: hash the current Secret content and compare it to
+	// the hash the provider last applied. An empty stored hash or a mismatch
+	// means the password must be (re)pushed on Update.
+	passwordDrift := false
+	if cr.Spec.ForProvider.PasswordSecretRef != nil {
+		password, err := clients.ResolveSecretValue(ctx, e.kube, cr.Spec.ForProvider.PasswordSecretRef)
+		if err != nil {
+			return managed.ExternalObservation{}, errors.Wrap(err, errGetUser)
+		}
+		current := hashPassword(password)
+		if priorHash == nil || *priorHash != current {
+			passwordDrift = true
+		}
+	}
+
+	upToDate := userUpToDate(cr, user) && !passwordDrift
 
 	// crossplane-runtime v2 no longer auto-sets Available(); set it on the exists
 	// path (lesson #2/#6). Drift is carried by ResourceUpToDate, not Ready.
@@ -287,11 +309,48 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 		updateReq.Email = &cr.Spec.ForProvider.Email
 	}
 
+	// Rotate the password only when the referenced Secret's content differs from
+	// the hash the provider last applied (recomputed here, not trusted from a
+	// possibly-stale status). When it matches we leave password unset so Forgejo
+	// is not re-PATCHed with the password on every drift-driven Update.
+	var newHash string
+	if cr.Spec.ForProvider.PasswordSecretRef != nil {
+		password, err := clients.ResolveSecretValue(ctx, e.kube, cr.Spec.ForProvider.PasswordSecretRef)
+		if err != nil {
+			return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateUser)
+		}
+		current := hashPassword(password)
+		stored := cr.Status.AtProvider.PasswordHash
+		if stored == nil || *stored != current {
+			updateReq.Password = password
+			// The admin edit-user API requires login_name (and source_id) to be
+			// present whenever password is set; default login_name to the username
+			// if the spec did not pin one.
+			if updateReq.LoginName == nil || *updateReq.LoginName == "" {
+				updateReq.LoginName = &username
+			}
+			newHash = current
+		}
+	}
+
 	if _, err := e.client.UpdateUser(ctx, username, updateReq); err != nil {
 		return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateUser)
 	}
 
+	// Persist the applied hash so the next Observe sees the rotation as settled.
+	if newHash != "" {
+		cr.Status.AtProvider.PasswordHash = &newHash
+	}
+
 	return managed.ExternalUpdate{}, nil
+}
+
+// hashPassword returns a stable sha256 hex digest of the password content. It is
+// the canonical form persisted to status.atProvider.passwordHash and compared in
+// Observe; the password itself is never stored.
+func hashPassword(password string) string {
+	sum := sha256.Sum256([]byte(password))
+	return hex.EncodeToString(sum[:])
 }
 
 func (e *external) Delete(ctx context.Context, mg resource.Managed) (managed.ExternalDelete, error) {
