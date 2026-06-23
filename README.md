@@ -81,6 +81,11 @@ no meaningful in-place update (the value is write-only / the key is immutable), 
 their controllers treat the resource as up-to-date once it exists and skip the
 live update step.
 
+Crossplane **management policies** (`spec.managementPolicies`) are honoured by all
+14 controllers — ObserveOnly, no-delete, pause, and partial-action modes — when
+the provider is run with `--enable-management-policies`
+(`feature.EnableBetaManagementPolicies`). The flag defaults off.
+
 ## Working with secret-bearing resources
 
 **Secret values are never set inline.** Every field that carries a credential is

@@ -41,13 +41,14 @@ import (
 
 func main() {
 	var (
-		app              = kingpin.New(filepath.Base(os.Args[0]), "Gitea Crossplane provider").DefaultEnvars()
-		debug            = app.Flag("debug", "Run with debug logging.").Short('d').Bool()
-		syncInterval     = app.Flag("sync", "Sync interval controls how often all resources will be double checked for drift.").Short('s').Default("1h").Duration()
-		pollInterval     = app.Flag("poll", "Poll interval controls how often an individual resource should be checked for drift.").Default("1m").Duration()
-		leaderElection   = app.Flag("leader-election", "Use leader election for the controller manager.").Short('l').Default("false").Bool()
-		maxReconcileRate = app.Flag("max-reconcile-rate", "The global maximum rate per second at which resources may checked for drift from the desired state.").Default("100").Int()
-		_                = app.Flag("namespace", "Namespace used to set as default scope in default secret store config.").Default("crossplane-system").Envar("POD_NAMESPACE").String()
+		app                      = kingpin.New(filepath.Base(os.Args[0]), "Gitea Crossplane provider").DefaultEnvars()
+		debug                    = app.Flag("debug", "Run with debug logging.").Short('d').Bool()
+		syncInterval             = app.Flag("sync", "Sync interval controls how often all resources will be double checked for drift.").Short('s').Default("1h").Duration()
+		pollInterval             = app.Flag("poll", "Poll interval controls how often an individual resource should be checked for drift.").Default("1m").Duration()
+		leaderElection           = app.Flag("leader-election", "Use leader election for the controller manager.").Short('l').Default("false").Bool()
+		maxReconcileRate         = app.Flag("max-reconcile-rate", "The global maximum rate per second at which resources may checked for drift from the desired state.").Default("100").Int()
+		enableManagementPolicies = app.Flag("enable-management-policies", "Enable support for Management Policies (spec.managementPolicies), e.g. ObserveOnly, no-delete, pause.").Default("false").Bool()
+		_                        = app.Flag("namespace", "Namespace used to set as default scope in default secret store config.").Default("crossplane-system").Envar("POD_NAMESPACE").String()
 	)
 	kingpin.MustParse(app.Parse(os.Args[1:]))
 
@@ -94,6 +95,10 @@ func main() {
 	kingpin.FatalIfError(apis.AddToScheme(mgr.GetScheme()), "Cannot add Gitea APIs to scheme")
 
 	featureFlags := &feature.Flags{}
+	if *enableManagementPolicies {
+		featureFlags.Enable(feature.EnableBetaManagementPolicies)
+		log.Info("Beta feature enabled", "flag", feature.EnableBetaManagementPolicies)
+	}
 	o := controller.Options{
 		Logger:                  log,
 		MaxConcurrentReconciles: *maxReconcileRate,
