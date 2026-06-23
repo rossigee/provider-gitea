@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-06-23
+
 ### Added
 - Support for Crossplane management policies (`spec.managementPolicies`) across
   all 14 controllers, gated behind the `--enable-management-policies` flag
