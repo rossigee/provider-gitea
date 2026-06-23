@@ -1,0 +1,7 @@
+apiVersion: label.gitea.m.crossplane.io/v2
+kind: Label
+metadata: {name: uptest-label-org, namespace: provider-gitea-e2e, annotations: {meta.upbound.io/example-id: label/v2/label-org, uptest.upbound.io/update-parameter: '{"color":"0000ff"}'}}
+spec:
+  # Org-scoped label (scope: org + organization set; repository must be empty).
+  forProvider: {name: uptest-label-org, scope: org, organization: uptest-org, color: "00ff00", description: e2e}
+  providerConfigRef: {name: e2e, kind: ProviderConfig}

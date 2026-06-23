@@ -1,0 +1,7 @@
+apiVersion: variable.gitea.m.crossplane.io/v2
+kind: Variable
+metadata: {name: uptest-variable, namespace: provider-gitea-e2e, annotations: {meta.upbound.io/example-id: variable/v2/variable, uptest.upbound.io/update-parameter: '{"value":"registry.updated.example.com"}'}}
+spec:
+  # Org-scoped Actions variable: value is readable so the update converges (real drift).
+  forProvider: {name: UPTEST_REGISTRY_URL, value: registry.example.com, organization: uptest-org}
+  providerConfigRef: {name: e2e, kind: ProviderConfig}
