@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Support for Crossplane management policies (`spec.managementPolicies`) across
+  all 14 controllers, gated behind the `--enable-management-policies` flag
+  (`feature.EnableBetaManagementPolicies`). Enables ObserveOnly, no-delete,
+  pause, and partial-action modes.
+
 ### 🔻 API surface trimmed to 14 reconcilable kinds
 - **Removed** kinds that cannot reconcile as managed resources (they modelled
   git content or runtime/imperative operations): `Action`, `Runner`,
