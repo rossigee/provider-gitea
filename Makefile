@@ -46,6 +46,23 @@ XPKGS = provider-gitea
 # image is present in daemon.
 xpkg.build.provider-gitea: do.build.images
 
+# Stage the makelib-built binary where the runtime Dockerfile expects it.
+#
+# go.build (build/makelib/golang.mk) writes the provider binary to
+# $(OUTPUT_DIR)/bin/$(PLATFORM)/provider (e.g. _output/bin/linux_amd64/provider),
+# but cluster/images/provider-gitea/Dockerfile COPYs it from bin/$(PLATFORM)/provider
+# relative to the repo-root build context. Nothing in the makelib image path bridges
+# the two, so `make build` fails at img.build with
+#   COPY failed: ... stat bin/linux_amd64/provider: file does not exist
+# on a clean checkout (it only ever "passed" when a stale bin/ from scripts/build-xpkg.sh
+# happened to be present). scripts/publish.sh works because build-xpkg.sh compiles
+# straight into bin/. Mirror that staging here so the makelib path matches the Dockerfile.
+$(foreach i,$(IMAGES),do.build.image.$(i)): img.stage.binary
+img.stage.binary:
+	@mkdir -p bin/$(PLATFORM)
+	@cp -f $(OUTPUT_DIR)/bin/$(PLATFORM)/provider bin/$(PLATFORM)/provider
+.PHONY: img.stage.binary
+
 # Ensure publish only happens on release branches
 publish.artifacts:
 	@if ! echo "$(BRANCH_NAME)" | grep -qE "$(subst $(SPACE),|,main|master|release-.*)"; then \ 
