@@ -83,6 +83,15 @@ YAML
 echo "uptest-setup: waiting until provider is Healthy"
 ${KUBECTL} wait provider.pkg --all --for condition=Healthy --timeout 5m
 
+# Wait for the MR CRDs to be Established before applying any MRs. Crossplane can
+# report Healthy slightly ahead of the apiserver's discovery cache refresh, which
+# causes "the server doesn't have a resource type" on the next apply.
+echo "uptest-setup: waiting for CRDs to be Established"
+${KUBECTL} wait --for=condition=Established \
+  crd/repositories.gitea.m.crossplane.io \
+  crd/organizations.gitea.m.crossplane.io \
+  --timeout 60s
+
 # Pre-create the foundational resources almost everything else depends on (the
 # repository and the organization) and wait for them Ready BEFORE uptest applies
 # the full set. uptest applies all examples in parallel; a dependent whose parent
@@ -93,7 +102,7 @@ ${KUBECTL} wait provider.pkg --all --for condition=Healthy --timeout 5m
 # then adopts these (already Ready) and still drives + deletes them.
 echo "uptest-setup: pre-creating foundational repository + organization"
 ${KUBECTL} apply -f "${ROOT}/examples/e2e/repository.yaml" -f "${ROOT}/examples/e2e/organization.yaml" >/dev/null
-${KUBECTL} -n "$NS" wait repository.repository.gitea.m.crossplane.io/uptest-repo \
-  organization.organization.gitea.m.crossplane.io/uptest-org \
+${KUBECTL} -n "$NS" wait repositories.gitea.m.crossplane.io/uptest-repo \
+  organizations.gitea.m.crossplane.io/uptest-org \
   --for condition=Ready --timeout 3m
 echo "uptest-setup: done"
