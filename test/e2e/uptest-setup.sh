@@ -29,9 +29,13 @@ GITEA_ADMIN_PASSWORD="${GITEA_ADMIN_PASSWORD:-Uptest-Admin-123}"
 ${KUBECTL} create namespace "$NS" --dry-run=client -o yaml | ${KUBECTL} apply -f - >/dev/null
 
 echo "uptest-setup: minting admin API token in the gitea pod"
-# generate-access-token --raw prints just the token. The token name must be
-# unique per call, so include a fixed e2e name; on a fresh cluster this is the
-# first one. `all` scope so every resource controller can act.
+# Idempotent: delete the "e2e" token if it already exists (KEEP-cluster re-runs).
+# Uses the Gitea HTTP API inside the pod (curl is present in the gitea image).
+${KUBECTL} -n "$GITEA_NS" exec "deploy/${GITEA_RELEASE}" -c gitea -- \
+  curl -sf -u "${GITEA_ADMIN}:${GITEA_ADMIN_PASSWORD}" \
+  -X DELETE "http://localhost:3000/api/v1/users/${GITEA_ADMIN}/tokens/e2e" \
+  2>/dev/null || true
+# generate-access-token --raw prints just the token; `all` scope for all controllers.
 TOKEN="$(${KUBECTL} -n "$GITEA_NS" exec "deploy/${GITEA_RELEASE}" -c gitea -- \
   gitea admin user generate-access-token --username "$GITEA_ADMIN" \
   --token-name "e2e" --scopes all --raw 2>/dev/null | tr -d '\r\n' | tail -c 64)"
