@@ -21,7 +21,7 @@ limitations under the License.
 package v1beta1
 
 import (
-	corev2 "github.com/crossplane/crossplane/apis/v2/core/v2"
+	"github.com/crossplane/crossplane/apis/v2/core/v2"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 )
 
@@ -114,17 +114,17 @@ func (in *OrganizationSecretParameters) DeepCopyInto(out *OrganizationSecretPara
 	*out = *in
 	if in.ValueSecretRef != nil {
 		in, out := &in.ValueSecretRef, &out.ValueSecretRef
-		*out = new(corev2.SecretKeySelector)
+		*out = new(v2.SecretKeySelector)
 		**out = **in
 	}
 	if in.ConnectionRef != nil {
 		in, out := &in.ConnectionRef, &out.ConnectionRef
-		*out = new(corev2.Reference)
+		*out = new(v2.Reference)
 		(*in).DeepCopyInto(*out)
 	}
 	if in.ProviderConfigRef != nil {
 		in, out := &in.ProviderConfigRef, &out.ProviderConfigRef
-		*out = new(corev2.Reference)
+		*out = new(v2.Reference)
 		(*in).DeepCopyInto(*out)
 	}
 }

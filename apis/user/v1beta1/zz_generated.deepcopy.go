@@ -21,7 +21,7 @@ limitations under the License.
 package v1beta1
 
 import (
-	corev2 "github.com/crossplane/crossplane/apis/v2/core/v2"
+	"github.com/crossplane/crossplane/apis/v2/core/v2"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 )
 
@@ -139,7 +139,7 @@ func (in *UserParameters) DeepCopyInto(out *UserParameters) {
 	*out = *in
 	if in.PasswordSecretRef != nil {
 		in, out := &in.PasswordSecretRef, &out.PasswordSecretRef
-		*out = new(corev2.SecretKeySelector)
+		*out = new(v2.SecretKeySelector)
 		**out = **in
 	}
 	if in.MaxRepoCreation != nil {
@@ -229,12 +229,12 @@ func (in *UserParameters) DeepCopyInto(out *UserParameters) {
 	}
 	if in.ConnectionRef != nil {
 		in, out := &in.ConnectionRef, &out.ConnectionRef
-		*out = new(corev2.Reference)
+		*out = new(v2.Reference)
 		(*in).DeepCopyInto(*out)
 	}
 	if in.ProviderConfigRef != nil {
 		in, out := &in.ProviderConfigRef, &out.ProviderConfigRef
-		*out = new(corev2.Reference)
+		*out = new(v2.Reference)
 		(*in).DeepCopyInto(*out)
 	}
 }
