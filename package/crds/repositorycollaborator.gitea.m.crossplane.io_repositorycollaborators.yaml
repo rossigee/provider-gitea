@@ -16,7 +16,7 @@ spec:
     listKind: RepositoryCollaboratorList
     plural: repositorycollaborators
     shortNames:
-    - repo
+    - rcol
     singular: repositorycollaborator
   scope: Namespaced
   versions:

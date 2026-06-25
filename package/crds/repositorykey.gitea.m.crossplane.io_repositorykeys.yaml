@@ -16,7 +16,7 @@ spec:
     listKind: RepositoryKeyList
     plural: repositorykeys
     shortNames:
-    - repo
+    - rkey
     singular: repositorykey
   scope: Namespaced
   versions:
