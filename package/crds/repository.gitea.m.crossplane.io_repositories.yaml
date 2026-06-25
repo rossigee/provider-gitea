@@ -4,7 +4,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.20.0
-  name: repositories.repository.gitea.m.crossplane.io
+  name: repositories.gitea.m.crossplane.io
 spec:
   group: gitea.m.crossplane.io
   names:
