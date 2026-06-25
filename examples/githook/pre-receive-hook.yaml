@@ -1,4 +1,4 @@
-apiVersion: githook.gitea.m.crossplane.io/v2
+apiVersion: gitea.m.crossplane.io/v1beta1
 kind: GitHook
 metadata:
   name: example-pre-receive-hook

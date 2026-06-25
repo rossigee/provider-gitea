@@ -1,7 +1,7 @@
 # References uptest-collab-user, which uptest-setup.sh seeds via the gitea CLI
 # before the MRs reconcile (the repo owner can't be added as a collaborator, and
 # a parallel user MR would race). owner/repo come from the Repository example.
-apiVersion: repositorycollaborator.gitea.m.crossplane.io/v2
+apiVersion: gitea.m.crossplane.io/v1beta1
 kind: RepositoryCollaborator
 metadata: {name: uptest-collab, namespace: provider-gitea-e2e, annotations: {meta.upbound.io/example-id: repositorycollaborator/v2/repositorycollaborator}}
 spec:

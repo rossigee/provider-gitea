@@ -2,7 +2,7 @@
 # This demonstrates all managed resources working together for a complete CI/CD workflow
 
 # 1. Create Organization
-apiVersion: organization.gitea.m.crossplane.io/v2
+apiVersion: gitea.m.crossplane.io/v1beta1
 kind: Organization
 metadata:
   name: infrastructure-org
@@ -24,7 +24,7 @@ spec:
 
 ---
 # 2. Create Repository for provider-gitea
-apiVersion: repository.gitea.m.crossplane.io/v2
+apiVersion: gitea.m.crossplane.io/v1beta1
 kind: Repository
 metadata:
   name: provider-gitea-repo
@@ -53,7 +53,7 @@ spec:
 
 ---
 # 3. Create CI/CD User for automated operations
-apiVersion: user.gitea.m.crossplane.io/v2
+apiVersion: gitea.m.crossplane.io/v1beta1
 kind: User
 metadata:
   name: ci-user
@@ -78,7 +78,7 @@ spec:
 
 ---
 # 4. Create Organization Secrets for Harbor integration
-apiVersion: organizationsecret.gitea.m.crossplane.io/v2
+apiVersion: gitea.m.crossplane.io/v1beta1
 kind: OrganizationSecret
 metadata:
   name: harbor-registry
@@ -97,7 +97,7 @@ spec:
     name: default
 
 ---
-apiVersion: organizationsecret.gitea.m.crossplane.io/v2
+apiVersion: gitea.m.crossplane.io/v1beta1
 kind: OrganizationSecret
 metadata:
   name: harbor-credentials
@@ -116,7 +116,7 @@ spec:
     name: default
 
 ---
-apiVersion: organizationsecret.gitea.m.crossplane.io/v2
+apiVersion: gitea.m.crossplane.io/v1beta1
 kind: OrganizationSecret
 metadata:
   name: docker-project
@@ -136,7 +136,7 @@ spec:
 
 ---
 # 5. Create Webhook for automated builds
-apiVersion: webhook.gitea.m.crossplane.io/v2
+apiVersion: gitea.m.crossplane.io/v1beta1
 kind: Webhook
 metadata:
   name: harbor-build-webhook

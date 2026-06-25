@@ -1,4 +1,4 @@
-apiVersion: variable.gitea.m.crossplane.io/v2
+apiVersion: gitea.m.crossplane.io/v1beta1
 kind: Variable
 metadata: {name: uptest-variable, namespace: provider-gitea-e2e, annotations: {meta.upbound.io/example-id: variable/v2/variable, uptest.upbound.io/update-parameter: '{"value":"registry.updated.example.com"}'}}
 spec:

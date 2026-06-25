@@ -1,6 +1,6 @@
 ---
 # Organization-scoped Actions variable (non-secret, value is readable).
-apiVersion: variable.gitea.m.crossplane.io/v2
+apiVersion: gitea.m.crossplane.io/v1beta1
 kind: Variable
 metadata:
   name: org-registry-url
@@ -15,7 +15,7 @@ spec:
 ---
 # Repository-scoped Actions variable. Setting repository (owner/name) selects
 # repo scope; organization must be omitted.
-apiVersion: variable.gitea.m.crossplane.io/v2
+apiVersion: gitea.m.crossplane.io/v1beta1
 kind: Variable
 metadata:
   name: repo-deploy-env

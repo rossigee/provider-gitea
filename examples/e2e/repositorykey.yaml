@@ -1,4 +1,4 @@
-apiVersion: repositorykey.gitea.m.crossplane.io/v2
+apiVersion: gitea.m.crossplane.io/v1beta1
 kind: RepositoryKey
 metadata: {name: uptest-repokey, namespace: provider-gitea-e2e, annotations: {meta.upbound.io/example-id: repositorykey/v2/repositorykey}}
 spec:

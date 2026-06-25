@@ -1,4 +1,4 @@
-apiVersion: webhook.gitea.m.crossplane.io/v2
+apiVersion: gitea.m.crossplane.io/v1beta1
 kind: Webhook
 metadata: {name: uptest-webhook, namespace: provider-gitea-e2e, annotations: {meta.upbound.io/example-id: webhook/v2/webhook}}
 spec:

@@ -1,4 +1,4 @@
-apiVersion: team.gitea.m.crossplane.io/v2
+apiVersion: gitea.m.crossplane.io/v1beta1
 kind: Team
 metadata:
   name: example-team

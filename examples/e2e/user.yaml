@@ -1,4 +1,4 @@
-apiVersion: user.gitea.m.crossplane.io/v2
+apiVersion: gitea.m.crossplane.io/v1beta1
 kind: User
 metadata: {name: uptest-user, namespace: provider-gitea-e2e, annotations: {meta.upbound.io/example-id: user/v2/user, uptest.upbound.io/update-parameter: '{"fullName":"Uptest User Updated"}'}}
 spec:

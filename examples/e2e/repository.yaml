@@ -1,7 +1,7 @@
 # Created under the authenticated admin user (gitea_admin); external-name
 # becomes gitea_admin/uptest-repo from the backend response. autoInit gives the
 # repo an initial commit on the default branch (main) so dependents work.
-apiVersion: repository.gitea.m.crossplane.io/v2
+apiVersion: gitea.m.crossplane.io/v1beta1
 kind: Repository
 metadata: {name: uptest-repo, namespace: provider-gitea-e2e, annotations: {meta.upbound.io/example-id: repository/v2/repository, uptest.upbound.io/update-parameter: '{"description":"updated by provider-gitea e2e"}'}}
 spec:
