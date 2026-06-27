@@ -65,7 +65,7 @@ func Setup(mgr ctrl.Manager, o controller.Options) error {
 		}),
 		managed.WithLogger(o.Logger.WithValues("controller", name)),
 		managed.WithPollInterval(o.PollInterval),
-		managed.WithPollJitterHook(o.PollInterval/10),
+		managed.WithPollJitterHook(o.PollInterval / 10),
 		managed.WithRecorder(event.NewAPIRecorder(mgr.GetEventRecorderFor(name))),
 	}
 	// Honour spec.managementPolicies (ObserveOnly, no-delete, pause, ...) when the

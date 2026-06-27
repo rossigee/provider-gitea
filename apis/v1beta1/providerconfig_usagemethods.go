@@ -33,21 +33,21 @@ import (
 // Kind field of the returned value will be empty when read back from storage;
 // it is populated on every write via SetProviderConfigReference.
 func (p *ProviderConfigUsage) GetProviderConfigReference() xpv1.ProviderConfigReference {
-	return xpv1.ProviderConfigReference{Name: p.ProviderConfigUsage.ProviderConfigReference.Name}
+	return xpv1.ProviderConfigReference{Name: p.ProviderConfigReference.Name}
 }
 
 // SetProviderConfigReference stores the typed ProviderConfig reference.
 func (p *ProviderConfigUsage) SetProviderConfigReference(ref xpv1.ProviderConfigReference) {
-	p.ProviderConfigUsage.ProviderConfigReference = xpv1.Reference{Name: ref.Name}
+	p.ProviderConfigReference = xpv1.Reference{Name: ref.Name}
 }
 
 // GetResourceReference returns the managed resource reference stored in the
 // usage record.
 func (p *ProviderConfigUsage) GetResourceReference() xpv1.TypedReference {
-	return p.ProviderConfigUsage.ResourceReference
+	return p.ResourceReference
 }
 
 // SetResourceReference stores the managed resource reference in the usage record.
 func (p *ProviderConfigUsage) SetResourceReference(ref xpv1.TypedReference) {
-	p.ProviderConfigUsage.ResourceReference = ref
+	p.ResourceReference = ref
 }
