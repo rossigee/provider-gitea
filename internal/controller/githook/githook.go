@@ -50,6 +50,7 @@ const (
 	errDeleteGitHook     = "failed to delete githook"
 	errGetProviderConfig = "failed to get provider config"
 	errExternalName      = "invalid external-name, expected hook type"
+	errTrackUsage        = "cannot track ProviderConfig usage"
 )
 
 // Setup adds a controller that reconciles GitHook managed resources.
@@ -57,9 +58,13 @@ func Setup(mgr ctrl.Manager, o controller.Options) error {
 	name := managed.ControllerName(v2.GitHookKind)
 
 	opts := []managed.ReconcilerOption{
-		managed.WithExternalConnector(&connector{kube: mgr.GetClient()}),
+		managed.WithExternalConnector(&connector{
+			kube:  mgr.GetClient(),
+			usage: resource.NewProviderConfigUsageTracker(mgr.GetClient(), &v1beta1.ProviderConfigUsage{}),
+		}),
 		managed.WithLogger(o.Logger.WithValues("controller", name)),
 		managed.WithPollInterval(o.PollInterval),
+		managed.WithPollJitterHook(o.PollInterval / 10),
 		managed.WithRecorder(event.NewAPIRecorder(mgr.GetEventRecorderFor(name))),
 	}
 	// Honour spec.managementPolicies (ObserveOnly, no-delete, pause, ...) when the
@@ -79,13 +84,18 @@ func Setup(mgr ctrl.Manager, o controller.Options) error {
 }
 
 type connector struct {
-	kube client.Client
+	kube  client.Client
+	usage resource.ModernTracker
 }
 
 func (c *connector) Connect(ctx context.Context, mg resource.Managed) (managed.ExternalClient, error) {
 	cr, ok := mg.(*v2.GitHook)
 	if !ok {
 		return nil, errors.New(errNotGitHook)
+	}
+
+	if err := c.usage.Track(ctx, cr); err != nil {
+		return nil, errors.Wrap(err, errTrackUsage)
 	}
 
 	pcRef := cr.Spec.ProviderConfigReference

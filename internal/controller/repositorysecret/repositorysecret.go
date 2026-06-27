@@ -51,6 +51,7 @@ const (
 	errGetProviderConfig      = "failed to get provider config"
 	errExternalName           = "invalid external-name, expected secret name"
 	errGetValue               = "failed to read secret value from valueSecretRef"
+	errTrackUsage             = "cannot track ProviderConfig usage"
 )
 
 // Setup adds a controller that reconciles RepositorySecret managed resources.
@@ -58,9 +59,13 @@ func Setup(mgr ctrl.Manager, o controller.Options) error {
 	name := managed.ControllerName(v2.RepositorySecretKind)
 
 	opts := []managed.ReconcilerOption{
-		managed.WithExternalConnector(&connector{kube: mgr.GetClient()}),
+		managed.WithExternalConnector(&connector{
+			kube:  mgr.GetClient(),
+			usage: resource.NewProviderConfigUsageTracker(mgr.GetClient(), &v1beta1.ProviderConfigUsage{}),
+		}),
 		managed.WithLogger(o.Logger.WithValues("controller", name)),
 		managed.WithPollInterval(o.PollInterval),
+		managed.WithPollJitterHook(o.PollInterval / 10),
 		managed.WithRecorder(event.NewAPIRecorder(mgr.GetEventRecorderFor(name))),
 	}
 	// Honour spec.managementPolicies (ObserveOnly, no-delete, pause, ...) when the
@@ -80,13 +85,18 @@ func Setup(mgr ctrl.Manager, o controller.Options) error {
 }
 
 type connector struct {
-	kube client.Client
+	kube  client.Client
+	usage resource.ModernTracker
 }
 
 func (c *connector) Connect(ctx context.Context, mg resource.Managed) (managed.ExternalClient, error) {
 	cr, ok := mg.(*v2.RepositorySecret)
 	if !ok {
 		return nil, errors.New(errNotRepositorySecret)
+	}
+
+	if err := c.usage.Track(ctx, cr); err != nil {
+		return nil, errors.Wrap(err, errTrackUsage)
 	}
 
 	pcRef := cr.Spec.ProviderConfigReference
