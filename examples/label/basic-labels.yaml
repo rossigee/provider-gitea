@@ -1,6 +1,6 @@
 ---
 # Bug label with red color
-apiVersion: label.gitea.m.crossplane.io/v2
+apiVersion: gitea.m.crossplane.io/v1beta1
 kind: Label
 metadata:
   name: bug-label
@@ -16,7 +16,7 @@ spec:
     name: default
 ---
 # Enhancement label with green color
-apiVersion: label.gitea.m.crossplane.io/v2
+apiVersion: gitea.m.crossplane.io/v1beta1
 kind: Label
 metadata:
   name: enhancement-label
@@ -32,7 +32,7 @@ spec:
     name: default
 ---
 # Priority scoped labels (exclusive)
-apiVersion: label.gitea.m.crossplane.io/v2
+apiVersion: gitea.m.crossplane.io/v1beta1
 kind: Label
 metadata:
   name: priority-high-label
@@ -47,7 +47,7 @@ spec:
   providerConfigRef:
     name: default
 ---
-apiVersion: label.gitea.m.crossplane.io/v2
+apiVersion: gitea.m.crossplane.io/v1beta1
 kind: Label
 metadata:
   name: priority-medium-label
@@ -62,7 +62,7 @@ spec:
   providerConfigRef:
     name: default
 ---
-apiVersion: label.gitea.m.crossplane.io/v2
+apiVersion: gitea.m.crossplane.io/v1beta1
 kind: Label
 metadata:
   name: priority-low-label
@@ -79,7 +79,7 @@ spec:
 ---
 # Organization-scoped label (scope: org). Targets /orgs/{org}/labels; repository
 # must be omitted. Without scope, labels default to repo scope (backward compat).
-apiVersion: label.gitea.m.crossplane.io/v2
+apiVersion: gitea.m.crossplane.io/v1beta1
 kind: Label
 metadata:
   name: org-security-label

@@ -1,6 +1,16 @@
 # Provider Gitea
 
-A v2-only Crossplane provider for declarative Gitea management: **15 namespaced
+> [!WARNING]
+> **The next release contains breaking API changes.** All existing CRs must be
+> deleted and re-applied — CRD names and API versions change and in-place upgrade
+> is not possible. See [BREAKING_CHANGES.md](BREAKING_CHANGES.md) for the full
+> migration guide.
+>
+> Key changes: unified group (`gitea.m.crossplane.io/v1beta1` for all MRs,
+> replacing the per-resource `<kind>.gitea.m.crossplane.io/v2` groups); ProviderConfig
+> group (`gitea.crossplane.io`) is unchanged.
+
+A Crossplane provider for declarative Gitea management: **15 namespaced
 resource kinds**, each with a working reconciler proven end-to-end against a real
 Gitea server in CI.
 
@@ -22,7 +32,7 @@ managed-methodset, and a package that can't ship Healthy-but-CRD-less.
 
 ## Resource catalog
 
-All kinds use the namespaced v2 group `<kind>.gitea.m.crossplane.io/v2` and must
+All kinds use the namespaced group `gitea.m.crossplane.io/v1beta1` and must
 carry `metadata.namespace`.
 
 | Resource | Purpose | Example |
@@ -109,7 +119,7 @@ kind: Secret
 metadata: {name: alice-password, namespace: default}
 stringData: {password: "S3cure-Pass-123"}
 ---
-apiVersion: user.gitea.m.crossplane.io/v2
+apiVersion: gitea.m.crossplane.io/v1beta1
 kind: User
 metadata: {name: alice, namespace: default}
 spec:
@@ -144,7 +154,7 @@ for any future user-scoped resource.
 3. Create a ProviderConfig + apply a resource (see `examples/e2e/`):
    ```bash
    kubectl apply -f examples/e2e/repository.yaml
-   kubectl get repository.repository.gitea.m.crossplane.io -n <ns>
+   kubectl get repository.gitea.m.crossplane.io -n <ns>
    ```
 
 ## Testing

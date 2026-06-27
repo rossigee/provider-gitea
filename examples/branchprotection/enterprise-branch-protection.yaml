@@ -1,6 +1,6 @@
 # Enterprise-grade branch protection configuration
 # This example demonstrates comprehensive branch protection rules for a production repository
-apiVersion: branchprotection.gitea.m.crossplane.io/v2
+apiVersion: gitea.m.crossplane.io/v1beta1
 kind: BranchProtection
 metadata:
   name: main-branch-protection

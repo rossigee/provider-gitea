@@ -1,6 +1,6 @@
 # Basic branch protection for small teams
 # Minimal configuration for protecting main branch
-apiVersion: branchprotection.gitea.m.crossplane.io/v2
+apiVersion: gitea.m.crossplane.io/v1beta1
 kind: BranchProtection
 metadata:
   name: basic-main-protection

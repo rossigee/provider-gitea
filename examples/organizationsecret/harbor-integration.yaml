@@ -1,4 +1,4 @@
-apiVersion: organizationsecret.gitea.m.crossplane.io/v2
+apiVersion: gitea.m.crossplane.io/v1beta1
 kind: OrganizationSecret
 metadata:
   name: harbor-registry-secret
@@ -17,7 +17,7 @@ spec:
   providerConfigRef:
     name: default
 ---
-apiVersion: organizationsecret.gitea.m.crossplane.io/v2
+apiVersion: gitea.m.crossplane.io/v1beta1
 kind: OrganizationSecret
 metadata:
   name: harbor-robot-credentials
@@ -36,7 +36,7 @@ spec:
   providerConfigRef:
     name: default
 ---
-apiVersion: organizationsecret.gitea.m.crossplane.io/v2
+apiVersion: gitea.m.crossplane.io/v1beta1
 kind: OrganizationSecret
 metadata:
   name: harbor-project-name

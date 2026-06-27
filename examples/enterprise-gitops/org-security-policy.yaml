@@ -1,4 +1,4 @@
-apiVersion: organizationsettings.gitea.m.crossplane.io/v2
+apiVersion: gitea.m.crossplane.io/v1beta1
 kind: OrganizationSettings
 metadata:
   name: enterprise-security-policy

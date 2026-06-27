@@ -1,4 +1,4 @@
-apiVersion: accesstoken.gitea.m.crossplane.io/v2
+apiVersion: gitea.m.crossplane.io/v1beta1
 kind: AccessToken
 metadata: {name: uptest-token, namespace: provider-gitea-e2e, annotations: {meta.upbound.io/example-id: accesstoken/v2/accesstoken}}
 spec:

@@ -1,4 +1,4 @@
-apiVersion: organization.gitea.m.crossplane.io/v2
+apiVersion: gitea.m.crossplane.io/v1beta1
 kind: Organization
 metadata:
   name: example-org

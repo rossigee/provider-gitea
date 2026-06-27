@@ -4,9 +4,9 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.20.0
-  name: webhooks.webhook.gitea.m.crossplane.io
+  name: webhooks.gitea.m.crossplane.io
 spec:
-  group: webhook.gitea.m.crossplane.io
+  group: gitea.m.crossplane.io
   names:
     categories:
     - crossplane
@@ -33,7 +33,7 @@ spec:
     - jsonPath: .metadata.creationTimestamp
       name: AGE
       type: date
-    name: v2
+    name: v1beta1
     schema:
       openAPIV3Schema:
         properties:

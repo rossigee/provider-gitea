@@ -42,7 +42,7 @@ import (
 	xpv1 "github.com/crossplane/crossplane/apis/v2/core/v2"
 
 	"github.com/rossigee/provider-gitea/apis/v1beta1"
-	v2 "github.com/rossigee/provider-gitea/apis/webhook/v2"
+	v2 "github.com/rossigee/provider-gitea/apis/webhook/v1beta1"
 	"github.com/rossigee/provider-gitea/internal/clients"
 )
 

@@ -29,9 +29,13 @@ GITEA_ADMIN_PASSWORD="${GITEA_ADMIN_PASSWORD:-Uptest-Admin-123}"
 ${KUBECTL} create namespace "$NS" --dry-run=client -o yaml | ${KUBECTL} apply -f - >/dev/null
 
 echo "uptest-setup: minting admin API token in the gitea pod"
-# generate-access-token --raw prints just the token. The token name must be
-# unique per call, so include a fixed e2e name; on a fresh cluster this is the
-# first one. `all` scope so every resource controller can act.
+# Idempotent: delete the "e2e" token if it already exists (KEEP-cluster re-runs).
+# Uses the Gitea HTTP API inside the pod (curl is present in the gitea image).
+${KUBECTL} -n "$GITEA_NS" exec "deploy/${GITEA_RELEASE}" -c gitea -- \
+  curl -sf -u "${GITEA_ADMIN}:${GITEA_ADMIN_PASSWORD}" \
+  -X DELETE "http://localhost:3000/api/v1/users/${GITEA_ADMIN}/tokens/e2e" \
+  2>/dev/null || true
+# generate-access-token --raw prints just the token; `all` scope for all controllers.
 TOKEN="$(${KUBECTL} -n "$GITEA_NS" exec "deploy/${GITEA_RELEASE}" -c gitea -- \
   gitea admin user generate-access-token --username "$GITEA_ADMIN" \
   --token-name "e2e" --scopes all --raw 2>/dev/null | tr -d '\r\n' | tail -c 64)"
@@ -83,6 +87,15 @@ YAML
 echo "uptest-setup: waiting until provider is Healthy"
 ${KUBECTL} wait provider.pkg --all --for condition=Healthy --timeout 5m
 
+# Wait for the MR CRDs to be Established before applying any MRs. Crossplane can
+# report Healthy slightly ahead of the apiserver's discovery cache refresh, which
+# causes "the server doesn't have a resource type" on the next apply.
+echo "uptest-setup: waiting for CRDs to be Established"
+${KUBECTL} wait --for=condition=Established \
+  crd/repositories.gitea.m.crossplane.io \
+  crd/organizations.gitea.m.crossplane.io \
+  --timeout 60s
+
 # Pre-create the foundational resources almost everything else depends on (the
 # repository and the organization) and wait for them Ready BEFORE uptest applies
 # the full set. uptest applies all examples in parallel; a dependent whose parent
@@ -93,7 +106,7 @@ ${KUBECTL} wait provider.pkg --all --for condition=Healthy --timeout 5m
 # then adopts these (already Ready) and still drives + deletes them.
 echo "uptest-setup: pre-creating foundational repository + organization"
 ${KUBECTL} apply -f "${ROOT}/examples/e2e/repository.yaml" -f "${ROOT}/examples/e2e/organization.yaml" >/dev/null
-${KUBECTL} -n "$NS" wait repository.repository.gitea.m.crossplane.io/uptest-repo \
-  organization.organization.gitea.m.crossplane.io/uptest-org \
+${KUBECTL} -n "$NS" wait repositories.gitea.m.crossplane.io/uptest-repo \
+  organizations.gitea.m.crossplane.io/uptest-org \
   --for condition=Ready --timeout 3m
 echo "uptest-setup: done"

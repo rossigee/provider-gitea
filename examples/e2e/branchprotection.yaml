@@ -1,4 +1,4 @@
-apiVersion: branchprotection.gitea.m.crossplane.io/v2
+apiVersion: gitea.m.crossplane.io/v1beta1
 kind: BranchProtection
 metadata: {name: uptest-bp, namespace: provider-gitea-e2e, annotations: {meta.upbound.io/example-id: branchprotection/v2/branchprotection}}
 spec:
