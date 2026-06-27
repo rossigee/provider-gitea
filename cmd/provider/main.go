@@ -47,7 +47,7 @@ func main() {
 		pollInterval             = app.Flag("poll", "Poll interval controls how often an individual resource should be checked for drift.").Default("1m").Duration()
 		leaderElection           = app.Flag("leader-election", "Use leader election for the controller manager.").Short('l').Default("false").Bool()
 		maxReconcileRate         = app.Flag("max-reconcile-rate", "The global maximum rate per second at which resources may checked for drift from the desired state.").Default("100").Int()
-		enableManagementPolicies = app.Flag("enable-management-policies", "Enable support for Management Policies (spec.managementPolicies), e.g. ObserveOnly, no-delete, pause.").Default("false").Bool()
+		enableManagementPolicies = app.Flag("enable-management-policies", "Enable support for Management Policies (spec.managementPolicies), e.g. ObserveOnly, no-delete, pause.").Default("true").Bool()
 		_                        = app.Flag("namespace", "Namespace used to set as default scope in default secret store config.").Default("crossplane-system").Envar("POD_NAMESPACE").String()
 	)
 	kingpin.MustParse(app.Parse(os.Args[1:]))
