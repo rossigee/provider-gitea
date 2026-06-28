@@ -101,6 +101,8 @@ PY
   kubectl -n kube-system rollout status deploy/coredns --timeout=120s
 fi
 
+log "regenerating CRDs (must match what release.yml ships)"
+"${ROOT}/scripts/generate.sh"
 XPKG="$("${ROOT}/scripts/build-xpkg.sh" amd64)"
 "${ROOT}/scripts/verify-xpkg.sh" "$XPKG"
 log "pushing package to ${PUSH_REF} (pulled in-cluster as ${REG_REF})"
