@@ -14,10 +14,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// Package v2 contains the v2 API of organizationsecret
+// Package v1beta1 contains the v1beta1 API of organizationsecret
 // +kubebuilder:object:generate=true
 // +groupName=gitea.m.crossplane.io
-// +versionName=v2
 package v1beta1
 
 import (
