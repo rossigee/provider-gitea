@@ -45,9 +45,6 @@ jobs:
             echo "version=${{ inputs.version }}" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Regenerate CRDs (the package must carry them)
-        run: bash scripts/generate.sh
-
       - name: Set up QEMU (cross-arch runtime images)
         uses: docker/setup-qemu-action@v3
 
