@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.12.1] - 2026-06-28
+
+### Fixed
+- Removed stale `// +versionName=v2` kubebuilder marker from all 15 resource
+  `groupversion_info.go` files. The marker caused controller-gen to stamp CRDs
+  with version `v2` while the runtime `SchemeGroupVersion` registered types under
+  `v1beta1`, so Org, User, Repository and all other MRs never reconciled after
+  a fresh install of v0.12.0.
+- Release workflow no longer regenerates CRDs at publish time; the committed
+  `package/crds/` snapshot (validated by the `check-diff` CI job) is used
+  directly, eliminating the source of the v0.12.0 mismatch.
+
 ### Removed (repo cleanup — no runtime behaviour change)
 - Fork-migration scaffolding scripts (`create-v2-apis.sh`, `complete-v2-apis.sh`,
   `enhance-v2-apis.sh`, `fix-*.sh`, `build-and-push.sh`) — referenced nowhere.
