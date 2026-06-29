@@ -116,7 +116,7 @@ jobs:
         run: make test
 
       - name: Upload Coverage Reports
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v7
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           file: ./coverage.out
