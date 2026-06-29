@@ -319,6 +319,17 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 		updateReq.Email = &cr.Spec.ForProvider.Email
 	}
 
+	// Gitea's PATCH /admin/users/{username} always requires login_name and
+	// source_id even when not changing them. Default to the username and 0
+	// (local account) when the spec does not pin them.
+	if updateReq.LoginName == nil || *updateReq.LoginName == "" {
+		updateReq.LoginName = &username
+	}
+	if updateReq.SourceID == nil {
+		zero := int64(0)
+		updateReq.SourceID = &zero
+	}
+
 	// Rotate the password only when the referenced Secret's content differs from
 	// the hash the provider last applied (recomputed here, not trusted from a
 	// possibly-stale status). When it matches we leave password unset so Forgejo
@@ -333,12 +344,6 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 		stored := cr.Status.AtProvider.PasswordHash
 		if stored == nil || *stored != current {
 			updateReq.Password = password
-			// The admin edit-user API requires login_name (and source_id) to be
-			// present whenever password is set; default login_name to the username
-			// if the spec did not pin one.
-			if updateReq.LoginName == nil || *updateReq.LoginName == "" {
-				updateReq.LoginName = &username
-			}
 			newHash = current
 		}
 	}
