@@ -215,10 +215,17 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 	meta.SetExternalName(cr, strconv.FormatInt(token.ID, 10))
 
 	// Surface the one-time secret token value as a connection detail; it is the
-	// only chance to capture it (Gitea never returns it again).
+	// only chance to capture it (Gitea never returns it again). Forgejo/Gitea
+	// disclose the value under the "sha1" field of the create response; the
+	// "token" field is not populated by current server versions. Prefer sha1 and
+	// fall back to token so a server that ever populates the latter still works.
+	secret := token.Sha1
+	if secret == "" {
+		secret = token.Token
+	}
 	conn := managed.ConnectionDetails{}
-	if token.Token != "" {
-		conn["token"] = []byte(token.Token)
+	if secret != "" {
+		conn["token"] = []byte(secret)
 	}
 
 	return managed.ExternalCreation{ConnectionDetails: conn}, nil

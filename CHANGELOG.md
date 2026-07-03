@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.12.3] - 2026-07-03
+
+### Fixed
+- `AccessToken` Create now captures the one-time token value from the `sha1`
+  field of the Gitea/Forgejo create response (falling back to `token`) instead
+  of reading only the never-populated `token` field. Previously every
+  `AccessToken` reconciled to `Ready=True`/`Synced=True` but wrote an **empty**
+  connection Secret (only `token_last_eight` was surfaced, in status), so any
+  consumer of `writeConnectionSecretToRef` (e.g. a ProviderConfig referencing
+  the minted token) received no credential. The existing unit test masked the
+  bug by populating the `token` field, which real servers never return; the test
+  now uses `sha1` and adds a `token`-fallback case.
+
 ## [0.12.1] - 2026-06-28
 
 ### Fixed

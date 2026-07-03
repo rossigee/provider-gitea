@@ -118,7 +118,8 @@ func TestObserveAvailableAndUpToDate(t *testing.T) {
 }
 
 func TestCreateSetsExternalName(t *testing.T) {
-	f := &fakeClient{createResp: &clients.AccessToken{ID: 7, Name: "ci-token", Token: "secret-value"}}
+	// Forgejo/Gitea disclose the token value under the "sha1" field on create.
+	f := &fakeClient{createResp: &clients.AccessToken{ID: 7, Name: "ci-token", Sha1: "secret-value"}}
 	e := &external{client: f}
 
 	cr := newCR("")
@@ -130,7 +131,22 @@ func TestCreateSetsExternalName(t *testing.T) {
 		t.Fatalf("expected external-name 7, got %q", got)
 	}
 	if string(obs.ConnectionDetails["token"]) != "secret-value" {
-		t.Fatalf("expected token connection detail to be captured, got %q", obs.ConnectionDetails["token"])
+		t.Fatalf("expected token connection detail to be captured from sha1, got %q", obs.ConnectionDetails["token"])
+	}
+}
+
+// TestCreateCapturesTokenFallback ensures that if a server ever populates the
+// legacy "token" field instead of "sha1", the value is still captured.
+func TestCreateCapturesTokenFallback(t *testing.T) {
+	f := &fakeClient{createResp: &clients.AccessToken{ID: 8, Name: "ci-token", Token: "legacy-value"}}
+	e := &external{client: f}
+
+	obs, err := e.Create(context.Background(), newCR(""))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if string(obs.ConnectionDetails["token"]) != "legacy-value" {
+		t.Fatalf("expected token connection detail from token fallback, got %q", obs.ConnectionDetails["token"])
 	}
 }
 
