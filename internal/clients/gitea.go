@@ -368,7 +368,15 @@ type User struct {
 	Description   string `json:"description"`
 }
 
-// CreateUserRequest represents the request body for creating a user
+// CreateUserRequest represents the request body for creating a user.
+//
+// MustChangePassword and Restricted are *bool, not bool: both are
+// meaningful at false (explicitly disable Gitea/Forgejo's own
+// force-password-change-on-create default; explicitly create an
+// unrestricted account), and a plain bool with `omitempty` silently drops
+// an explicit false from the request body (false is bool's zero value), so
+// Gitea/Forgejo never sees it and falls back to its own server-side
+// default instead of the value the caller actually asked for.
 type CreateUserRequest struct {
 	Username           string `json:"username"`
 	Email              string `json:"email"`
@@ -377,8 +385,8 @@ type CreateUserRequest struct {
 	LoginName          string `json:"login_name,omitempty"`
 	SendNotify         bool   `json:"send_notify,omitempty"`
 	SourceID           int64  `json:"source_id,omitempty"`
-	MustChangePassword bool   `json:"must_change_password,omitempty"`
-	Restricted         bool   `json:"restricted,omitempty"`
+	MustChangePassword *bool  `json:"must_change_password,omitempty"`
+	Restricted         *bool  `json:"restricted,omitempty"`
 	Visibility         string `json:"visibility,omitempty"`
 }
 
@@ -393,6 +401,7 @@ type UpdateUserRequest struct {
 	FullName                *string `json:"full_name,omitempty"`
 	LoginName               *string `json:"login_name,omitempty"`
 	SourceID                *int64  `json:"source_id,omitempty"`
+	MustChangePassword      *bool   `json:"must_change_password,omitempty"`
 	Active                  *bool   `json:"active,omitempty"`
 	Admin                   *bool   `json:"admin,omitempty"`
 	AllowGitHook            *bool   `json:"allow_git_hook,omitempty"`

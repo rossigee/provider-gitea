@@ -23,6 +23,7 @@ import (
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
@@ -43,6 +44,7 @@ type fakeClient struct {
 	createErr  error
 	deleteErr  error
 	deleted    bool
+	lastCreate *clients.CreateUserRequest
 	lastUpdate *clients.UpdateUserRequest
 	updateCnt  int
 }
@@ -51,7 +53,8 @@ func (f *fakeClient) GetUser(_ context.Context, _ string) (*clients.User, error)
 	return f.getUser, f.getErr
 }
 
-func (f *fakeClient) CreateUser(_ context.Context, _ *clients.CreateUserRequest) (*clients.User, error) {
+func (f *fakeClient) CreateUser(_ context.Context, req *clients.CreateUserRequest) (*clients.User, error) {
+	f.lastCreate = req
 	return f.createResp, f.createErr
 }
 
@@ -227,6 +230,56 @@ func TestCreateSetsExternalNameFromBackend(t *testing.T) {
 	}
 	if got := meta.GetExternalName(cr); got != "my-user" {
 		t.Fatalf("expected external-name my-user, got %q", got)
+	}
+}
+
+// An explicit false must survive onto the wire: CreateUserRequest.
+// MustChangePassword/Restricted are *bool specifically so an explicit false
+// doesn't vanish behind `omitempty` (a plain bool's zero value). If either
+// regresses to a plain bool, Forgejo silently falls back to its own
+// force-password-change-on-create default instead of the false the caller
+// asked for — the bug that blocked every real ApplicationToken PAT mint
+// (Basic Auth 403s until the flag is actually false server-side).
+func TestCreateSendsExplicitFalseForPointerBoolFields(t *testing.T) {
+	f := &fakeClient{createResp: &clients.User{ID: 7, Username: "my-user"}}
+	e := &external{client: f, kube: kubeWithPassword()}
+
+	cr := newCR("")
+	cr.Spec.ForProvider.MustChangePassword = ptr.To(false)
+	cr.Spec.ForProvider.Restricted = ptr.To(false)
+	if _, err := e.Create(context.Background(), cr); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if f.lastCreate == nil {
+		t.Fatalf("expected CreateUser to have been called")
+	}
+	if f.lastCreate.MustChangePassword == nil || *f.lastCreate.MustChangePassword {
+		t.Fatalf("expected MustChangePassword to be a non-nil false, got %+v", f.lastCreate.MustChangePassword)
+	}
+	if f.lastCreate.Restricted == nil || *f.lastCreate.Restricted {
+		t.Fatalf("expected Restricted to be a non-nil false, got %+v", f.lastCreate.Restricted)
+	}
+}
+
+// Update must also carry MustChangePassword — the old UpdateUserRequest had
+// no such field at all, so no Update ever touched it: an admin-promotion
+// reconcile (or any other drift-correction Update) could never clear a
+// stuck must-change-password flag, only Create could set it in the first
+// place.
+func TestUpdateSendsMustChangePassword(t *testing.T) {
+	f := &fakeClient{getUser: &clients.User{ID: 7, Username: "my-user"}}
+	e := &external{client: f, kube: kubeWithPassword()}
+
+	cr := newCR("my-user")
+	h := hashPassword("s3cret")
+	cr.Status.AtProvider.PasswordHash = &h // no password rotation this reconcile
+	cr.Spec.ForProvider.MustChangePassword = ptr.To(false)
+
+	if _, err := e.Update(context.Background(), cr); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if f.lastUpdate == nil || f.lastUpdate.MustChangePassword == nil || *f.lastUpdate.MustChangePassword {
+		t.Fatalf("expected Update to carry a non-nil false MustChangePassword, got %+v", f.lastUpdate)
 	}
 }
 

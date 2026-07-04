@@ -265,12 +265,10 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 	if cr.Spec.ForProvider.SourceID != nil {
 		createReq.SourceID = *cr.Spec.ForProvider.SourceID
 	}
-	if cr.Spec.ForProvider.MustChangePassword != nil {
-		createReq.MustChangePassword = *cr.Spec.ForProvider.MustChangePassword
-	}
-	if cr.Spec.ForProvider.Restricted != nil {
-		createReq.Restricted = *cr.Spec.ForProvider.Restricted
-	}
+	// Passed as pointers, not dereferenced: both are meaningful at false
+	// (see CreateUserRequest's doc comment on why these two are *bool).
+	createReq.MustChangePassword = cr.Spec.ForProvider.MustChangePassword
+	createReq.Restricted = cr.Spec.ForProvider.Restricted
 	if cr.Spec.ForProvider.Visibility != nil {
 		createReq.Visibility = *cr.Spec.ForProvider.Visibility
 	}
@@ -302,6 +300,7 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 		FullName:                cr.Spec.ForProvider.FullName,
 		LoginName:               cr.Spec.ForProvider.LoginName,
 		SourceID:                cr.Spec.ForProvider.SourceID,
+		MustChangePassword:      cr.Spec.ForProvider.MustChangePassword,
 		Active:                  cr.Spec.ForProvider.Active,
 		Admin:                   cr.Spec.ForProvider.Admin,
 		AllowGitHook:            cr.Spec.ForProvider.AllowGitHook,

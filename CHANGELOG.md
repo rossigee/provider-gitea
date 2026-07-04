@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- `User`'s `CreateUserRequest.MustChangePassword`/`Restricted` were plain
+  `bool` with `json:"...,omitempty"` — Go's `omitempty` drops a field at its
+  zero value, so an explicit `false` (a value both fields are meaningful at)
+  silently vanished from the `POST /admin/users` body. Forgejo then applied
+  its own server-side default instead of the caller's actual request — for
+  `mustChangePassword: false` specifically, every newly created user ended
+  up requiring a password change regardless of spec, which blocks Basic-Auth
+  API calls outright (403) until the user completes that change. Both
+  fields are now `*bool`, matching every other optional boolean already in
+  `CreateUserRequest`/`UpdateUserRequest`.
+- `UpdateUserRequest` had no `MustChangePassword` field at all, so no
+  `Update` (drift correction, admin promotion, or otherwise) could ever
+  address it — only `Create` could set it, and only in one direction.
+
 ## [0.12.3] - 2026-07-03
 
 ### Fixed
