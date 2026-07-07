@@ -61,7 +61,7 @@ jobs:
           password: ${{ github.token }}
 
       - name: Build
-        run: make build BUILD_PLATFORMS="linux_amd64 linux_arm64"
+        run: make build BUILD_PLATFORMS="linux_amd64"
         env:
           VERSION: ${{ steps.version.outputs.version }}
 
@@ -70,12 +70,17 @@ jobs:
         env:
           VERSION: ${{ steps.version.outputs.version }}
 
-      - name: Publish Artifacts (Docker Images + Crossplane Packages)
+      - name: Publish Docker Image
         run: |
-          make publish \
-            REGISTRY_ORGS="ghcr.io/${{ github.repository_owner }}" \
-            XPKG_REG_ORGS="ghcr.io/${{ github.repository_owner }}" \
-            BRANCH_NAME=master
+          make img.publish \
+            REGISTRY_ORGS="ghcr.io/${{ github.repository_owner }}"
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+
+      - name: Publish Crossplane Packages
+        run: |
+          make xpkg.publish \
+            XPKG_REG_ORGS="ghcr.io/${{ github.repository_owner }}"
         env:
           VERSION: ${{ steps.version.outputs.version }}
 
