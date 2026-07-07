@@ -59,7 +59,7 @@ publish.artifacts:
 publish: publish.artifacts
 
 # Setup Package Metadata
-export CROSSPLANE_VERSION := v2.0.2
+export CROSSPLANE_VERSION := v2.3.3
 -include build/makelib/local.xpkg.mk
 -include build/makelib/controlplane.mk
 
