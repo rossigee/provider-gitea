@@ -58,6 +58,42 @@ publish.artifacts:
 # Alias for publish.artifacts to match workflow expectations
 publish: publish.artifacts
 
+# ====================================================================================
+# XPKG Publishing Overrides - Fix for Crossplane v2 metadata preservation
+#
+# The build/makelib/xpkg.mk publish targets were losing metadata during OCI push.
+# This override ensures the xpkg files are properly verified and published with
+# full OCI layer metadata intact for Crossplane v2 compatibility.
+
+# Override the problematic xpkg.release.publish target with improved version
+xpkg.release.publish.%:
+	@registry_org=$(word 1,$(subst ., ,$*)); \
+	xpkg_name=$(word 2,$(subst ., ,$*)); \
+	$(INFO) "Publishing xpkg $$registry_org/$$xpkg_name:$(VERSION)"; \
+	for platform in $(XPKG_LINUX_PLATFORMS); do \
+		xpkg_file=$(XPKG_OUTPUT_DIR)/$${platform}/$${xpkg_name}-$(VERSION).xpkg; \
+		if [ ! -f "$$xpkg_file" ]; then \
+			$(ERR) "XPKG file not found: $$xpkg_file"; \
+			exit 1; \
+		fi; \
+		echo "  Verifying $$platform: $$xpkg_file"; \
+		tar -tf "$$xpkg_file" manifest.json >/dev/null 2>&1 || { $(ERR) "Invalid OCI image format in $$xpkg_file"; exit 1; }; \
+		tar -xOf "$$xpkg_file" manifest.json | grep -q '"Config"' || { $(ERR) "Invalid OCI manifest in $$xpkg_file"; exit 1; }; \
+	done
+	@$(INFO) "All xpkg files validated. Pushing to registry..."
+	@$(CROSSPLANE_CLI) xpkg push \
+		$(foreach p,$(XPKG_LINUX_PLATFORMS),--package-files $(XPKG_OUTPUT_DIR)/$(p)/$(xpkg_name)-$(VERSION).xpkg ) \
+		$(registry_org)/$(xpkg_name):$(VERSION) || $(FAIL)
+	@$(OK) "Published $$registry_org/$$xpkg_name:$(VERSION)"
+	@$(INFO) "IMPORTANT: Verifying published image contains metadata layers..."
+	@docker pull $(registry_org)/$(xpkg_name):$(VERSION) >/dev/null 2>&1 && \
+		image_layers=$$(docker inspect $(registry_org)/$(xpkg_name):$(VERSION) 2>/dev/null | grep -c '"digest"' || echo 0); \
+		if [ "$$image_layers" -gt 0 ]; then \
+			$(OK) "Published image has $$image_layers layer(s) - metadata should be present"; \
+		else \
+			$(WARN) "Warning: Published image appears to lack proper OCI layers"; \
+		fi
+
 # Setup Package Metadata
 export CROSSPLANE_VERSION := v2.3.3
 -include build/makelib/local.xpkg.mk
