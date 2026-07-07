@@ -70,17 +70,12 @@ jobs:
         env:
           VERSION: ${{ steps.version.outputs.version }}
 
-      - name: Publish Docker Image
+      - name: Publish Artifacts
         run: |
-          make img.publish \
-            REGISTRY_ORGS="ghcr.io/${{ github.repository_owner }}"
-        env:
-          VERSION: ${{ steps.version.outputs.version }}
-
-      - name: Publish Crossplane Packages
-        run: |
-          make xpkg.publish \
-            XPKG_REG_ORGS="ghcr.io/${{ github.repository_owner }}"
+          make publish \
+            REGISTRY_ORGS="ghcr.io/${{ github.repository_owner }}" \
+            XPKG_REG_ORGS="ghcr.io/${{ github.repository_owner }}" \
+            BRANCH_NAME=master
         env:
           VERSION: ${{ steps.version.outputs.version }}
 
