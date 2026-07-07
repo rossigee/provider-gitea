@@ -60,22 +60,37 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ github.token }}
 
-      - name: Build
-        run: make build BUILD_PLATFORMS="linux_amd64"
+      - name: Build Provider Binary
+        run: |
+          mkdir -p _output/bin/linux_amd64
+          go build -v -o _output/bin/linux_amd64/provider \
+            -ldflags "-X github.com/rossigee/provider-gitea/internal/version.Version=${{ steps.version.outputs.version }}" \
+            ./cmd/provider
         env:
           VERSION: ${{ steps.version.outputs.version }}
+
+      - name: Build and Push Docker Image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./cluster/images/provider-gitea/Dockerfile
+          build-args: |
+            TARGETOS=linux
+            TARGETARCH=amd64
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/provider-gitea:${{ steps.version.outputs.version }}
+            ghcr.io/${{ github.repository_owner }}/provider-gitea:latest
+          push: true
 
       - name: Build Crossplane Packages
         run: make xpkg.build BUILD_PLATFORMS="linux_amd64 linux_arm64"
         env:
           VERSION: ${{ steps.version.outputs.version }}
 
-      - name: Publish Artifacts
+      - name: Publish Crossplane Packages
         run: |
-          make publish \
-            REGISTRY_ORGS="ghcr.io/${{ github.repository_owner }}" \
-            XPKG_REG_ORGS="ghcr.io/${{ github.repository_owner }}" \
-            BRANCH_NAME=master
+          make xpkg.publish \
+            XPKG_REG_ORGS="ghcr.io/${{ github.repository_owner }}"
         env:
           VERSION: ${{ steps.version.outputs.version }}
 
