@@ -18,31 +18,28 @@ package repositorykey
 
 import (
 	"context"
-	"strconv"
-	"strings"
-
-	"github.com/pkg/errors"
-	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-
-	xpv1 "github.com/crossplane/crossplane-runtime/v2/pkg/controller"
+	"github.com/crossplane/crossplane-runtime/v2/pkg/controller"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/meta"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
-
+	"github.com/pkg/errors"
 	"github.com/rossigee/provider-gitea/apis/repositorykey/v2"
 	"github.com/rossigee/provider-gitea/apis/v1beta1"
 	"github.com/rossigee/provider-gitea/internal/clients"
 	"github.com/rossigee/provider-gitea/internal/tracing"
+	"sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"strconv"
+	"strings"
 )
 
 const (
-	errNotRepositoryKey         = "managed resource is not a RepositoryKey custom resource"
-	errGetRepositoryKey         = "failed to get repositorykey"
-	errCreateRepositoryKey      = "failed to create repositorykey"
-	errUpdateRepositoryKey      = "failed to update repositorykey"
-	errDeleteRepositoryKey      = "failed to delete repositorykey"
-	errGetProviderConfig = "failed to get provider config"
+	errNotRepositoryKey    = "managed resource is not a RepositoryKey custom resource"
+	errGetRepositoryKey    = "failed to get repositorykey"
+	errCreateRepositoryKey = "failed to create repositorykey"
+	errUpdateRepositoryKey = "failed to update repositorykey"
+	errDeleteRepositoryKey = "failed to delete repositorykey"
+	errGetProviderConfig   = "failed to get provider config"
 )
 
 type connector struct {

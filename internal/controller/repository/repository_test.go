@@ -19,16 +19,14 @@ package repository
 import (
 	"context"
 	"fmt"
-	"testing"
-
 	"github.com/crossplane/crossplane-runtime/v2/pkg/meta"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"sigs.k8s.io/controller-runtime/pkg/client/fake"
-
 	"github.com/rossigee/provider-gitea/apis/repository/v2"
 	"github.com/rossigee/provider-gitea/internal/clients"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/client/fake"
+	"testing"
 )
 
 type mockRepoClient struct {
@@ -69,21 +67,27 @@ func (m *mockRepoClient) DeleteRepository(ctx context.Context, owner, name strin
 	}
 	return nil
 }
-func (m *mockRepoClient) Disconnect(ctx context.Context) error                                        { return nil }
-func (m *mockRepoClient) GetOrganization(ctx context.Context, name string) (*clients.Organization, error) { return nil, nil }
+func (m *mockRepoClient) Disconnect(ctx context.Context) error { return nil }
+func (m *mockRepoClient) GetOrganization(ctx context.Context, name string) (*clients.Organization, error) {
+	return nil, nil
+}
 func (m *mockRepoClient) CreateOrganization(ctx context.Context, req *clients.CreateOrganizationRequest) (*clients.Organization, error) {
 	return nil, nil
 }
 func (m *mockRepoClient) UpdateOrganization(ctx context.Context, name string, req *clients.UpdateOrganizationRequest) (*clients.Organization, error) {
 	return nil, nil
 }
-func (m *mockRepoClient) DeleteOrganization(ctx context.Context, name string) error                                { return nil }
-func (m *mockRepoClient) GetUser(ctx context.Context, username string) (*clients.User, error)                     { return nil, nil }
-func (m *mockRepoClient) CreateUser(ctx context.Context, req *clients.CreateUserRequest) (*clients.User, error)   { return nil, nil }
+func (m *mockRepoClient) DeleteOrganization(ctx context.Context, name string) error { return nil }
+func (m *mockRepoClient) GetUser(ctx context.Context, username string) (*clients.User, error) {
+	return nil, nil
+}
+func (m *mockRepoClient) CreateUser(ctx context.Context, req *clients.CreateUserRequest) (*clients.User, error) {
+	return nil, nil
+}
 func (m *mockRepoClient) UpdateUser(ctx context.Context, username string, req *clients.UpdateUserRequest) (*clients.User, error) {
 	return nil, nil
 }
-func (m *mockRepoClient) DeleteUser(ctx context.Context, username string) error                                  { return nil }
+func (m *mockRepoClient) DeleteUser(ctx context.Context, username string) error { return nil }
 func (m *mockRepoClient) GetRepositoryWebhook(ctx context.Context, owner, repo string, id int64) (*clients.Webhook, error) {
 	return nil, nil
 }
@@ -93,7 +97,9 @@ func (m *mockRepoClient) CreateRepositoryWebhook(ctx context.Context, owner, rep
 func (m *mockRepoClient) UpdateRepositoryWebhook(ctx context.Context, owner, repo string, id int64, req *clients.UpdateWebhookRequest) (*clients.Webhook, error) {
 	return nil, nil
 }
-func (m *mockRepoClient) DeleteRepositoryWebhook(ctx context.Context, owner, repo string, id int64) error { return nil }
+func (m *mockRepoClient) DeleteRepositoryWebhook(ctx context.Context, owner, repo string, id int64) error {
+	return nil
+}
 func (m *mockRepoClient) GetOrganizationWebhook(ctx context.Context, org string, id int64) (*clients.Webhook, error) {
 	return nil, nil
 }
@@ -103,14 +109,18 @@ func (m *mockRepoClient) CreateOrganizationWebhook(ctx context.Context, org stri
 func (m *mockRepoClient) UpdateOrganizationWebhook(ctx context.Context, org string, id int64, req *clients.UpdateWebhookRequest) (*clients.Webhook, error) {
 	return nil, nil
 }
-func (m *mockRepoClient) DeleteOrganizationWebhook(ctx context.Context, org string, id int64) error { return nil }
+func (m *mockRepoClient) DeleteOrganizationWebhook(ctx context.Context, org string, id int64) error {
+	return nil
+}
 func (m *mockRepoClient) GetDeployKey(ctx context.Context, owner, repo string, id int64) (*clients.DeployKey, error) {
 	return nil, nil
 }
 func (m *mockRepoClient) CreateDeployKey(ctx context.Context, owner, repo string, req *clients.CreateDeployKeyRequest) (*clients.DeployKey, error) {
 	return nil, nil
 }
-func (m *mockRepoClient) DeleteDeployKey(ctx context.Context, owner, repo string, id int64) error { return nil }
+func (m *mockRepoClient) DeleteDeployKey(ctx context.Context, owner, repo string, id int64) error {
+	return nil
+}
 func (m *mockRepoClient) GetOrganizationSecret(ctx context.Context, org, secretName string) (*clients.OrganizationSecret, error) {
 	return nil, nil
 }
@@ -120,16 +130,22 @@ func (m *mockRepoClient) CreateOrganizationSecret(ctx context.Context, org, secr
 func (m *mockRepoClient) UpdateOrganizationSecret(ctx context.Context, org, secretName string, req *clients.CreateOrganizationSecretRequest) error {
 	return nil
 }
-func (m *mockRepoClient) DeleteOrganizationSecret(ctx context.Context, org, secretName string) error         { return nil }
-func (m *mockRepoClient) GetTeam(ctx context.Context, teamID int64) (*clients.Team, error)                   { return nil, nil }
+func (m *mockRepoClient) DeleteOrganizationSecret(ctx context.Context, org, secretName string) error {
+	return nil
+}
+func (m *mockRepoClient) GetTeam(ctx context.Context, teamID int64) (*clients.Team, error) {
+	return nil, nil
+}
 func (m *mockRepoClient) CreateTeam(ctx context.Context, org string, req *clients.CreateTeamRequest) (*clients.Team, error) {
 	return nil, nil
 }
 func (m *mockRepoClient) UpdateTeam(ctx context.Context, teamID int64, req *clients.UpdateTeamRequest) (*clients.Team, error) {
 	return nil, nil
 }
-func (m *mockRepoClient) DeleteTeam(ctx context.Context, teamID int64) error                                  { return nil }
-func (m *mockRepoClient) ListOrganizationTeams(ctx context.Context, org string) ([]*clients.Team, error)     { return nil, nil }
+func (m *mockRepoClient) DeleteTeam(ctx context.Context, teamID int64) error { return nil }
+func (m *mockRepoClient) ListOrganizationTeams(ctx context.Context, org string) ([]*clients.Team, error) {
+	return nil, nil
+}
 func (m *mockRepoClient) GetLabel(ctx context.Context, owner, repo string, labelID int64) (*clients.Label, error) {
 	return nil, nil
 }
@@ -139,7 +155,9 @@ func (m *mockRepoClient) CreateLabel(ctx context.Context, owner, repo string, re
 func (m *mockRepoClient) UpdateLabel(ctx context.Context, owner, repo string, labelID int64, req *clients.UpdateLabelRequest) (*clients.Label, error) {
 	return nil, nil
 }
-func (m *mockRepoClient) DeleteLabel(ctx context.Context, owner, repo string, labelID int64) error            { return nil }
+func (m *mockRepoClient) DeleteLabel(ctx context.Context, owner, repo string, labelID int64) error {
+	return nil
+}
 func (m *mockRepoClient) ListRepositoryLabels(ctx context.Context, owner, repo string) ([]*clients.Label, error) {
 	return nil, nil
 }
@@ -152,7 +170,9 @@ func (m *mockRepoClient) AddRepositoryCollaborator(ctx context.Context, owner, r
 func (m *mockRepoClient) UpdateRepositoryCollaborator(ctx context.Context, owner, repo, username string, req *clients.UpdateCollaboratorRequest) error {
 	return nil
 }
-func (m *mockRepoClient) RemoveRepositoryCollaborator(ctx context.Context, owner, repo, username string) error { return nil }
+func (m *mockRepoClient) RemoveRepositoryCollaborator(ctx context.Context, owner, repo, username string) error {
+	return nil
+}
 func (m *mockRepoClient) ListRepositoryCollaborators(ctx context.Context, owner, repo string) ([]*clients.RepositoryCollaborator, error) {
 	return nil, nil
 }
@@ -162,14 +182,18 @@ func (m *mockRepoClient) GetOrganizationSettings(ctx context.Context, org string
 func (m *mockRepoClient) UpdateOrganizationSettings(ctx context.Context, org string, req *clients.UpdateOrganizationSettingsRequest) (*clients.OrganizationSettings, error) {
 	return nil, nil
 }
-func (m *mockRepoClient) GetGitHook(ctx context.Context, repository, hookType string) (*clients.GitHook, error) { return nil, nil }
+func (m *mockRepoClient) GetGitHook(ctx context.Context, repository, hookType string) (*clients.GitHook, error) {
+	return nil, nil
+}
 func (m *mockRepoClient) CreateGitHook(ctx context.Context, repository string, req *clients.CreateGitHookRequest) (*clients.GitHook, error) {
 	return nil, nil
 }
 func (m *mockRepoClient) UpdateGitHook(ctx context.Context, repository, hookType string, req *clients.UpdateGitHookRequest) (*clients.GitHook, error) {
 	return nil, nil
 }
-func (m *mockRepoClient) DeleteGitHook(ctx context.Context, repository, hookType string) error { return nil }
+func (m *mockRepoClient) DeleteGitHook(ctx context.Context, repository, hookType string) error {
+	return nil
+}
 func (m *mockRepoClient) GetBranchProtection(ctx context.Context, repository, branch string) (*clients.BranchProtection, error) {
 	return nil, nil
 }
@@ -179,7 +203,9 @@ func (m *mockRepoClient) CreateBranchProtection(ctx context.Context, repository,
 func (m *mockRepoClient) UpdateBranchProtection(ctx context.Context, repository, branch string, req *clients.UpdateBranchProtectionRequest) (*clients.BranchProtection, error) {
 	return nil, nil
 }
-func (m *mockRepoClient) DeleteBranchProtection(ctx context.Context, repository, branch string) error { return nil }
+func (m *mockRepoClient) DeleteBranchProtection(ctx context.Context, repository, branch string) error {
+	return nil
+}
 func (m *mockRepoClient) GetRepositoryKey(ctx context.Context, repository string, keyID int64) (*clients.RepositoryKey, error) {
 	return nil, nil
 }
@@ -189,7 +215,9 @@ func (m *mockRepoClient) CreateRepositoryKey(ctx context.Context, repository str
 func (m *mockRepoClient) UpdateRepositoryKey(ctx context.Context, repository string, keyID int64, req *clients.UpdateRepositoryKeyRequest) (*clients.RepositoryKey, error) {
 	return nil, nil
 }
-func (m *mockRepoClient) DeleteRepositoryKey(ctx context.Context, repository string, keyID int64) error { return nil }
+func (m *mockRepoClient) DeleteRepositoryKey(ctx context.Context, repository string, keyID int64) error {
+	return nil
+}
 func (m *mockRepoClient) GetAccessToken(ctx context.Context, username string, tokenID int64) (*clients.AccessToken, error) {
 	return nil, nil
 }
@@ -199,7 +227,9 @@ func (m *mockRepoClient) CreateAccessToken(ctx context.Context, username string,
 func (m *mockRepoClient) UpdateAccessToken(ctx context.Context, username string, tokenID int64, req *clients.UpdateAccessTokenRequest) (*clients.AccessToken, error) {
 	return nil, nil
 }
-func (m *mockRepoClient) DeleteAccessToken(ctx context.Context, username string, tokenID int64) error { return nil }
+func (m *mockRepoClient) DeleteAccessToken(ctx context.Context, username string, tokenID int64) error {
+	return nil
+}
 func (m *mockRepoClient) GetRepositorySecret(ctx context.Context, repository, secretName string) (*clients.RepositorySecret, error) {
 	return nil, nil
 }
@@ -209,15 +239,21 @@ func (m *mockRepoClient) CreateRepositorySecret(ctx context.Context, repository,
 func (m *mockRepoClient) UpdateRepositorySecret(ctx context.Context, repository, secretName string, req *clients.UpdateRepositorySecretRequest) error {
 	return nil
 }
-func (m *mockRepoClient) DeleteRepositorySecret(ctx context.Context, repository, secretName string) error { return nil }
-func (m *mockRepoClient) GetUserKey(ctx context.Context, username string, keyID int64) (*clients.UserKey, error) { return nil, nil }
+func (m *mockRepoClient) DeleteRepositorySecret(ctx context.Context, repository, secretName string) error {
+	return nil
+}
+func (m *mockRepoClient) GetUserKey(ctx context.Context, username string, keyID int64) (*clients.UserKey, error) {
+	return nil, nil
+}
 func (m *mockRepoClient) CreateUserKey(ctx context.Context, username string, req *clients.CreateUserKeyRequest) (*clients.UserKey, error) {
 	return nil, nil
 }
 func (m *mockRepoClient) UpdateUserKey(ctx context.Context, username string, keyID int64, req *clients.UpdateUserKeyRequest) (*clients.UserKey, error) {
 	return nil, nil
 }
-func (m *mockRepoClient) DeleteUserKey(ctx context.Context, username string, keyID int64) error { return nil }
+func (m *mockRepoClient) DeleteUserKey(ctx context.Context, username string, keyID int64) error {
+	return nil
+}
 func (m *mockRepoClient) GetIssue(ctx context.Context, owner, repo string, number int64) (*clients.Issue, error) {
 	return nil, nil
 }
@@ -227,7 +263,9 @@ func (m *mockRepoClient) CreateIssue(ctx context.Context, owner, repo string, re
 func (m *mockRepoClient) UpdateIssue(ctx context.Context, owner, repo string, number int64, req *clients.UpdateIssueOptions) (*clients.Issue, error) {
 	return nil, nil
 }
-func (m *mockRepoClient) DeleteIssue(ctx context.Context, owner, repo string, number int64) error { return nil }
+func (m *mockRepoClient) DeleteIssue(ctx context.Context, owner, repo string, number int64) error {
+	return nil
+}
 func (m *mockRepoClient) GetPullRequest(ctx context.Context, owner, repo string, number int64) (*clients.PullRequest, error) {
 	return nil, nil
 }
@@ -237,19 +275,27 @@ func (m *mockRepoClient) CreatePullRequest(ctx context.Context, owner, repo stri
 func (m *mockRepoClient) UpdatePullRequest(ctx context.Context, owner, repo string, number int64, req *clients.UpdatePullRequestOptions) (*clients.PullRequest, error) {
 	return nil, nil
 }
-func (m *mockRepoClient) DeletePullRequest(ctx context.Context, owner, repo string, number int64) error { return nil }
+func (m *mockRepoClient) DeletePullRequest(ctx context.Context, owner, repo string, number int64) error {
+	return nil
+}
 func (m *mockRepoClient) MergePullRequest(ctx context.Context, owner, repo string, number int64, req *clients.MergePullRequestOptions) (*clients.PullRequest, error) {
 	return nil, nil
 }
-func (m *mockRepoClient) GetRelease(ctx context.Context, owner, repo string, id int64) (*clients.Release, error) { return nil, nil }
-func (m *mockRepoClient) GetReleaseByTag(ctx context.Context, owner, repo, tag string) (*clients.Release, error) { return nil, nil }
+func (m *mockRepoClient) GetRelease(ctx context.Context, owner, repo string, id int64) (*clients.Release, error) {
+	return nil, nil
+}
+func (m *mockRepoClient) GetReleaseByTag(ctx context.Context, owner, repo, tag string) (*clients.Release, error) {
+	return nil, nil
+}
 func (m *mockRepoClient) CreateRelease(ctx context.Context, owner, repo string, req *clients.CreateReleaseOptions) (*clients.Release, error) {
 	return nil, nil
 }
 func (m *mockRepoClient) UpdateRelease(ctx context.Context, owner, repo string, id int64, req *clients.UpdateReleaseOptions) (*clients.Release, error) {
 	return nil, nil
 }
-func (m *mockRepoClient) DeleteRelease(ctx context.Context, owner, repo string, id int64) error { return nil }
+func (m *mockRepoClient) DeleteRelease(ctx context.Context, owner, repo string, id int64) error {
+	return nil
+}
 func (m *mockRepoClient) CreateReleaseAttachment(ctx context.Context, owner, repo string, releaseID int64, filename, contentType string, content []byte) (*clients.ReleaseAttachment, error) {
 	return nil, nil
 }
@@ -265,17 +311,27 @@ func (m *mockRepoClient) AddOrganizationMember(ctx context.Context, org, usernam
 func (m *mockRepoClient) UpdateOrganizationMember(ctx context.Context, org, username string, req *clients.UpdateOrganizationMemberRequest) (*clients.OrganizationMember, error) {
 	return nil, nil
 }
-func (m *mockRepoClient) RemoveOrganizationMember(ctx context.Context, org, username string) error { return nil }
-func (m *mockRepoClient) GetAction(ctx context.Context, repository, workflowName string) (*clients.Action, error) { return nil, nil }
+func (m *mockRepoClient) RemoveOrganizationMember(ctx context.Context, org, username string) error {
+	return nil
+}
+func (m *mockRepoClient) GetAction(ctx context.Context, repository, workflowName string) (*clients.Action, error) {
+	return nil, nil
+}
 func (m *mockRepoClient) CreateAction(ctx context.Context, repository string, req *clients.CreateActionRequest) (*clients.Action, error) {
 	return nil, nil
 }
 func (m *mockRepoClient) UpdateAction(ctx context.Context, repository, workflowName string, req *clients.UpdateActionRequest) (*clients.Action, error) {
 	return nil, nil
 }
-func (m *mockRepoClient) DeleteAction(ctx context.Context, repository, workflowName string) error { return nil }
-func (m *mockRepoClient) EnableAction(ctx context.Context, repository, workflowName string) error   { return nil }
-func (m *mockRepoClient) DisableAction(ctx context.Context, repository, workflowName string) error  { return nil }
+func (m *mockRepoClient) DeleteAction(ctx context.Context, repository, workflowName string) error {
+	return nil
+}
+func (m *mockRepoClient) EnableAction(ctx context.Context, repository, workflowName string) error {
+	return nil
+}
+func (m *mockRepoClient) DisableAction(ctx context.Context, repository, workflowName string) error {
+	return nil
+}
 func (m *mockRepoClient) GetRunner(ctx context.Context, scope, scopeValue string, runnerID int64) (*clients.Runner, error) {
 	return nil, nil
 }
@@ -285,9 +341,15 @@ func (m *mockRepoClient) CreateRunner(ctx context.Context, scope, scopeValue str
 func (m *mockRepoClient) UpdateRunner(ctx context.Context, scope, scopeValue string, runnerID int64, req *clients.UpdateRunnerRequest) (*clients.Runner, error) {
 	return nil, nil
 }
-func (m *mockRepoClient) DeleteRunner(ctx context.Context, scope, scopeValue string, runnerID int64) error { return nil }
-func (m *mockRepoClient) ListRunners(ctx context.Context, scope, scopeValue string) ([]*clients.Runner, error) { return nil, nil }
-func (m *mockRepoClient) GetAdminUser(ctx context.Context, username string) (*clients.AdminUser, error)        { return nil, nil }
+func (m *mockRepoClient) DeleteRunner(ctx context.Context, scope, scopeValue string, runnerID int64) error {
+	return nil
+}
+func (m *mockRepoClient) ListRunners(ctx context.Context, scope, scopeValue string) ([]*clients.Runner, error) {
+	return nil, nil
+}
+func (m *mockRepoClient) GetAdminUser(ctx context.Context, username string) (*clients.AdminUser, error) {
+	return nil, nil
+}
 func (m *mockRepoClient) CreateAdminUser(ctx context.Context, req *clients.CreateAdminUserRequest) (*clients.AdminUser, error) {
 	return nil, nil
 }

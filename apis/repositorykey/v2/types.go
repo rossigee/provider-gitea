@@ -17,11 +17,11 @@ limitations under the License.
 package v2
 
 import (
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-
-	xpv1 "github.com/crossplane/crossplane/apis/v2/core/v2"
+	"github.com/crossplane/crossplane/apis/v2/core/v2"
 )
+
 
 type RepositoryKeyParameters struct {
 	// Repository is the repository that owns this deploy key (owner/name format)
@@ -167,7 +167,4 @@ func (r *RepositoryKey) GetWriteConnectionSecretToReference() *xpv1.LocalSecretR
 func (r *RepositoryKey) SetWriteConnectionSecretToReference(p *xpv1.LocalSecretReference) {
 	r.Spec.WriteConnectionSecretToReference = p
 }
-
-func init() {
-	SchemeBuilder.Register(&RepositoryKey{}, &RepositoryKeyList{})
 }

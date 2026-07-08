@@ -22,19 +22,16 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"github.com/pkg/errors"
+	"github.com/rossigee/provider-gitea/apis/v1beta1"
 	"io"
+	"k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"net/http"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"strings"
 	"time"
-
-	"github.com/pkg/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-
-	corev1 "k8s.io/api/core/v1"
-
-	"github.com/rossigee/provider-gitea/apis/v1beta1"
 )
 
 const (
@@ -395,30 +392,30 @@ type UpdateUserRequest struct {
 
 // Issue represents a Gitea issue
 type Issue struct {
-	ID          int64      `json:"id"`
-	Number      int64      `json:"number"`
-	Title       string     `json:"title"`
-	Body        string     `json:"body"`
-	State       string     `json:"state"`
-	HTMLURL     string     `json:"html_url"`
-	Comments    int        `json:"comments"`
-	User        *User      `json:"user"`
-	Labels      []*Label   `json:"labels"`
-	Assignees   []*User    `json:"assignees"`
-	Milestone   *Milestone `json:"milestone,omitempty"`
-	CreatedAt   *metav1.Time `json:"created_at,omitempty"`
-	UpdatedAt   *metav1.Time `json:"updated_at,omitempty"`
-	ClosedAt    *metav1.Time `json:"closed_at,omitempty"`
+	ID        int64        `json:"id"`
+	Number    int64        `json:"number"`
+	Title     string       `json:"title"`
+	Body      string       `json:"body"`
+	State     string       `json:"state"`
+	HTMLURL   string       `json:"html_url"`
+	Comments  int          `json:"comments"`
+	User      *User        `json:"user"`
+	Labels    []*Label     `json:"labels"`
+	Assignees []*User      `json:"assignees"`
+	Milestone *Milestone   `json:"milestone,omitempty"`
+	CreatedAt *metav1.Time `json:"created_at,omitempty"`
+	UpdatedAt *metav1.Time `json:"updated_at,omitempty"`
+	ClosedAt  *metav1.Time `json:"closed_at,omitempty"`
 }
 
 // Milestone represents a Gitea milestone
 type Milestone struct {
-	ID          int64  `json:"id"`
-	Title       string `json:"title"`
-	Description string `json:"description"`
-	State       string `json:"state"`
-	OpenIssues  int    `json:"open_issues"`
-	ClosedIssues int   `json:"closed_issues"`
+	ID           int64  `json:"id"`
+	Title        string `json:"title"`
+	Description  string `json:"description"`
+	State        string `json:"state"`
+	OpenIssues   int    `json:"open_issues"`
+	ClosedIssues int    `json:"closed_issues"`
 }
 
 // CreateIssueOptions represents the options for creating an issue
@@ -442,33 +439,33 @@ type UpdateIssueOptions struct {
 
 // PullRequest represents a Gitea pull request
 type PullRequest struct {
-	ID             int64         `json:"id"`
-	Number         int64         `json:"number"`
-	Title          string        `json:"title"`
-	Body           string        `json:"body"`
-	State          string        `json:"state"`
-	HTMLURL        string        `json:"html_url"`
-	DiffURL        string        `json:"diff_url"`
-	PatchURL       string        `json:"patch_url"`
-	Mergeable      *bool         `json:"mergeable,omitempty"`
-	Merged         bool          `json:"merged"`
-	Comments       int           `json:"comments"`
-	ReviewComments int           `json:"review_comments"`
-	Additions      int           `json:"additions"`
-	Deletions      int           `json:"deletions"`
-	ChangedFiles   int           `json:"changed_files"`
-	Draft          bool          `json:"draft"`
-	User           *User         `json:"user"`
-	Head           *Branch       `json:"head"`
-	Base           *Branch       `json:"base"`
-	Labels         []*Label      `json:"labels"`
-	Assignees      []*User       `json:"assignees"`
-	RequestedReviewers []*User   `json:"requested_reviewers"`
-	Milestone      *Milestone    `json:"milestone,omitempty"`
-	CreatedAt      *metav1.Time  `json:"created_at,omitempty"`
-	UpdatedAt      *metav1.Time  `json:"updated_at,omitempty"`
-	ClosedAt       *metav1.Time  `json:"closed_at,omitempty"`
-	MergedAt       *metav1.Time  `json:"merged_at,omitempty"`
+	ID                 int64        `json:"id"`
+	Number             int64        `json:"number"`
+	Title              string       `json:"title"`
+	Body               string       `json:"body"`
+	State              string       `json:"state"`
+	HTMLURL            string       `json:"html_url"`
+	DiffURL            string       `json:"diff_url"`
+	PatchURL           string       `json:"patch_url"`
+	Mergeable          *bool        `json:"mergeable,omitempty"`
+	Merged             bool         `json:"merged"`
+	Comments           int          `json:"comments"`
+	ReviewComments     int          `json:"review_comments"`
+	Additions          int          `json:"additions"`
+	Deletions          int          `json:"deletions"`
+	ChangedFiles       int          `json:"changed_files"`
+	Draft              bool         `json:"draft"`
+	User               *User        `json:"user"`
+	Head               *Branch      `json:"head"`
+	Base               *Branch      `json:"base"`
+	Labels             []*Label     `json:"labels"`
+	Assignees          []*User      `json:"assignees"`
+	RequestedReviewers []*User      `json:"requested_reviewers"`
+	Milestone          *Milestone   `json:"milestone,omitempty"`
+	CreatedAt          *metav1.Time `json:"created_at,omitempty"`
+	UpdatedAt          *metav1.Time `json:"updated_at,omitempty"`
+	ClosedAt           *metav1.Time `json:"closed_at,omitempty"`
+	MergedAt           *metav1.Time `json:"merged_at,omitempty"`
 }
 
 // Branch represents a git branch reference in a pull request
@@ -480,16 +477,16 @@ type Branch struct {
 
 // CreatePullRequestOptions represents the options for creating a pull request
 type CreatePullRequestOptions struct {
-	Title     string   `json:"title"`
-	Body      *string  `json:"body,omitempty"`
-	Head      string   `json:"head"`
-	Base      string   `json:"base"`
-	Assignees []string `json:"assignees,omitempty"`
-	Reviewers []string `json:"reviewers,omitempty"`
+	Title         string   `json:"title"`
+	Body          *string  `json:"body,omitempty"`
+	Head          string   `json:"head"`
+	Base          string   `json:"base"`
+	Assignees     []string `json:"assignees,omitempty"`
+	Reviewers     []string `json:"reviewers,omitempty"`
 	TeamReviewers []string `json:"team_reviewers,omitempty"`
-	Labels    []string `json:"labels,omitempty"`
-	Milestone *string  `json:"milestone,omitempty"`
-	Draft     *bool    `json:"draft,omitempty"`
+	Labels        []string `json:"labels,omitempty"`
+	Milestone     *string  `json:"milestone,omitempty"`
+	Draft         *bool    `json:"draft,omitempty"`
 }
 
 // UpdatePullRequestOptions represents the options for updating a pull request
@@ -506,7 +503,7 @@ type UpdatePullRequestOptions struct {
 
 // MergePullRequestOptions represents the options for merging a pull request
 type MergePullRequestOptions struct {
-	DoMerge        bool   `json:"Do"`
+	DoMerge           bool   `json:"Do"`
 	MergeMessageField string `json:"MergeMessageField,omitempty"`
 	MergeTitleField   string `json:"MergeTitleField,omitempty"`
 	MergeWhen         string `json:"MergeWhen,omitempty"`
@@ -514,22 +511,22 @@ type MergePullRequestOptions struct {
 
 // Release represents a Gitea release
 type Release struct {
-	ID              int64                     `json:"id"`
-	TagName         string                    `json:"tag_name"`
-	TargetCommitish string                    `json:"target_commitish"`
-	Name            string                    `json:"name"`
-	Body            string                    `json:"body"`
-	URL             string                    `json:"url"`
-	HTMLURL         string                    `json:"html_url"`
-	TarballURL      string                    `json:"tarball_url"`
-	ZipballURL      string                    `json:"zipball_url"`
-	UploadURL       string                    `json:"upload_url"`
-	Draft           bool                      `json:"draft"`
-	Prerelease      bool                      `json:"prerelease"`
-	CreatedAt       *metav1.Time              `json:"created_at,omitempty"`
-	PublishedAt     *metav1.Time              `json:"published_at,omitempty"`
-	Author          *User                     `json:"author,omitempty"`
-	Assets          []ReleaseAttachment       `json:"assets,omitempty"`
+	ID              int64               `json:"id"`
+	TagName         string              `json:"tag_name"`
+	TargetCommitish string              `json:"target_commitish"`
+	Name            string              `json:"name"`
+	Body            string              `json:"body"`
+	URL             string              `json:"url"`
+	HTMLURL         string              `json:"html_url"`
+	TarballURL      string              `json:"tarball_url"`
+	ZipballURL      string              `json:"zipball_url"`
+	UploadURL       string              `json:"upload_url"`
+	Draft           bool                `json:"draft"`
+	Prerelease      bool                `json:"prerelease"`
+	CreatedAt       *metav1.Time        `json:"created_at,omitempty"`
+	PublishedAt     *metav1.Time        `json:"published_at,omitempty"`
+	Author          *User               `json:"author,omitempty"`
+	Assets          []ReleaseAttachment `json:"assets,omitempty"`
 }
 
 // ReleaseAttachment represents a release asset/attachment
@@ -2296,7 +2293,7 @@ func (c *giteaClient) DeleteIssue(ctx context.Context, owner, repo string, numbe
 	req := &UpdateIssueOptions{
 		State: func() *string { s := "closed"; return &s }(),
 	}
-	
+
 	_, err := c.UpdateIssue(ctx, owner, repo, number, req)
 	return err
 }
@@ -2357,7 +2354,7 @@ func (c *giteaClient) DeletePullRequest(ctx context.Context, owner, repo string,
 	req := &UpdatePullRequestOptions{
 		State: func() *string { s := "closed"; return &s }(),
 	}
-	
+
 	_, err := c.UpdatePullRequest(ctx, owner, repo, number, req)
 	return err
 }
@@ -2453,14 +2450,14 @@ func (c *giteaClient) CreateReleaseAttachment(ctx context.Context, owner, repo s
 	// For simplicity, we'll implement a basic version
 	// In a full implementation, this would handle multipart file uploads
 	path := fmt.Sprintf("/repos/%s/%s/releases/%d/assets", owner, repo, releaseID)
-	
+
 	// This is a simplified implementation - real implementation would use multipart upload
 	req := map[string]interface{}{
-		"name": filename,
+		"name":         filename,
 		"content_type": contentType,
 		// Note: Real implementation would handle file upload differently
 	}
-	
+
 	resp, err := c.doRequest(ctx, "POST", path, req)
 	if err != nil {
 		return nil, err

@@ -17,11 +17,11 @@ limitations under the License.
 package v2
 
 import (
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-
-	xpv1 "github.com/crossplane/crossplane/apis/v2/core/v2"
+	"github.com/crossplane/crossplane/apis/v2/core/v2"
 )
+
 
 // ActionLastRun contains information about the last workflow run
 type ActionLastRun struct {
@@ -211,7 +211,4 @@ func (r *Action) GetWriteConnectionSecretToReference() *xpv1.LocalSecretReferenc
 func (r *Action) SetWriteConnectionSecretToReference(p *xpv1.LocalSecretReference) {
 	r.Spec.WriteConnectionSecretToReference = p
 }
-
-func init() {
-	SchemeBuilder.Register(&Action{}, &ActionList{})
 }

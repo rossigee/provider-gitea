@@ -19,30 +19,27 @@ package repository
 import (
 	"context"
 	"fmt"
-	"strings"
-
-	"github.com/pkg/errors"
-	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-
-	xpv1 "github.com/crossplane/crossplane-runtime/v2/pkg/controller"
+	"github.com/crossplane/crossplane-runtime/v2/pkg/controller"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/meta"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
-
+	"github.com/pkg/errors"
 	"github.com/rossigee/provider-gitea/apis/repository/v2"
 	"github.com/rossigee/provider-gitea/apis/v1beta1"
 	"github.com/rossigee/provider-gitea/internal/clients"
 	"github.com/rossigee/provider-gitea/internal/tracing"
+	"sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"strings"
 )
 
 const (
-	errNotRepository         = "managed resource is not a Repository custom resource"
-	errGetRepository         = "failed to get repository"
-	errCreateRepository      = "failed to create repository"
-	errUpdateRepository      = "failed to update repository"
-	errDeleteRepository      = "failed to delete repository"
-	errGetProviderConfig     = "failed to get provider config"
+	errNotRepository     = "managed resource is not a Repository custom resource"
+	errGetRepository     = "failed to get repository"
+	errCreateRepository  = "failed to create repository"
+	errUpdateRepository  = "failed to update repository"
+	errDeleteRepository  = "failed to delete repository"
+	errGetProviderConfig = "failed to get provider config"
 )
 
 // A connector is expected to produce an ExternalClient when its Connect method is called.

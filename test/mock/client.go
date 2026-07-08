@@ -19,10 +19,8 @@ package mock
 
 import (
 	"context"
-
-	"github.com/stretchr/testify/mock"
-
 	"github.com/rossigee/provider-gitea/internal/clients"
+	"github.com/stretchr/testify/mock"
 )
 
 // Client provides a comprehensive mock implementation of the Gitea client interface

@@ -18,30 +18,27 @@ package repositorysecret
 
 import (
 	"context"
-	"strings"
-
-	"github.com/pkg/errors"
-	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-
-	xpv1 "github.com/crossplane/crossplane-runtime/v2/pkg/controller"
+	"github.com/crossplane/crossplane-runtime/v2/pkg/controller"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/meta"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
-
+	"github.com/pkg/errors"
 	"github.com/rossigee/provider-gitea/apis/repositorysecret/v2"
 	"github.com/rossigee/provider-gitea/apis/v1beta1"
 	"github.com/rossigee/provider-gitea/internal/clients"
 	"github.com/rossigee/provider-gitea/internal/tracing"
+	"sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"strings"
 )
 
 const (
-	errNotRepositorySecret         = "managed resource is not a RepositorySecret custom resource"
-	errGetRepositorySecret         = "failed to get repositorysecret"
-	errCreateRepositorySecret      = "failed to create repositorysecret"
-	errUpdateRepositorySecret      = "failed to update repositorysecret"
-	errDeleteRepositorySecret      = "failed to delete repositorysecret"
-	errGetProviderConfig = "failed to get provider config"
+	errNotRepositorySecret    = "managed resource is not a RepositorySecret custom resource"
+	errGetRepositorySecret    = "failed to get repositorysecret"
+	errCreateRepositorySecret = "failed to create repositorysecret"
+	errUpdateRepositorySecret = "failed to update repositorysecret"
+	errDeleteRepositorySecret = "failed to delete repositorysecret"
+	errGetProviderConfig      = "failed to get provider config"
 )
 
 type connector struct {

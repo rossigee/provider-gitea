@@ -17,11 +17,11 @@ limitations under the License.
 package v2
 
 import (
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-
-	xpv1 "github.com/crossplane/crossplane/apis/v2/core/v2"
+	"github.com/crossplane/crossplane/apis/v2/core/v2"
 )
+
 
 // RepositoryCollaboratorPermissions defines the permissions for a collaborator
 type RepositoryCollaboratorPermissions struct {
@@ -166,7 +166,4 @@ func (r *RepositoryCollaborator) GetWriteConnectionSecretToReference() *xpv1.Loc
 func (r *RepositoryCollaborator) SetWriteConnectionSecretToReference(p *xpv1.LocalSecretReference) {
 	r.Spec.WriteConnectionSecretToReference = p
 }
-
-func init() {
-	SchemeBuilder.Register(&RepositoryCollaborator{}, &RepositoryCollaboratorList{})
 }

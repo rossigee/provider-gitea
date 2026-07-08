@@ -17,11 +17,11 @@ limitations under the License.
 package v2
 
 import (
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-
-	xpv1 "github.com/crossplane/crossplane/apis/v2/core/v2"
+	"github.com/crossplane/crossplane/apis/v2/core/v2"
 )
+
 
 // OrganizationMemberUserInfo contains basic user information
 type OrganizationMemberUserInfo struct {
@@ -182,7 +182,4 @@ func (r *OrganizationMember) GetWriteConnectionSecretToReference() *xpv1.LocalSe
 func (r *OrganizationMember) SetWriteConnectionSecretToReference(p *xpv1.LocalSecretReference) {
 	r.Spec.WriteConnectionSecretToReference = p
 }
-
-func init() {
-	SchemeBuilder.Register(&OrganizationMember{}, &OrganizationMemberList{})
 }

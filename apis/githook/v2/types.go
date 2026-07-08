@@ -17,11 +17,11 @@ limitations under the License.
 package v2
 
 import (
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-
-	xpv1 "github.com/crossplane/crossplane/apis/v2/core/v2"
+	"github.com/crossplane/crossplane/apis/v2/core/v2"
 )
+
 
 type GitHookParameters struct {
 	// Repository is the repository that owns this hook (owner/name format)
@@ -153,7 +153,4 @@ func (r *GitHook) GetWriteConnectionSecretToReference() *xpv1.LocalSecretReferen
 func (r *GitHook) SetWriteConnectionSecretToReference(p *xpv1.LocalSecretReference) {
 	r.Spec.WriteConnectionSecretToReference = p
 }
-
-func init() {
-	SchemeBuilder.Register(&GitHook{}, &GitHookList{})
 }

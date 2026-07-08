@@ -17,11 +17,11 @@ limitations under the License.
 package v2
 
 import (
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-
-	xpv1 "github.com/crossplane/crossplane/apis/v2/core/v2"
+	"github.com/crossplane/crossplane/apis/v2/core/v2"
 )
+
 
 // BranchProtectionAppliedSettings contains the currently applied protection settings
 type BranchProtectionAppliedSettings struct {
@@ -240,7 +240,4 @@ func (r *BranchProtection) GetWriteConnectionSecretToReference() *xpv1.LocalSecr
 func (r *BranchProtection) SetWriteConnectionSecretToReference(p *xpv1.LocalSecretReference) {
 	r.Spec.WriteConnectionSecretToReference = p
 }
-
-func init() {
-	SchemeBuilder.Register(&BranchProtection{}, &BranchProtectionList{})
 }

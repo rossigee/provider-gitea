@@ -17,11 +17,9 @@ limitations under the License.
 package controller
 
 import (
-	ctrl "sigs.k8s.io/controller-runtime"
-
 	"github.com/crossplane/crossplane-runtime/v2/pkg/controller"
-
 	"github.com/rossigee/provider-gitea/internal/controller/repository"
+	"sigs.k8s.io/controller-runtime"
 )
 
 func Setup(mgr ctrl.Manager, o controller.Options) error {
