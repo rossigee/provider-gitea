@@ -65,10 +65,16 @@ jobs:
         env:
           VERSION: ${{ steps.version.outputs.version }}
 
-      - name: Build Docker Images
-        run: make img.build BUILD_PLATFORMS="linux_amd64 linux_arm64"
-        env:
-          VERSION: ${{ steps.version.outputs.version }}
+      - name: Build and Push Docker Image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: ./Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/provider-gitea:${{ steps.version.outputs.version }}
+            ghcr.io/${{ github.repository_owner }}/provider-gitea:latest
 
       - name: Build Crossplane Packages
         run: make xpkg.build BUILD_PLATFORMS="linux_amd64 linux_arm64"
