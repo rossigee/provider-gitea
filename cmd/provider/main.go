@@ -17,6 +17,7 @@ limitations under the License.
 package main
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -36,6 +37,7 @@ import (
 
 	"github.com/rossigee/provider-gitea/apis"
 	giteacontroller "github.com/rossigee/provider-gitea/internal/controller"
+	"github.com/rossigee/provider-gitea/internal/tracing"
 	"github.com/rossigee/provider-gitea/internal/version"
 )
 
@@ -53,6 +55,12 @@ func main() {
 
 	zl := zap.New(zap.UseDevMode(*debug))
 	log := logging.NewLogrLogger(zl.WithName("provider-gitea"))
+
+	shutdownTracing := tracing.Init("provider-gitea")
+	defer shutdownTracing(context.Background())
+
+	shutdownTracing(context.Background())
+
 	if *debug {
 		// The controller-runtime runs with a no-op logger by default. It is
 		// *very* verbose even at info level, so we only provide it a real
