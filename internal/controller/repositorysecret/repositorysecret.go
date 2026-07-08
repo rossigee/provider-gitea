@@ -32,6 +32,7 @@ import (
 	"github.com/rossigee/provider-gitea/apis/repositorysecret/v2"
 	"github.com/rossigee/provider-gitea/apis/v1beta1"
 	"github.com/rossigee/provider-gitea/internal/clients"
+	"github.com/rossigee/provider-gitea/internal/tracing"
 )
 
 const (
@@ -79,6 +80,10 @@ type externalClient struct {
 }
 
 func (e *externalClient) Observe(ctx context.Context, mg resource.Managed) (managed.ExternalObservation, error) {
+	_, span := tracing.StartSpan(ctx, "repositorysecret.observe",
+		tracing.SpanAttrs("repositorysecret", mg.GetName(), "observe")...)
+	defer span.End()
+
 	cr, ok := mg.(*v2.RepositorySecret)
 	if !ok {
 		return managed.ExternalObservation{}, errors.New(errNotRepositorySecret)
@@ -106,6 +111,10 @@ func (e *externalClient) Observe(ctx context.Context, mg resource.Managed) (mana
 }
 
 func (e *externalClient) Create(ctx context.Context, mg resource.Managed) (managed.ExternalCreation, error) {
+	_, span := tracing.StartSpan(ctx, "repositorysecret.create",
+		tracing.SpanAttrs("repositorysecret", mg.GetName(), "create")...)
+	defer span.End()
+
 	cr, ok := mg.(*v2.RepositorySecret)
 	if !ok {
 		return managed.ExternalCreation{}, errors.New(errNotRepositorySecret)
@@ -125,6 +134,10 @@ func (e *externalClient) Create(ctx context.Context, mg resource.Managed) (manag
 }
 
 func (e *externalClient) Update(ctx context.Context, mg resource.Managed) (managed.ExternalUpdate, error) {
+	_, span := tracing.StartSpan(ctx, "repositorysecret.update",
+		tracing.SpanAttrs("repositorysecret", mg.GetName(), "update")...)
+	defer span.End()
+
 	cr, ok := mg.(*v2.RepositorySecret)
 	if !ok {
 		return managed.ExternalUpdate{}, errors.New(errNotRepositorySecret)
@@ -141,6 +154,10 @@ func (e *externalClient) Update(ctx context.Context, mg resource.Managed) (manag
 }
 
 func (e *externalClient) Delete(ctx context.Context, mg resource.Managed) (managed.ExternalDelete, error) {
+	_, span := tracing.StartSpan(ctx, "repositorysecret.delete",
+		tracing.SpanAttrs("repositorysecret", mg.GetName(), "delete")...)
+	defer span.End()
+
 	cr, ok := mg.(*v2.RepositorySecret)
 	if !ok {
 		return managed.ExternalDelete{}, errors.New(errNotRepositorySecret)

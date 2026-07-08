@@ -33,6 +33,7 @@ import (
 	"github.com/rossigee/provider-gitea/apis/repository/v2"
 	"github.com/rossigee/provider-gitea/apis/v1beta1"
 	"github.com/rossigee/provider-gitea/internal/clients"
+	"github.com/rossigee/provider-gitea/internal/tracing"
 )
 
 const (
@@ -88,6 +89,10 @@ type externalClient struct {
 }
 
 func (e *externalClient) Observe(ctx context.Context, mg resource.Managed) (managed.ExternalObservation, error) {
+	_, span := tracing.StartSpan(ctx, "repository.observe",
+		tracing.SpanAttrs("repository", mg.GetName(), "observe")...)
+	defer span.End()
+
 	cr, ok := mg.(*v2.Repository)
 	if !ok {
 		return managed.ExternalObservation{}, errors.New(errNotRepository)
@@ -128,6 +133,10 @@ func (e *externalClient) Observe(ctx context.Context, mg resource.Managed) (mana
 }
 
 func (e *externalClient) Create(ctx context.Context, mg resource.Managed) (managed.ExternalCreation, error) {
+	_, span := tracing.StartSpan(ctx, "repository.create",
+		tracing.SpanAttrs("repository", mg.GetName(), "create")...)
+	defer span.End()
+
 	cr, ok := mg.(*v2.Repository)
 	if !ok {
 		return managed.ExternalCreation{}, errors.New(errNotRepository)
@@ -183,6 +192,10 @@ func (e *externalClient) Create(ctx context.Context, mg resource.Managed) (manag
 }
 
 func (e *externalClient) Update(ctx context.Context, mg resource.Managed) (managed.ExternalUpdate, error) {
+	_, span := tracing.StartSpan(ctx, "repository.update",
+		tracing.SpanAttrs("repository", mg.GetName(), "update")...)
+	defer span.End()
+
 	cr, ok := mg.(*v2.Repository)
 	if !ok {
 		return managed.ExternalUpdate{}, errors.New(errNotRepository)
@@ -221,6 +234,10 @@ func (e *externalClient) Update(ctx context.Context, mg resource.Managed) (manag
 }
 
 func (e *externalClient) Delete(ctx context.Context, mg resource.Managed) (managed.ExternalDelete, error) {
+	_, span := tracing.StartSpan(ctx, "repository.delete",
+		tracing.SpanAttrs("repository", mg.GetName(), "delete")...)
+	defer span.End()
+
 	cr, ok := mg.(*v2.Repository)
 	if !ok {
 		return managed.ExternalDelete{}, errors.New(errNotRepository)

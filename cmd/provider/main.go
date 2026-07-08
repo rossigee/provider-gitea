@@ -59,7 +59,6 @@ func main() {
 	shutdownTracing := tracing.Init("provider-gitea")
 	defer shutdownTracing(context.Background())
 
-	shutdownTracing(context.Background())
 
 	if *debug {
 		// The controller-runtime runs with a no-op logger by default. It is
