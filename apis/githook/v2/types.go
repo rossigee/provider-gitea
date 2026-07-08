@@ -133,6 +133,27 @@ func (r *GitHook) SetManagementPolicies(p xpv1.ManagementPolicies) {
 	r.Spec.ManagementPolicies = p
 }
 
+
+// GetProviderConfigReference of this GitHook.
+func (r *GitHook) GetProviderConfigReference() *xpv1.ProviderConfigReference {
+	return r.Spec.ProviderConfigReference
+}
+
+// SetProviderConfigReference of this GitHook.
+func (r *GitHook) SetProviderConfigReference(p *xpv1.ProviderConfigReference) {
+	r.Spec.ProviderConfigReference = p
+}
+
+// GetWriteConnectionSecretToReference of this GitHook.
+func (r *GitHook) GetWriteConnectionSecretToReference() *xpv1.LocalSecretReference {
+	return r.Spec.WriteConnectionSecretToReference
+}
+
+// SetWriteConnectionSecretToReference of this GitHook.
+func (r *GitHook) SetWriteConnectionSecretToReference(p *xpv1.LocalSecretReference) {
+	r.Spec.WriteConnectionSecretToReference = p
+}
+
 func init() {
 	SchemeBuilder.Register(&GitHook{}, &GitHookList{})
 }

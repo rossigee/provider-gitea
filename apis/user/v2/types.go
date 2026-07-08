@@ -190,6 +190,27 @@ func (r *User) SetManagementPolicies(p xpv1.ManagementPolicies) {
 	r.Spec.ManagementPolicies = p
 }
 
+
+// GetProviderConfigReference of this User.
+func (r *User) GetProviderConfigReference() *xpv1.ProviderConfigReference {
+	return r.Spec.ProviderConfigReference
+}
+
+// SetProviderConfigReference of this User.
+func (r *User) SetProviderConfigReference(p *xpv1.ProviderConfigReference) {
+	r.Spec.ProviderConfigReference = p
+}
+
+// GetWriteConnectionSecretToReference of this User.
+func (r *User) GetWriteConnectionSecretToReference() *xpv1.LocalSecretReference {
+	return r.Spec.WriteConnectionSecretToReference
+}
+
+// SetWriteConnectionSecretToReference of this User.
+func (r *User) SetWriteConnectionSecretToReference(p *xpv1.LocalSecretReference) {
+	r.Spec.WriteConnectionSecretToReference = p
+}
+
 func init() {
 	SchemeBuilder.Register(&User{}, &UserList{})
 }

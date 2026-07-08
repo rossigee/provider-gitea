@@ -138,6 +138,27 @@ func (r *DeployKey) SetManagementPolicies(p xpv1.ManagementPolicies) {
 	r.Spec.ManagementPolicies = p
 }
 
+
+// GetProviderConfigReference of this DeployKey.
+func (r *DeployKey) GetProviderConfigReference() *xpv1.ProviderConfigReference {
+	return r.Spec.ProviderConfigReference
+}
+
+// SetProviderConfigReference of this DeployKey.
+func (r *DeployKey) SetProviderConfigReference(p *xpv1.ProviderConfigReference) {
+	r.Spec.ProviderConfigReference = p
+}
+
+// GetWriteConnectionSecretToReference of this DeployKey.
+func (r *DeployKey) GetWriteConnectionSecretToReference() *xpv1.LocalSecretReference {
+	return r.Spec.WriteConnectionSecretToReference
+}
+
+// SetWriteConnectionSecretToReference of this DeployKey.
+func (r *DeployKey) SetWriteConnectionSecretToReference(p *xpv1.LocalSecretReference) {
+	r.Spec.WriteConnectionSecretToReference = p
+}
+
 func init() {
 	SchemeBuilder.Register(&DeployKey{}, &DeployKeyList{})
 }

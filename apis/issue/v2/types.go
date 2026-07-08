@@ -162,6 +162,27 @@ func (r *Issue) SetManagementPolicies(p xpv1.ManagementPolicies) {
 	r.Spec.ManagementPolicies = p
 }
 
+
+// GetProviderConfigReference of this Issue.
+func (r *Issue) GetProviderConfigReference() *xpv1.ProviderConfigReference {
+	return r.Spec.ProviderConfigReference
+}
+
+// SetProviderConfigReference of this Issue.
+func (r *Issue) SetProviderConfigReference(p *xpv1.ProviderConfigReference) {
+	r.Spec.ProviderConfigReference = p
+}
+
+// GetWriteConnectionSecretToReference of this Issue.
+func (r *Issue) GetWriteConnectionSecretToReference() *xpv1.LocalSecretReference {
+	return r.Spec.WriteConnectionSecretToReference
+}
+
+// SetWriteConnectionSecretToReference of this Issue.
+func (r *Issue) SetWriteConnectionSecretToReference(p *xpv1.LocalSecretReference) {
+	r.Spec.WriteConnectionSecretToReference = p
+}
+
 func init() {
 	SchemeBuilder.Register(&Issue{}, &IssueList{})
 }

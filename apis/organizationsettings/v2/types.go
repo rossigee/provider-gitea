@@ -182,6 +182,27 @@ func (r *OrganizationSettings) SetManagementPolicies(p xpv1.ManagementPolicies) 
 	r.Spec.ManagementPolicies = p
 }
 
+
+// GetProviderConfigReference of this OrganizationSettings.
+func (r *OrganizationSettings) GetProviderConfigReference() *xpv1.ProviderConfigReference {
+	return r.Spec.ProviderConfigReference
+}
+
+// SetProviderConfigReference of this OrganizationSettings.
+func (r *OrganizationSettings) SetProviderConfigReference(p *xpv1.ProviderConfigReference) {
+	r.Spec.ProviderConfigReference = p
+}
+
+// GetWriteConnectionSecretToReference of this OrganizationSettings.
+func (r *OrganizationSettings) GetWriteConnectionSecretToReference() *xpv1.LocalSecretReference {
+	return r.Spec.WriteConnectionSecretToReference
+}
+
+// SetWriteConnectionSecretToReference of this OrganizationSettings.
+func (r *OrganizationSettings) SetWriteConnectionSecretToReference(p *xpv1.LocalSecretReference) {
+	r.Spec.WriteConnectionSecretToReference = p
+}
+
 func init() {
 	SchemeBuilder.Register(&OrganizationSettings{}, &OrganizationSettingsList{})
 }

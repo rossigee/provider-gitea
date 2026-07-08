@@ -146,6 +146,27 @@ func (r *RepositoryCollaborator) SetManagementPolicies(p xpv1.ManagementPolicies
 	r.Spec.ManagementPolicies = p
 }
 
+
+// GetProviderConfigReference of this RepositoryCollaborator.
+func (r *RepositoryCollaborator) GetProviderConfigReference() *xpv1.ProviderConfigReference {
+	return r.Spec.ProviderConfigReference
+}
+
+// SetProviderConfigReference of this RepositoryCollaborator.
+func (r *RepositoryCollaborator) SetProviderConfigReference(p *xpv1.ProviderConfigReference) {
+	r.Spec.ProviderConfigReference = p
+}
+
+// GetWriteConnectionSecretToReference of this RepositoryCollaborator.
+func (r *RepositoryCollaborator) GetWriteConnectionSecretToReference() *xpv1.LocalSecretReference {
+	return r.Spec.WriteConnectionSecretToReference
+}
+
+// SetWriteConnectionSecretToReference of this RepositoryCollaborator.
+func (r *RepositoryCollaborator) SetWriteConnectionSecretToReference(p *xpv1.LocalSecretReference) {
+	r.Spec.WriteConnectionSecretToReference = p
+}
+
 func init() {
 	SchemeBuilder.Register(&RepositoryCollaborator{}, &RepositoryCollaboratorList{})
 }
