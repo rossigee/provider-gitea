@@ -60,33 +60,17 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ github.token }}
 
-      - name: Build Binaries
-        run: make build BUILD_PLATFORMS="linux_amd64 linux_arm64"
-        env:
-          VERSION: ${{ steps.version.outputs.version }}
-
-      - name: Build and Push Docker Image
-        uses: docker/build-push-action@v4
-        with:
-          context: ./cluster/images/provider-gitea
-          file: ./cluster/images/provider-gitea/Dockerfile
-          platforms: linux/amd64,linux/arm64
-          push: true
-          tags: |
-            ghcr.io/${{ github.repository_owner }}/provider-gitea:${{ steps.version.outputs.version }}
-            ghcr.io/${{ github.repository_owner }}/provider-gitea:latest
-
-      - name: Build Crossplane Packages
-        run: make xpkg.build BUILD_PLATFORMS="linux_amd64 linux_arm64"
-        env:
-          VERSION: ${{ steps.version.outputs.version }}
-
-      - name: Publish Artifacts (Docker Images + Crossplane Packages)
+      - name: Build and Publish
         run: |
-          make publish \
-            REGISTRY_ORGS="ghcr.io/${{ github.repository_owner }}" \
-            XPKG_REG_ORGS="ghcr.io/${{ github.repository_owner }}" \
-            BRANCH_NAME=master
+          # Build for amd64 only for release (arm64 can be built separately if needed)
+          make build BUILD_PLATFORMS="linux_amd64"
+          make xpkg.build BUILD_PLATFORMS="linux_amd64"
+
+          # Publish Docker image
+          make img.release.publish REGISTRY_ORGS="ghcr.io/${{ github.repository_owner }}"
+
+          # Publish xpkg package
+          make xpkg.release.publish XPKG_REG_ORGS="ghcr.io/${{ github.repository_owner }}"
         env:
           VERSION: ${{ steps.version.outputs.version }}
 
