@@ -1,0 +1,22 @@
+apiVersion: repository.gitea.crossplane.io/v1alpha1
+kind: Repository
+metadata:
+  name: example-repo
+  namespace: default
+spec:
+  forProvider:
+    owner: example-org
+    name: example-repo
+    description: "An example repository managed by Crossplane"
+    private: false
+    defaultBranch: main
+    issueLabels: "default"
+    autoInit: true
+    gitignores: "Go"
+    licenses: "MIT"
+    readmeTemplate: "Default"
+
+  providerConfigRef:
+    name: default
+
+  deletionPolicy: Orphan  # Prevent deletion of real repo if CR is deleted

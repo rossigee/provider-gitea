@@ -1,0 +1,19 @@
+apiVersion: user.gitea.crossplane.io/v1alpha1
+kind: User
+metadata:
+  name: example-user
+  namespace: default
+spec:
+  forProvider:
+    loginName: example-user
+    fullName: Example User
+    email: example@example.com
+    password: "change-me-to-secure-password"
+    mustChangePassword: true
+    admin: false
+    sendNotify: true
+
+  providerConfigRef:
+    name: default
+
+  deletionPolicy: Orphan  # Prevent deletion of real user if CR is deleted

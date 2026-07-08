@@ -1,0 +1,18 @@
+apiVersion: organization.gitea.crossplane.io/v1alpha1
+kind: Organization
+metadata:
+  name: example-org
+  namespace: default
+spec:
+  forProvider:
+    username: example-org
+    fullName: Example Organization
+    description: "An example organization managed by Crossplane"
+    visibility: public
+    website: "https://example.com"
+    location: "Earth"
+
+  providerConfigRef:
+    name: default
+
+  deletionPolicy: Orphan  # Prevent deletion of real org if CR is deleted

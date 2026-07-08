@@ -1,0 +1,20 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: crossplane-system
+
+resources:
+  - 00-namespace.yaml
+  - 10-serviceaccount.yaml
+  - 20-clusterrole.yaml
+  - 30-clusterrolebinding.yaml
+  - 40-provider.yaml
+  - 50-providerconfig.yaml
+
+commonLabels:
+  app: provider-gitea
+  managed-by: kubectl
+
+commonAnnotations:
+  description: "provider-gitea - Crossplane provider for Gitea"
+  version: "v0.8.9"

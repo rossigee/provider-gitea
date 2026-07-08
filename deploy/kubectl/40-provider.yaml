@@ -1,0 +1,23 @@
+apiVersion: pkg.crossplane.io/v1
+kind: Provider
+metadata:
+  name: provider-gitea
+  labels:
+    app: provider-gitea
+    component: provider
+spec:
+  # OCI image reference
+  package: ghcr.io/rossigee/provider-gitea:v0.8.9
+
+  # Pull policy for the image
+  packagePullPolicy: IfNotPresent
+
+  # Reference to DeploymentRuntimeConfig for provider deployment
+  runtimeConfigRef:
+    name: default
+
+  # Service account for the provider deployment
+  serviceAccountName: provider-gitea
+
+  # Skip dependency resolution
+  skipDependencyResolution: false

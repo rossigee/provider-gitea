@@ -1,0 +1,36 @@
+apiVersion: gitea.crossplane.io/v1alpha1
+kind: ProviderConfig
+metadata:
+  name: default
+  labels:
+    app: provider-gitea
+    component: config
+spec:
+  # Credentials source - use Secret reference
+  credentials:
+    source: Secret
+    secretRef:
+      namespace: crossplane-system
+      name: gitea-credentials
+      key: config
+
+---
+# Secret containing Gitea API credentials
+# NOTE: Replace with your actual Gitea credentials
+apiVersion: v1
+kind: Secret
+metadata:
+  name: gitea-credentials
+  namespace: crossplane-system
+  labels:
+    app: provider-gitea
+    component: config
+type: Opaque
+stringData:
+  # Gitea API configuration JSON
+  # Format: {"baseURL": "https://git.example.com", "token": "YOUR_API_TOKEN"}
+  config: |
+    {
+      "baseURL": "https://git.example.com",
+      "token": "your-gitea-api-token-here"
+    }
