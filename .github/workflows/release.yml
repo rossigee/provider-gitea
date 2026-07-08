@@ -62,12 +62,14 @@ jobs:
 
       - name: Build and Publish
         run: |
-          # Build binaries and xpkg packages
-          make build BUILD_PLATFORMS="linux_amd64"
-          make xpkg.build BUILD_PLATFORMS="linux_amd64"
+          # Build binaries and xpkg packages for both platforms
+          make build BUILD_PLATFORMS="linux_amd64 linux_arm64"
+          make xpkg.build BUILD_PLATFORMS="linux_amd64 linux_arm64"
 
-          # Publish xpkg packages (contains Docker image layers)
-          make xpkg.release.publish XPKG_REG_ORGS="ghcr.io/${{ github.repository_owner }}"
+          # Publish xpkg packages for both platforms
+          make xpkg.release.publish \
+            XPKG_REG_ORGS="ghcr.io/${{ github.repository_owner }}" \
+            PLATFORMS="linux_amd64 linux_arm64"
         env:
           VERSION: ${{ steps.version.outputs.version }}
 
