@@ -60,8 +60,13 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ github.token }}
 
-      - name: Build
+      - name: Build Binaries
         run: make build BUILD_PLATFORMS="linux_amd64 linux_arm64"
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+
+      - name: Build Docker Images
+        run: make img.build BUILD_PLATFORMS="linux_amd64 linux_arm64"
         env:
           VERSION: ${{ steps.version.outputs.version }}
 
