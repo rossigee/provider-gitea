@@ -1,0 +1,47 @@
+{{- if .Values.rbac.create }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ .Values.provider.name }}
+  labels:
+    {{- toYaml .Values.labels | nindent 4 }}
+rules:
+  # Core API groups required by provider
+  - apiGroups:
+      - ""
+    resources:
+      - secrets
+      - configmaps
+    verbs:
+      - get
+      - list
+      - watch
+
+  # Provider-specific resources
+  - apiGroups:
+      - gitea.crossplane.io
+    resources:
+      - "*"
+    verbs:
+      - "*"
+
+  # Crossplane core resources
+  - apiGroups:
+      - pkg.crossplane.io
+    resources:
+      - providers
+      - providerconfigs
+    verbs:
+      - get
+      - list
+      - watch
+
+  # Events for logging
+  - apiGroups:
+      - ""
+    resources:
+      - events
+    verbs:
+      - create
+      - patch
+{{- end }}

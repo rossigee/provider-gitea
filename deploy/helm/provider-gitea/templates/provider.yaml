@@ -1,0 +1,20 @@
+apiVersion: pkg.crossplane.io/v1
+kind: Provider
+metadata:
+  name: {{ .Values.provider.name }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- toYaml .Values.labels | nindent 4 }}
+  {{- with .Values.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  package: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+  packagePullPolicy: {{ .Values.provider.packagePullPolicy }}
+  runtimeConfigRef:
+    name: {{ .Values.runtimeConfig.name }}
+  {{- if .Values.serviceAccount.create }}
+  serviceAccountName: {{ .Values.serviceAccount.name }}
+  {{- end }}
+  skipDependencyResolution: {{ .Values.provider.skipDependencyResolution }}

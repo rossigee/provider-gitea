@@ -1,0 +1,39 @@
+{{- if .Values.providerConfig.create }}
+apiVersion: gitea.crossplane.io/v1alpha1
+kind: ProviderConfig
+metadata:
+  name: {{ .Values.providerConfig.name }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- toYaml .Values.labels | nindent 4 }}
+spec:
+  credentials:
+    source: {{ .Values.providerConfig.credentials.source }}
+    secretRef:
+      namespace: {{ .Values.providerConfig.credentials.secretRef.namespace }}
+      name: {{ .Values.providerConfig.credentials.secretRef.name }}
+      key: {{ .Values.providerConfig.credentials.secretRef.key }}
+
+---
+{{- if .Values.gitea.token }}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ .Values.providerConfig.credentials.secretRef.name }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- toYaml .Values.labels | nindent 4 }}
+type: Opaque
+stringData:
+  {{ .Values.providerConfig.credentials.secretRef.key }}: |
+    {
+      "baseURL": "{{ .Values.gitea.baseURL }}",
+      "token": "{{ .Values.gitea.token }}"
+    }
+{{- else }}
+# NOTE: Manual secret creation required. Run:
+# kubectl create secret generic gitea-credentials \
+#   -n {{ .Values.namespace }} \
+#   --from-literal={{ .Values.providerConfig.credentials.secretRef.key }}='{"baseURL":"https://git.example.com","token":"YOUR_TOKEN"}'
+{{- end }}
+{{- end }}

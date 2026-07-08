@@ -1,0 +1,98 @@
+# Default values for provider-gitea Helm chart
+
+# Provider image configuration
+image:
+  repository: ghcr.io/rossigee/provider-gitea
+  tag: v0.8.9
+  pullPolicy: IfNotPresent
+
+# Namespace where provider will be deployed
+namespace: crossplane-system
+
+# ServiceAccount configuration
+serviceAccount:
+  create: true
+  name: provider-gitea
+  annotations: {}
+
+# Provider resource configuration
+provider:
+  name: provider-gitea
+  # Package pull policy: Always, IfNotPresent, Never
+  packagePullPolicy: IfNotPresent
+  # Whether to skip dependency resolution
+  skipDependencyResolution: false
+
+# DeploymentRuntimeConfig reference
+runtimeConfig:
+  name: default
+
+# ProviderConfig (Gitea API credentials)
+providerConfig:
+  name: default
+  create: true
+
+  # Gitea API configuration
+  credentials:
+    # Source type: Secret, Env, FSA (File System)
+    source: Secret
+
+    # Secret reference
+    secretRef:
+      namespace: crossplane-system
+      name: gitea-credentials
+      key: config
+
+# Gitea API credentials (if creating Secret)
+gitea:
+  # Gitea API base URL
+  baseURL: "https://git.example.com"
+
+  # API token for authentication
+  # NOTE: Use Helm secrets or external secret management for production
+  token: ""
+
+# RBAC configuration
+rbac:
+  create: true
+
+# Pod security context
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 65534
+  fsGroup: 65534
+
+# Container security context
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+  readOnlyRootFilesystem: true
+
+# Resource limits and requests
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+# Node selector for pod placement
+nodeSelector: {}
+
+# Tolerations for pod scheduling
+tolerations: []
+
+# Affinity rules for pod scheduling
+affinity: {}
+
+# Labels to add to all resources
+labels:
+  app: provider-gitea
+  managed-by: helm
+
+# Annotations to add to all resources
+annotations:
+  description: "provider-gitea - Crossplane provider for Gitea"

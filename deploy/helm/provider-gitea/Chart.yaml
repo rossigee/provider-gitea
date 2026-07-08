@@ -1,0 +1,37 @@
+apiVersion: v2
+name: provider-gitea
+description: A Crossplane provider for managing Gitea with Kubernetes-native resources
+type: application
+
+version: 0.8.9
+appVersion: "0.8.9"
+
+# Chart metadata
+home: https://github.com/rossigee/provider-gitea
+sources:
+  - https://github.com/rossigee/provider-gitea
+keywords:
+  - crossplane
+  - gitea
+  - provider
+  - kubernetes
+
+maintainers:
+  - name: Ross Golder
+    email: ross@golder.org
+    url: https://github.com/rossigee
+
+# Chart classification
+kubeVersion: ">=1.20.0"
+dependencies: []
+
+# Artifact Hub metadata
+annotations:
+  category: Integration
+  licenses: Apache-2.0
+  artifacthub.io/operator: "true"
+  artifacthub.io/operatorCapabilities: "Full Lifecycle"
+  artifacthub.io/prerelease: "false"
+  artifacthub.io/recommendations: |
+    - Crossplane core must be installed first
+    - Requires Kubernetes 1.20+
