@@ -21,7 +21,7 @@ limitations under the License.
 package v2
 
 import (
-	xpv1 "github.com/crossplane/crossplane/apis/v2/core/v2"
+	corev2 "github.com/crossplane/crossplane/apis/v2/core/v2"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
@@ -125,12 +125,12 @@ func (in *RepositorySecretParameters) DeepCopyInto(out *RepositorySecretParamete
 	out.ValueSecretRef = in.ValueSecretRef
 	if in.ConnectionRef != nil {
 		in, out := &in.ConnectionRef, &out.ConnectionRef
-		*out = new(xpv1.Reference)
+		*out = new(corev2.Reference)
 		(*in).DeepCopyInto(*out)
 	}
 	if in.ProviderConfigRef != nil {
 		in, out := &in.ProviderConfigRef, &out.ProviderConfigRef
-		*out = new(xpv1.Reference)
+		*out = new(corev2.Reference)
 		(*in).DeepCopyInto(*out)
 	}
 }
