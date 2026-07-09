@@ -90,7 +90,7 @@ type externalClient struct {
 
 func (e *externalClient) Observe(ctx context.Context, mg resource.Managed) (managed.ExternalObservation, error) {
 	_, span := tracing.StartSpan(ctx, "repository.observe",
-		tracing.SpanAttrs("repository", mg.GetName(), "observe")...)
+		tracing.SpanAttrs("repository", tracing.ResourceName(mg), "observe")...)
 	defer span.End()
 
 	cr, ok := mg.(*v2.Repository)
@@ -134,7 +134,7 @@ func (e *externalClient) Observe(ctx context.Context, mg resource.Managed) (mana
 
 func (e *externalClient) Create(ctx context.Context, mg resource.Managed) (managed.ExternalCreation, error) {
 	_, span := tracing.StartSpan(ctx, "repository.create",
-		tracing.SpanAttrs("repository", mg.GetName(), "create")...)
+		tracing.SpanAttrs("repository", tracing.ResourceName(mg), "create")...)
 	defer span.End()
 
 	cr, ok := mg.(*v2.Repository)
@@ -193,7 +193,7 @@ func (e *externalClient) Create(ctx context.Context, mg resource.Managed) (manag
 
 func (e *externalClient) Update(ctx context.Context, mg resource.Managed) (managed.ExternalUpdate, error) {
 	_, span := tracing.StartSpan(ctx, "repository.update",
-		tracing.SpanAttrs("repository", mg.GetName(), "update")...)
+		tracing.SpanAttrs("repository", tracing.ResourceName(mg), "update")...)
 	defer span.End()
 
 	cr, ok := mg.(*v2.Repository)
@@ -235,7 +235,7 @@ func (e *externalClient) Update(ctx context.Context, mg resource.Managed) (manag
 
 func (e *externalClient) Delete(ctx context.Context, mg resource.Managed) (managed.ExternalDelete, error) {
 	_, span := tracing.StartSpan(ctx, "repository.delete",
-		tracing.SpanAttrs("repository", mg.GetName(), "delete")...)
+		tracing.SpanAttrs("repository", tracing.ResourceName(mg), "delete")...)
 	defer span.End()
 
 	cr, ok := mg.(*v2.Repository)
