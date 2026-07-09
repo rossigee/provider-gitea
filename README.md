@@ -47,6 +47,8 @@ carry `metadata.namespace`.
 | `BranchProtection` | Branch protection rules | [branchprotection.yaml](examples/e2e/branchprotection.yaml) |
 | `RepositoryKey` | Repository SSH (deploy) keys | [repositorykey.yaml](examples/e2e/repositorykey.yaml) |
 | `RepositoryCollaborator` | Repository access grants | [repositorycollaborator.yaml](examples/e2e/repositorycollaborator.yaml) |
+| `TeamMembership` | User \<-> team association (org-owner = membership in `Owners`) | [teammembership.yaml](examples/e2e/teammembership.yaml) |
+| `TeamRepository` | Repository \<-> team attachment | [teamrepository.yaml](examples/e2e/teamrepository.yaml) |
 | `OrganizationSettings` | Organization policy | [organizationsettings.yaml](examples/e2e/organizationsettings.yaml) |
 | `Variable` | Actions variable (non-secret), repo- or org-scoped | [variable.yaml](examples/e2e/variable.yaml) |
 | `RepositorySecret` 🔑 | Actions secret on a repo | [repositorysecret.yaml](examples/e2e/repositorysecret.yaml) |
@@ -68,7 +70,7 @@ reconcile:
 | Runner | Registration needs a one-time token and a live `act_runner` agent — runtime registration, not desired state. |
 | PullRequest | A transient event over two branches with divergent commits, not a managed resource. |
 | Issue / Release | Content/tickets/tagged artifacts — not infrastructure config. |
-| OrganizationMember | Gitea has no add-member endpoint; membership is a side-effect of team membership (use `Team`). |
+| OrganizationMember | Gitea has no add-member endpoint; membership is a side-effect of team membership (use `TeamMembership`). |
 
 Two kinds were merged/deduplicated rather than dropped:
 - **AdminUser** merged into **`User`** (both drove `/admin/users`); `User` carries
@@ -84,13 +86,14 @@ through uptest:
 
 | Stage | Coverage |
 |-------|----------|
-| Create / Observe / Import / Delete | **all 15 kinds**, against real Gitea |
+| Create / Observe / Import / Delete | **all 17 kinds**, against real Gitea |
 | Update | exercised live for the mutable kinds (`Repository`, `Organization`, `Label`, `Team`, `User`) via `uptest.upbound.io/update-parameter`; unit-tested for the rest |
 
 `RepositorySecret`, `OrganizationSecret`, `AccessToken`, and `RepositoryKey` have
 no meaningful in-place update (the value is write-only / the key is immutable), so
 their controllers treat the resource as up-to-date once it exists and skip the
-live update step.
+live update step. `TeamMembership` and `TeamRepository` are binary associations
+with no mutable attributes, so their `Update` is a no-op for the same reason.
 
 Crossplane **management policies** (`spec.managementPolicies`) are honoured by all
 15 controllers — ObserveOnly, no-delete, pause, and partial-action modes — when

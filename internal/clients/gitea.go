@@ -88,6 +88,17 @@ type Client interface {
 	CreateTeam(ctx context.Context, org string, req *CreateTeamRequest) (*Team, error)
 	UpdateTeam(ctx context.Context, teamID int64, req *UpdateTeamRequest) (*Team, error)
 	DeleteTeam(ctx context.Context, teamID int64) error
+	ListOrganizationTeams(ctx context.Context, org string) ([]Team, error)
+
+	// Team Membership operations
+	GetTeamMember(ctx context.Context, teamID int64, username string) (*User, error)
+	AddTeamMember(ctx context.Context, teamID int64, username string) error
+	RemoveTeamMember(ctx context.Context, teamID int64, username string) error
+
+	// Team Repository operations
+	GetTeamRepository(ctx context.Context, teamID int64, org, repo string) (*Repository, error)
+	AddTeamRepository(ctx context.Context, teamID int64, org, repo string) error
+	RemoveTeamRepository(ctx context.Context, teamID int64, org, repo string) error
 
 	// Label operations
 	GetLabel(ctx context.Context, owner, repo string, labelID int64) (*Label, error)

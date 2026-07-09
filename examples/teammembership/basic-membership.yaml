@@ -1,0 +1,30 @@
+---
+# Regular team membership
+apiVersion: gitea.m.crossplane.io/v1beta1
+kind: TeamMembership
+metadata:
+  name: alice-devs
+  namespace: default
+spec:
+  forProvider:
+    organization: my-example-org
+    team: developers
+    username: alice
+  providerConfigRef:
+    name: default
+---
+# Org-owner case: membership in the org's auto-created "Owners" team makes the
+# user an organization owner. There is no separate OrganizationMember kind —
+# Gitea expresses org membership purely through team membership.
+apiVersion: gitea.m.crossplane.io/v1beta1
+kind: TeamMembership
+metadata:
+  name: bob-owners
+  namespace: default
+spec:
+  forProvider:
+    organization: my-example-org
+    team: Owners
+    username: bob
+  providerConfigRef:
+    name: default

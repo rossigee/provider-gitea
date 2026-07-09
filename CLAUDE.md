@@ -4,7 +4,7 @@ Crossplane provider for Gitea (`github.com/rossigee/provider-gitea`).
 
 Managed resources live under `gitea.m.crossplane.io/v1beta1`. ProviderConfig lives under `gitea.crossplane.io/v1beta1`.
 
-Resources: Organization, User, Repository, Webhook, BranchProtection, AccessToken, Label, Variable, Team, GitHook, OrganizationSettings, OrganizationSecret, RepositorySecret, RepositoryKey, RepositoryCollaborator.
+Resources: Organization, User, Repository, Webhook, BranchProtection, AccessToken, Label, Variable, Team, GitHook, OrganizationSettings, OrganizationSecret, RepositorySecret, RepositoryKey, RepositoryCollaborator, TeamMembership, TeamRepository.
 
 ## Commands
 

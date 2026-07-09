@@ -1,0 +1,16 @@
+# A team-repository attachment needs an org-owned repo — uptest-repo (see
+# repository.yaml) belongs to gitea_admin, not uptest-org — so this creates a
+# second repository under the org via CreateOrganizationRepository (owner set).
+apiVersion: gitea.m.crossplane.io/v1beta1
+kind: Repository
+metadata: {name: uptest-org-repo, namespace: provider-gitea-e2e, annotations: {meta.upbound.io/example-id: teamrepository/v2/repository}}
+spec:
+  forProvider: {name: uptest-org-repo, owner: uptest-org, description: e2e, private: true, autoInit: true, defaultBranch: main}
+  providerConfigRef: {name: e2e, kind: ProviderConfig}
+---
+apiVersion: gitea.m.crossplane.io/v1beta1
+kind: TeamRepository
+metadata: {name: uptest-teamrepository, namespace: provider-gitea-e2e, annotations: {meta.upbound.io/example-id: teamrepository/v2/teamrepository}}
+spec:
+  forProvider: {organization: uptest-org, team: uptest-team, repository: uptest-org-repo}
+  providerConfigRef: {name: e2e, kind: ProviderConfig}

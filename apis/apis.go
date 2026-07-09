@@ -33,6 +33,8 @@ import (
 	repositorykeyv2 "github.com/rossigee/provider-gitea/apis/repositorykey/v1beta1"
 	repositorysecretv2 "github.com/rossigee/provider-gitea/apis/repositorysecret/v1beta1"
 	teamv2 "github.com/rossigee/provider-gitea/apis/team/v1beta1"
+	teammembershipv2 "github.com/rossigee/provider-gitea/apis/teammembership/v1beta1"
+	teamrepositoryv2 "github.com/rossigee/provider-gitea/apis/teamrepository/v1beta1"
 	userv2 "github.com/rossigee/provider-gitea/apis/user/v1beta1"
 	variablev2 "github.com/rossigee/provider-gitea/apis/variable/v1beta1"
 	webhookv2 "github.com/rossigee/provider-gitea/apis/webhook/v1beta1"
@@ -65,6 +67,8 @@ func init() {
 		accesstokenv2.SchemeBuilder.AddToScheme,
 		repositorysecretv2.SchemeBuilder.AddToScheme,
 		variablev2.SchemeBuilder.AddToScheme,
+		teammembershipv2.SchemeBuilder.AddToScheme,
+		teamrepositoryv2.SchemeBuilder.AddToScheme,
 	)
 }
 

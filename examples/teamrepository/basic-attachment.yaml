@@ -1,0 +1,13 @@
+---
+apiVersion: gitea.m.crossplane.io/v1beta1
+kind: TeamRepository
+metadata:
+  name: developers-widget
+  namespace: default
+spec:
+  forProvider:
+    organization: my-example-org
+    team: developers
+    repository: widget
+  providerConfigRef:
+    name: default

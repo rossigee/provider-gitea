@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- `TeamMembership` managed resource: adds/removes a user to/from an existing
+  team (`GET`/`PUT`/`DELETE /teams/{id}/members/{username}`). Team is
+  referenced by (`organization`, `team`) name, resolved to a numeric id via
+  `ListOrganizationTeams`, with an optional `teamId` escape hatch to skip
+  resolution. Membership is binary — there is no per-member role — so
+  `Update` is a no-op. Making a user an organization owner is just membership
+  in the org's auto-created `Owners` team, so this one kind covers that case
+  too; this deliberately supersedes the abandoned `OrganizationMember` kind,
+  whose `PUT /orgs/{org}/members/{username}` client call targets an endpoint
+  Gitea does not have.
+- `TeamRepository` managed resource: attaches/detaches an org repository
+  to/from a team (`GET`/`PUT`/`DELETE /teams/{id}/repos/{org}/{repo}`), using
+  the same team name/id resolution as `TeamMembership`. `Update` is a no-op.
+
 ### Fixed
 - `User`'s `CreateUserRequest.MustChangePassword`/`Restricted` were plain
   `bool` with `json:"...,omitempty"` — Go's `omitempty` drops a field at its

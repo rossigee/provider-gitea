@@ -1,0 +1,9 @@
+# References uptest-team (Team example) and uptest-collab-user, which
+# uptest-setup.sh seeds via the gitea CLI before the MRs reconcile (same user
+# RepositoryCollaborator uses).
+apiVersion: gitea.m.crossplane.io/v1beta1
+kind: TeamMembership
+metadata: {name: uptest-teammembership, namespace: provider-gitea-e2e, annotations: {meta.upbound.io/example-id: teammembership/v2/teammembership}}
+spec:
+  forProvider: {organization: uptest-org, team: uptest-team, username: uptest-collab-user}
+  providerConfigRef: {name: e2e, kind: ProviderConfig}
