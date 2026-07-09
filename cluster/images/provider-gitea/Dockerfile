@@ -5,7 +5,7 @@ RUN apk --no-cache add ca-certificates bash
 ARG TARGETOS
 ARG TARGETARCH
 
-ADD _output/bin/${TARGETOS}_${TARGETARCH}/provider /usr/local/bin/provider
+ADD bin/${TARGETOS}_${TARGETARCH}/provider /usr/local/bin/provider
 
 EXPOSE 8080
 USER 65532
