@@ -17,9 +17,8 @@ limitations under the License.
 package v2
 
 import (
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"github.com/crossplane/crossplane/apis/v2/core/v2"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	xpv1 "github.com/crossplane/crossplane/apis/v2/core/v2"
 )
 
 
@@ -106,7 +105,7 @@ type WebhookStatus struct {
 // +kubebuilder:resource:scope=Namespaced,categories={crossplane,managed,gitea},shortName=webh
 // +kubebuilder:printcolumn:name="READY",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="SYNCED",type="string",JSONPath=".status.conditions[?(@.type=='Synced')].status"
-// +kubebuilder:printcolumn:name="EXTERNAL-NAME",type="string",JSONPath=".metadata.annotations.crossplane\\.io/external-name"
+// +kubebuilder:printcolumn:name="EXTERNAL-NAME",type="string",JSONPath=".metadata.annotations.crossplane.io/external-name"
 // +kubebuilder:printcolumn:name="AGE",type="date",JSONPath=".metadata.creationTimestamp"
 
 // Webhook is the Schema for the webhooks API v2 (namespaced)
@@ -126,15 +125,6 @@ type WebhookList struct {
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []Webhook `json:"items"`
 }
-
-// Webhook type metadata
-var (
-	WebhookKind             = "Webhook"
-	WebhookGroupKind        = schema.GroupKind{Group: Group, Kind: WebhookKind}
-	WebhookKindAPIVersion   = WebhookKind + "." + SchemeGroupVersion.String()
-	WebhookGroupVersionKind = SchemeGroupVersion.WithKind(WebhookKind)
-)
-
 
 // GetCondition returns the condition for the given ConditionType if it exists, otherwise returns nil.
 func (r *Webhook) GetCondition(ct xpv1.ConditionType) xpv1.Condition {
@@ -175,5 +165,4 @@ func (r *Webhook) GetWriteConnectionSecretToReference() *xpv1.LocalSecretReferen
 // SetWriteConnectionSecretToReference of this Webhook.
 func (r *Webhook) SetWriteConnectionSecretToReference(p *xpv1.LocalSecretReference) {
 	r.Spec.WriteConnectionSecretToReference = p
-}
 }

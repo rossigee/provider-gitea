@@ -17,9 +17,8 @@ limitations under the License.
 package v2
 
 import (
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"github.com/crossplane/crossplane/apis/v2/core/v2"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	xpv1 "github.com/crossplane/crossplane/apis/v2/core/v2"
 )
 
 
@@ -111,7 +110,7 @@ type OrganizationStatus struct {
 // +kubebuilder:resource:scope=Namespaced,categories={crossplane,managed,gitea},shortName=gorg
 // +kubebuilder:printcolumn:name="READY",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="SYNCED",type="string",JSONPath=".status.conditions[?(@.type=='Synced')].status"
-// +kubebuilder:printcolumn:name="EXTERNAL-NAME",type="string",JSONPath=".metadata.annotations.crossplane\\.io/external-name"
+// +kubebuilder:printcolumn:name="EXTERNAL-NAME",type="string",JSONPath=".metadata.annotations.crossplane.io/external-name"
 // +kubebuilder:printcolumn:name="AGE",type="date",JSONPath=".metadata.creationTimestamp"
 
 // Organization is the Schema for the organizations API v2 (namespaced)
@@ -131,15 +130,6 @@ type OrganizationList struct {
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []Organization `json:"items"`
 }
-
-// Organization type metadata
-var (
-	OrganizationKind             = "Organization"
-	OrganizationGroupKind        = schema.GroupKind{Group: Group, Kind: OrganizationKind}
-	OrganizationKindAPIVersion   = OrganizationKind + "." + SchemeGroupVersion.String()
-	OrganizationGroupVersionKind = SchemeGroupVersion.WithKind(OrganizationKind)
-)
-
 
 // GetCondition returns the condition for the given ConditionType if it exists, otherwise returns nil.
 func (r *Organization) GetCondition(ct xpv1.ConditionType) xpv1.Condition {
@@ -180,5 +170,4 @@ func (r *Organization) GetWriteConnectionSecretToReference() *xpv1.LocalSecretRe
 // SetWriteConnectionSecretToReference of this Organization.
 func (r *Organization) SetWriteConnectionSecretToReference(p *xpv1.LocalSecretReference) {
 	r.Spec.WriteConnectionSecretToReference = p
-}
 }

@@ -21,6 +21,7 @@ limitations under the License.
 package v2
 
 import (
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 

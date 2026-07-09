@@ -19,18 +19,21 @@ package repository
 import (
 	"context"
 	"fmt"
+	"strings"
+
 	"github.com/crossplane/crossplane-runtime/v2/pkg/controller"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/meta"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
 	"github.com/pkg/errors"
 	"github.com/rossigee/provider-gitea/apis/repository/v2"
-	"github.com/rossigee/provider-gitea/apis/v1beta1"
+
 	"github.com/rossigee/provider-gitea/internal/clients"
 	"github.com/rossigee/provider-gitea/internal/tracing"
-	"sigs.k8s.io/controller-runtime"
+	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"strings"
+
+	v1beta1 "github.com/rossigee/provider-gitea/apis/v1beta1"
 )
 
 const (
@@ -258,7 +261,7 @@ func (e *externalClient) Disconnect(ctx context.Context) error {
 }
 
 // Setup adds a controller that reconciles Repository managed resources.
-func Setup(mgr ctrl.Manager, o xpv1.Options) error {
+func Setup(mgr ctrl.Manager, o controller.Options) error {
 	name := managed.ControllerName(v2.RepositoryKind)
 
 	r := managed.NewReconciler(mgr,

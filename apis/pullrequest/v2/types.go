@@ -17,9 +17,8 @@ limitations under the License.
 package v2
 
 import (
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"github.com/crossplane/crossplane/apis/v2/core/v2"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	xpv1 "github.com/crossplane/crossplane/apis/v2/core/v2"
 )
 
 
@@ -151,7 +150,7 @@ type PullRequestStatus struct {
 // +kubebuilder:resource:scope=Namespaced,categories={crossplane,managed,gitea},shortName=pull
 // +kubebuilder:printcolumn:name="READY",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="SYNCED",type="string",JSONPath=".status.conditions[?(@.type=='Synced')].status"
-// +kubebuilder:printcolumn:name="EXTERNAL-NAME",type="string",JSONPath=".metadata.annotations.crossplane\\.io/external-name"
+// +kubebuilder:printcolumn:name="EXTERNAL-NAME",type="string",JSONPath=".metadata.annotations.crossplane.io/external-name"
 // +kubebuilder:printcolumn:name="AGE",type="date",JSONPath=".metadata.creationTimestamp"
 
 // PullRequest is the Schema for the pullrequests API v2 (namespaced)
@@ -172,13 +171,7 @@ type PullRequestList struct {
 	Items           []PullRequest `json:"items"`
 }
 
-// PullRequest type metadata
-var (
-	PullRequestKind             = "PullRequest"
-	PullRequestGroupKind        = schema.GroupKind{Group: Group, Kind: PullRequestKind}
-	PullRequestKindAPIVersion   = PullRequestKind + "." + SchemeGroupVersion.String()
-	PullRequestGroupVersionKind = SchemeGroupVersion.WithKind(PullRequestKind)
-)
+
 
 
 // GetCondition returns the condition for the given ConditionType if it exists, otherwise returns nil.
@@ -220,5 +213,4 @@ func (r *PullRequest) GetWriteConnectionSecretToReference() *xpv1.LocalSecretRef
 // SetWriteConnectionSecretToReference of this PullRequest.
 func (r *PullRequest) SetWriteConnectionSecretToReference(p *xpv1.LocalSecretReference) {
 	r.Spec.WriteConnectionSecretToReference = p
-}
 }

@@ -1,5 +1,5 @@
 /*
-Copyright 2024 The Crossplane Authors.
+Copyright 2025 The Crossplane Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -16,25 +16,5 @@ limitations under the License.
 
 package v1alpha1
 
-import (
-	"k8s.io/apimachinery/pkg/runtime"
-)
-
-// Package type metadata.
-const (
-	Group   = "gitea.crossplane.io"
-	Version = "v1alpha1"
-)
-
-var (
-	// SchemeGroupVersion is group version used to register these objects
-	SchemeGroupVersion = schema.GroupVersion{Group: Group, Version: Version}
-
-	// SchemeBuilder is used to add go types to the GroupVersionKind scheme
-	SchemeBuilder = runtime.NewSchemeBuilder(addKnownTypes)
-	AddToScheme   = SchemeBuilder.AddToScheme
-)
-
-func addKnownTypes(s *runtime.Scheme) error {
-	return nil
-}
+// Legacy v1alpha1 package version. No root resource types are defined here.
+// All Gitea resources use the v2 namespaced APIs under apis/*/v2/.

@@ -17,9 +17,8 @@ limitations under the License.
 package v2
 
 import (
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"github.com/crossplane/crossplane/apis/v2/core/v2"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	xpv1 "github.com/crossplane/crossplane/apis/v2/core/v2"
 )
 
 
@@ -140,7 +139,7 @@ type UserStatus struct {
 // +kubebuilder:resource:scope=Namespaced,categories={crossplane,managed,gitea},shortName=user
 // +kubebuilder:printcolumn:name="READY",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="SYNCED",type="string",JSONPath=".status.conditions[?(@.type=='Synced')].status"
-// +kubebuilder:printcolumn:name="EXTERNAL-NAME",type="string",JSONPath=".metadata.annotations.crossplane\\.io/external-name"
+// +kubebuilder:printcolumn:name="EXTERNAL-NAME",type="string",JSONPath=".metadata.annotations.crossplane.io/external-name"
 // +kubebuilder:printcolumn:name="AGE",type="date",JSONPath=".metadata.creationTimestamp"
 
 // User is the Schema for the users API v2 (namespaced)
@@ -161,13 +160,7 @@ type UserList struct {
 	Items           []User `json:"items"`
 }
 
-// User type metadata
-var (
-	UserKind             = "User"
-	UserGroupKind        = schema.GroupKind{Group: Group, Kind: UserKind}
-	UserKindAPIVersion   = UserKind + "." + SchemeGroupVersion.String()
-	UserGroupVersionKind = SchemeGroupVersion.WithKind(UserKind)
-)
+// User type metadata lives in register.go. Avoid duplicate.
 
 
 // GetCondition returns the condition for the given ConditionType if it exists, otherwise returns nil.
@@ -209,5 +202,4 @@ func (r *User) GetWriteConnectionSecretToReference() *xpv1.LocalSecretReference 
 // SetWriteConnectionSecretToReference of this User.
 func (r *User) SetWriteConnectionSecretToReference(p *xpv1.LocalSecretReference) {
 	r.Spec.WriteConnectionSecretToReference = p
-}
 }

@@ -17,9 +17,8 @@ limitations under the License.
 package v2
 
 import (
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"github.com/crossplane/crossplane/apis/v2/core/v2"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	xpv1 "github.com/crossplane/crossplane/apis/v2/core/v2"
 )
 
 
@@ -126,7 +125,7 @@ type RepositoryStatus struct {
 // +kubebuilder:resource:scope=Namespaced,categories={crossplane,managed,gitea},shortName=grepo
 // +kubebuilder:printcolumn:name="READY",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="SYNCED",type="string",JSONPath=".status.conditions[?(@.type=='Synced')].status"
-// +kubebuilder:printcolumn:name="EXTERNAL-NAME",type="string",JSONPath=".metadata.annotations.crossplane\\.io/external-name"
+// +kubebuilder:printcolumn:name="EXTERNAL-NAME",type="string",JSONPath=".metadata.annotations.crossplane.io/external-name"
 // +kubebuilder:printcolumn:name="AGE",type="date",JSONPath=".metadata.creationTimestamp"
 
 // Repository is the Schema for the repositories API v2 (namespaced)
@@ -147,13 +146,7 @@ type RepositoryList struct {
 	Items           []Repository `json:"items"`
 }
 
-// Repository type metadata
-var (
-	RepositoryKind             = "Repository"
-	RepositoryGroupKind        = schema.GroupKind{Group: Group, Kind: RepositoryKind}
-	RepositoryKindAPIVersion   = RepositoryKind + "." + SchemeGroupVersion.String()
-	RepositoryGroupVersionKind = SchemeGroupVersion.WithKind(RepositoryKind)
-)
+
 
 // GetCondition returns the condition for the given ConditionType if it exists, otherwise returns nil.
 func (r *Repository) GetCondition(ct xpv1.ConditionType) xpv1.Condition {
@@ -194,5 +187,4 @@ func (r *Repository) GetWriteConnectionSecretToReference() *xpv1.LocalSecretRefe
 // SetWriteConnectionSecretToReference of this Repository.
 func (r *Repository) SetWriteConnectionSecretToReference(p *xpv1.LocalSecretReference) {
 	r.Spec.WriteConnectionSecretToReference = p
-}
 }

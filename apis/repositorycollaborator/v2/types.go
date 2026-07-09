@@ -17,9 +17,8 @@ limitations under the License.
 package v2
 
 import (
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"github.com/crossplane/crossplane/apis/v2/core/v2"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	xpv1 "github.com/crossplane/crossplane/apis/v2/core/v2"
 )
 
 
@@ -96,7 +95,7 @@ type RepositoryCollaboratorStatus struct {
 // +kubebuilder:resource:scope=Namespaced,categories={crossplane,managed,gitea},shortName=repo
 // +kubebuilder:printcolumn:name="READY",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="SYNCED",type="string",JSONPath=".status.conditions[?(@.type=='Synced')].status"
-// +kubebuilder:printcolumn:name="EXTERNAL-NAME",type="string",JSONPath=".metadata.annotations.crossplane\\.io/external-name"
+// +kubebuilder:printcolumn:name="EXTERNAL-NAME",type="string",JSONPath=".metadata.annotations.crossplane.io/external-name"
 // +kubebuilder:printcolumn:name="AGE",type="date",JSONPath=".metadata.creationTimestamp"
 
 // RepositoryCollaborator is the Schema for the repositorycollaborators API v2 (namespaced)
@@ -116,15 +115,6 @@ type RepositoryCollaboratorList struct {
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []RepositoryCollaborator `json:"items"`
 }
-
-// RepositoryCollaborator type metadata
-var (
-	RepositoryCollaboratorKind             = "RepositoryCollaborator"
-	RepositoryCollaboratorGroupKind        = schema.GroupKind{Group: Group, Kind: RepositoryCollaboratorKind}
-	RepositoryCollaboratorKindAPIVersion   = RepositoryCollaboratorKind + "." + SchemeGroupVersion.String()
-	RepositoryCollaboratorGroupVersionKind = SchemeGroupVersion.WithKind(RepositoryCollaboratorKind)
-)
-
 
 // GetCondition returns the condition for the given ConditionType if it exists, otherwise returns nil.
 func (r *RepositoryCollaborator) GetCondition(ct xpv1.ConditionType) xpv1.Condition {
@@ -165,5 +155,4 @@ func (r *RepositoryCollaborator) GetWriteConnectionSecretToReference() *xpv1.Loc
 // SetWriteConnectionSecretToReference of this RepositoryCollaborator.
 func (r *RepositoryCollaborator) SetWriteConnectionSecretToReference(p *xpv1.LocalSecretReference) {
 	r.Spec.WriteConnectionSecretToReference = p
-}
 }

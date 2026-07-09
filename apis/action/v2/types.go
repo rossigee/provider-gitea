@@ -17,9 +17,8 @@ limitations under the License.
 package v2
 
 import (
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"github.com/crossplane/crossplane/apis/v2/core/v2"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	xpv1 "github.com/crossplane/crossplane/apis/v2/core/v2"
 )
 
 
@@ -55,7 +54,7 @@ type ActionParameters struct {
 
 	// WorkflowName is the name of the workflow file
 	// +kubebuilder:validation:Required
-	// +kubebuilder:validation:Pattern="^[a-zA-Z0-9._-]+\\.ya?ml$"
+	// +kubebuilder:validation:Pattern="^[a-zA-Z0-9._-]+.ya?ml$"
 	// +kubebuilder:validation:MinLength=1
 	// +kubebuilder:validation:MaxLength=255
 	WorkflowName string `json:"workflowName"`
@@ -141,7 +140,7 @@ type ActionStatus struct {
 // +kubebuilder:resource:scope=Namespaced,categories={crossplane,managed,gitea},shortName=acti
 // +kubebuilder:printcolumn:name="READY",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="SYNCED",type="string",JSONPath=".status.conditions[?(@.type=='Synced')].status"
-// +kubebuilder:printcolumn:name="EXTERNAL-NAME",type="string",JSONPath=".metadata.annotations.crossplane\\.io/external-name"
+// +kubebuilder:printcolumn:name="EXTERNAL-NAME",type="string",JSONPath=".metadata.annotations.crossplane.io/external-name"
 // +kubebuilder:printcolumn:name="AGE",type="date",JSONPath=".metadata.creationTimestamp"
 
 // Action is the Schema for the actions API v2 (namespaced)
@@ -161,15 +160,6 @@ type ActionList struct {
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []Action `json:"items"`
 }
-
-// Action type metadata
-var (
-	ActionKind             = "Action"
-	ActionGroupKind        = schema.GroupKind{Group: Group, Kind: ActionKind}
-	ActionKindAPIVersion   = ActionKind + "." + SchemeGroupVersion.String()
-	ActionGroupVersionKind = SchemeGroupVersion.WithKind(ActionKind)
-)
-
 
 // GetCondition returns the condition for the given ConditionType if it exists, otherwise returns nil.
 func (r *Action) GetCondition(ct xpv1.ConditionType) xpv1.Condition {
@@ -210,5 +200,4 @@ func (r *Action) GetWriteConnectionSecretToReference() *xpv1.LocalSecretReferenc
 // SetWriteConnectionSecretToReference of this Action.
 func (r *Action) SetWriteConnectionSecretToReference(p *xpv1.LocalSecretReference) {
 	r.Spec.WriteConnectionSecretToReference = p
-}
 }

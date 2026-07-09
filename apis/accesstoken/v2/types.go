@@ -17,9 +17,8 @@ limitations under the License.
 package v2
 
 import (
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"github.com/crossplane/crossplane/apis/v2/core/v2"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	xpv1 "github.com/crossplane/crossplane/apis/v2/core/v2"
 )
 
 
@@ -95,7 +94,7 @@ type AccessTokenStatus struct {
 // +kubebuilder:resource:scope=Namespaced,categories={crossplane,managed,gitea},shortName=acce
 // +kubebuilder:printcolumn:name="READY",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="SYNCED",type="string",JSONPath=".status.conditions[?(@.type=='Synced')].status"
-// +kubebuilder:printcolumn:name="EXTERNAL-NAME",type="string",JSONPath=".metadata.annotations.crossplane\\.io/external-name"
+// +kubebuilder:printcolumn:name="EXTERNAL-NAME",type="string",JSONPath=".metadata.annotations.crossplane.io/external-name"
 // +kubebuilder:printcolumn:name="AGE",type="date",JSONPath=".metadata.creationTimestamp"
 
 // AccessToken is the Schema for the accesstokens API v2 (namespaced)
@@ -116,13 +115,7 @@ type AccessTokenList struct {
 	Items           []AccessToken `json:"items"`
 }
 
-// AccessToken type metadata
-var (
-	AccessTokenKind             = "AccessToken"
-	AccessTokenGroupKind        = schema.GroupKind{Group: Group, Kind: AccessTokenKind}
-	AccessTokenKindAPIVersion   = AccessTokenKind + "." + SchemeGroupVersion.String()
-	AccessTokenGroupVersionKind = SchemeGroupVersion.WithKind(AccessTokenKind)
-)
+
 
 
 // GetCondition returns the condition for the given ConditionType if it exists, otherwise returns nil.
@@ -164,5 +157,4 @@ func (r *AccessToken) GetWriteConnectionSecretToReference() *xpv1.LocalSecretRef
 // SetWriteConnectionSecretToReference of this AccessToken.
 func (r *AccessToken) SetWriteConnectionSecretToReference(p *xpv1.LocalSecretReference) {
 	r.Spec.WriteConnectionSecretToReference = p
-}
 }

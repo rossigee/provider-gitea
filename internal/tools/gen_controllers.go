@@ -43,7 +43,7 @@ import (
 	"github.com/crossplane/crossplane-runtime/v2/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
 	"github.com/rossigee/provider-gitea/apis/{{.Package}}/{{.APIVersion}}"
-	"github.com/rossigee/provider-gitea/apis/v1beta1"
+
 	"github.com/rossigee/provider-gitea/internal/clients"
 )
 

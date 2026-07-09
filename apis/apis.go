@@ -19,8 +19,7 @@ package apis
 
 import (
 	"k8s.io/apimachinery/pkg/runtime"
-)
- - v2-only provider
+
 	accesstokenv2 "github.com/rossigee/provider-gitea/apis/accesstoken/v2"
 	actionv2 "github.com/rossigee/provider-gitea/apis/action/v2"
 	adminuserv2 "github.com/rossigee/provider-gitea/apis/adminuser/v2"

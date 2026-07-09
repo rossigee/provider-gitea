@@ -19,7 +19,7 @@ package controller
 import (
 	"github.com/crossplane/crossplane-runtime/v2/pkg/controller"
 	"github.com/rossigee/provider-gitea/internal/controller/repository"
-	"sigs.k8s.io/controller-runtime"
+	ctrl "sigs.k8s.io/controller-runtime"
 )
 
 func Setup(mgr ctrl.Manager, o controller.Options) error {
