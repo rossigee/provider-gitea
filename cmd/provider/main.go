@@ -24,6 +24,9 @@ import (
 	"time"
 
 	"github.com/alecthomas/kingpin/v2"
+	apimachineryruntime "k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/kubernetes/scheme"
+
 	"github.com/crossplane/crossplane-runtime/v2/pkg/controller"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/feature"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/logging"
@@ -73,11 +76,16 @@ func main() {
 		"leader-election", *leaderElection,
 		"debug-mode", *debug)
 
+	s := apimachineryruntime.NewScheme()
+	kingpin.FatalIfError(scheme.AddToScheme(s), "Cannot add k8s types to scheme")
+	kingpin.FatalIfError(apis.AddToScheme(s), "Cannot add Gitea APIs to scheme")
+
 	cfg, err := ctrl.GetConfig()
 	kingpin.FatalIfError(err, "Cannot get API server rest config")
 
 	// Get the manager options
 	options := ctrl.Options{
+		Scheme:             s,
 		LeaderElection:   *leaderElection,
 		LeaderElectionID: "crossplane-leader-election-provider-gitea",
 		Cache: cache.Options{
@@ -90,8 +98,6 @@ func main() {
 
 	mgr, err := ctrl.NewManager(cfg, options)
 	kingpin.FatalIfError(err, "Cannot create controller manager")
-
-	kingpin.FatalIfError(apis.AddToScheme(mgr.GetScheme()), "Cannot add Gitea APIs to scheme")
 
 	featureFlags := &feature.Flags{}
 	o := controller.Options{

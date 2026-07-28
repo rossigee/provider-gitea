@@ -18,11 +18,15 @@ package controller
 
 import (
 	"github.com/crossplane/crossplane-runtime/v2/pkg/controller"
+	"github.com/rossigee/provider-gitea/internal/controller/providerconfig"
 	"github.com/rossigee/provider-gitea/internal/controller/repository"
 	ctrl "sigs.k8s.io/controller-runtime"
 )
 
 func Setup(mgr ctrl.Manager, o controller.Options) error {
+	if err := providerconfig.Setup(mgr); err != nil {
+		return err
+	}
 	for _, setup := range []func(ctrl.Manager, controller.Options) error{
 		repository.Setup,
 	} {

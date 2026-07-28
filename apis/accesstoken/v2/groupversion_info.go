@@ -21,6 +21,7 @@ limitations under the License.
 package v2
 
 import (
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime"
 )
@@ -44,5 +45,6 @@ func addKnownTypes(s *runtime.Scheme) error {
 		&AccessToken{},
 		&AccessTokenList{},
 	)
+		metav1.AddToGroupVersion(s, SchemeGroupVersion)
 	return nil
 }
