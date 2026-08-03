@@ -207,7 +207,13 @@ func (e *externalClient) Create(ctx context.Context, mg resource.Managed) (manag
 	externalID := buildExternalID(owner, repo, webhook.ID, repo == "")
 	meta.SetExternalName(cr, externalID)
 
-	return managed.ExternalCreation{}, nil
+	cr.Status.AtProvider = v2.WebhookObservation{
+		ID:        &webhook.ID,
+		CreatedAt: &webhook.CreatedAt,
+		UpdatedAt: &webhook.UpdatedAt,
+	}
+
+	return managed.ExternalCreation{ExternalNameAssigned: true}, nil
 }
 
 func (e *externalClient) Update(ctx context.Context, mg resource.Managed) (managed.ExternalUpdate, error) {
@@ -333,6 +339,7 @@ func Setup(mgr ctrl.Manager, o controller.Options) error {
 		resource.ManagedKind(v2.WebhookGroupVersionKind),
 		managed.WithExternalConnector(&connector{kube: mgr.GetClient()}),
 		managed.WithLogger(o.Logger.WithValues("controller", name)),
+		managed.WithPollInterval(o.PollInterval),
 	)
 
 	return ctrl.NewControllerManagedBy(mgr).
