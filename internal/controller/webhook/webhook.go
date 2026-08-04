@@ -27,6 +27,7 @@ import (
 	"github.com/crossplane/crossplane-runtime/v2/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
 	"github.com/pkg/errors"
+	xpv1 "github.com/crossplane/crossplane/apis/v2/core/v2"
 	"github.com/rossigee/provider-gitea/apis/webhook/v2"
 	"github.com/rossigee/provider-gitea/internal/clients"
 	"github.com/rossigee/provider-gitea/internal/tracing"
@@ -126,6 +127,8 @@ func (e *externalClient) Observe(ctx context.Context, mg resource.Managed) (mana
 		CreatedAt: &webhook.CreatedAt,
 		UpdatedAt: &webhook.UpdatedAt,
 	}
+
+	cr.SetConditions(xpv1.Available())
 
 	return managed.ExternalObservation{ResourceExists: true, ResourceUpToDate: isWebhookUpToDate(cr, webhook)}, nil
 }
