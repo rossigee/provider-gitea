@@ -213,7 +213,7 @@ func (e *externalClient) Create(ctx context.Context, mg resource.Managed) (manag
 		UpdatedAt: &webhook.UpdatedAt,
 	}
 
-	return managed.ExternalCreation{ExternalNameAssigned: true}, nil
+	return managed.ExternalCreation{}, nil
 }
 
 func (e *externalClient) Update(ctx context.Context, mg resource.Managed) (managed.ExternalUpdate, error) {
