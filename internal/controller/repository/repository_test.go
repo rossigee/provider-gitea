@@ -427,7 +427,7 @@ func TestObserve(t *testing.T) {
 		assert.False(t, obs.ResourceExists)
 	})
 
-	t.Run("invalid external name format returns error", func(t *testing.T) {
+	t.Run("invalid external name format treated as not exists", func(t *testing.T) {
 		ec := &externalClient{client: &mockRepoClient{}}
 
 		cr := &v2.Repository{
@@ -438,9 +438,9 @@ func TestObserve(t *testing.T) {
 		}
 		meta.SetExternalName(cr, "invalid")
 
-		_, err := ec.Observe(context.Background(), cr)
-		require.Error(t, err)
-		assert.Contains(t, err.Error(), "invalid external-id format")
+		obs, err := ec.Observe(context.Background(), cr)
+		require.NoError(t, err)
+		assert.False(t, obs.ResourceExists)
 	})
 }
 

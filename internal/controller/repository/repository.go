@@ -105,7 +105,7 @@ func (e *externalClient) Observe(ctx context.Context, mg resource.Managed) (mana
 
 	parts := strings.Split(externalID, "/")
 	if len(parts) != 2 {
-		return managed.ExternalObservation{}, errors.New("invalid external-id format, expected owner/name")
+		return managed.ExternalObservation{ResourceExists: false}, nil
 	}
 
 	owner, name := parts[0], parts[1]
