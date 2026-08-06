@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-08-06
+
+### ✨ **New Features**
+- **Webhook Controller**: Complete webhook lifecycle management with Create/Update/Delete operations
+- **OTLP Tracing**: OpenTelemetry tracing support for enhanced observability
+- **Dependabot Integration**: Automated dependency management with severity-based auto-merge
+
+### 🐛 **Bug Fixes**
+- **Repository Observe**: Treat invalid external-id format as resource-not-exists instead of error
+- **Webhook Conditions**: Set Available condition when webhook is observed
+- **Webhook Create**: Return ExternalNameAssigned=true in Create()
+- **Webhook Cleanup**: Remove non-existent ExternalNameAssigned field
+- **Core Scheme**: Add core Kubernetes scheme registration for Crossplane v2 compatibility
+- **Nil Tracer Panic**: Fix nil tracer panic in tests, add tracing.ResourceName helper
+
+### 🔧 **Build & CI/CD**
+- **Go Toolchain**: Updated to Go 1.26.5
+- **Dependencies**: Updated upstream crossplane-runtime to v2.3.3
+- **CI Workflows**: Upgrade GitHub Actions to latest major versions
+- **Build Submodule**: Use HTTPS for build submodule (fixes release workflow)
+- **Govulncheck**: Handle unfixable vulnerabilities, prevent go.mod changes
+- **V2 Migration**: EventRecorder migration, fix lint, tests, and logging
+
 ## [0.8.2] - 2025-10-30
 
 ### 🔧 **Build & CI/CD Improvements**
