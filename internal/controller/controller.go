@@ -18,6 +18,7 @@ package controller
 
 import (
 	"github.com/crossplane/crossplane-runtime/v2/pkg/controller"
+	"github.com/rossigee/provider-gitea/internal/controller/organization"
 	"github.com/rossigee/provider-gitea/internal/controller/providerconfig"
 	"github.com/rossigee/provider-gitea/internal/controller/repository"
 	"github.com/rossigee/provider-gitea/internal/controller/webhook"
@@ -30,6 +31,7 @@ func Setup(mgr ctrl.Manager, o controller.Options) error {
 	}
 	for _, setup := range []func(ctrl.Manager, controller.Options) error{
 		repository.Setup,
+		organization.Setup,
 		webhook.Setup,
 	} {
 		if err := setup(mgr, o); err != nil {

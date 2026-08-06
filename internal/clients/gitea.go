@@ -311,6 +311,12 @@ type Organization struct {
 	RepoAdminChangeTeamAccess bool   `json:"repo_admin_change_team_access"`
 	Email                     string `json:"email"`
 	AvatarURL                 string `json:"avatar_url"`
+	Created                   string `json:"created"`
+	Updated                   string `json:"updated"`
+	NumRepos                  int64  `json:"num_repos"`
+	NumPrivateRepos           int64  `json:"num_private_repos"`
+	NumMembers                int64  `json:"num_members"`
+	NumTeams                  int64  `json:"num_teams"`
 }
 
 // CreateOrganizationRequest represents the request body for creating an organization
