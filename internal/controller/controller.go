@@ -21,6 +21,7 @@ import (
 	"github.com/rossigee/provider-gitea/internal/controller/organization"
 	"github.com/rossigee/provider-gitea/internal/controller/providerconfig"
 	"github.com/rossigee/provider-gitea/internal/controller/repository"
+	"github.com/rossigee/provider-gitea/internal/controller/user"
 	"github.com/rossigee/provider-gitea/internal/controller/webhook"
 	ctrl "sigs.k8s.io/controller-runtime"
 )
@@ -32,6 +33,7 @@ func Setup(mgr ctrl.Manager, o controller.Options) error {
 	for _, setup := range []func(ctrl.Manager, controller.Options) error{
 		repository.Setup,
 		organization.Setup,
+		user.Setup,
 		webhook.Setup,
 	} {
 		if err := setup(mgr, o); err != nil {

@@ -288,8 +288,18 @@ func (e *externalClient) Delete(ctx context.Context, mg resource.Managed) (manag
 		return managed.ExternalDelete{}, nil
 	}
 
-	err := e.client.DeleteOrganization(ctx, externalName)
-	return managed.ExternalDelete{}, errors.Wrap(err, errDeleteOrganization)
+	// Gracefully handle already-deleted external resource.
+	_, err := e.client.GetOrganization(ctx, externalName)
+	if err == nil {
+		if err := e.client.DeleteOrganization(ctx, externalName); err != nil {
+			return managed.ExternalDelete{}, errors.Wrap(err, errDeleteOrganization)
+		}
+		return managed.ExternalDelete{}, nil
+	}
+	if !strings.Contains(err.Error(), "404") {
+		return managed.ExternalDelete{}, errors.Wrap(err, errDeleteOrganization)
+	}
+	return managed.ExternalDelete{}, nil
 }
 
 func (e *externalClient) Disconnect(ctx context.Context) error {

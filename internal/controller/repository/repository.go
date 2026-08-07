@@ -131,8 +131,29 @@ func (e *externalClient) Observe(ctx context.Context, mg resource.Managed) (mana
 
 	cr.SetConditions(xpv1.Available())
 
-	// Assume resource is up-to-date (simplified - could compare desired vs actual)
-	return managed.ExternalObservation{ResourceExists: true, ResourceUpToDate: true}, nil
+	return managed.ExternalObservation{
+		ResourceExists:   true,
+		ResourceUpToDate: isRepositoryUpToDate(cr, repo),
+	}, nil
+}
+
+func isRepositoryUpToDate(cr *v2.Repository, repo *clients.Repository) bool {
+	if cr.Spec.ForProvider.Description != nil && *cr.Spec.ForProvider.Description != repo.Description {
+		return false
+	}
+	if cr.Spec.ForProvider.Private != nil && *cr.Spec.ForProvider.Private != repo.Private {
+		return false
+	}
+	if cr.Spec.ForProvider.Template != nil && *cr.Spec.ForProvider.Template != repo.Template {
+		return false
+	}
+	if cr.Spec.ForProvider.Archived != nil && *cr.Spec.ForProvider.Archived != repo.Archived {
+		return false
+	}
+	if cr.Spec.ForProvider.DefaultBranch != nil && repo.DefaultBranch != "" && *cr.Spec.ForProvider.DefaultBranch != repo.DefaultBranch {
+		return false
+	}
+	return true
 }
 
 func (e *externalClient) Create(ctx context.Context, mg resource.Managed) (managed.ExternalCreation, error) {
@@ -254,8 +275,16 @@ func (e *externalClient) Delete(ctx context.Context, mg resource.Managed) (manag
 
 	owner, name := parts[0], parts[1]
 
-	err := e.client.DeleteRepository(ctx, owner, name)
-	return managed.ExternalDelete{}, errors.Wrap(err, errDeleteRepository)
+	// Gracefully handle already-deleted external resource.
+	if _, err := e.client.GetRepository(ctx, owner, name); err == nil {
+		if err := e.client.DeleteRepository(ctx, owner, name); err != nil {
+			return managed.ExternalDelete{}, errors.Wrap(err, errDeleteRepository)
+		}
+		return managed.ExternalDelete{}, nil
+	} else if !strings.Contains(err.Error(), "404") {
+		return managed.ExternalDelete{}, errors.Wrap(err, errDeleteRepository)
+	}
+	return managed.ExternalDelete{}, nil
 }
 
 func (e *externalClient) Disconnect(ctx context.Context) error {

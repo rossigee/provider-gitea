@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.1] - 2026-08-07
+
+### 🐛 **Bug Fixes**
+- **Repository Observe**: Set Available condition when resource is observed to exist, preventing READY=False (Creating) state for adopted resources
+
+## [0.10.0] - 2026-08-06
+
+### ✨ **New Features**
+- **Organization Controller**: Complete organization lifecycle management with Observe/Create/Update/Delete operations and v2 API support
+- **Organization Observation**: Extended client struct with Created, Updated, NumRepos, NumPrivateRepos, NumMembers, NumTeams fields
+- **isOrganizationUpToDate**: Drift detection comparing desired vs actual org state for username, name, description, location, website, visibility
+- **Unit Tests**: Added tests for organization up-to-date detection
+
+### 🔧 **Build & CI/CD**
+- **xpkg Packaging**: Use proper `make xpkg.build` for valid Crossplane package format
+
 ## [0.9.0] - 2026-08-06
 
 ### ✨ **New Features**
