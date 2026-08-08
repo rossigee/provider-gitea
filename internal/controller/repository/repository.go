@@ -27,14 +27,13 @@ import (
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
 	"github.com/pkg/errors"
 	xpv1 "github.com/crossplane/crossplane/apis/v2/core/v2"
+	v1beta1 "github.com/rossigee/provider-gitea/apis/v1beta1"
 	"github.com/rossigee/provider-gitea/apis/repository/v2"
 
 	"github.com/rossigee/provider-gitea/internal/clients"
 	"github.com/rossigee/provider-gitea/internal/tracing"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-
-	v1beta1 "github.com/rossigee/provider-gitea/apis/v1beta1"
 )
 
 const (
@@ -129,11 +128,24 @@ func (e *externalClient) Observe(ctx context.Context, mg resource.Managed) (mana
 		Language: &repo.Language,
 	}
 
+	// Update observed state
+	cr.Status.AtProvider = v2.RepositoryObservation{
+		ID:       &repo.ID,
+		FullName: &repo.FullName,
+		HTMLURL:  &repo.HTMLURL,
+		SSHURL:   &repo.SSHURL,
+		CloneURL: &repo.CloneURL,
+		Language: &repo.Language,
+	}
+
+	uo := isRepositoryUpToDate(cr, repo)
+
+	// Only set Available() - Crossplane runtime handles Synced condition automatically
 	cr.SetConditions(xpv1.Available())
 
 	return managed.ExternalObservation{
 		ResourceExists:   true,
-		ResourceUpToDate: isRepositoryUpToDate(cr, repo),
+		ResourceUpToDate: uo,
 	}, nil
 }
 
@@ -169,6 +181,44 @@ func (e *externalClient) Create(ctx context.Context, mg resource.Managed) (manag
 	owner := ""
 	if cr.Spec.ForProvider.Owner != nil {
 		owner = *cr.Spec.ForProvider.Owner
+	}
+
+	// Check if repo already exists - if so, don't treat this as a new creation
+	// This prevents the "Creating" condition from persisting
+	name := cr.Spec.ForProvider.Name
+	if name == "" {
+		name = meta.GetExternalName(cr)
+		if name != "" {
+			parts := strings.Split(name, "/")
+			if len(parts) == 2 {
+				name = parts[1]
+			}
+		}
+	}
+
+	if name != "" {
+		// Check if repo already exists
+		var checkOwner string
+		var checkName string
+		if owner != "" {
+			checkOwner = owner
+			checkName = name
+		} else {
+			extName := meta.GetExternalName(cr)
+			if extName != "" {
+				parts := strings.Split(extName, "/")
+				if len(parts) == 2 {
+					checkOwner = parts[0]
+					checkName = parts[1]
+				}
+			}
+		}
+		if checkOwner != "" && checkName != "" {
+			_, err := e.client.GetRepository(ctx, checkOwner, checkName)
+			if err == nil {
+				return managed.ExternalCreation{}, nil
+			}
+		}
 	}
 
 	// Build create request from spec
