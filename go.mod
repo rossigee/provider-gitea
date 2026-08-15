@@ -4,7 +4,7 @@ go 1.26.5
 
 require (
 	github.com/alecthomas/kingpin/v2 v2.4.0
-	github.com/crossplane/crossplane-runtime/v2 v2.3.3
+	github.com/crossplane/crossplane-runtime/v2 v2.4.0-rc.0
 	github.com/crossplane/crossplane-tools v0.0.0-20251017183449-dd4517244339
 	github.com/crossplane/crossplane/apis/v2 v2.4.0-rc.0
 	github.com/go-logr/logr v1.4.4
