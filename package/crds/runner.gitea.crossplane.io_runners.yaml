@@ -71,7 +71,6 @@ spec:
                       type: string
                     minItems: 1
                     type: array
-                    uniqueItems: true
                   name:
                     maxLength: 100
                     minLength: 1

@@ -38,7 +38,6 @@ type AccessTokenParameters struct {
 	// Scopes defines the permissions granted to this token
 	// +kubebuilder:validation:Required
 	// +kubebuilder:validation:MinItems=1
-	// +kubebuilder:validation:UniqueItems=true
 	Scopes []string `json:"scopes"`
 
 	// V2 Enhancement: Connection reference for multi-tenant support

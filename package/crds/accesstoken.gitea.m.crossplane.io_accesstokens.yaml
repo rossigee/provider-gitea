@@ -98,7 +98,6 @@ spec:
                       type: string
                     minItems: 1
                     type: array
-                    uniqueItems: true
                   username:
                     maxLength: 40
                     minLength: 1

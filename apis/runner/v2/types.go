@@ -53,7 +53,6 @@ type RunnerParameters struct {
 
 	// Labels are the labels assigned to this runner for job targeting
 	// +kubebuilder:validation:MinItems=1
-	// +kubebuilder:validation:UniqueItems=true
 	Labels []string `json:"labels"`
 
 	// Description is an optional description for the runner
