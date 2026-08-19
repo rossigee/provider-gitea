@@ -17,10 +17,9 @@ limitations under the License.
 package v2
 
 import (
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	xpv1 "github.com/crossplane/crossplane/apis/v2/core/v2"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
-
 
 type LabelParameters struct {
 	// Name is the label name
@@ -69,13 +68,13 @@ type LabelObservation struct {
 // LabelSpec defines the desired state of Label
 type LabelSpec struct {
 	xpv1.ManagedResourceSpec `json:",inline"`
-	ForProvider       LabelParameters `json:"forProvider"`
+	ForProvider              LabelParameters `json:"forProvider"`
 }
 
 // LabelStatus defines the observed state of Label
 type LabelStatus struct {
 	xpv1.ManagedResourceStatus `json:",inline"`
-	AtProvider          LabelObservation `json:"atProvider,omitempty"`
+	AtProvider                 LabelObservation `json:"atProvider,omitempty"`
 }
 
 // +kubebuilder:object:root=true
@@ -107,7 +106,6 @@ type LabelList struct {
 
 // Label type metadata lives in register.go. Avoid duplicate.
 
-
 // GetCondition returns the condition for the given ConditionType if it exists, otherwise returns nil.
 func (r *Label) GetCondition(ct xpv1.ConditionType) xpv1.Condition {
 	return r.Status.GetCondition(ct)
@@ -127,7 +125,6 @@ func (r *Label) GetManagementPolicies() xpv1.ManagementPolicies {
 func (r *Label) SetManagementPolicies(p xpv1.ManagementPolicies) {
 	r.Spec.ManagementPolicies = p
 }
-
 
 // GetProviderConfigReference of this Label.
 func (r *Label) GetProviderConfigReference() *xpv1.ProviderConfigReference {

@@ -17,10 +17,9 @@ limitations under the License.
 package v2
 
 import (
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	xpv1 "github.com/crossplane/crossplane/apis/v2/core/v2"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
-
 
 type AccessTokenParameters struct {
 	// Username is the user that owns this access token
@@ -78,13 +77,13 @@ type AccessTokenObservation struct {
 // AccessTokenSpec defines the desired state of AccessToken
 type AccessTokenSpec struct {
 	xpv1.ManagedResourceSpec `json:",inline"`
-	ForProvider       AccessTokenParameters `json:"forProvider"`
+	ForProvider              AccessTokenParameters `json:"forProvider"`
 }
 
 // AccessTokenStatus defines the observed state of AccessToken
 type AccessTokenStatus struct {
 	xpv1.ManagedResourceStatus `json:",inline"`
-	AtProvider          AccessTokenObservation `json:"atProvider,omitempty"`
+	AtProvider                 AccessTokenObservation `json:"atProvider,omitempty"`
 }
 
 // +kubebuilder:object:root=true
@@ -114,9 +113,6 @@ type AccessTokenList struct {
 	Items           []AccessToken `json:"items"`
 }
 
-
-
-
 // GetCondition returns the condition for the given ConditionType if it exists, otherwise returns nil.
 func (r *AccessToken) GetCondition(ct xpv1.ConditionType) xpv1.Condition {
 	return r.Status.GetCondition(ct)
@@ -136,7 +132,6 @@ func (r *AccessToken) GetManagementPolicies() xpv1.ManagementPolicies {
 func (r *AccessToken) SetManagementPolicies(p xpv1.ManagementPolicies) {
 	r.Spec.ManagementPolicies = p
 }
-
 
 // GetProviderConfigReference of this AccessToken.
 func (r *AccessToken) GetProviderConfigReference() *xpv1.ProviderConfigReference {

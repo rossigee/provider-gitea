@@ -17,10 +17,9 @@ limitations under the License.
 package v2
 
 import (
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	xpv1 "github.com/crossplane/crossplane/apis/v2/core/v2"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
-
 
 // AdminUserStats contains statistics about the admin user
 type AdminUserStats struct {
@@ -172,13 +171,13 @@ type AdminUserObservation struct {
 // AdminUserSpec defines the desired state of AdminUser
 type AdminUserSpec struct {
 	xpv1.ManagedResourceSpec `json:",inline"`
-	ForProvider       AdminUserParameters `json:"forProvider"`
+	ForProvider              AdminUserParameters `json:"forProvider"`
 }
 
 // AdminUserStatus defines the observed state of AdminUser
 type AdminUserStatus struct {
 	xpv1.ManagedResourceStatus `json:",inline"`
-	AtProvider          AdminUserObservation `json:"atProvider,omitempty"`
+	AtProvider                 AdminUserObservation `json:"atProvider,omitempty"`
 }
 
 // +kubebuilder:object:root=true
@@ -227,7 +226,6 @@ func (r *AdminUser) GetManagementPolicies() xpv1.ManagementPolicies {
 func (r *AdminUser) SetManagementPolicies(p xpv1.ManagementPolicies) {
 	r.Spec.ManagementPolicies = p
 }
-
 
 // GetProviderConfigReference of this AdminUser.
 func (r *AdminUser) GetProviderConfigReference() *xpv1.ProviderConfigReference {

@@ -17,10 +17,9 @@ limitations under the License.
 package v2
 
 import (
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	xpv1 "github.com/crossplane/crossplane/apis/v2/core/v2"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
-
 
 // OrganizationParameters define the desired state of a Gitea Organization v2
 type OrganizationParameters struct {
@@ -95,13 +94,13 @@ type OrganizationObservation struct {
 // OrganizationSpec defines the desired state of Organization
 type OrganizationSpec struct {
 	xpv1.ManagedResourceSpec `json:",inline"`
-	ForProvider       OrganizationParameters `json:"forProvider"`
+	ForProvider              OrganizationParameters `json:"forProvider"`
 }
 
 // OrganizationStatus defines the observed state of Organization
 type OrganizationStatus struct {
 	xpv1.ManagedResourceStatus `json:",inline"`
-	AtProvider          OrganizationObservation `json:"atProvider,omitempty"`
+	AtProvider                 OrganizationObservation `json:"atProvider,omitempty"`
 }
 
 // +kubebuilder:object:root=true
@@ -150,7 +149,6 @@ func (r *Organization) GetManagementPolicies() xpv1.ManagementPolicies {
 func (r *Organization) SetManagementPolicies(p xpv1.ManagementPolicies) {
 	r.Spec.ManagementPolicies = p
 }
-
 
 // GetProviderConfigReference of this Organization.
 func (r *Organization) GetProviderConfigReference() *xpv1.ProviderConfigReference {

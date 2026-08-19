@@ -17,10 +17,9 @@ limitations under the License.
 package v2
 
 import (
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	xpv1 "github.com/crossplane/crossplane/apis/v2/core/v2"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
-
 
 // ReleaseAsset represents a file attached to a release
 type ReleaseAsset struct {
@@ -172,13 +171,13 @@ type ReleaseObservation struct {
 // ReleaseSpec defines the desired state of Release
 type ReleaseSpec struct {
 	xpv1.ManagedResourceSpec `json:",inline"`
-	ForProvider       ReleaseParameters `json:"forProvider"`
+	ForProvider              ReleaseParameters `json:"forProvider"`
 }
 
 // ReleaseStatus defines the observed state of Release
 type ReleaseStatus struct {
 	xpv1.ManagedResourceStatus `json:",inline"`
-	AtProvider          ReleaseObservation `json:"atProvider,omitempty"`
+	AtProvider                 ReleaseObservation `json:"atProvider,omitempty"`
 }
 
 // +kubebuilder:object:root=true
@@ -227,7 +226,6 @@ func (r *Release) GetManagementPolicies() xpv1.ManagementPolicies {
 func (r *Release) SetManagementPolicies(p xpv1.ManagementPolicies) {
 	r.Spec.ManagementPolicies = p
 }
-
 
 // GetProviderConfigReference of this Release.
 func (r *Release) GetProviderConfigReference() *xpv1.ProviderConfigReference {

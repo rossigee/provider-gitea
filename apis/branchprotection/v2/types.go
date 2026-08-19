@@ -17,10 +17,9 @@ limitations under the License.
 package v2
 
 import (
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	xpv1 "github.com/crossplane/crossplane/apis/v2/core/v2"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
-
 
 // BranchProtectionAppliedSettings contains the currently applied protection settings
 type BranchProtectionAppliedSettings struct {
@@ -154,13 +153,13 @@ type BranchProtectionObservation struct {
 // BranchProtectionSpec defines the desired state of BranchProtection
 type BranchProtectionSpec struct {
 	xpv1.ManagedResourceSpec `json:",inline"`
-	ForProvider       BranchProtectionParameters `json:"forProvider"`
+	ForProvider              BranchProtectionParameters `json:"forProvider"`
 }
 
 // BranchProtectionStatus defines the observed state of BranchProtection
 type BranchProtectionStatus struct {
 	xpv1.ManagedResourceStatus `json:",inline"`
-	AtProvider          BranchProtectionObservation `json:"atProvider,omitempty"`
+	AtProvider                 BranchProtectionObservation `json:"atProvider,omitempty"`
 }
 
 // +kubebuilder:object:root=true
@@ -209,7 +208,6 @@ func (r *BranchProtection) GetManagementPolicies() xpv1.ManagementPolicies {
 func (r *BranchProtection) SetManagementPolicies(p xpv1.ManagementPolicies) {
 	r.Spec.ManagementPolicies = p
 }
-
 
 // GetProviderConfigReference of this BranchProtection.
 func (r *BranchProtection) GetProviderConfigReference() *xpv1.ProviderConfigReference {

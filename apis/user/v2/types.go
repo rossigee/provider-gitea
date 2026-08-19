@@ -17,10 +17,9 @@ limitations under the License.
 package v2
 
 import (
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	xpv1 "github.com/crossplane/crossplane/apis/v2/core/v2"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
-
 
 type UserParameters struct {
 	// Username is the user's username
@@ -124,13 +123,13 @@ type UserObservation struct {
 // UserSpec defines the desired state of User
 type UserSpec struct {
 	xpv1.ManagedResourceSpec `json:",inline"`
-	ForProvider       UserParameters `json:"forProvider"`
+	ForProvider              UserParameters `json:"forProvider"`
 }
 
 // UserStatus defines the observed state of User
 type UserStatus struct {
 	xpv1.ManagedResourceStatus `json:",inline"`
-	AtProvider          UserObservation `json:"atProvider,omitempty"`
+	AtProvider                 UserObservation `json:"atProvider,omitempty"`
 }
 
 // +kubebuilder:object:root=true
@@ -162,7 +161,6 @@ type UserList struct {
 
 // User type metadata lives in register.go. Avoid duplicate.
 
-
 // GetCondition returns the condition for the given ConditionType if it exists, otherwise returns nil.
 func (r *User) GetCondition(ct xpv1.ConditionType) xpv1.Condition {
 	return r.Status.GetCondition(ct)
@@ -182,7 +180,6 @@ func (r *User) GetManagementPolicies() xpv1.ManagementPolicies {
 func (r *User) SetManagementPolicies(p xpv1.ManagementPolicies) {
 	r.Spec.ManagementPolicies = p
 }
-
 
 // GetProviderConfigReference of this User.
 func (r *User) GetProviderConfigReference() *xpv1.ProviderConfigReference {

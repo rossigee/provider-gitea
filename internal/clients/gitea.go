@@ -908,6 +908,7 @@ type BranchProtection struct {
 
 // CreateBranchProtectionRequest represents the request body for creating branch protection
 type CreateBranchProtectionRequest struct {
+	Branch                        string   `json:"branch"`
 	RuleName                      string   `json:"rule_name"`
 	EnablePush                    *bool    `json:"enable_push,omitempty"`
 	EnablePushWhitelist           *bool    `json:"enable_push_whitelist,omitempty"`
@@ -1535,6 +1536,7 @@ func (c *giteaClient) CreateBranchProtection(ctx context.Context, repository, br
 	owner, repo := parts[0], parts[1]
 
 	path := fmt.Sprintf("/repos/%s/%s/branch_protections", owner, repo)
+	req.Branch = branch
 	resp, err := c.doRequest(ctx, "POST", path, req)
 	if err != nil {
 		return nil, err

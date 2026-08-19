@@ -24,8 +24,8 @@ import (
 	"github.com/crossplane/crossplane-runtime/v2/pkg/meta"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
-	"github.com/pkg/errors"
 	xpv1 "github.com/crossplane/crossplane/apis/v2/core/v2"
+	"github.com/pkg/errors"
 	"github.com/rossigee/provider-gitea/apis/organization/v2"
 	"github.com/rossigee/provider-gitea/internal/clients"
 	"github.com/rossigee/provider-gitea/internal/tracing"
@@ -117,14 +117,14 @@ func (e *externalClient) Observe(ctx context.Context, mg resource.Managed) (mana
 	teams := org.NumTeams
 
 	cr.Status.AtProvider = v2.OrganizationObservation{
-		ID:                     &org.ID,
-		AvatarURL:              &org.AvatarURL,
-		Email:                  &org.Email,
+		ID:                        &org.ID,
+		AvatarURL:                 &org.AvatarURL,
+		Email:                     &org.Email,
 		RepoAdminChangeTeamAccess: &repoAdminChangeTeamAccess,
-		PublicRepos:            &publicRepos,
-		PrivateRepos:           &privateRepos,
-		Members:                &members,
-		Teams:                  &teams,
+		PublicRepos:               &publicRepos,
+		PrivateRepos:              &privateRepos,
+		Members:                   &members,
+		Teams:                     &teams,
 	}
 
 	cr.SetConditions(xpv1.Available())
@@ -210,14 +210,14 @@ func (e *externalClient) Create(ctx context.Context, mg resource.Managed) (manag
 	teams := org.NumTeams
 
 	cr.Status.AtProvider = v2.OrganizationObservation{
-		ID:                     &org.ID,
-		AvatarURL:              &org.AvatarURL,
-		Email:                  &org.Email,
+		ID:                        &org.ID,
+		AvatarURL:                 &org.AvatarURL,
+		Email:                     &org.Email,
 		RepoAdminChangeTeamAccess: &repoAdminChangeTeamAccess,
-		PublicRepos:            &publicRepos,
-		PrivateRepos:           &privateRepos,
-		Members:                &members,
-		Teams:                  &teams,
+		PublicRepos:               &publicRepos,
+		PrivateRepos:              &privateRepos,
+		Members:                   &members,
+		Teams:                     &teams,
 	}
 
 	cr.SetConditions(xpv1.Available())
@@ -260,14 +260,14 @@ func (e *externalClient) Update(ctx context.Context, mg resource.Managed) (manag
 	teams := org.NumTeams
 
 	cr.Status.AtProvider = v2.OrganizationObservation{
-		ID:                     &org.ID,
-		AvatarURL:              &org.AvatarURL,
-		Email:                  &org.Email,
+		ID:                        &org.ID,
+		AvatarURL:                 &org.AvatarURL,
+		Email:                     &org.Email,
 		RepoAdminChangeTeamAccess: &repoAdminChangeTeamAccess,
-		PublicRepos:            &publicRepos,
-		PrivateRepos:           &privateRepos,
-		Members:                &members,
-		Teams:                  &teams,
+		PublicRepos:               &publicRepos,
+		PrivateRepos:              &privateRepos,
+		Members:                   &members,
+		Teams:                     &teams,
 	}
 
 	return managed.ExternalUpdate{}, nil

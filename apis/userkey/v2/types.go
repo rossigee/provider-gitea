@@ -17,10 +17,9 @@ limitations under the License.
 package v2
 
 import (
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	xpv1 "github.com/crossplane/crossplane/apis/v2/core/v2"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
-
 
 type UserKeyParameters struct {
 	// Username is the user that owns this SSH key
@@ -75,13 +74,13 @@ type UserKeyObservation struct {
 // UserKeySpec defines the desired state of UserKey
 type UserKeySpec struct {
 	xpv1.ManagedResourceSpec `json:",inline"`
-	ForProvider       UserKeyParameters `json:"forProvider"`
+	ForProvider              UserKeyParameters `json:"forProvider"`
 }
 
 // UserKeyStatus defines the observed state of UserKey
 type UserKeyStatus struct {
 	xpv1.ManagedResourceStatus `json:",inline"`
-	AtProvider          UserKeyObservation `json:"atProvider,omitempty"`
+	AtProvider                 UserKeyObservation `json:"atProvider,omitempty"`
 }
 
 // +kubebuilder:object:root=true
@@ -113,7 +112,6 @@ type UserKeyList struct {
 
 // UserKey type metadata lives in register.go. Avoid duplicating.
 
-
 // GetCondition returns the condition for the given ConditionType if it exists, otherwise returns nil.
 func (r *UserKey) GetCondition(ct xpv1.ConditionType) xpv1.Condition {
 	return r.Status.GetCondition(ct)
@@ -133,7 +131,6 @@ func (r *UserKey) GetManagementPolicies() xpv1.ManagementPolicies {
 func (r *UserKey) SetManagementPolicies(p xpv1.ManagementPolicies) {
 	r.Spec.ManagementPolicies = p
 }
-
 
 // GetProviderConfigReference of this UserKey.
 func (r *UserKey) GetProviderConfigReference() *xpv1.ProviderConfigReference {

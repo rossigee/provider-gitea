@@ -17,10 +17,9 @@ limitations under the License.
 package v2
 
 import (
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	xpv1 "github.com/crossplane/crossplane/apis/v2/core/v2"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
-
 
 // ActionLastRun contains information about the last workflow run
 type ActionLastRun struct {
@@ -125,13 +124,13 @@ type ActionObservation struct {
 // ActionSpec defines the desired state of Action
 type ActionSpec struct {
 	xpv1.ManagedResourceSpec `json:",inline"`
-	ForProvider       ActionParameters `json:"forProvider"`
+	ForProvider              ActionParameters `json:"forProvider"`
 }
 
 // ActionStatus defines the observed state of Action
 type ActionStatus struct {
 	xpv1.ManagedResourceStatus `json:",inline"`
-	AtProvider          ActionObservation `json:"atProvider,omitempty"`
+	AtProvider                 ActionObservation `json:"atProvider,omitempty"`
 }
 
 // +kubebuilder:object:root=true
@@ -180,7 +179,6 @@ func (r *Action) GetManagementPolicies() xpv1.ManagementPolicies {
 func (r *Action) SetManagementPolicies(p xpv1.ManagementPolicies) {
 	r.Spec.ManagementPolicies = p
 }
-
 
 // GetProviderConfigReference of this Action.
 func (r *Action) GetProviderConfigReference() *xpv1.ProviderConfigReference {

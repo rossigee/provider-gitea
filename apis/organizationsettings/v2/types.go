@@ -17,10 +17,9 @@ limitations under the License.
 package v2
 
 import (
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	xpv1 "github.com/crossplane/crossplane/apis/v2/core/v2"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
-
 
 // AppliedOrganizationSettings contains the currently applied organization settings
 type AppliedOrganizationSettings struct {
@@ -116,13 +115,13 @@ type OrganizationSettingsObservation struct {
 // OrganizationSettingsSpec defines the desired state of OrganizationSettings
 type OrganizationSettingsSpec struct {
 	xpv1.ManagedResourceSpec `json:",inline"`
-	ForProvider       OrganizationSettingsParameters `json:"forProvider"`
+	ForProvider              OrganizationSettingsParameters `json:"forProvider"`
 }
 
 // OrganizationSettingsStatus defines the observed state of OrganizationSettings
 type OrganizationSettingsStatus struct {
 	xpv1.ManagedResourceStatus `json:",inline"`
-	AtProvider          OrganizationSettingsObservation `json:"atProvider,omitempty"`
+	AtProvider                 OrganizationSettingsObservation `json:"atProvider,omitempty"`
 }
 
 // +kubebuilder:object:root=true
@@ -171,7 +170,6 @@ func (r *OrganizationSettings) GetManagementPolicies() xpv1.ManagementPolicies {
 func (r *OrganizationSettings) SetManagementPolicies(p xpv1.ManagementPolicies) {
 	r.Spec.ManagementPolicies = p
 }
-
 
 // GetProviderConfigReference of this OrganizationSettings.
 func (r *OrganizationSettings) GetProviderConfigReference() *xpv1.ProviderConfigReference {

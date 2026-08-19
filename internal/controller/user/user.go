@@ -24,8 +24,8 @@ import (
 	"github.com/crossplane/crossplane-runtime/v2/pkg/meta"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
-	"github.com/pkg/errors"
 	xpv1 "github.com/crossplane/crossplane/apis/v2/core/v2"
+	"github.com/pkg/errors"
 	"github.com/rossigee/provider-gitea/apis/user/v2"
 	"github.com/rossigee/provider-gitea/internal/clients"
 	"github.com/rossigee/provider-gitea/internal/tracing"
@@ -36,12 +36,12 @@ import (
 )
 
 const (
-	errNotUser            = "managed resource is not a User custom resource"
-	errGetUser            = "failed to get user"
-	errCreateUser         = "failed to create user"
-	errUpdateUser         = "failed to update user"
-	errDeleteUser         = "failed to delete user"
-	errGetProviderConfig  = "failed to get provider config"
+	errNotUser             = "managed resource is not a User custom resource"
+	errGetUser             = "failed to get user"
+	errCreateUser          = "failed to create user"
+	errUpdateUser          = "failed to update user"
+	errDeleteUser          = "failed to delete user"
+	errGetProviderConfig   = "failed to get provider config"
 	errInvalidExternalName = "invalid external-name, expected username"
 )
 
@@ -219,20 +219,20 @@ func (e *externalClient) Update(ctx context.Context, mg resource.Managed) (manag
 	}
 
 	req := &clients.UpdateUserRequest{
-		Email:        &cr.Spec.ForProvider.Email,
-		FullName:     cr.Spec.ForProvider.FullName,
-		LoginName:    cr.Spec.ForProvider.LoginName,
-		Website:      cr.Spec.ForProvider.Website,
-		Location:     cr.Spec.ForProvider.Location,
-		Description:  cr.Spec.ForProvider.Description,
-		Visibility:   cr.Spec.ForProvider.Visibility,
-		Active:       cr.Spec.ForProvider.Active,
-		Admin:        cr.Spec.ForProvider.Admin,
-		ProhibitLogin: cr.Spec.ForProvider.ProhibitLogin,
-		AllowGitHook: cr.Spec.ForProvider.AllowGitHook,
-		AllowImportLocal: cr.Spec.ForProvider.AllowImportLocal,
+		Email:                   &cr.Spec.ForProvider.Email,
+		FullName:                cr.Spec.ForProvider.FullName,
+		LoginName:               cr.Spec.ForProvider.LoginName,
+		Website:                 cr.Spec.ForProvider.Website,
+		Location:                cr.Spec.ForProvider.Location,
+		Description:             cr.Spec.ForProvider.Description,
+		Visibility:              cr.Spec.ForProvider.Visibility,
+		Active:                  cr.Spec.ForProvider.Active,
+		Admin:                   cr.Spec.ForProvider.Admin,
+		ProhibitLogin:           cr.Spec.ForProvider.ProhibitLogin,
+		AllowGitHook:            cr.Spec.ForProvider.AllowGitHook,
+		AllowImportLocal:        cr.Spec.ForProvider.AllowImportLocal,
 		AllowCreateOrganization: cr.Spec.ForProvider.AllowCreateOrganization,
-		Restricted:   cr.Spec.ForProvider.Restricted,
+		Restricted:              cr.Spec.ForProvider.Restricted,
 	}
 
 	user, err := e.client.UpdateUser(ctx, externalName, req)

@@ -17,10 +17,9 @@ limitations under the License.
 package v2
 
 import (
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	xpv1 "github.com/crossplane/crossplane/apis/v2/core/v2"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
-
 
 type RepositorySecretParameters struct {
 	// Repository is the repository that owns this secret (owner/name format)
@@ -68,13 +67,13 @@ type RepositorySecretObservation struct {
 // RepositorySecretSpec defines the desired state of RepositorySecret
 type RepositorySecretSpec struct {
 	xpv1.ManagedResourceSpec `json:",inline"`
-	ForProvider       RepositorySecretParameters `json:"forProvider"`
+	ForProvider              RepositorySecretParameters `json:"forProvider"`
 }
 
 // RepositorySecretStatus defines the observed state of RepositorySecret
 type RepositorySecretStatus struct {
 	xpv1.ManagedResourceStatus `json:",inline"`
-	AtProvider          RepositorySecretObservation `json:"atProvider,omitempty"`
+	AtProvider                 RepositorySecretObservation `json:"atProvider,omitempty"`
 }
 
 // +kubebuilder:object:root=true
@@ -106,7 +105,6 @@ type RepositorySecretList struct {
 
 // (metadata defined in register.go to avoid duplication)
 
-
 // GetCondition returns the condition for the given ConditionType if it exists, otherwise returns nil.
 func (r *RepositorySecret) GetCondition(ct xpv1.ConditionType) xpv1.Condition {
 	return r.Status.GetCondition(ct)
@@ -126,7 +124,6 @@ func (r *RepositorySecret) GetManagementPolicies() xpv1.ManagementPolicies {
 func (r *RepositorySecret) SetManagementPolicies(p xpv1.ManagementPolicies) {
 	r.Spec.ManagementPolicies = p
 }
-
 
 // GetProviderConfigReference of this RepositorySecret.
 func (r *RepositorySecret) GetProviderConfigReference() *xpv1.ProviderConfigReference {

@@ -17,10 +17,9 @@ limitations under the License.
 package v2
 
 import (
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	xpv1 "github.com/crossplane/crossplane/apis/v2/core/v2"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
-
 
 type RepositoryKeyParameters struct {
 	// Repository is the repository that owns this deploy key (owner/name format)
@@ -81,13 +80,13 @@ type RepositoryKeyObservation struct {
 // RepositoryKeySpec defines the desired state of RepositoryKey
 type RepositoryKeySpec struct {
 	xpv1.ManagedResourceSpec `json:",inline"`
-	ForProvider       RepositoryKeyParameters `json:"forProvider"`
+	ForProvider              RepositoryKeyParameters `json:"forProvider"`
 }
 
 // RepositoryKeyStatus defines the observed state of RepositoryKey
 type RepositoryKeyStatus struct {
 	xpv1.ManagedResourceStatus `json:",inline"`
-	AtProvider          RepositoryKeyObservation `json:"atProvider,omitempty"`
+	AtProvider                 RepositoryKeyObservation `json:"atProvider,omitempty"`
 }
 
 // +kubebuilder:object:root=true
@@ -117,9 +116,6 @@ type RepositoryKeyList struct {
 	Items           []RepositoryKey `json:"items"`
 }
 
-
-
-
 // GetCondition returns the condition for the given ConditionType if it exists, otherwise returns nil.
 func (r *RepositoryKey) GetCondition(ct xpv1.ConditionType) xpv1.Condition {
 	return r.Status.GetCondition(ct)
@@ -139,7 +135,6 @@ func (r *RepositoryKey) GetManagementPolicies() xpv1.ManagementPolicies {
 func (r *RepositoryKey) SetManagementPolicies(p xpv1.ManagementPolicies) {
 	r.Spec.ManagementPolicies = p
 }
-
 
 // GetProviderConfigReference of this RepositoryKey.
 func (r *RepositoryKey) GetProviderConfigReference() *xpv1.ProviderConfigReference {

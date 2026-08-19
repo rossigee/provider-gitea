@@ -17,10 +17,9 @@ limitations under the License.
 package v2
 
 import (
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	xpv1 "github.com/crossplane/crossplane/apis/v2/core/v2"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
-
 
 // DataFromSource represents the source of secret data
 type DataFromSource struct {
@@ -90,13 +89,13 @@ type OrganizationSecretObservation struct {
 // OrganizationSecretSpec defines the desired state of OrganizationSecret
 type OrganizationSecretSpec struct {
 	xpv1.ManagedResourceSpec `json:",inline"`
-	ForProvider       OrganizationSecretParameters `json:"forProvider"`
+	ForProvider              OrganizationSecretParameters `json:"forProvider"`
 }
 
 // OrganizationSecretStatus defines the observed state of OrganizationSecret
 type OrganizationSecretStatus struct {
 	xpv1.ManagedResourceStatus `json:",inline"`
-	AtProvider          OrganizationSecretObservation `json:"atProvider,omitempty"`
+	AtProvider                 OrganizationSecretObservation `json:"atProvider,omitempty"`
 }
 
 // +kubebuilder:object:root=true
@@ -145,7 +144,6 @@ func (r *OrganizationSecret) GetManagementPolicies() xpv1.ManagementPolicies {
 func (r *OrganizationSecret) SetManagementPolicies(p xpv1.ManagementPolicies) {
 	r.Spec.ManagementPolicies = p
 }
-
 
 // GetProviderConfigReference of this OrganizationSecret.
 func (r *OrganizationSecret) GetProviderConfigReference() *xpv1.ProviderConfigReference {

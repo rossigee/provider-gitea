@@ -17,10 +17,9 @@ limitations under the License.
 package v2
 
 import (
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	xpv1 "github.com/crossplane/crossplane/apis/v2/core/v2"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
-
 
 type IssueParameters struct {
 	// Title is the title of the issue
@@ -96,13 +95,13 @@ type IssueObservation struct {
 // IssueSpec defines the desired state of Issue
 type IssueSpec struct {
 	xpv1.ManagedResourceSpec `json:",inline"`
-	ForProvider       IssueParameters `json:"forProvider"`
+	ForProvider              IssueParameters `json:"forProvider"`
 }
 
 // IssueStatus defines the observed state of Issue
 type IssueStatus struct {
 	xpv1.ManagedResourceStatus `json:",inline"`
-	AtProvider          IssueObservation `json:"atProvider,omitempty"`
+	AtProvider                 IssueObservation `json:"atProvider,omitempty"`
 }
 
 // +kubebuilder:object:root=true
@@ -151,7 +150,6 @@ func (r *Issue) GetManagementPolicies() xpv1.ManagementPolicies {
 func (r *Issue) SetManagementPolicies(p xpv1.ManagementPolicies) {
 	r.Spec.ManagementPolicies = p
 }
-
 
 // GetProviderConfigReference of this Issue.
 func (r *Issue) GetProviderConfigReference() *xpv1.ProviderConfigReference {

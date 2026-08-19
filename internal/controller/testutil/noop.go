@@ -100,7 +100,9 @@ func (NoopClient) GetDeployKey(ctx context.Context, owner, repo string, id int64
 func (NoopClient) CreateDeployKey(ctx context.Context, owner, repo string, req *clients.CreateDeployKeyRequest) (*clients.DeployKey, error) {
 	return nil, nil
 }
-func (NoopClient) DeleteDeployKey(ctx context.Context, owner, repo string, id int64) error { return nil }
+func (NoopClient) DeleteDeployKey(ctx context.Context, owner, repo string, id int64) error {
+	return nil
+}
 
 // Org secrets
 func (NoopClient) GetOrganizationSecret(ctx context.Context, org, secretName string) (*clients.OrganizationSecret, error) {
@@ -112,7 +114,9 @@ func (NoopClient) CreateOrganizationSecret(ctx context.Context, org, secretName 
 func (NoopClient) UpdateOrganizationSecret(ctx context.Context, org, secretName string, req *clients.CreateOrganizationSecretRequest) error {
 	return nil
 }
-func (NoopClient) DeleteOrganizationSecret(ctx context.Context, org, secretName string) error { return nil }
+func (NoopClient) DeleteOrganizationSecret(ctx context.Context, org, secretName string) error {
+	return nil
+}
 
 // Teams
 func (NoopClient) GetTeam(ctx context.Context, teamID int64) (*clients.Team, error) { return nil, nil }
@@ -137,7 +141,9 @@ func (NoopClient) CreateLabel(ctx context.Context, owner, repo string, req *clie
 func (NoopClient) UpdateLabel(ctx context.Context, owner, repo string, labelID int64, req *clients.UpdateLabelRequest) (*clients.Label, error) {
 	return nil, nil
 }
-func (NoopClient) DeleteLabel(ctx context.Context, owner, repo string, labelID int64) error { return nil }
+func (NoopClient) DeleteLabel(ctx context.Context, owner, repo string, labelID int64) error {
+	return nil
+}
 func (NoopClient) ListRepositoryLabels(ctx context.Context, owner, repo string) ([]*clients.Label, error) {
 	return nil, nil
 }
@@ -189,7 +195,9 @@ func (NoopClient) CreateBranchProtection(ctx context.Context, repository, branch
 func (NoopClient) UpdateBranchProtection(ctx context.Context, repository, branch string, req *clients.UpdateBranchProtectionRequest) (*clients.BranchProtection, error) {
 	return nil, nil
 }
-func (NoopClient) DeleteBranchProtection(ctx context.Context, repository, branch string) error { return nil }
+func (NoopClient) DeleteBranchProtection(ctx context.Context, repository, branch string) error {
+	return nil
+}
 
 // Repo keys
 func (NoopClient) GetRepositoryKey(ctx context.Context, repository string, keyID int64) (*clients.RepositoryKey, error) {
@@ -201,7 +209,9 @@ func (NoopClient) CreateRepositoryKey(ctx context.Context, repository string, re
 func (NoopClient) UpdateRepositoryKey(ctx context.Context, repository string, keyID int64, req *clients.UpdateRepositoryKeyRequest) (*clients.RepositoryKey, error) {
 	return nil, nil
 }
-func (NoopClient) DeleteRepositoryKey(ctx context.Context, repository string, keyID int64) error { return nil }
+func (NoopClient) DeleteRepositoryKey(ctx context.Context, repository string, keyID int64) error {
+	return nil
+}
 
 // Access tokens
 func (NoopClient) GetAccessToken(ctx context.Context, username string, tokenID int64) (*clients.AccessToken, error) {
@@ -213,7 +223,9 @@ func (NoopClient) CreateAccessToken(ctx context.Context, username string, req *c
 func (NoopClient) UpdateAccessToken(ctx context.Context, username string, tokenID int64, req *clients.UpdateAccessTokenRequest) (*clients.AccessToken, error) {
 	return nil, nil
 }
-func (NoopClient) DeleteAccessToken(ctx context.Context, username string, tokenID int64) error { return nil }
+func (NoopClient) DeleteAccessToken(ctx context.Context, username string, tokenID int64) error {
+	return nil
+}
 
 // Repo secrets
 func (NoopClient) GetRepositorySecret(ctx context.Context, repository, secretName string) (*clients.RepositorySecret, error) {
@@ -225,7 +237,9 @@ func (NoopClient) CreateRepositorySecret(ctx context.Context, repository, secret
 func (NoopClient) UpdateRepositorySecret(ctx context.Context, repository, secretName string, req *clients.UpdateRepositorySecretRequest) error {
 	return nil
 }
-func (NoopClient) DeleteRepositorySecret(ctx context.Context, repository, secretName string) error { return nil }
+func (NoopClient) DeleteRepositorySecret(ctx context.Context, repository, secretName string) error {
+	return nil
+}
 
 // User keys
 func (NoopClient) GetUserKey(ctx context.Context, username string, keyID int64) (*clients.UserKey, error) {
@@ -249,7 +263,9 @@ func (NoopClient) CreateIssue(ctx context.Context, owner, repo string, req *clie
 func (NoopClient) UpdateIssue(ctx context.Context, owner, repo string, number int64, req *clients.UpdateIssueOptions) (*clients.Issue, error) {
 	return nil, nil
 }
-func (NoopClient) DeleteIssue(ctx context.Context, owner, repo string, number int64) error { return nil }
+func (NoopClient) DeleteIssue(ctx context.Context, owner, repo string, number int64) error {
+	return nil
+}
 func (NoopClient) GetPullRequest(ctx context.Context, owner, repo string, number int64) (*clients.PullRequest, error) {
 	return nil, nil
 }
@@ -259,7 +275,9 @@ func (NoopClient) CreatePullRequest(ctx context.Context, owner, repo string, req
 func (NoopClient) UpdatePullRequest(ctx context.Context, owner, repo string, number int64, req *clients.UpdatePullRequestOptions) (*clients.PullRequest, error) {
 	return nil, nil
 }
-func (NoopClient) DeletePullRequest(ctx context.Context, owner, repo string, number int64) error { return nil }
+func (NoopClient) DeletePullRequest(ctx context.Context, owner, repo string, number int64) error {
+	return nil
+}
 func (NoopClient) MergePullRequest(ctx context.Context, owner, repo string, number int64, req *clients.MergePullRequestOptions) (*clients.PullRequest, error) {
 	return nil, nil
 }
@@ -295,7 +313,9 @@ func (NoopClient) AddOrganizationMember(ctx context.Context, org, username strin
 func (NoopClient) UpdateOrganizationMember(ctx context.Context, org, username string, req *clients.UpdateOrganizationMemberRequest) (*clients.OrganizationMember, error) {
 	return nil, nil
 }
-func (NoopClient) RemoveOrganizationMember(ctx context.Context, org, username string) error { return nil }
+func (NoopClient) RemoveOrganizationMember(ctx context.Context, org, username string) error {
+	return nil
+}
 
 // Actions
 func (NoopClient) GetAction(ctx context.Context, repository, workflowName string) (*clients.Action, error) {
@@ -307,9 +327,15 @@ func (NoopClient) CreateAction(ctx context.Context, repository string, req *clie
 func (NoopClient) UpdateAction(ctx context.Context, repository, workflowName string, req *clients.UpdateActionRequest) (*clients.Action, error) {
 	return nil, nil
 }
-func (NoopClient) DeleteAction(ctx context.Context, repository, workflowName string) error { return nil }
-func (NoopClient) EnableAction(ctx context.Context, repository, workflowName string) error { return nil }
-func (NoopClient) DisableAction(ctx context.Context, repository, workflowName string) error { return nil }
+func (NoopClient) DeleteAction(ctx context.Context, repository, workflowName string) error {
+	return nil
+}
+func (NoopClient) EnableAction(ctx context.Context, repository, workflowName string) error {
+	return nil
+}
+func (NoopClient) DisableAction(ctx context.Context, repository, workflowName string) error {
+	return nil
+}
 
 // Runners
 func (NoopClient) GetRunner(ctx context.Context, scope, scopeValue string, runnerID int64) (*clients.Runner, error) {
@@ -321,7 +347,9 @@ func (NoopClient) CreateRunner(ctx context.Context, scope, scopeValue string, re
 func (NoopClient) UpdateRunner(ctx context.Context, scope, scopeValue string, runnerID int64, req *clients.UpdateRunnerRequest) (*clients.Runner, error) {
 	return nil, nil
 }
-func (NoopClient) DeleteRunner(ctx context.Context, scope, scopeValue string, runnerID int64) error { return nil }
+func (NoopClient) DeleteRunner(ctx context.Context, scope, scopeValue string, runnerID int64) error {
+	return nil
+}
 
 // Admin users
 func (NoopClient) GetAdminUser(ctx context.Context, username string) (*clients.AdminUser, error) {

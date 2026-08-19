@@ -17,10 +17,9 @@ limitations under the License.
 package v2
 
 import (
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	xpv1 "github.com/crossplane/crossplane/apis/v2/core/v2"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
-
 
 type WebhookParameters struct {
 	// Repository is the repository name (required for repository webhooks)
@@ -90,13 +89,13 @@ type WebhookObservation struct {
 // WebhookSpec defines the desired state of Webhook
 type WebhookSpec struct {
 	xpv1.ManagedResourceSpec `json:",inline"`
-	ForProvider       WebhookParameters `json:"forProvider"`
+	ForProvider              WebhookParameters `json:"forProvider"`
 }
 
 // WebhookStatus defines the observed state of Webhook
 type WebhookStatus struct {
 	xpv1.ManagedResourceStatus `json:",inline"`
-	AtProvider          WebhookObservation `json:"atProvider,omitempty"`
+	AtProvider                 WebhookObservation `json:"atProvider,omitempty"`
 }
 
 // +kubebuilder:object:root=true
@@ -145,7 +144,6 @@ func (r *Webhook) GetManagementPolicies() xpv1.ManagementPolicies {
 func (r *Webhook) SetManagementPolicies(p xpv1.ManagementPolicies) {
 	r.Spec.ManagementPolicies = p
 }
-
 
 // GetProviderConfigReference of this Webhook.
 func (r *Webhook) GetProviderConfigReference() *xpv1.ProviderConfigReference {

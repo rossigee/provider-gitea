@@ -17,10 +17,9 @@ limitations under the License.
 package v2
 
 import (
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	xpv1 "github.com/crossplane/crossplane/apis/v2/core/v2"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
-
 
 type DeployKeyParameters struct {
 	// Repository is the repository name
@@ -72,13 +71,13 @@ type DeployKeyObservation struct {
 // DeployKeySpec defines the desired state of DeployKey
 type DeployKeySpec struct {
 	xpv1.ManagedResourceSpec `json:",inline"`
-	ForProvider       DeployKeyParameters `json:"forProvider"`
+	ForProvider              DeployKeyParameters `json:"forProvider"`
 }
 
 // DeployKeyStatus defines the observed state of DeployKey
 type DeployKeyStatus struct {
 	xpv1.ManagedResourceStatus `json:",inline"`
-	AtProvider          DeployKeyObservation `json:"atProvider,omitempty"`
+	AtProvider                 DeployKeyObservation `json:"atProvider,omitempty"`
 }
 
 // +kubebuilder:object:root=true
@@ -127,7 +126,6 @@ func (r *DeployKey) GetManagementPolicies() xpv1.ManagementPolicies {
 func (r *DeployKey) SetManagementPolicies(p xpv1.ManagementPolicies) {
 	r.Spec.ManagementPolicies = p
 }
-
 
 // GetProviderConfigReference of this DeployKey.
 func (r *DeployKey) GetProviderConfigReference() *xpv1.ProviderConfigReference {

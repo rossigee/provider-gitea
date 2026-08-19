@@ -139,7 +139,7 @@ func TestIsOrganizationUpToDate(t *testing.T) {
 				Visibility: strPtr("private"),
 			},
 			org: &clients.Organization{
-				Username:  "test-org",
+				Username:   "test-org",
 				Visibility: "public",
 			},
 			want: false,

@@ -26,8 +26,8 @@ import (
 	"github.com/crossplane/crossplane-runtime/v2/pkg/meta"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
-	"github.com/pkg/errors"
 	xpv1 "github.com/crossplane/crossplane/apis/v2/core/v2"
+	"github.com/pkg/errors"
 	"github.com/rossigee/provider-gitea/apis/webhook/v2"
 	"github.com/rossigee/provider-gitea/internal/clients"
 	"github.com/rossigee/provider-gitea/internal/tracing"
@@ -38,13 +38,13 @@ import (
 )
 
 const (
-	errNotWebhook         = "managed resource is not a Webhook custom resource"
-	errGetWebhook         = "failed to get webhook"
-	errCreateWebhook      = "failed to create webhook"
-	errUpdateWebhook      = "failed to update webhook"
-	errDeleteWebhook      = "failed to delete webhook"
-	errGetProviderConfig  = "failed to get provider config"
-	errInvalidExternalID  = "invalid external-id format, expected owner/repo/id or org/id"
+	errNotWebhook        = "managed resource is not a Webhook custom resource"
+	errGetWebhook        = "failed to get webhook"
+	errCreateWebhook     = "failed to create webhook"
+	errUpdateWebhook     = "failed to update webhook"
+	errDeleteWebhook     = "failed to delete webhook"
+	errGetProviderConfig = "failed to get provider config"
+	errInvalidExternalID = "invalid external-id format, expected owner/repo/id or org/id"
 )
 
 // A connector is expected to produce an ExternalClient when its Connect method is called.

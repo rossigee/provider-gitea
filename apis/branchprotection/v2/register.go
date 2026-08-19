@@ -28,4 +28,10 @@ var (
 	BranchProtectionAppliedSettingsGroupKind        = schema.GroupKind{Group: Group, Kind: BranchProtectionAppliedSettingsKind}
 	BranchProtectionAppliedSettingsKindAPIVersion   = BranchProtectionAppliedSettingsKind + "." + SchemeGroupVersion.String()
 	BranchProtectionAppliedSettingsGroupVersionKind = SchemeGroupVersion.WithKind(BranchProtectionAppliedSettingsKind)
+
+	// BranchProtection type metadata.
+	BranchProtectionKind             = reflect.TypeOf(BranchProtection{}).Name()
+	BranchProtectionGroupKind        = schema.GroupKind{Group: Group, Kind: BranchProtectionKind}
+	BranchProtectionKindAPIVersion   = BranchProtectionKind + "." + SchemeGroupVersion.String()
+	BranchProtectionGroupVersionKind = SchemeGroupVersion.WithKind(BranchProtectionKind)
 )

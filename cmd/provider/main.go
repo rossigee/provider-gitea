@@ -37,8 +37,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	giteacontroller "github.com/rossigee/provider-gitea/internal/controller"
 	"github.com/rossigee/provider-gitea/apis"
+	giteacontroller "github.com/rossigee/provider-gitea/internal/controller"
 	"github.com/rossigee/provider-gitea/internal/tracing"
 	"github.com/rossigee/provider-gitea/internal/version"
 )
@@ -85,7 +85,7 @@ func main() {
 
 	// Get the manager options
 	options := ctrl.Options{
-		Scheme:             s,
+		Scheme:           s,
 		LeaderElection:   *leaderElection,
 		LeaderElectionID: "crossplane-leader-election-provider-gitea",
 		Cache: cache.Options{

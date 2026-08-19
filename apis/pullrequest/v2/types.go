@@ -17,10 +17,9 @@ limitations under the License.
 package v2
 
 import (
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	xpv1 "github.com/crossplane/crossplane/apis/v2/core/v2"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
-
 
 type PullRequestParameters struct {
 	// Title is the title of the pull request
@@ -135,13 +134,13 @@ type PullRequestObservation struct {
 // PullRequestSpec defines the desired state of PullRequest
 type PullRequestSpec struct {
 	xpv1.ManagedResourceSpec `json:",inline"`
-	ForProvider       PullRequestParameters `json:"forProvider"`
+	ForProvider              PullRequestParameters `json:"forProvider"`
 }
 
 // PullRequestStatus defines the observed state of PullRequest
 type PullRequestStatus struct {
 	xpv1.ManagedResourceStatus `json:",inline"`
-	AtProvider          PullRequestObservation `json:"atProvider,omitempty"`
+	AtProvider                 PullRequestObservation `json:"atProvider,omitempty"`
 }
 
 // +kubebuilder:object:root=true
@@ -171,9 +170,6 @@ type PullRequestList struct {
 	Items           []PullRequest `json:"items"`
 }
 
-
-
-
 // GetCondition returns the condition for the given ConditionType if it exists, otherwise returns nil.
 func (r *PullRequest) GetCondition(ct xpv1.ConditionType) xpv1.Condition {
 	return r.Status.GetCondition(ct)
@@ -193,7 +189,6 @@ func (r *PullRequest) GetManagementPolicies() xpv1.ManagementPolicies {
 func (r *PullRequest) SetManagementPolicies(p xpv1.ManagementPolicies) {
 	r.Spec.ManagementPolicies = p
 }
-
 
 // GetProviderConfigReference of this PullRequest.
 func (r *PullRequest) GetProviderConfigReference() *xpv1.ProviderConfigReference {

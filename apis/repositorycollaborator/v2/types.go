@@ -17,10 +17,9 @@ limitations under the License.
 package v2
 
 import (
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	xpv1 "github.com/crossplane/crossplane/apis/v2/core/v2"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
-
 
 // RepositoryCollaboratorPermissions defines the permissions for a collaborator
 type RepositoryCollaboratorPermissions struct {
@@ -80,13 +79,13 @@ type RepositoryCollaboratorObservation struct {
 // RepositoryCollaboratorSpec defines the desired state of RepositoryCollaborator
 type RepositoryCollaboratorSpec struct {
 	xpv1.ManagedResourceSpec `json:",inline"`
-	ForProvider       RepositoryCollaboratorParameters `json:"forProvider"`
+	ForProvider              RepositoryCollaboratorParameters `json:"forProvider"`
 }
 
 // RepositoryCollaboratorStatus defines the observed state of RepositoryCollaborator
 type RepositoryCollaboratorStatus struct {
 	xpv1.ManagedResourceStatus `json:",inline"`
-	AtProvider          RepositoryCollaboratorObservation `json:"atProvider,omitempty"`
+	AtProvider                 RepositoryCollaboratorObservation `json:"atProvider,omitempty"`
 }
 
 // +kubebuilder:object:root=true
@@ -135,7 +134,6 @@ func (r *RepositoryCollaborator) GetManagementPolicies() xpv1.ManagementPolicies
 func (r *RepositoryCollaborator) SetManagementPolicies(p xpv1.ManagementPolicies) {
 	r.Spec.ManagementPolicies = p
 }
-
 
 // GetProviderConfigReference of this RepositoryCollaborator.
 func (r *RepositoryCollaborator) GetProviderConfigReference() *xpv1.ProviderConfigReference {

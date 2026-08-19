@@ -17,10 +17,9 @@ limitations under the License.
 package v2
 
 import (
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	xpv1 "github.com/crossplane/crossplane/apis/v2/core/v2"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
-
 
 // RepositoryParameters define the desired state of a Gitea Repository v2
 type RepositoryParameters struct {
@@ -110,13 +109,13 @@ type RepositoryObservation struct {
 // RepositorySpec defines the desired state of Repository
 type RepositorySpec struct {
 	xpv1.ManagedResourceSpec `json:",inline"`
-	ForProvider       RepositoryParameters `json:"forProvider"`
+	ForProvider              RepositoryParameters `json:"forProvider"`
 }
 
 // RepositoryStatus defines the observed state of Repository
 type RepositoryStatus struct {
 	xpv1.ManagedResourceStatus `json:",inline"`
-	AtProvider          RepositoryObservation `json:"atProvider,omitempty"`
+	AtProvider                 RepositoryObservation `json:"atProvider,omitempty"`
 }
 
 // +kubebuilder:object:root=true
@@ -146,8 +145,6 @@ type RepositoryList struct {
 	Items           []Repository `json:"items"`
 }
 
-
-
 // GetCondition returns the condition for the given ConditionType if it exists, otherwise returns nil.
 func (r *Repository) GetCondition(ct xpv1.ConditionType) xpv1.Condition {
 	return r.Status.GetCondition(ct)
@@ -167,7 +164,6 @@ func (r *Repository) GetManagementPolicies() xpv1.ManagementPolicies {
 func (r *Repository) SetManagementPolicies(p xpv1.ManagementPolicies) {
 	r.Spec.ManagementPolicies = p
 }
-
 
 // GetProviderConfigReference of this Repository.
 func (r *Repository) GetProviderConfigReference() *xpv1.ProviderConfigReference {

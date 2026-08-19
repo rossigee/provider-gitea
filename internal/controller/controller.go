@@ -18,6 +18,7 @@ package controller
 
 import (
 	"github.com/crossplane/crossplane-runtime/v2/pkg/controller"
+	"github.com/rossigee/provider-gitea/internal/controller/branchprotection"
 	"github.com/rossigee/provider-gitea/internal/controller/organization"
 	"github.com/rossigee/provider-gitea/internal/controller/providerconfig"
 	"github.com/rossigee/provider-gitea/internal/controller/repository"
@@ -39,6 +40,7 @@ func Setup(mgr ctrl.Manager, o controller.Options) error {
 		organization.Setup,
 		user.Setup,
 		webhook.Setup,
+		branchprotection.Setup,
 	} {
 		if err := setup(mgr, o); err != nil {
 			return err
