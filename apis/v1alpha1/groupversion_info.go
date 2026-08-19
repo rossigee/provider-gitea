@@ -38,7 +38,7 @@ var (
 )
 
 func addKnownTypes(s *runtime.Scheme) error {
-	s.AddKnownTypes(SchemeGroupVersion)// no root types registered yet
+	s.AddKnownTypes(SchemeGroupVersion) // no root types registered yet
 
 	metav1.AddToGroupVersion(s, SchemeGroupVersion)
 	return nil

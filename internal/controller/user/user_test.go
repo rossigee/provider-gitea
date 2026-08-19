@@ -22,7 +22,7 @@ import (
 	"testing"
 
 	"github.com/crossplane/crossplane-runtime/v2/pkg/meta"
-	"github.com/rossigee/provider-gitea/apis/user/v2"
+	v2 "github.com/rossigee/provider-gitea/apis/user/v2"
 	"github.com/rossigee/provider-gitea/internal/clients"
 	"github.com/rossigee/provider-gitea/internal/controller/testutil"
 	"github.com/stretchr/testify/assert"

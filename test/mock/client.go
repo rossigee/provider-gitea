@@ -19,6 +19,7 @@ package mock
 
 import (
 	"context"
+
 	"github.com/rossigee/provider-gitea/internal/clients"
 	"github.com/stretchr/testify/mock"
 )

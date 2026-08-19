@@ -25,7 +25,7 @@ import (
 	"github.com/crossplane/crossplane-runtime/v2/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
 	"github.com/pkg/errors"
-	"github.com/rossigee/provider-gitea/apis/repositorysecret/v2"
+	v2 "github.com/rossigee/provider-gitea/apis/repositorysecret/v2"
 
 	"github.com/rossigee/provider-gitea/internal/clients"
 	"github.com/rossigee/provider-gitea/internal/tracing"
