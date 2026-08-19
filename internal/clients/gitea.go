@@ -222,7 +222,7 @@ func NewClient(ctx context.Context, cfg *v1beta1.ProviderConfig, kube client.Cli
 	// Handle insecure connections
 	if cfg.Spec.Insecure != nil && *cfg.Spec.Insecure {
 		transport := &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, // #nosec G402 -- gated by provider config Spec.Insecure
 		}
 		httpClient.Transport = transport
 	}
