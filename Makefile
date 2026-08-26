@@ -9,7 +9,7 @@ PLATFORMS ?= linux_amd64 linux_arm64
 -include build/makelib/output.mk
 
 # Setup Go
-GO_REQUIRED_VERSION ?= 1.26.6
+GO_REQUIRED_VERSION ?= 1.27.0
 
 NPROCS ?= 1
 GO_TEST_PARALLEL := $(shell echo $$(( $(NPROCS) / 2 )))
@@ -18,7 +18,7 @@ GO_LDFLAGS += -X $(GO_PROJECT)/internal/version.Version=$(VERSION)
 GO_SUBDIRS += cmd internal apis
 GO111MODULE = on
 # Override golangci-lint version for modern Go support
-GOLANGCILINT_VERSION ?= 2.12.2
+GOLANGCILINT_VERSION ?= 2.13.1
 -include build/makelib/golang.mk
 
 # Setup Kubernetes tools
