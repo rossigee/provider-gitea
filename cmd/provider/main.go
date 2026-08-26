@@ -55,15 +55,15 @@ import (
 
 func main() {
 	var (
-		app                      = kingpin.New(filepath.Base(os.Args[0]), "Gitea Crossplane provider").DefaultEnvars()
-		debug                    = app.Flag("debug", "Run with debug logging.").Short('d').Bool()
-		syncInterval             = app.Flag("sync", "Sync interval controls how often all resources will be double checked for drift.").Short('s').Default("1h").Duration()
-		pollInterval             = app.Flag("poll", "Poll interval controls how often an individual resource should be checked for drift.").Default("1m").Duration()
-		leaderElection           = app.Flag("leader-election", "Use leader election for the controller manager.").Short('l').Default("false").Bool()
-		maxReconcileRate         = app.Flag("max-reconcile-rate", "The global maximum rate per second at which resources may checked for drift from the desired state.").Default("100").Int()
-		_                        = app.Flag("namespace", "Namespace used to set as default scope in default secret store config.").Default("crossplane-system").Envar("POD_NAMESPACE").String()
-		pollStateMetricInterval  = app.Flag("poll-state-metric", "State metric recording interval").Default("5s").Duration()
-		metricsBindAddress       = app.Flag("metrics-bind-address", "The address the metrics endpoint binds to.").Default(":8080").String()
+		app                     = kingpin.New(filepath.Base(os.Args[0]), "Gitea Crossplane provider").DefaultEnvars()
+		debug                   = app.Flag("debug", "Run with debug logging.").Short('d').Bool()
+		syncInterval            = app.Flag("sync", "Sync interval controls how often all resources will be double checked for drift.").Short('s').Default("1h").Duration()
+		pollInterval            = app.Flag("poll", "Poll interval controls how often an individual resource should be checked for drift.").Default("1m").Duration()
+		leaderElection          = app.Flag("leader-election", "Use leader election for the controller manager.").Short('l').Default("false").Bool()
+		maxReconcileRate        = app.Flag("max-reconcile-rate", "The global maximum rate per second at which resources may checked for drift from the desired state.").Default("100").Int()
+		_                       = app.Flag("namespace", "Namespace used to set as default scope in default secret store config.").Default("crossplane-system").Envar("POD_NAMESPACE").String()
+		pollStateMetricInterval = app.Flag("poll-state-metric", "State metric recording interval").Default("5s").Duration()
+		metricsBindAddress      = app.Flag("metrics-bind-address", "The address the metrics endpoint binds to.").Default(":8080").String()
 	)
 	kingpin.MustParse(app.Parse(os.Args[1:]))
 

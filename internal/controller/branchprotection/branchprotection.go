@@ -150,21 +150,21 @@ func (e *externalClient) Observe(ctx context.Context, mg resource.Managed) (mana
 
 func boolPtrEqual(a *bool, b bool) bool {
 	if a == nil {
-		return false == b
+		return !b
 	}
 	return *a == b
 }
 
 func strPtrEqual(a *string, b string) bool {
 	if a == nil {
-		return "" == b
+		return b == ""
 	}
 	return *a == b
 }
 
 func intPtrEqual(a *int, b int) bool {
 	if a == nil {
-		return 0 == b
+		return b == 0
 	}
 	return *a == b
 }
