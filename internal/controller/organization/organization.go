@@ -21,6 +21,7 @@ import (
 	"strings"
 
 	"github.com/crossplane/crossplane-runtime/v2/pkg/controller"
+	"github.com/crossplane/crossplane-runtime/v2/pkg/feature"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/meta"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
@@ -306,15 +307,22 @@ func (e *externalClient) Disconnect(ctx context.Context) error {
 	return nil
 }
 
-// Setup adds a controller that reconciles Organization managed resources.
 func Setup(mgr ctrl.Manager, o controller.Options) error {
 	name := managed.ControllerName(v2.OrganizationKind)
 
-	r := managed.NewReconciler(mgr,
-		resource.ManagedKind(v2.OrganizationGroupVersionKind),
+	opts := []managed.ReconcilerOption{
 		managed.WithExternalConnector(&connector{kube: mgr.GetClient()}),
 		managed.WithLogger(o.Logger.WithValues("controller", name)),
 		managed.WithPollInterval(o.PollInterval),
+	}
+
+	if o.Features != nil && o.Features.Enabled(feature.EnableBetaManagementPolicies) {
+		opts = append(opts, managed.WithManagementPolicies())
+	}
+
+	r := managed.NewReconciler(mgr,
+		resource.ManagedKind(v2.OrganizationGroupVersionKind),
+		opts...,
 	)
 
 	return ctrl.NewControllerManagedBy(mgr).

@@ -30,4 +30,8 @@ const (
 	// Management Policies. See the below design document for more details:
 	// https://github.com/crossplane/crossplane/blob/master/design/one-pager-ignore-changes.md
 	EnableAlphaManagementPolicies feature.Flag = "EnableAlphaManagementPolicies"
+
+	// EnableBetaManagementPolicies enables beta support for
+	// Management Policies. See https://github.com/crossplane/crossplane/pull/3531
+	EnableBetaManagementPolicies feature.Flag = "EnableBetaManagementPolicies"
 )

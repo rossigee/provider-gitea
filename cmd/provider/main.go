@@ -64,6 +64,7 @@ func main() {
 		_                       = app.Flag("namespace", "Namespace used to set as default scope in default secret store config.").Default("crossplane-system").Envar("POD_NAMESPACE").String()
 		pollStateMetricInterval = app.Flag("poll-state-metric", "State metric recording interval").Default("5s").Duration()
 		metricsBindAddress      = app.Flag("metrics-bind-address", "The address the metrics endpoint binds to.").Default(":8080").String()
+		enableManagementPolicies = app.Flag("enable-management-policies", "Enable support for management policies.").Default("true").OverrideDefaultFromEnvar("ENABLE_MANAGEMENT_POLICIES").Bool()
 	)
 	kingpin.MustParse(app.Parse(os.Args[1:]))
 
@@ -86,6 +87,7 @@ func main() {
 		"poll-interval", pollInterval.String(),
 		"max-reconcile-rate", *maxReconcileRate,
 		"leader-election", *leaderElection,
+		"management-policies", *enableManagementPolicies,
 		"debug-mode", *debug)
 
 	s := apimachineryruntime.NewScheme()
@@ -130,6 +132,11 @@ func main() {
 		GlobalRateLimiter:       ratelimiter.NewGlobal(*maxReconcileRate),
 		Features:                featureFlags,
 		MetricOptions:           &mo,
+	}
+
+	if *enableManagementPolicies {
+		featureFlags.Enable(feature.EnableBetaManagementPolicies)
+		log.Info("Beta feature enabled", "flag", feature.EnableBetaManagementPolicies)
 	}
 
 	kingpin.FatalIfError(giteacontroller.Setup(mgr, o), "Cannot setup Gitea controllers")
