@@ -1,6 +1,6 @@
 # API access token for CI/CD automation
 # This example creates a scoped token for automated workflows
-apiVersion: accesstoken.gitea.crossplane.io/v1alpha1
+apiVersion: accesstoken.gitea.m.crossplane.io/v2
 kind: AccessToken
 metadata:
   name: ci-automation-token

@@ -45,7 +45,6 @@ import (
 	webhookv2 "github.com/rossigee/provider-gitea/apis/webhook/v2"
 
 	// Provider configuration APIs
-	v1alpha1 "github.com/rossigee/provider-gitea/apis/v1alpha1"
 	v1beta1 "github.com/rossigee/provider-gitea/apis/v1beta1"
 )
 
@@ -53,7 +52,6 @@ func init() {
 	// Register the types with the Scheme so the components can map objects to GroupVersionKinds and back
 	AddToSchemes = append(AddToSchemes,
 		// Provider configuration APIs
-		v1alpha1.SchemeBuilder.AddToScheme,
 		v1beta1.SchemeBuilder.AddToScheme,
 
 		// v2 APIs (namespaced with .m. API group) - v2-only provider

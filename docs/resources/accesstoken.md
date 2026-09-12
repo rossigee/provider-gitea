@@ -1,6 +1,6 @@
 # AccessToken
 
-**API Version**: `accesstoken.gitea.m.crossplane.io/v1beta1`
+**API Version**: `accesstoken.gitea.m.crossplane.io/v2`
 
 Manages scoped API tokens for automation.
 
@@ -15,7 +15,7 @@ Manages scoped API tokens for automation.
 ## Example
 
 ```yaml
-apiVersion: accesstoken.gitea.m.crossplane.io/v1beta1
+apiVersion: accesstoken.gitea.m.crossplane.io/v2
 kind: AccessToken
 metadata:
   name: ci-token

@@ -1,4 +1,4 @@
-apiVersion: deploykey.gitea.crossplane.io/v1alpha1
+apiVersion: deploykey.gitea.m.crossplane.io/v2
 kind: DeployKey
 metadata:
   name: example-deploy-key

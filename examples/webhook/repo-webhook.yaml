@@ -1,4 +1,4 @@
-apiVersion: webhook.gitea.crossplane.io/v1alpha1
+apiVersion: webhook.gitea.m.crossplane.io/v2
 kind: Webhook
 metadata:
   name: example-webhook

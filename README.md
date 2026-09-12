@@ -48,7 +48,7 @@ type: Opaque
 stringData:
   token: "your-gitea-api-token"
 ---
-apiVersion: gitea.crossplane.io/v1beta1
+apiVersion: gitea.m.crossplane.io/v1beta1
 kind: ProviderConfig
 metadata:
   name: default

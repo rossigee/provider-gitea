@@ -28,7 +28,6 @@ spec:
     #   name: gitea-connection
 
   # Standard Crossplane resource configuration
-  deletionPolicy: Delete
   managementPolicies: ["Create", "Update", "Delete"]
 
 ---

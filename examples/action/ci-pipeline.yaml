@@ -1,6 +1,6 @@
 # CI/CD Pipeline workflow using Gitea Actions
 # This example creates a comprehensive build and deployment pipeline
-apiVersion: action.gitea.crossplane.io/v1alpha1
+apiVersion: action.gitea.m.crossplane.io/v2
 kind: Action
 metadata:
   name: ci-pipeline-workflow

@@ -22,7 +22,6 @@ spec:
     providerConfigRef:
       name: gitea-production-config
 
-  deletionPolicy: Delete
 
 ---
 # Example: Production ProviderConfig in production namespace

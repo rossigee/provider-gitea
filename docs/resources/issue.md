@@ -1,6 +1,6 @@
 # Issue
 
-**API Version**: `issue.gitea.m.crossplane.io/v1beta1`
+**API Version**: `issue.gitea.m.crossplane.io/v2`
 
 Manages repository issues and tracking.
 
@@ -20,7 +20,7 @@ Manages repository issues and tracking.
 ## Example
 
 ```yaml
-apiVersion: issue.gitea.m.crossplane.io/v1beta1
+apiVersion: issue.gitea.m.crossplane.io/v2
 kind: Issue
 metadata:
   name: new-issue

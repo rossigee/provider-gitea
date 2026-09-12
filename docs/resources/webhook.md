@@ -1,6 +1,6 @@
 # Webhook
 
-**API Version**: `webhook.gitea.m.crossplane.io/v1beta1`
+**API Version**: `webhook.gitea.m.crossplane.io/v2`
 
 Manages webhooks for repositories and organizations.
 
@@ -24,7 +24,7 @@ Manages webhooks for repositories and organizations.
 ## Example
 
 ```yaml
-apiVersion: webhook.gitea.m.crossplane.io/v1beta1
+apiVersion: webhook.gitea.m.crossplane.io/v2
 kind: Webhook
 metadata:
   name: my-webhook

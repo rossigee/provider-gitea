@@ -1,6 +1,6 @@
 # RepositoryKey
 
-**API Version**: `repositorykey.gitea.m.crossplane.io/v1beta1`
+**API Version**: `repositorykey.gitea.m.crossplane.io/v2`
 
 Manages SSH deployment keys for repositories.
 
@@ -17,7 +17,7 @@ Manages SSH deployment keys for repositories.
 ## Example
 
 ```yaml
-apiVersion: repositorykey.gitea.m.crossplane.io/v1beta1
+apiVersion: repositorykey.gitea.m.crossplane.io/v2
 kind: RepositoryKey
 metadata:
   name: deploy-key

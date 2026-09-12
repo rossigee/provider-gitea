@@ -1,6 +1,6 @@
 # Repository
 
-**API Version**: `repository.gitea.m.crossplane.io/v1beta1`
+**API Version**: `repository.gitea.m.crossplane.io/v2`
 
 Manages Git repositories with comprehensive configuration options.
 
@@ -26,7 +26,7 @@ Manages Git repositories with comprehensive configuration options.
 ## Example
 
 ```yaml
-apiVersion: repository.gitea.m.crossplane.io/v1beta1
+apiVersion: repository.gitea.m.crossplane.io/v2
 kind: Repository
 metadata:
   name: my-repo

@@ -1,6 +1,6 @@
 # User SSH key for developer access
 # This example adds an SSH key to a user's account
-apiVersion: userkey.gitea.crossplane.io/v1alpha1
+apiVersion: userkey.gitea.m.crossplane.io/v2
 kind: UserKey
 metadata:
   name: developer-laptop-key

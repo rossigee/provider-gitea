@@ -1,6 +1,6 @@
 # Release
 
-**API Version**: `release.gitea.m.crossplane.io/v1beta1`
+**API Version**: `release.gitea.m.crossplane.io/v2`
 
 Manages repository releases and version tags.
 
@@ -20,7 +20,7 @@ Manages repository releases and version tags.
 ## Example
 
 ```yaml
-apiVersion: release.gitea.m.crossplane.io/v1beta1
+apiVersion: release.gitea.m.crossplane.io/v2
 kind: Release
 metadata:
   name: v1.0.0

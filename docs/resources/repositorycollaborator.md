@@ -1,6 +1,6 @@
 # RepositoryCollaborator
 
-**API Version**: `repositorycollaborator.gitea.m.crossplane.io/v1beta1`
+**API Version**: `repositorycollaborator.gitea.m.crossplane.io/v2`
 
 Manages repository collaboration and access control.
 
@@ -16,7 +16,7 @@ Manages repository collaboration and access control.
 ## Example
 
 ```yaml
-apiVersion: repositorycollaborator.gitea.m.crossplane.io/v1beta1
+apiVersion: repositorycollaborator.gitea.m.crossplane.io/v2
 kind: RepositoryCollaborator
 metadata:
   name: collab

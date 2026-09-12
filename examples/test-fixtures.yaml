@@ -2,7 +2,7 @@
 # These create test resources that can be easily cleaned up
 
 # 1. Create a test organization first
-apiVersion: organization.gitea.crossplane.io/v1alpha1
+apiVersion: organization.gitea.m.crossplane.io/v2
 kind: Organization
 metadata:
   name: test-org-fixtures
@@ -23,7 +23,7 @@ spec:
 
 ---
 # 2. Test OrganizationSecret with direct data
-apiVersion: organizationsecret.gitea.crossplane.io/v1alpha1
+apiVersion: organizationsecret.gitea.m.crossplane.io/v2
 kind: OrganizationSecret
 metadata:
   name: test-secret-direct

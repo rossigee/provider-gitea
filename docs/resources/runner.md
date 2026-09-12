@@ -1,6 +1,6 @@
 # Runner
 
-**API Version**: `runner.gitea.m.crossplane.io/v1beta1`
+**API Version**: `runner.gitea.m.crossplane.io/v2`
 
 Manages self-hosted runners for CI/CD execution.
 
@@ -21,7 +21,7 @@ Manages self-hosted runners for CI/CD execution.
 ## Example
 
 ```yaml
-apiVersion: runner.gitea.m.crossplane.io/v1beta1
+apiVersion: runner.gitea.m.crossplane.io/v2
 kind: Runner
 metadata:
   name: ci-runner

@@ -1,6 +1,6 @@
 # Administrative users for platform management
 # This example creates human admin accounts with proper security settings
-apiVersion: adminuser.gitea.crossplane.io/v1alpha1
+apiVersion: adminuser.gitea.m.crossplane.io/v2
 kind: AdminUser
 metadata:
   name: platform-admin
@@ -43,7 +43,7 @@ spec:
     name: default
 
 ---
-apiVersion: adminuser.gitea.crossplane.io/v1alpha1
+apiVersion: adminuser.gitea.m.crossplane.io/v2
 kind: AdminUser
 metadata:
   name: security-admin

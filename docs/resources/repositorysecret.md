@@ -1,6 +1,6 @@
 # RepositorySecret
 
-**API Version**: `repositorysecret.gitea.m.crossplane.io/v1beta1`
+**API Version**: `repositorysecret.gitea.m.crossplane.io/v2`
 
 Manages CI/CD secrets with Kubernetes integration.
 
@@ -19,7 +19,7 @@ Manages CI/CD secrets with Kubernetes integration.
 ## Example
 
 ```yaml
-apiVersion: repositorysecret.gitea.m.crossplane.io/v1beta1
+apiVersion: repositorysecret.gitea.m.crossplane.io/v2
 kind: RepositorySecret
 metadata:
   name: api-key

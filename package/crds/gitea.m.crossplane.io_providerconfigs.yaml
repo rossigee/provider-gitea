@@ -4,9 +4,9 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.22.0
-  name: providerconfigs.gitea.crossplane.io
+  name: providerconfigs.gitea.m.crossplane.io
 spec:
-  group: gitea.crossplane.io
+  group: gitea.m.crossplane.io
   names:
     kind: ProviderConfig
     listKind: ProviderConfigList

@@ -1,6 +1,6 @@
 # UserKey
 
-**API Version**: `userkey.gitea.m.crossplane.io/v1beta1`
+**API Version**: `userkey.gitea.m.crossplane.io/v2`
 
 Manages SSH keys for user accounts.
 
@@ -16,7 +16,7 @@ Manages SSH keys for user accounts.
 ## Example
 
 ```yaml
-apiVersion: userkey.gitea.m.crossplane.io/v1beta1
+apiVersion: userkey.gitea.m.crossplane.io/v2
 kind: UserKey
 metadata:
   name: ssh-key

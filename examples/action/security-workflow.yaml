@@ -1,6 +1,6 @@
 # Security-focused workflow with comprehensive scanning
 # This example creates a security-first CI workflow
-apiVersion: action.gitea.crossplane.io/v1alpha1
+apiVersion: action.gitea.m.crossplane.io/v2
 kind: Action
 metadata:
   name: security-scanning-workflow

@@ -1,6 +1,6 @@
 # Label
 
-**API Version**: `label.gitea.m.crossplane.io/v1beta1`
+**API Version**: `label.gitea.m.crossplane.io/v2`
 
 Manages issue and pull request labels.
 
@@ -18,7 +18,7 @@ Manages issue and pull request labels.
 ## Example
 
 ```yaml
-apiVersion: label.gitea.m.crossplane.io/v1beta1
+apiVersion: label.gitea.m.crossplane.io/v2
 kind: Label
 metadata:
   name: bug-label

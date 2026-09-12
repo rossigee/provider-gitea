@@ -1,6 +1,6 @@
 # GitHook
 
-**API Version**: `githook.gitea.m.crossplane.io/v1beta1`
+**API Version**: `githook.gitea.m.crossplane.io/v2`
 
 Manages server-side Git hooks for policy enforcement.
 
@@ -16,7 +16,7 @@ Manages server-side Git hooks for policy enforcement.
 ## Example
 
 ```yaml
-apiVersion: githook.gitea.m.crossplane.io/v1beta1
+apiVersion: githook.gitea.m.crossplane.io/v2
 kind: GitHook
 metadata:
   name: pre-receive-hook

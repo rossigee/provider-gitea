@@ -1,6 +1,6 @@
 ---
 # Read-only collaborator
-apiVersion: repositorycollaborator.gitea.crossplane.io/v1alpha1
+apiVersion: repositorycollaborator.gitea.m.crossplane.io/v2
 kind: RepositoryCollaborator
 metadata:
   name: readonly-collaborator
@@ -13,7 +13,7 @@ spec:
     name: default
 ---
 # Write access collaborator
-apiVersion: repositorycollaborator.gitea.crossplane.io/v1alpha1
+apiVersion: repositorycollaborator.gitea.m.crossplane.io/v2
 kind: RepositoryCollaborator
 metadata:
   name: write-collaborator
@@ -26,7 +26,7 @@ spec:
     name: default
 ---
 # Admin collaborator
-apiVersion: repositorycollaborator.gitea.crossplane.io/v1alpha1
+apiVersion: repositorycollaborator.gitea.m.crossplane.io/v2
 kind: RepositoryCollaborator
 metadata:
   name: admin-collaborator
@@ -39,7 +39,7 @@ spec:
     name: default
 ---
 # Personal repository collaborator
-apiVersion: repositorycollaborator.gitea.crossplane.io/v1alpha1
+apiVersion: repositorycollaborator.gitea.m.crossplane.io/v2
 kind: RepositoryCollaborator
 metadata:
   name: personal-repo-collaborator

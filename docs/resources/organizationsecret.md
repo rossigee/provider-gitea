@@ -1,6 +1,6 @@
 # OrganizationSecret
 
-**API Version**: `organizationsecret.gitea.m.crossplane.io/v1beta1`
+**API Version**: `organizationsecret.gitea.m.crossplane.io/v2`
 
 Manages organization-wide CI/CD secrets.
 
@@ -20,7 +20,7 @@ Manages organization-wide CI/CD secrets.
 ## Example
 
 ```yaml
-apiVersion: organizationsecret.gitea.m.crossplane.io/v1beta1
+apiVersion: organizationsecret.gitea.m.crossplane.io/v2
 kind: OrganizationSecret
 metadata:
   name: org-secret

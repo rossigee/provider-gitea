@@ -1,6 +1,6 @@
 # Repository SSH deploy key for automated deployments
 # This example creates a read-only SSH key for CI/CD deployments
-apiVersion: repositorykey.gitea.crossplane.io/v1alpha1
+apiVersion: repositorykey.gitea.m.crossplane.io/v2
 kind: RepositoryKey
 metadata:
   name: ci-deployment-key

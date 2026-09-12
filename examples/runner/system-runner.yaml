@@ -1,6 +1,6 @@
 # System-wide runner for global workloads
 # This example creates a runner available system-wide
-apiVersion: runner.gitea.crossplane.io/v1alpha1
+apiVersion: runner.gitea.m.crossplane.io/v2
 kind: Runner
 metadata:
   name: system-maintenance-runner

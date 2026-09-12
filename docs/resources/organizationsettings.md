@@ -1,6 +1,6 @@
 # OrganizationSettings
 
-**API Version**: `organizationsettings.gitea.m.crossplane.io/v1beta1`
+**API Version**: `organizationsettings.gitea.m.crossplane.io/v2`
 
 Manages organization-wide policies and settings.
 
@@ -20,7 +20,7 @@ Manages organization-wide policies and settings.
 ## Example
 
 ```yaml
-apiVersion: organizationsettings.gitea.m.crossplane.io/v1beta1
+apiVersion: organizationsettings.gitea.m.crossplane.io/v2
 kind: OrganizationSettings
 metadata:
   name: org-settings

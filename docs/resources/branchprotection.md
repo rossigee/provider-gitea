@@ -1,6 +1,6 @@
 # BranchProtection
 
-**API Version**: `branchprotection.gitea.m.crossplane.io/v1beta1`
+**API Version**: `branchprotection.gitea.m.crossplane.io/v2`
 
 Enterprise-grade branch protection with approval workflows.
 
@@ -32,7 +32,7 @@ Enterprise-grade branch protection with approval workflows.
 ## Example
 
 ```yaml
-apiVersion: branchprotection.gitea.m.crossplane.io/v1beta1
+apiVersion: branchprotection.gitea.m.crossplane.io/v2
 kind: BranchProtection
 metadata:
   name: main-protection

@@ -18,7 +18,7 @@ type: Opaque
 stringData:
   token: "your-gitea-access-token"
 ---
-apiVersion: gitea.crossplane.io/v1beta1
+apiVersion: gitea.m.crossplane.io/v1beta1
 kind: ProviderConfig
 metadata:
   name: default
@@ -78,7 +78,7 @@ For enterprise deployments, configure separate ProviderConfigs for different env
 
 ### Production Environment
 ```yaml
-apiVersion: gitea.crossplane.io/v1beta1
+apiVersion: gitea.m.crossplane.io/v1beta1
 kind: ProviderConfig
 metadata:
   name: production
@@ -91,7 +91,7 @@ spec:
       name: gitea-prod-secret
       key: token
 ---
-apiVersion: gitea.crossplane.io/v1beta1
+apiVersion: gitea.m.crossplane.io/v1beta1
 kind: ProviderConfig
 metadata:
   name: staging
@@ -108,7 +108,7 @@ spec:
 ### Environment-Specific Resource Configuration
 
 ```yaml
-apiVersion: repository.gitea.crossplane.io/v1alpha1
+apiVersion: repository.gitea.m.crossplane.io/v2
 kind: Repository
 metadata:
   name: enterprise-app
@@ -120,7 +120,7 @@ spec:
   providerConfigRef:
     name: production
 ---
-apiVersion: branchprotection.gitea.crossplane.io/v1alpha1
+apiVersion: branchprotection.gitea.m.crossplane.io/v2
 kind: BranchProtection
 metadata:
   name: main-branch-protection
@@ -162,7 +162,7 @@ spec:
 
 ### 2. **Network Security**
 ```yaml
-apiVersion: gitea.crossplane.io/v1beta1
+apiVersion: gitea.m.crossplane.io/v1beta1
 kind: ProviderConfig
 metadata:
   name: secure-production
@@ -191,7 +191,7 @@ kind: ClusterRole
 metadata:
   name: gitea-provider
 rules:
-- apiGroups: ["gitea.crossplane.io"]
+- apiGroups: ["gitea.m.crossplane.io"]
   resources: ["*"]
   verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
 ---
@@ -214,7 +214,7 @@ subjects:
 ### CI/CD Integration
 ```yaml
 # Repository with full CI/CD setup
-apiVersion: repository.gitea.crossplane.io/v1alpha1
+apiVersion: repository.gitea.m.crossplane.io/v2
 kind: Repository
 metadata:
   name: microservice-app
@@ -226,7 +226,7 @@ spec:
     hasIssues: true
     hasPullRequests: true
 ---
-apiVersion: action.gitea.crossplane.io/v1alpha1
+apiVersion: action.gitea.m.crossplane.io/v2
 kind: Action
 metadata:
   name: ci-pipeline
@@ -247,7 +247,7 @@ spec:
           - name: Run tests
             run: make test
 ---
-apiVersion: runner.gitea.crossplane.io/v1alpha1
+apiVersion: runner.gitea.m.crossplane.io/v2
 kind: Runner
 metadata:
   name: org-runner

@@ -1,6 +1,6 @@
 # User
 
-**API Version**: `user.gitea.m.crossplane.io/v1beta1`
+**API Version**: `user.gitea.m.crossplane.io/v2`
 
 Manages user accounts (admin privileges required).
 
@@ -22,7 +22,7 @@ Manages user accounts (admin privileges required).
 ## Example
 
 ```yaml
-apiVersion: user.gitea.m.crossplane.io/v1beta1
+apiVersion: user.gitea.m.crossplane.io/v2
 kind: User
 metadata:
   name: developer

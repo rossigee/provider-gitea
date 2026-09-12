@@ -1,6 +1,6 @@
 # AdminUser
 
-**API Version**: `adminuser.gitea.m.crossplane.io/v1beta1`
+**API Version**: `adminuser.gitea.m.crossplane.io/v2`
 
 Manages administrative users and service accounts.
 
@@ -24,7 +24,7 @@ Manages administrative users and service accounts.
 ## Example
 
 ```yaml
-apiVersion: adminuser.gitea.m.crossplane.io/v1beta1
+apiVersion: adminuser.gitea.m.crossplane.io/v2
 kind: AdminUser
 metadata:
   name: service-account

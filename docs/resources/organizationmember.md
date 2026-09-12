@@ -1,6 +1,6 @@
 # OrganizationMember
 
-**API Version**: `organizationmember.gitea.m.crossplane.io/v1beta1`
+**API Version**: `organizationmember.gitea.m.crossplane.io/v2`
 
 Manages organization membership and roles.
 
@@ -15,7 +15,7 @@ Manages organization membership and roles.
 ## Example
 
 ```yaml
-apiVersion: organizationmember.gitea.m.crossplane.io/v1beta1
+apiVersion: organizationmember.gitea.m.crossplane.io/v2
 kind: OrganizationMember
 metadata:
   name: member

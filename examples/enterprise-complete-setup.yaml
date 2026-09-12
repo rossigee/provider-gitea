@@ -3,7 +3,7 @@
 
 ---
 # 1. Administrative Users
-apiVersion: adminuser.gitea.crossplane.io/v1alpha1
+apiVersion: adminuser.gitea.m.crossplane.io/v2
 kind: AdminUser
 metadata:
   name: gitea-admin
@@ -26,7 +26,7 @@ spec:
 
 ---
 # 2. CI/CD Service Account
-apiVersion: adminuser.gitea.crossplane.io/v1alpha1
+apiVersion: adminuser.gitea.m.crossplane.io/v2
 kind: AdminUser
 metadata:
   name: ci-automation
@@ -50,7 +50,7 @@ spec:
 
 ---
 # 3. Organization Membership
-apiVersion: organizationmember.gitea.crossplane.io/v1alpha1
+apiVersion: organizationmember.gitea.m.crossplane.io/v2
 kind: OrganizationMember
 metadata:
   name: admin-org-membership
@@ -65,7 +65,7 @@ spec:
 
 ---
 # 4. API Access Token for CI/CD
-apiVersion: accesstoken.gitea.crossplane.io/v1alpha1
+apiVersion: accesstoken.gitea.m.crossplane.io/v2
 kind: AccessToken
 metadata:
   name: ci-automation-token
@@ -87,7 +87,7 @@ spec:
 
 ---
 # 5. SSH Key for Admin
-apiVersion: userkey.gitea.crossplane.io/v1alpha1
+apiVersion: userkey.gitea.m.crossplane.io/v2
 kind: UserKey
 metadata:
   name: admin-ssh-key
@@ -104,7 +104,7 @@ spec:
 
 ---
 # 6. Repository SSH Deploy Key
-apiVersion: repositorykey.gitea.crossplane.io/v1alpha1
+apiVersion: repositorykey.gitea.m.crossplane.io/v2
 kind: RepositoryKey
 metadata:
   name: production-deploy-key
@@ -121,7 +121,7 @@ spec:
 
 ---
 # 7. Branch Protection for Main Branch
-apiVersion: branchprotection.gitea.crossplane.io/v1alpha1
+apiVersion: branchprotection.gitea.m.crossplane.io/v2
 kind: BranchProtection
 metadata:
   name: production-main-protection
@@ -163,7 +163,7 @@ spec:
 
 ---
 # 8. Repository Secrets for CI/CD
-apiVersion: repositorysecret.gitea.crossplane.io/v1alpha1
+apiVersion: repositorysecret.gitea.m.crossplane.io/v2
 kind: RepositorySecret
 metadata:
   name: docker-registry-password
@@ -179,7 +179,7 @@ spec:
     name: default
 
 ---
-apiVersion: repositorysecret.gitea.crossplane.io/v1alpha1
+apiVersion: repositorysecret.gitea.m.crossplane.io/v2
 kind: RepositorySecret
 metadata:
   name: deploy-token
@@ -196,7 +196,7 @@ spec:
 
 ---
 # 9. Organization Runners for CI/CD
-apiVersion: runner.gitea.crossplane.io/v1alpha1
+apiVersion: runner.gitea.m.crossplane.io/v2
 kind: Runner
 metadata:
   name: enterprise-build-runner
@@ -215,7 +215,7 @@ spec:
     name: default
 
 ---
-apiVersion: runner.gitea.crossplane.io/v1alpha1
+apiVersion: runner.gitea.m.crossplane.io/v2
 kind: Runner
 metadata:
   name: enterprise-security-runner
@@ -235,7 +235,7 @@ spec:
 
 ---
 # 10. CI/CD Pipeline Action
-apiVersion: action.gitea.crossplane.io/v1alpha1
+apiVersion: action.gitea.m.crossplane.io/v2
 kind: Action
 metadata:
   name: enterprise-ci-pipeline

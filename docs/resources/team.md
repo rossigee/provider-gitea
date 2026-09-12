@@ -1,6 +1,6 @@
 # Team
 
-**API Version**: `team.gitea.m.crossplane.io/v1beta1`
+**API Version**: `team.gitea.m.crossplane.io/v2`
 
 Manages organization teams and permissions.
 
@@ -19,7 +19,7 @@ Manages organization teams and permissions.
 ## Example
 
 ```yaml
-apiVersion: team.gitea.m.crossplane.io/v1beta1
+apiVersion: team.gitea.m.crossplane.io/v2
 kind: Team
 metadata:
   name: developers

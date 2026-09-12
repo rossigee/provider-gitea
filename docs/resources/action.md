@@ -1,6 +1,6 @@
 # Action
 
-**API Version**: `action.gitea.m.crossplane.io/v1beta1`
+**API Version**: `action.gitea.m.crossplane.io/v2`
 
 Manages CI/CD workflows and pipeline automation.
 
@@ -17,7 +17,7 @@ Manages CI/CD workflows and pipeline automation.
 ## Example
 
 ```yaml
-apiVersion: action.gitea.m.crossplane.io/v1beta1
+apiVersion: action.gitea.m.crossplane.io/v2
 kind: Action
 metadata:
   name: ci-workflow

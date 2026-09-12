@@ -1,6 +1,6 @@
 # Self-hosted runner for repository-specific workloads
 # This example creates a runner dedicated to a single repository
-apiVersion: runner.gitea.crossplane.io/v1alpha1
+apiVersion: runner.gitea.m.crossplane.io/v2
 kind: Runner
 metadata:
   name: webapp-dedicated-runner

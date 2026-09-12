@@ -1,6 +1,6 @@
 # Organization
 
-**API Version**: `organization.gitea.m.crossplane.io/v1beta1`
+**API Version**: `organization.gitea.m.crossplane.io/v2`
 
 Manages organizations with comprehensive policy controls.
 
@@ -20,7 +20,7 @@ Manages organizations with comprehensive policy controls.
 ## Example
 
 ```yaml
-apiVersion: organization.gitea.m.crossplane.io/v1beta1
+apiVersion: organization.gitea.m.crossplane.io/v2
 kind: Organization
 metadata:
   name: myorg

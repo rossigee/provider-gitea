@@ -1,6 +1,6 @@
 # Organization membership management
 # This example demonstrates adding users to an organization with different roles
-apiVersion: organizationmember.gitea.crossplane.io/v1alpha1
+apiVersion: organizationmember.gitea.m.crossplane.io/v2
 kind: OrganizationMember
 metadata:
   name: tech-lead-membership
@@ -24,7 +24,7 @@ spec:
     name: default
 
 ---
-apiVersion: organizationmember.gitea.crossplane.io/v1alpha1
+apiVersion: organizationmember.gitea.m.crossplane.io/v2
 kind: OrganizationMember
 metadata:
   name: developer-membership
@@ -40,7 +40,7 @@ spec:
     name: default
 
 ---
-apiVersion: organizationmember.gitea.crossplane.io/v1alpha1
+apiVersion: organizationmember.gitea.m.crossplane.io/v2
 kind: OrganizationMember
 metadata:
   name: contractor-membership

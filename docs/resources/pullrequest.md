@@ -1,6 +1,6 @@
 # PullRequest
 
-**API Version**: `pullrequest.gitea.m.crossplane.io/v1beta1`
+**API Version**: `pullrequest.gitea.m.crossplane.io/v2`
 
 Manages pull requests and code review workflows.
 
@@ -21,7 +21,7 @@ Manages pull requests and code review workflows.
 ## Example
 
 ```yaml
-apiVersion: pullrequest.gitea.m.crossplane.io/v1beta1
+apiVersion: pullrequest.gitea.m.crossplane.io/v2
 kind: PullRequest
 metadata:
   name: new-pr

@@ -47,7 +47,6 @@ spec:
     visibility: "private"
     providerConfigRef:
       name: enterprise-gitea
-  deletionPolicy: Delete
 
 ---
 # Core Infrastructure Repository
@@ -68,7 +67,6 @@ spec:
     trustModel: "collaborator"
     providerConfigRef:
       name: enterprise-gitea
-  deletionPolicy: Delete
 
 ---
 # Branch Protection for Main Branch
@@ -92,7 +90,6 @@ spec:
     unprotectedFilePatterns: ["README.md", "docs/*"]
     providerConfigRef:
       name: enterprise-gitea
-  deletionPolicy: Delete
 
 ---
 # CI/CD Webhook for Infrastructure
@@ -113,7 +110,6 @@ spec:
     active: true
     providerConfigRef:
       name: enterprise-gitea
-  deletionPolicy: Delete
 
 ---
 # Deploy Key for CI/CD Access
@@ -130,7 +126,6 @@ spec:
     readOnly: true
     providerConfigRef:
       name: enterprise-gitea
-  deletionPolicy: Delete
 
 ---
 # Team for Repository Access
@@ -150,7 +145,6 @@ spec:
     units: ["repo.code", "repo.issues", "repo.pulls", "repo.releases"]
     providerConfigRef:
       name: enterprise-gitea
-  deletionPolicy: Delete
 
 ---
 # Repository Secret for CI/CD
@@ -170,7 +164,6 @@ spec:
         key: token
     providerConfigRef:
       name: enterprise-gitea
-  deletionPolicy: Delete
 
 ---
 # Organization-wide Secret
@@ -190,7 +183,6 @@ spec:
         key: access-key-id
     providerConfigRef:
       name: enterprise-gitea
-  deletionPolicy: Delete
 
 ---
 # Action/Workflow Configuration
@@ -226,7 +218,6 @@ spec:
     enabled: true
     providerConfigRef:
       name: enterprise-gitea
-  deletionPolicy: Delete
 
 ---
 # Self-hosted Runner
@@ -244,7 +235,6 @@ spec:
     labels: ["enterprise", "secure", "terraform"]
     providerConfigRef:
       name: enterprise-gitea
-  deletionPolicy: Delete
 
 ---
 # Labels for Issue Management
@@ -261,7 +251,6 @@ spec:
     description: "Infrastructure related issues and PRs"
     providerConfigRef:
       name: enterprise-gitea
-  deletionPolicy: Delete
 
 ---
 # Enterprise Credentials Secret

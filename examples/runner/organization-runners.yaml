@@ -1,6 +1,6 @@
 # Organization-wide runners for shared workloads
 # This example creates runners available to all repos in an organization
-apiVersion: runner.gitea.crossplane.io/v1alpha1
+apiVersion: runner.gitea.m.crossplane.io/v2
 kind: Runner
 metadata:
   name: org-build-runner
@@ -28,7 +28,7 @@ spec:
     name: default
 
 ---
-apiVersion: runner.gitea.crossplane.io/v1alpha1
+apiVersion: runner.gitea.m.crossplane.io/v2
 kind: Runner
 metadata:
   name: org-security-runner
@@ -54,7 +54,7 @@ spec:
     name: default
 
 ---
-apiVersion: runner.gitea.crossplane.io/v1alpha1
+apiVersion: runner.gitea.m.crossplane.io/v2
 kind: Runner
 metadata:
   name: org-deployment-runner

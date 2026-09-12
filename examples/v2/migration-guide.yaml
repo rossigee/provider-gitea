@@ -5,7 +5,7 @@
 # BEFORE: v1alpha1 (cluster-scoped)
 # ========================================
 
-# OLD: Cluster-scoped repository (v1alpha1)
+# OLD: Cluster-scoped repository (v1alpha1) - historical, no longer served
 ---
 apiVersion: repository.gitea.crossplane.io/v1alpha1
 kind: Repository
@@ -22,7 +22,6 @@ spec:
     private: false
   providerConfigRef:
     name: default  # References cluster-scoped ProviderConfig
-  deletionPolicy: Delete
 
 ---
 # OLD: Cluster-scoped ProviderConfig (v1alpha1/v1beta1)
@@ -68,7 +67,6 @@ spec:
     # connectionRef:
     #   name: gitea-connection
 
-  deletionPolicy: Delete
 
 ---
 # NEW: Namespace-scoped ProviderConfig

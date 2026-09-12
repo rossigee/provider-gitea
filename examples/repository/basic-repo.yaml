@@ -1,4 +1,4 @@
-apiVersion: repository.gitea.crossplane.io/v1alpha1
+apiVersion: repository.gitea.m.crossplane.io/v2
 kind: Repository
 metadata:
   name: example-repo
