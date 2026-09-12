@@ -29,3 +29,11 @@ var (
 	ReleaseAssetKindAPIVersion   = ReleaseAssetKind + "." + SchemeGroupVersion.String()
 	ReleaseAssetGroupVersionKind = SchemeGroupVersion.WithKind(ReleaseAssetKind)
 )
+
+// Release type metadata.
+var (
+	ReleaseKind             = reflect.TypeOf(Release{}).Name()
+	ReleaseGroupKind        = schema.GroupKind{Group: Group, Kind: ReleaseKind}
+	ReleaseKindAPIVersion   = ReleaseKind + "." + SchemeGroupVersion.String()
+	ReleaseGroupVersionKind = SchemeGroupVersion.WithKind(ReleaseKind)
+)

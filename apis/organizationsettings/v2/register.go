@@ -29,3 +29,11 @@ var (
 	AppliedOrganizationSettingsKindAPIVersion   = AppliedOrganizationSettingsKind + "." + SchemeGroupVersion.String()
 	AppliedOrganizationSettingsGroupVersionKind = SchemeGroupVersion.WithKind(AppliedOrganizationSettingsKind)
 )
+
+// OrganizationSettings type metadata.
+var (
+	OrganizationSettingsKind             = reflect.TypeOf(OrganizationSettings{}).Name()
+	OrganizationSettingsGroupKind        = schema.GroupKind{Group: Group, Kind: OrganizationSettingsKind}
+	OrganizationSettingsKindAPIVersion   = OrganizationSettingsKind + "." + SchemeGroupVersion.String()
+	OrganizationSettingsGroupVersionKind = SchemeGroupVersion.WithKind(OrganizationSettingsKind)
+)

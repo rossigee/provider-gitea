@@ -1,0 +1,164 @@
+/*
+Copyright 2024 The Crossplane Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+package organizationsecret
+
+import (
+	"context"
+	"fmt"
+	"testing"
+
+	"github.com/crossplane/crossplane-runtime/v2/pkg/meta"
+	v2 "github.com/rossigee/provider-gitea/apis/organizationsecret/v2"
+	"github.com/rossigee/provider-gitea/internal/clients"
+	"github.com/rossigee/provider-gitea/internal/controller/testutil"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/client/fake"
+)
+
+type mockOrgSecretClient struct {
+	testutil.NoopClient
+	getFn    func(ctx context.Context, org, name string) (*clients.OrganizationSecret, error)
+	createFn func(ctx context.Context, org, name string, req *clients.CreateOrganizationSecretRequest) error
+	updateFn func(ctx context.Context, org, name string, req *clients.CreateOrganizationSecretRequest) error
+	deleteFn func(ctx context.Context, org, name string) error
+}
+
+func (m *mockOrgSecretClient) GetOrganizationSecret(ctx context.Context, org, name string) (*clients.OrganizationSecret, error) {
+	if m.getFn != nil {
+		return m.getFn(ctx, org, name)
+	}
+	return nil, nil
+}
+func (m *mockOrgSecretClient) CreateOrganizationSecret(ctx context.Context, org, name string, req *clients.CreateOrganizationSecretRequest) error {
+	if m.createFn != nil {
+		return m.createFn(ctx, org, name, req)
+	}
+	return nil
+}
+func (m *mockOrgSecretClient) UpdateOrganizationSecret(ctx context.Context, org, name string, req *clients.CreateOrganizationSecretRequest) error {
+	if m.updateFn != nil {
+		return m.updateFn(ctx, org, name, req)
+	}
+	return nil
+}
+func (m *mockOrgSecretClient) DeleteOrganizationSecret(ctx context.Context, org, name string) error {
+	if m.deleteFn != nil {
+		return m.deleteFn(ctx, org, name)
+	}
+	return nil
+}
+
+func testExternal() *externalClient {
+	return &externalClient{kube: fake.NewClientBuilder().Build(), client: &mockOrgSecretClient{}}
+}
+
+func TestObserve(t *testing.T) {
+	t.Run("no external name returns not exists", func(t *testing.T) {
+		ec := testExternal()
+		cr := &v2.OrganizationSecret{ObjectMeta: metav1.ObjectMeta{Namespace: "default", Name: "s"}}
+		obs, err := ec.Observe(context.Background(), cr)
+		require.NoError(t, err)
+		assert.False(t, obs.ResourceExists)
+	})
+
+	t.Run("404 returns not exists", func(t *testing.T) {
+		ec := testExternal()
+		ec.client = &mockOrgSecretClient{
+			getFn: func(ctx context.Context, org, name string) (*clients.OrganizationSecret, error) {
+				return nil, fmt.Errorf("API request failed with status 404: not found")
+			},
+		}
+		cr := &v2.OrganizationSecret{ObjectMeta: metav1.ObjectMeta{Namespace: "default", Name: "s"}}
+		meta.SetExternalName(cr, "acme/TOKEN")
+		obs, err := ec.Observe(context.Background(), cr)
+		require.NoError(t, err)
+		assert.False(t, obs.ResourceExists)
+	})
+
+	t.Run("existing secret exists and is up to date", func(t *testing.T) {
+		ec := testExternal()
+		ec.client = &mockOrgSecretClient{
+			getFn: func(ctx context.Context, org, name string) (*clients.OrganizationSecret, error) {
+				assert.Equal(t, "acme", org)
+				assert.Equal(t, "TOKEN", name)
+				return &clients.OrganizationSecret{Name: "TOKEN"}, nil
+			},
+		}
+		cr := &v2.OrganizationSecret{ObjectMeta: metav1.ObjectMeta{Namespace: "default", Name: "s"}}
+		meta.SetExternalName(cr, "acme/TOKEN")
+		obs, err := ec.Observe(context.Background(), cr)
+		require.NoError(t, err)
+		assert.True(t, obs.ResourceExists)
+		assert.True(t, obs.ResourceUpToDate)
+	})
+}
+
+func TestCreate(t *testing.T) {
+	ec := testExternal()
+	ec.client = &mockOrgSecretClient{
+		createFn: func(ctx context.Context, org, name string, req *clients.CreateOrganizationSecretRequest) error {
+			assert.Equal(t, "acme", org)
+			assert.Equal(t, "TOKEN", name)
+			assert.Equal(t, "s3cret", req.Data)
+			return nil
+		},
+	}
+	cr := &v2.OrganizationSecret{ObjectMeta: metav1.ObjectMeta{Namespace: "default", Name: "s"}}
+	cr.Spec.ForProvider.Organization = "acme"
+	cr.Spec.ForProvider.SecretName = "TOKEN"
+	data := "s3cret"
+	cr.Spec.ForProvider.Data = &data
+	_, err := ec.Create(context.Background(), cr)
+	require.NoError(t, err)
+	assert.Equal(t, "acme/TOKEN", meta.GetExternalName(cr))
+}
+
+func TestDelete(t *testing.T) {
+	t.Run("missing secret is success", func(t *testing.T) {
+		ec := testExternal()
+		ec.client = &mockOrgSecretClient{
+			getFn: func(ctx context.Context, org, name string) (*clients.OrganizationSecret, error) {
+				return nil, fmt.Errorf("API request failed with status 404: not found")
+			},
+		}
+		cr := &v2.OrganizationSecret{ObjectMeta: metav1.ObjectMeta{Namespace: "default", Name: "s"}}
+		meta.SetExternalName(cr, "acme/TOKEN")
+		_, err := ec.Delete(context.Background(), cr)
+		require.NoError(t, err)
+	})
+
+	t.Run("existing secret is deleted", func(t *testing.T) {
+		var deleted bool
+		ec := testExternal()
+		ec.client = &mockOrgSecretClient{
+			getFn: func(ctx context.Context, org, name string) (*clients.OrganizationSecret, error) {
+				return &clients.OrganizationSecret{Name: "TOKEN"}, nil
+			},
+			deleteFn: func(ctx context.Context, org, name string) error {
+				deleted = true
+				return nil
+			},
+		}
+		cr := &v2.OrganizationSecret{ObjectMeta: metav1.ObjectMeta{Namespace: "default", Name: "s"}}
+		meta.SetExternalName(cr, "acme/TOKEN")
+		_, err := ec.Delete(context.Background(), cr)
+		require.NoError(t, err)
+		assert.True(t, deleted)
+	})
+}

@@ -29,3 +29,11 @@ var (
 	ActionLastRunKindAPIVersion   = ActionLastRunKind + "." + SchemeGroupVersion.String()
 	ActionLastRunGroupVersionKind = SchemeGroupVersion.WithKind(ActionLastRunKind)
 )
+
+// Action type metadata.
+var (
+	ActionKind             = reflect.TypeOf(Action{}).Name()
+	ActionGroupKind        = schema.GroupKind{Group: Group, Kind: ActionKind}
+	ActionKindAPIVersion   = ActionKind + "." + SchemeGroupVersion.String()
+	ActionGroupVersionKind = SchemeGroupVersion.WithKind(ActionKind)
+)

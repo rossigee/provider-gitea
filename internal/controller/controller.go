@@ -18,13 +18,29 @@ package controller
 
 import (
 	"github.com/crossplane/crossplane-runtime/v2/pkg/controller"
+	"github.com/rossigee/provider-gitea/internal/controller/accesstoken"
+	"github.com/rossigee/provider-gitea/internal/controller/action"
+	"github.com/rossigee/provider-gitea/internal/controller/adminuser"
 	"github.com/rossigee/provider-gitea/internal/controller/branchprotection"
+	"github.com/rossigee/provider-gitea/internal/controller/deploykey"
+	"github.com/rossigee/provider-gitea/internal/controller/githook"
+	"github.com/rossigee/provider-gitea/internal/controller/issue"
+	"github.com/rossigee/provider-gitea/internal/controller/label"
 	"github.com/rossigee/provider-gitea/internal/controller/organization"
+	"github.com/rossigee/provider-gitea/internal/controller/organizationmember"
+	"github.com/rossigee/provider-gitea/internal/controller/organizationsecret"
+	"github.com/rossigee/provider-gitea/internal/controller/organizationsettings"
 	"github.com/rossigee/provider-gitea/internal/controller/providerconfig"
+	"github.com/rossigee/provider-gitea/internal/controller/pullrequest"
+	"github.com/rossigee/provider-gitea/internal/controller/release"
 	"github.com/rossigee/provider-gitea/internal/controller/repository"
+	"github.com/rossigee/provider-gitea/internal/controller/repositorycollaborator"
 	"github.com/rossigee/provider-gitea/internal/controller/repositorykey"
 	"github.com/rossigee/provider-gitea/internal/controller/repositorysecret"
+	"github.com/rossigee/provider-gitea/internal/controller/runner"
+	"github.com/rossigee/provider-gitea/internal/controller/team"
 	"github.com/rossigee/provider-gitea/internal/controller/user"
+	"github.com/rossigee/provider-gitea/internal/controller/userkey"
 	"github.com/rossigee/provider-gitea/internal/controller/webhook"
 	ctrl "sigs.k8s.io/controller-runtime"
 )
@@ -37,10 +53,26 @@ func Setup(mgr ctrl.Manager, o controller.Options) error {
 		repository.Setup,
 		repositorykey.Setup,
 		repositorysecret.Setup,
+		repositorycollaborator.Setup,
 		organization.Setup,
+		organizationmember.Setup,
+		organizationsecret.Setup,
+		organizationsettings.Setup,
 		user.Setup,
 		webhook.Setup,
 		branchprotection.Setup,
+		deploykey.Setup,
+		githook.Setup,
+		issue.Setup,
+		label.Setup,
+		accesstoken.Setup,
+		action.Setup,
+		adminuser.Setup,
+		pullrequest.Setup,
+		release.Setup,
+		runner.Setup,
+		team.Setup,
+		userkey.Setup,
 	} {
 		if err := setup(mgr, o); err != nil {
 			return err

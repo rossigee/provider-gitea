@@ -29,3 +29,11 @@ var (
 	AdminUserStatsKindAPIVersion   = AdminUserStatsKind + "." + SchemeGroupVersion.String()
 	AdminUserStatsGroupVersionKind = SchemeGroupVersion.WithKind(AdminUserStatsKind)
 )
+
+// AdminUser type metadata.
+var (
+	AdminUserKind             = reflect.TypeOf(AdminUser{}).Name()
+	AdminUserGroupKind        = schema.GroupKind{Group: Group, Kind: AdminUserKind}
+	AdminUserKindAPIVersion   = AdminUserKind + "." + SchemeGroupVersion.String()
+	AdminUserGroupVersionKind = SchemeGroupVersion.WithKind(AdminUserKind)
+)

@@ -29,3 +29,11 @@ var (
 	DataFromSourceKindAPIVersion   = DataFromSourceKind + "." + SchemeGroupVersion.String()
 	DataFromSourceGroupVersionKind = SchemeGroupVersion.WithKind(DataFromSourceKind)
 )
+
+// OrganizationSecret type metadata.
+var (
+	OrganizationSecretKind             = reflect.TypeOf(OrganizationSecret{}).Name()
+	OrganizationSecretGroupKind        = schema.GroupKind{Group: Group, Kind: OrganizationSecretKind}
+	OrganizationSecretKindAPIVersion   = OrganizationSecretKind + "." + SchemeGroupVersion.String()
+	OrganizationSecretGroupVersionKind = SchemeGroupVersion.WithKind(OrganizationSecretKind)
+)

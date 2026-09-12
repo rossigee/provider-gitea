@@ -1,0 +1,291 @@
+/*
+Copyright 2024 The Crossplane Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+package organizationsecret
+
+import (
+	"context"
+	"fmt"
+	"strings"
+
+	"github.com/crossplane/crossplane-runtime/v2/pkg/controller"
+	"github.com/crossplane/crossplane-runtime/v2/pkg/feature"
+	"github.com/crossplane/crossplane-runtime/v2/pkg/meta"
+	"github.com/crossplane/crossplane-runtime/v2/pkg/reconciler/managed"
+	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
+	xpv1 "github.com/crossplane/crossplane/apis/v2/core/v2"
+	"github.com/pkg/errors"
+	v2 "github.com/rossigee/provider-gitea/apis/organizationsecret/v2"
+	v1beta1 "github.com/rossigee/provider-gitea/apis/v1beta1"
+
+	"github.com/rossigee/provider-gitea/internal/clients"
+	"github.com/rossigee/provider-gitea/internal/tracing"
+	corev1 "k8s.io/api/core/v1"
+	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+)
+
+const (
+	errNotOrganizationSecret    = "managed resource is not an OrganizationSecret custom resource"
+	errGetOrganizationSecret    = "failed to get organization secret"
+	errCreateOrganizationSecret = "failed to create organization secret"
+	errUpdateOrganizationSecret = "failed to update organization secret"
+	errDeleteOrganizationSecret = "failed to delete organization secret"
+	errGetProviderConfig        = "failed to get provider config"
+	errResolveSecret            = "failed to resolve secret value"
+)
+
+// A connector is expected to produce an ExternalClient when its Connect method is called.
+type connector struct {
+	kube client.Client
+}
+
+// Connect returns an ExternalClient by:
+// 1. Getting the provider config
+// 2. Creating a Gitea API client
+// 3. Returning an external client wrapping the API client
+func (c *connector) Connect(ctx context.Context, mg resource.Managed) (managed.ExternalClient, error) {
+	cr, ok := mg.(*v2.OrganizationSecret)
+	if !ok {
+		return nil, errors.New(errNotOrganizationSecret)
+	}
+
+	// Get provider config reference from spec
+	pcRef := cr.Spec.ProviderConfigReference
+	if pcRef == nil {
+		return nil, errors.New("providerConfigRef is required")
+	}
+
+	var pc v1beta1.ProviderConfig
+	if err := c.kube.Get(ctx, client.ObjectKey{
+		Namespace: cr.GetNamespace(),
+		Name:      pcRef.Name,
+	}, &pc); err != nil {
+		return nil, errors.Wrap(err, errGetProviderConfig)
+	}
+
+	conn, err := clients.NewClient(ctx, &pc, c.kube)
+	if err != nil {
+		return nil, err
+	}
+
+	return &externalClient{kube: c.kube, client: conn}, nil
+}
+
+// An ExternalClient observes, then either creates, updates, or deletes an
+// external resource to ensure it matches the managed resource's desired state.
+type externalClient struct {
+	kube   client.Client
+	client clients.Client
+}
+
+// resolveSecretValue returns the plaintext secret value from Data or DataFrom.
+func (e *externalClient) resolveSecretValue(ctx context.Context, cr *v2.OrganizationSecret) (string, error) {
+	fp := cr.Spec.ForProvider
+	if fp.Data != nil {
+		return *fp.Data, nil
+	}
+	if fp.DataFrom != nil {
+		if fp.DataFrom.Value != nil {
+			return *fp.DataFrom.Value, nil
+		}
+		if fp.DataFrom.SecretKeyRef != nil {
+			ref := fp.DataFrom.SecretKeyRef
+			ns := cr.GetNamespace()
+			if ref.Namespace != "" {
+				ns = ref.Namespace
+			}
+			var secret corev1.Secret
+			if err := e.kube.Get(ctx, client.ObjectKey{Namespace: ns, Name: ref.Name}, &secret); err != nil {
+				return "", errors.Wrap(err, errResolveSecret)
+			}
+			val, ok := secret.Data[ref.Key]
+			if !ok {
+				return "", errors.New(errResolveSecret + ": key not found in secret")
+			}
+			return string(val), nil
+		}
+	}
+	return "", errors.New(errResolveSecret + ": specify Data or DataFrom")
+}
+
+// parseExternalName splits an "org/secretname" external name.
+func parseExternalName(externalID string) (org, secretName string, err error) {
+	parts := strings.Split(externalID, "/")
+	if len(parts) != 2 {
+		return "", "", fmt.Errorf("invalid external-id format %q, expected org/secretname", externalID)
+	}
+	return parts[0], parts[1], nil
+}
+
+func (e *externalClient) Observe(ctx context.Context, mg resource.Managed) (managed.ExternalObservation, error) {
+	_, span := tracing.StartSpan(ctx, "organizationsecret.observe",
+		tracing.SpanAttrs("organizationsecret", tracing.ResourceName(mg), "observe")...)
+	defer span.End()
+
+	cr, ok := mg.(*v2.OrganizationSecret)
+	if !ok {
+		return managed.ExternalObservation{}, errors.New(errNotOrganizationSecret)
+	}
+
+	externalID := meta.GetExternalName(cr)
+	if externalID == "" {
+		return managed.ExternalObservation{ResourceExists: false}, nil
+	}
+
+	org, secretName, err := parseExternalName(externalID)
+	if err != nil {
+		return managed.ExternalObservation{ResourceExists: false}, nil
+	}
+
+	secret, err := e.client.GetOrganizationSecret(ctx, org, secretName)
+	if err != nil {
+		if strings.Contains(err.Error(), "404") {
+			return managed.ExternalObservation{ResourceExists: false}, nil
+		}
+		return managed.ExternalObservation{}, errors.Wrap(err, errGetOrganizationSecret)
+	}
+
+	// Update observed state
+	cr.Status.AtProvider = v2.OrganizationSecretObservation{
+		CreatedAt: &secret.CreatedAt,
+		UpdatedAt: &secret.UpdatedAt,
+	}
+
+	// Secret values are write-only in Gitea; existence implies up-to-date.
+	// Value drift is detected on update by always writing the desired value.
+
+	// Only set Available() - Crossplane runtime handles Synced condition automatically
+	cr.SetConditions(xpv1.Available())
+
+	return managed.ExternalObservation{
+		ResourceExists:   true,
+		ResourceUpToDate: true,
+	}, nil
+}
+
+func (e *externalClient) Create(ctx context.Context, mg resource.Managed) (managed.ExternalCreation, error) {
+	_, span := tracing.StartSpan(ctx, "organizationsecret.create",
+		tracing.SpanAttrs("organizationsecret", tracing.ResourceName(mg), "create")...)
+	defer span.End()
+
+	cr, ok := mg.(*v2.OrganizationSecret)
+	if !ok {
+		return managed.ExternalCreation{}, errors.New(errNotOrganizationSecret)
+	}
+
+	value, err := e.resolveSecretValue(ctx, cr)
+	if err != nil {
+		return managed.ExternalCreation{}, err
+	}
+
+	fp := cr.Spec.ForProvider
+	if err := e.client.CreateOrganizationSecret(ctx, fp.Organization, fp.SecretName, &clients.CreateOrganizationSecretRequest{
+		Data: value,
+	}); err != nil {
+		return managed.ExternalCreation{}, errors.Wrap(err, errCreateOrganizationSecret)
+	}
+
+	// Set external name to org/secretname format for future lookups
+	meta.SetExternalName(cr, fmt.Sprintf("%s/%s", fp.Organization, fp.SecretName))
+
+	return managed.ExternalCreation{}, nil
+}
+
+func (e *externalClient) Update(ctx context.Context, mg resource.Managed) (managed.ExternalUpdate, error) {
+	_, span := tracing.StartSpan(ctx, "organizationsecret.update",
+		tracing.SpanAttrs("organizationsecret", tracing.ResourceName(mg), "update")...)
+	defer span.End()
+
+	cr, ok := mg.(*v2.OrganizationSecret)
+	if !ok {
+		return managed.ExternalUpdate{}, errors.New(errNotOrganizationSecret)
+	}
+
+	org, secretName, err := parseExternalName(meta.GetExternalName(cr))
+	if err != nil {
+		return managed.ExternalUpdate{}, err
+	}
+
+	value, err := e.resolveSecretValue(ctx, cr)
+	if err != nil {
+		return managed.ExternalUpdate{}, err
+	}
+
+	if err := e.client.UpdateOrganizationSecret(ctx, org, secretName, &clients.CreateOrganizationSecretRequest{
+		Data: value,
+	}); err != nil {
+		return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateOrganizationSecret)
+	}
+
+	return managed.ExternalUpdate{}, nil
+}
+
+func (e *externalClient) Delete(ctx context.Context, mg resource.Managed) (managed.ExternalDelete, error) {
+	_, span := tracing.StartSpan(ctx, "organizationsecret.delete",
+		tracing.SpanAttrs("organizationsecret", tracing.ResourceName(mg), "delete")...)
+	defer span.End()
+
+	cr, ok := mg.(*v2.OrganizationSecret)
+	if !ok {
+		return managed.ExternalDelete{}, errors.New(errNotOrganizationSecret)
+	}
+
+	org, secretName, err := parseExternalName(meta.GetExternalName(cr))
+	if err != nil {
+		return managed.ExternalDelete{}, nil
+	}
+
+	// Gracefully handle already-deleted external resource.
+	if _, err := e.client.GetOrganizationSecret(ctx, org, secretName); err == nil {
+		if err := e.client.DeleteOrganizationSecret(ctx, org, secretName); err != nil {
+			return managed.ExternalDelete{}, errors.Wrap(err, errDeleteOrganizationSecret)
+		}
+		return managed.ExternalDelete{}, nil
+	} else if !strings.Contains(err.Error(), "404") {
+		return managed.ExternalDelete{}, errors.Wrap(err, errDeleteOrganizationSecret)
+	}
+	return managed.ExternalDelete{}, nil
+}
+
+func (e *externalClient) Disconnect(ctx context.Context) error {
+	// No cleanup needed for HTTP client
+	return nil
+}
+
+func Setup(mgr ctrl.Manager, o controller.Options) error {
+	name := managed.ControllerName(v2.OrganizationSecretKind)
+
+	opts := []managed.ReconcilerOption{
+		managed.WithExternalConnector(&connector{kube: mgr.GetClient()}),
+		managed.WithLogger(o.Logger.WithValues("controller", name)),
+		managed.WithPollInterval(o.PollInterval),
+	}
+
+	if o.Features != nil && o.Features.Enabled(feature.EnableBetaManagementPolicies) {
+		opts = append(opts, managed.WithManagementPolicies())
+	}
+
+	r := managed.NewReconciler(mgr,
+		resource.ManagedKind(v2.OrganizationSecretGroupVersionKind),
+		opts...,
+	)
+
+	return ctrl.NewControllerManagedBy(mgr).
+		Named(name).
+		For(&v2.OrganizationSecret{}).
+		Complete(r)
+}

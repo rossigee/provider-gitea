@@ -29,3 +29,11 @@ var (
 	RepositoryCollaboratorPermissionsKindAPIVersion   = RepositoryCollaboratorPermissionsKind + "." + SchemeGroupVersion.String()
 	RepositoryCollaboratorPermissionsGroupVersionKind = SchemeGroupVersion.WithKind(RepositoryCollaboratorPermissionsKind)
 )
+
+// RepositoryCollaborator type metadata.
+var (
+	RepositoryCollaboratorKind             = reflect.TypeOf(RepositoryCollaborator{}).Name()
+	RepositoryCollaboratorGroupKind        = schema.GroupKind{Group: Group, Kind: RepositoryCollaboratorKind}
+	RepositoryCollaboratorKindAPIVersion   = RepositoryCollaboratorKind + "." + SchemeGroupVersion.String()
+	RepositoryCollaboratorGroupVersionKind = SchemeGroupVersion.WithKind(RepositoryCollaboratorKind)
+)

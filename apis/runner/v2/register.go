@@ -29,3 +29,11 @@ var (
 	RunnerGroupInfoKindAPIVersion   = RunnerGroupInfoKind + "." + SchemeGroupVersion.String()
 	RunnerGroupInfoGroupVersionKind = SchemeGroupVersion.WithKind(RunnerGroupInfoKind)
 )
+
+// Runner type metadata.
+var (
+	RunnerKind             = reflect.TypeOf(Runner{}).Name()
+	RunnerGroupKind        = schema.GroupKind{Group: Group, Kind: RunnerKind}
+	RunnerKindAPIVersion   = RunnerKind + "." + SchemeGroupVersion.String()
+	RunnerGroupVersionKind = SchemeGroupVersion.WithKind(RunnerKind)
+)

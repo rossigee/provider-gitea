@@ -29,3 +29,11 @@ var (
 	OrganizationMemberUserInfoKindAPIVersion   = OrganizationMemberUserInfoKind + "." + SchemeGroupVersion.String()
 	OrganizationMemberUserInfoGroupVersionKind = SchemeGroupVersion.WithKind(OrganizationMemberUserInfoKind)
 )
+
+// OrganizationMember type metadata.
+var (
+	OrganizationMemberKind             = reflect.TypeOf(OrganizationMember{}).Name()
+	OrganizationMemberGroupKind        = schema.GroupKind{Group: Group, Kind: OrganizationMemberKind}
+	OrganizationMemberKindAPIVersion   = OrganizationMemberKind + "." + SchemeGroupVersion.String()
+	OrganizationMemberGroupVersionKind = SchemeGroupVersion.WithKind(OrganizationMemberKind)
+)
