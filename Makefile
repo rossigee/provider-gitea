@@ -22,7 +22,7 @@ GOLANGCILINT_VERSION ?= 2.13.2
 -include build/makelib/golang.mk
 
 # Setup Kubernetes tools
-UP_VERSION = v0.28.0
+UP_VERSION = v0.40.3
 UP_CHANNEL = stable
 UPTEST_VERSION = v0.11.1
 -include build/makelib/k8s_tools.mk
