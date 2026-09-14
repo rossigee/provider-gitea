@@ -90,15 +90,11 @@ jobs:
       - name: Publish XPKG Package
         run: |
           set -e
-          VERSION="${{ steps.version.outputs.version }}"
-          REGISTRY="ghcr.io/${{ github.repository_owner }}"
+          export BRANCH_NAME="master"
 
-          echo "Publishing XPKG package to ${REGISTRY}/provider-gitea:${VERSION}"
-
-          # Use crossplane CLI to push XPKG package
-          crossplane xpkg push \
-            --package-files _output/xpkg/linux_amd64/provider-gitea-${VERSION}.xpkg \
-            ${REGISTRY}/provider-gitea:${VERSION}
+          # Use Makefile target to publish XPKG (handles Crossplane CLI availability)
+          make xpkg.release.publish.ghcr.io_rossigee.provider-gitea \
+            XPKG_REG_ORGS="ghcr.io/${{ github.repository_owner }}"
 
       - name: Verify Publication
         run: |
