@@ -79,7 +79,7 @@ jobs:
             --tag "${REGISTRY}/${IMAGE_NAME}:${VERSION}" \
             --tag "${REGISTRY}/${IMAGE_NAME}:latest" \
             --platform linux/amd64,linux/arm64 \
-            ./image/provider-gitea
+            ./cluster/images/provider-gitea
 
       - name: Publish XPKG Artifacts
         run: |
