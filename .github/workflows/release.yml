@@ -60,23 +60,31 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ github.token }}
 
-      - name: Build Artifacts
-        run: |
-          set -e  # Fail fast on any error
-
-          export VERSION="${{ steps.version.outputs.version }}"
-
-          echo "Repository: ${{ github.repository }}"
-          echo "Repository owner: ${{ github.repository_owner }}"
-          echo "Version: ${VERSION}"
-
-          export BRANCH_NAME="master"
-
-          make build.all build.artifacts
-
-      - name: Publish Artifacts
+      - name: Build and Push Docker Images
         run: |
           set -e
+
+          export VERSION="${{ steps.version.outputs.version }}"
+          export REGISTRY="ghcr.io/${{ github.repository_owner }}"
+          export IMAGE_NAME="provider-gitea"
+
+          echo "Building and pushing ${REGISTRY}/${IMAGE_NAME}:${VERSION}"
+
+          # First build the Go binaries needed for the Docker image
+          make build.all
+
+          # Build and push Docker image directly for multi-arch
+          docker buildx build \
+            --push \
+            --tag "${REGISTRY}/${IMAGE_NAME}:${VERSION}" \
+            --tag "${REGISTRY}/${IMAGE_NAME}:latest" \
+            --platform linux/amd64,linux/arm64 \
+            ./image/provider-gitea
+
+      - name: Publish XPKG Artifacts
+        run: |
+          set -e
+          export BRANCH_NAME="master"
           make publish.artifacts \
             REGISTRY_ORGS="ghcr.io/${{ github.repository_owner }}" \
             XPKG_REG_ORGS="ghcr.io/${{ github.repository_owner }}" \
