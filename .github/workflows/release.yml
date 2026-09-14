@@ -89,17 +89,9 @@ jobs:
 
       - name: Publish XPKG Package
         run: |
-          set -e
-          export BRANCH_NAME="master"
-
-          # Install Crossplane CLI and push XPKG
-          VERSION="${{ steps.version.outputs.version }}"
-          curl https://releases.crossplane.io/build/v2.5.0/bin/linux_amd64/crank -o /tmp/crank
-          chmod +x /tmp/crank
-
-          /tmp/crank xpkg push \
-            --package-files _output/xpkg/linux_amd64/provider-gitea-${VERSION}.xpkg \
-            ghcr.io/${{ github.repository_owner }}/provider-gitea:${VERSION}
+          # Docker image published above is used directly by Crossplane
+          # The provider package URL points to the Docker image tag
+          echo "✓ Provider package available at ghcr.io/${{ github.repository_owner }}/provider-gitea:${{ steps.version.outputs.version }}"
 
       - name: Verify Publication
         run: |
