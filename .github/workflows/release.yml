@@ -73,13 +73,15 @@ jobs:
           # First build the Go binaries needed for the Docker image
           make build.all
 
-          # Build and push Docker image directly for multi-arch
+          # Build and push Docker image directly for multi-arch from repo root
+          # The Dockerfile references _output/bin/ which exists at the repo root
           docker buildx build \
             --push \
             --tag "${REGISTRY}/${IMAGE_NAME}:${VERSION}" \
             --tag "${REGISTRY}/${IMAGE_NAME}:latest" \
             --platform linux/amd64,linux/arm64 \
-            ./cluster/images/provider-gitea
+            --file ./cluster/images/provider-gitea/Dockerfile \
+            .
 
       - name: Publish XPKG Artifacts
         run: |
