@@ -60,21 +60,25 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ github.token }}
 
-      - name: Build and Push Docker Images
+      - name: Build Artifacts
         run: |
           set -e
+          export VERSION="${{ steps.version.outputs.version }}"
+          export BRANCH_NAME="master"
 
+          # Build Go binaries, Docker image, and XPKG package
+          make build.all build.artifacts
+
+      - name: Push Docker Image
+        run: |
+          set -e
           export VERSION="${{ steps.version.outputs.version }}"
           export REGISTRY="ghcr.io/${{ github.repository_owner }}"
           export IMAGE_NAME="provider-gitea"
 
-          echo "Building and pushing ${REGISTRY}/${IMAGE_NAME}:${VERSION}"
+          echo "Pushing multi-arch Docker image to ${REGISTRY}/${IMAGE_NAME}:${VERSION}"
 
-          # First build the Go binaries needed for the Docker image
-          make build.all
-
-          # Build and push Docker image directly for multi-arch from repo root
-          # The Dockerfile references _output/bin/ which exists at the repo root
+          # Push Docker image directly for multi-arch from repo root
           docker buildx build \
             --push \
             --tag "${REGISTRY}/${IMAGE_NAME}:${VERSION}" \
@@ -83,14 +87,18 @@ jobs:
             --file ./cluster/images/provider-gitea/Dockerfile \
             .
 
-      - name: Publish XPKG Artifacts
+      - name: Publish XPKG Package
         run: |
           set -e
-          export BRANCH_NAME="master"
-          # Docker image already published via docker buildx --push above
-          # TODO: Separate XPKG-only publish target to avoid redundant Docker image push
-          # For now, skip to prevent "image does not exist locally" error
-          echo "Docker image already published via buildx"
+          VERSION="${{ steps.version.outputs.version }}"
+          REGISTRY="ghcr.io/${{ github.repository_owner }}"
+
+          echo "Publishing XPKG package to ${REGISTRY}/provider-gitea:${VERSION}"
+
+          # Use crossplane CLI to push XPKG package
+          crossplane xpkg push \
+            --package-files _output/xpkg/linux_amd64/provider-gitea-${VERSION}.xpkg \
+            ${REGISTRY}/provider-gitea:${VERSION}
 
       - name: Verify Publication
         run: |
