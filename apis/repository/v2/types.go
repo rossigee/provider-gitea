@@ -60,6 +60,64 @@ type RepositoryParameters struct {
 	// +kubebuilder:default="default"
 	TrustModel *string `json:"trustModel,omitempty"`
 
+	// Gitignores specifies the gitignore template to use
+	Gitignores *string `json:"gitignores,omitempty"`
+
+	// License specifies the license template to use
+	License *string `json:"license,omitempty"`
+
+	// Readme specifies the README template to use
+	Readme *string `json:"readme,omitempty"`
+
+	// IssueLabels specifies the issue label set to use
+	IssueLabels *string `json:"issueLabels,omitempty"`
+
+	// Website is the repository website URL
+	Website *string `json:"website,omitempty"`
+
+	// HasIssues enables/disables issue tracker
+	HasIssues *bool `json:"hasIssues,omitempty"`
+
+	// HasWiki enables/disables wiki
+	HasWiki *bool `json:"hasWiki,omitempty"`
+
+	// HasPullRequests enables/disables pull requests
+	HasPullRequests *bool `json:"hasPullRequests,omitempty"`
+
+	// HasProjects enables/disables projects
+	HasProjects *bool `json:"hasProjects,omitempty"`
+
+	// HasReleases enables/disables releases
+	HasReleases *bool `json:"hasReleases,omitempty"`
+
+	// HasPackages enables/disables packages
+	HasPackages *bool `json:"hasPackages,omitempty"`
+
+	// HasActions enables/disables actions
+	HasActions *bool `json:"hasActions,omitempty"`
+
+	// AllowMergeCommits enables merge commits
+	AllowMergeCommits *bool `json:"allowMergeCommits,omitempty"`
+
+	// AllowRebase enables rebase merges
+	AllowRebase *bool `json:"allowRebase,omitempty"`
+
+	// AllowRebaseExplicit enables explicit rebase merges
+	AllowRebaseExplicit *bool `json:"allowRebaseExplicit,omitempty"`
+
+	// AllowSquashMerge enables squash merges
+	AllowSquashMerge *bool `json:"allowSquashMerge,omitempty"`
+
+	// AllowRebaseUpdate enables rebase update
+	AllowRebaseUpdate *bool `json:"allowRebaseUpdate,omitempty"`
+
+	// DefaultDeleteBranchAfterMerge deletes branch after merge by default
+	DefaultDeleteBranchAfterMerge *bool `json:"defaultDeleteBranchAfterMerge,omitempty"`
+
+	// DefaultMergeStyle specifies the default merge style
+	// +kubebuilder:validation:Enum=merge;rebase;squash;rebase-merge
+	DefaultMergeStyle *string `json:"defaultMergeStyle,omitempty"`
+
 	// V2 Enhancement: Connection reference for multi-tenant support
 	// ConnectionRef specifies the Gitea connection to use
 	ConnectionRef *xpv1.Reference `json:"connectionRef,omitempty"`

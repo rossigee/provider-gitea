@@ -97,6 +97,9 @@ spec:
                     required:
                     - name
                     type: object
+                  repoAdminChangeTeamAccess:
+                    default: false
+                    type: boolean
                   username:
                     pattern: ^[a-zA-Z0-9]([a-zA-Z0-9._-]*[a-zA-Z0-9])?$
                     type: string
@@ -171,8 +174,6 @@ spec:
                   publicRepos:
                     format: int64
                     type: integer
-                  repoAdminChangeTeamAccess:
-                    type: boolean
                   teams:
                     format: int64
                     type: integer

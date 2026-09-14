@@ -195,6 +195,101 @@ func (in *RepositoryParameters) DeepCopyInto(out *RepositoryParameters) {
 		*out = new(string)
 		**out = **in
 	}
+	if in.Gitignores != nil {
+		in, out := &in.Gitignores, &out.Gitignores
+		*out = new(string)
+		**out = **in
+	}
+	if in.License != nil {
+		in, out := &in.License, &out.License
+		*out = new(string)
+		**out = **in
+	}
+	if in.Readme != nil {
+		in, out := &in.Readme, &out.Readme
+		*out = new(string)
+		**out = **in
+	}
+	if in.IssueLabels != nil {
+		in, out := &in.IssueLabels, &out.IssueLabels
+		*out = new(string)
+		**out = **in
+	}
+	if in.Website != nil {
+		in, out := &in.Website, &out.Website
+		*out = new(string)
+		**out = **in
+	}
+	if in.HasIssues != nil {
+		in, out := &in.HasIssues, &out.HasIssues
+		*out = new(bool)
+		**out = **in
+	}
+	if in.HasWiki != nil {
+		in, out := &in.HasWiki, &out.HasWiki
+		*out = new(bool)
+		**out = **in
+	}
+	if in.HasPullRequests != nil {
+		in, out := &in.HasPullRequests, &out.HasPullRequests
+		*out = new(bool)
+		**out = **in
+	}
+	if in.HasProjects != nil {
+		in, out := &in.HasProjects, &out.HasProjects
+		*out = new(bool)
+		**out = **in
+	}
+	if in.HasReleases != nil {
+		in, out := &in.HasReleases, &out.HasReleases
+		*out = new(bool)
+		**out = **in
+	}
+	if in.HasPackages != nil {
+		in, out := &in.HasPackages, &out.HasPackages
+		*out = new(bool)
+		**out = **in
+	}
+	if in.HasActions != nil {
+		in, out := &in.HasActions, &out.HasActions
+		*out = new(bool)
+		**out = **in
+	}
+	if in.AllowMergeCommits != nil {
+		in, out := &in.AllowMergeCommits, &out.AllowMergeCommits
+		*out = new(bool)
+		**out = **in
+	}
+	if in.AllowRebase != nil {
+		in, out := &in.AllowRebase, &out.AllowRebase
+		*out = new(bool)
+		**out = **in
+	}
+	if in.AllowRebaseExplicit != nil {
+		in, out := &in.AllowRebaseExplicit, &out.AllowRebaseExplicit
+		*out = new(bool)
+		**out = **in
+	}
+	if in.AllowSquashMerge != nil {
+		in, out := &in.AllowSquashMerge, &out.AllowSquashMerge
+		*out = new(bool)
+		**out = **in
+	}
+	if in.AllowRebaseUpdate != nil {
+		in, out := &in.AllowRebaseUpdate, &out.AllowRebaseUpdate
+		*out = new(bool)
+		**out = **in
+	}
+	if in.DefaultDeleteBranchAfterMerge != nil {
+		in, out := &in.DefaultDeleteBranchAfterMerge, &out.DefaultDeleteBranchAfterMerge
+		*out = new(bool)
+		**out = **in
+	}
+	if in.DefaultMergeStyle != nil {
+		in, out := &in.DefaultMergeStyle, &out.DefaultMergeStyle
+		*out = new(string)
+		**out = **in
+	}
 	if in.ConnectionRef != nil {
 		in, out := &in.ConnectionRef, &out.ConnectionRef
 		*out = new(corev2.Reference)

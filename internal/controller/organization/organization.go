@@ -111,21 +111,19 @@ func (e *externalClient) Observe(ctx context.Context, mg resource.Managed) (mana
 		return managed.ExternalObservation{}, errors.Wrap(err, errGetOrganization)
 	}
 
-	repoAdminChangeTeamAccess := org.RepoAdminChangeTeamAccess
 	publicRepos := org.NumRepos
 	privateRepos := org.NumPrivateRepos
 	members := org.NumMembers
 	teams := org.NumTeams
 
 	cr.Status.AtProvider = v2.OrganizationObservation{
-		ID:                        &org.ID,
-		AvatarURL:                 &org.AvatarURL,
-		Email:                     &org.Email,
-		RepoAdminChangeTeamAccess: &repoAdminChangeTeamAccess,
-		PublicRepos:               &publicRepos,
-		PrivateRepos:              &privateRepos,
-		Members:                   &members,
-		Teams:                     &teams,
+		ID:           &org.ID,
+		AvatarURL:    &org.AvatarURL,
+		Email:        &org.Email,
+		PublicRepos:  &publicRepos,
+		PrivateRepos: &privateRepos,
+		Members:      &members,
+		Teams:        &teams,
 	}
 
 	cr.SetConditions(xpv1.Available())
@@ -152,6 +150,9 @@ func isOrganizationUpToDate(cr *v2.Organization, org *clients.Organization) bool
 	if cr.Spec.ForProvider.Visibility != nil && *cr.Spec.ForProvider.Visibility != org.Visibility {
 		return false
 	}
+	if cr.Spec.ForProvider.RepoAdminChangeTeamAccess != nil && *cr.Spec.ForProvider.RepoAdminChangeTeamAccess != org.RepoAdminChangeTeamAccess {
+		return false
+	}
 	return true
 }
 
@@ -172,6 +173,7 @@ func (e *externalClient) Create(ctx context.Context, mg resource.Managed) (manag
 	}
 
 	var fullName, description, website, location, visibility string
+	var repoAdminChangeTeamAccess bool
 	if cr.Spec.ForProvider.Name != nil {
 		fullName = *cr.Spec.ForProvider.Name
 	}
@@ -187,14 +189,18 @@ func (e *externalClient) Create(ctx context.Context, mg resource.Managed) (manag
 	if cr.Spec.ForProvider.Visibility != nil {
 		visibility = *cr.Spec.ForProvider.Visibility
 	}
+	if cr.Spec.ForProvider.RepoAdminChangeTeamAccess != nil {
+		repoAdminChangeTeamAccess = *cr.Spec.ForProvider.RepoAdminChangeTeamAccess
+	}
 
 	req := &clients.CreateOrganizationRequest{
-		Username:    cr.Spec.ForProvider.Username,
-		FullName:    fullName,
-		Description: description,
-		Website:     website,
-		Location:    location,
-		Visibility:  visibility,
+		Username:                  cr.Spec.ForProvider.Username,
+		FullName:                  fullName,
+		Description:               description,
+		Website:                   website,
+		Location:                  location,
+		Visibility:                visibility,
+		RepoAdminChangeTeamAccess: repoAdminChangeTeamAccess,
 	}
 
 	org, err := e.client.CreateOrganization(ctx, req)
@@ -204,21 +210,19 @@ func (e *externalClient) Create(ctx context.Context, mg resource.Managed) (manag
 
 	meta.SetExternalName(cr, org.Username)
 
-	repoAdminChangeTeamAccess := org.RepoAdminChangeTeamAccess
 	publicRepos := org.NumRepos
 	privateRepos := org.NumPrivateRepos
 	members := org.NumMembers
 	teams := org.NumTeams
 
 	cr.Status.AtProvider = v2.OrganizationObservation{
-		ID:                        &org.ID,
-		AvatarURL:                 &org.AvatarURL,
-		Email:                     &org.Email,
-		RepoAdminChangeTeamAccess: &repoAdminChangeTeamAccess,
-		PublicRepos:               &publicRepos,
-		PrivateRepos:              &privateRepos,
-		Members:                   &members,
-		Teams:                     &teams,
+		ID:           &org.ID,
+		AvatarURL:    &org.AvatarURL,
+		Email:        &org.Email,
+		PublicRepos:  &publicRepos,
+		PrivateRepos: &privateRepos,
+		Members:      &members,
+		Teams:        &teams,
 	}
 
 	cr.SetConditions(xpv1.Available())
@@ -242,11 +246,12 @@ func (e *externalClient) Update(ctx context.Context, mg resource.Managed) (manag
 	}
 
 	req := &clients.UpdateOrganizationRequest{
-		FullName:    cr.Spec.ForProvider.Name,
-		Description: cr.Spec.ForProvider.Description,
-		Website:     cr.Spec.ForProvider.Website,
-		Location:    cr.Spec.ForProvider.Location,
-		Visibility:  cr.Spec.ForProvider.Visibility,
+		FullName:                  cr.Spec.ForProvider.Name,
+		Description:               cr.Spec.ForProvider.Description,
+		Website:                   cr.Spec.ForProvider.Website,
+		Location:                  cr.Spec.ForProvider.Location,
+		Visibility:                cr.Spec.ForProvider.Visibility,
+		RepoAdminChangeTeamAccess: cr.Spec.ForProvider.RepoAdminChangeTeamAccess,
 	}
 
 	org, err := e.client.UpdateOrganization(ctx, externalName, req)
@@ -254,21 +259,19 @@ func (e *externalClient) Update(ctx context.Context, mg resource.Managed) (manag
 		return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateOrganization)
 	}
 
-	repoAdminChangeTeamAccess := org.RepoAdminChangeTeamAccess
 	publicRepos := org.NumRepos
 	privateRepos := org.NumPrivateRepos
 	members := org.NumMembers
 	teams := org.NumTeams
 
 	cr.Status.AtProvider = v2.OrganizationObservation{
-		ID:                        &org.ID,
-		AvatarURL:                 &org.AvatarURL,
-		Email:                     &org.Email,
-		RepoAdminChangeTeamAccess: &repoAdminChangeTeamAccess,
-		PublicRepos:               &publicRepos,
-		PrivateRepos:              &privateRepos,
-		Members:                   &members,
-		Teams:                     &teams,
+		ID:           &org.ID,
+		AvatarURL:    &org.AvatarURL,
+		Email:        &org.Email,
+		PublicRepos:  &publicRepos,
+		PrivateRepos: &privateRepos,
+		Members:      &members,
+		Teams:        &teams,
 	}
 
 	return managed.ExternalUpdate{}, nil

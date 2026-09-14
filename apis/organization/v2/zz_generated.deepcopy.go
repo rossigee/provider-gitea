@@ -102,11 +102,6 @@ func (in *OrganizationObservation) DeepCopyInto(out *OrganizationObservation) {
 		*out = new(string)
 		**out = **in
 	}
-	if in.RepoAdminChangeTeamAccess != nil {
-		in, out := &in.RepoAdminChangeTeamAccess, &out.RepoAdminChangeTeamAccess
-		*out = new(bool)
-		**out = **in
-	}
 	if in.CreatedAt != nil {
 		in, out := &in.CreatedAt, &out.CreatedAt
 		*out = (*in).DeepCopy()
@@ -178,6 +173,11 @@ func (in *OrganizationParameters) DeepCopyInto(out *OrganizationParameters) {
 	if in.Visibility != nil {
 		in, out := &in.Visibility, &out.Visibility
 		*out = new(string)
+		**out = **in
+	}
+	if in.RepoAdminChangeTeamAccess != nil {
+		in, out := &in.RepoAdminChangeTeamAccess, &out.RepoAdminChangeTeamAccess
+		*out = new(bool)
 		**out = **in
 	}
 	if in.ConnectionRef != nil {

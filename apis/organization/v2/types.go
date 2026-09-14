@@ -48,6 +48,10 @@ type OrganizationParameters struct {
 	// +kubebuilder:default="public"
 	Visibility *string `json:"visibility,omitempty"`
 
+	// RepoAdminChangeTeamAccess allows repository admins to change team access
+	// +kubebuilder:default=false
+	RepoAdminChangeTeamAccess *bool `json:"repoAdminChangeTeamAccess,omitempty"`
+
 	// V2 Enhancement: Connection reference for multi-tenant support
 	// ConnectionRef specifies the Gitea connection to use
 	ConnectionRef *xpv1.Reference `json:"connectionRef,omitempty"`
@@ -67,9 +71,6 @@ type OrganizationObservation struct {
 
 	// Email is the organization email
 	Email *string `json:"email,omitempty"`
-
-	// RepoAdminChangeTeamAccess determines if repository admins can change team access
-	RepoAdminChangeTeamAccess *bool `json:"repoAdminChangeTeamAccess,omitempty"`
 
 	// CreatedAt is the creation timestamp
 	CreatedAt *metav1.Time `json:"createdAt,omitempty"`

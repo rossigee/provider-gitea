@@ -238,25 +238,39 @@ func NewClient(ctx context.Context, cfg *v1beta1.ProviderConfig, kube client.Cli
 
 // Repository represents a Gitea repository
 type Repository struct {
-	ID            int64  `json:"id"`
-	Name          string `json:"name"`
-	FullName      string `json:"full_name"`
-	Description   string `json:"description"`
-	Private       bool   `json:"private"`
-	Fork          bool   `json:"fork"`
-	Template      bool   `json:"template"`
-	Empty         bool   `json:"empty"`
-	Archived      bool   `json:"archived"`
-	Size          int    `json:"size"`
-	HTMLURL       string `json:"html_url"`
-	SSHURL        string `json:"ssh_url"`
-	CloneURL      string `json:"clone_url"`
-	Website       string `json:"website"`
-	Language      string `json:"language"`
-	DefaultBranch string `json:"default_branch"`
-	CreatedAt     string `json:"created_at"`
-	UpdatedAt     string `json:"updated_at"`
-	Owner         *User  `json:"owner"`
+	ID                            int64  `json:"id"`
+	Name                          string `json:"name"`
+	FullName                      string `json:"full_name"`
+	Description                   string `json:"description"`
+	Private                       bool   `json:"private"`
+	Fork                          bool   `json:"fork"`
+	Template                      bool   `json:"template"`
+	Empty                         bool   `json:"empty"`
+	Archived                      bool   `json:"archived"`
+	Size                          int    `json:"size"`
+	HTMLURL                       string `json:"html_url"`
+	SSHURL                        string `json:"ssh_url"`
+	CloneURL                      string `json:"clone_url"`
+	Website                       string `json:"website"`
+	Language                      string `json:"language"`
+	DefaultBranch                 string `json:"default_branch"`
+	CreatedAt                     string `json:"created_at"`
+	UpdatedAt                     string `json:"updated_at"`
+	Owner                         *User  `json:"owner"`
+	HasIssues                     bool   `json:"has_issues"`
+	HasWiki                       bool   `json:"has_wiki"`
+	HasPullRequests               bool   `json:"has_pull_requests"`
+	HasProjects                   bool   `json:"has_projects"`
+	HasReleases                   bool   `json:"has_releases"`
+	HasPackages                   bool   `json:"has_packages"`
+	HasActions                    bool   `json:"has_actions"`
+	AllowMergeCommits             bool   `json:"allow_merge_commits"`
+	AllowRebase                   bool   `json:"allow_rebase"`
+	AllowRebaseExplicit           bool   `json:"allow_rebase_explicit"`
+	AllowSquashMerge              bool   `json:"allow_squash_merge"`
+	AllowRebaseUpdate             bool   `json:"allow_rebase_update"`
+	DefaultDeleteBranchAfterMerge bool   `json:"default_delete_branch_after_merge"`
+	DefaultMergeStyle             string `json:"default_merge_style"`
 }
 
 // CreateRepositoryRequest represents the request body for creating a repository
@@ -270,6 +284,7 @@ type CreateRepositoryRequest struct {
 	License       string `json:"license,omitempty"`
 	Readme        string `json:"readme,omitempty"`
 	IssueLabels   string `json:"issue_labels,omitempty"`
+	Website       string `json:"website,omitempty"`
 	TrustModel    string `json:"trust_model,omitempty"`
 	DefaultBranch string `json:"default_branch,omitempty"`
 }

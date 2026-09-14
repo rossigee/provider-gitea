@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.14.0] - 2026-09-14
+
+### ✨ **New Features**
+- **Repository Field Parity**: Restore v1alpha1 API coverage in v2 with 19 new fields (hasIssues, hasWiki, hasPullRequests, hasProjects, hasReleases, hasPackages, hasActions, allowMergeCommits, allowRebase, allowRebaseExplicit, allowSquashMerge, allowRebaseUpdate, defaultDeleteBranchAfterMerge, defaultMergeStyle, gitignores, license, readme, issueLabels, website)
+- **Organization Parameter**: Add repoAdminChangeTeamAccess to OrganizationParameters for user-controlled management
+
+### 🔧 **Changes**
+- **Repository Controller**: Forward all 19 new fields in Create() and Update() methods
+- **Repository Client Struct**: Add missing response fields to Repository struct for proper drift detection
+- **Drift Detection**: Extended isRepositoryUpToDate() and isOrganizationUpToDate() to check all newly-supported fields
+- **Repository Requests**: Add Website field to CreateRepositoryRequest for repository creation
+
 ## [0.10.1] - 2026-08-07
 
 ### 🐛 **Bug Fixes**
