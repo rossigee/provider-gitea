@@ -146,6 +146,7 @@ jobs:
         run: |
           set -e
           echo "Building version ${VERSION}"
+          make build.all build.artifacts
           make publish.artifacts \
             REGISTRY_ORGS="ghcr.io/${{ github.repository_owner }}" \
             XPKG_REG_ORGS="ghcr.io/${{ github.repository_owner }}" \
