@@ -60,6 +60,9 @@ type RepositoryParameters struct {
 	// +kubebuilder:default="default"
 	TrustModel *string `json:"trustModel,omitempty"`
 
+	// Topics is a list of searchable tags/keywords associated with the repository
+	Topics []string `json:"topics,omitempty"`
+
 	// V2 Enhancement: Connection reference for multi-tenant support
 	// ConnectionRef specifies the Gitea connection to use
 	ConnectionRef *xpv1.Reference `json:"connectionRef,omitempty"`

@@ -51,6 +51,8 @@ type Client interface {
 	CreateOrganizationRepository(ctx context.Context, org string, req *CreateRepositoryRequest) (*Repository, error)
 	UpdateRepository(ctx context.Context, owner, name string, req *UpdateRepositoryRequest) (*Repository, error)
 	DeleteRepository(ctx context.Context, owner, name string) error
+	GetRepositoryTopics(ctx context.Context, owner, name string) (*RepositoryTopics, error)
+	UpdateRepositoryTopics(ctx context.Context, owner, name string, req *UpdateRepositoryTopicsRequest) error
 
 	// Organization operations
 	GetOrganization(ctx context.Context, name string) (*Organization, error)
@@ -78,6 +80,11 @@ type Client interface {
 	GetDeployKey(ctx context.Context, owner, repo string, id int64) (*DeployKey, error)
 	CreateDeployKey(ctx context.Context, owner, repo string, req *CreateDeployKeyRequest) (*DeployKey, error)
 	DeleteDeployKey(ctx context.Context, owner, repo string, id int64) error
+
+	// Deploy Token operations
+	CreateDeployToken(ctx context.Context, owner, repo string, req *CreateDeployTokenRequest) (*DeployToken, error)
+	GetDeployToken(ctx context.Context, owner, repo string, id int64) (*DeployToken, error)
+	DeleteDeployToken(ctx context.Context, owner, repo string, id int64) error
 
 	// Organization Secret operations
 	GetOrganizationSecret(ctx context.Context, org, secretName string) (*OrganizationSecret, error)
@@ -297,6 +304,16 @@ type UpdateRepositoryRequest struct {
 	DefaultMergeStyle             *string `json:"default_merge_style,omitempty"`
 	DefaultBranch                 *string `json:"default_branch,omitempty"`
 	Archived                      *bool   `json:"archived,omitempty"`
+}
+
+// RepositoryTopics represents the response body for repository topics
+type RepositoryTopics struct {
+	Topics []string `json:"topics"`
+}
+
+// UpdateRepositoryTopicsRequest represents the request body for replacing repository topics
+type UpdateRepositoryTopicsRequest struct {
+	Topics []string `json:"topics"`
 }
 
 // Organization represents a Gitea organization

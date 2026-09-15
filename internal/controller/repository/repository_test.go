@@ -382,7 +382,7 @@ func TestIsRepositoryUpToDate(t *testing.T) {
 				},
 			},
 		}
-		assert.True(t, isRepositoryUpToDate(cr, baseRepo))
+		assert.True(t, isRepositoryUpToDate(cr, baseRepo, nil))
 	})
 
 	t.Run("description mismatch is not up to date", func(t *testing.T) {
@@ -393,7 +393,7 @@ func TestIsRepositoryUpToDate(t *testing.T) {
 				},
 			},
 		}
-		assert.False(t, isRepositoryUpToDate(cr, baseRepo))
+		assert.False(t, isRepositoryUpToDate(cr, baseRepo, nil))
 	})
 
 	t.Run("privacy mismatch is not up to date", func(t *testing.T) {
@@ -404,7 +404,7 @@ func TestIsRepositoryUpToDate(t *testing.T) {
 				},
 			},
 		}
-		assert.False(t, isRepositoryUpToDate(cr, baseRepo))
+		assert.False(t, isRepositoryUpToDate(cr, baseRepo, nil))
 	})
 
 	t.Run("archived mismatch is not up to date", func(t *testing.T) {
@@ -415,7 +415,7 @@ func TestIsRepositoryUpToDate(t *testing.T) {
 				},
 			},
 		}
-		assert.False(t, isRepositoryUpToDate(cr, baseRepo))
+		assert.False(t, isRepositoryUpToDate(cr, baseRepo, nil))
 	})
 
 	t.Run("template mismatch is not up to date", func(t *testing.T) {
@@ -426,7 +426,7 @@ func TestIsRepositoryUpToDate(t *testing.T) {
 				},
 			},
 		}
-		assert.False(t, isRepositoryUpToDate(cr, baseRepo))
+		assert.False(t, isRepositoryUpToDate(cr, baseRepo, nil))
 	})
 
 	t.Run("default branch mismatch is not up to date", func(t *testing.T) {
@@ -437,7 +437,7 @@ func TestIsRepositoryUpToDate(t *testing.T) {
 				},
 			},
 		}
-		assert.False(t, isRepositoryUpToDate(cr, baseRepo))
+		assert.False(t, isRepositoryUpToDate(cr, baseRepo, nil))
 	})
 
 	t.Run("nil fields are ignored", func(t *testing.T) {
@@ -446,7 +446,7 @@ func TestIsRepositoryUpToDate(t *testing.T) {
 				ForProvider: v2.RepositoryParameters{},
 			},
 		}
-		assert.True(t, isRepositoryUpToDate(cr, baseRepo))
+		assert.True(t, isRepositoryUpToDate(cr, baseRepo, nil))
 	})
 }
 

@@ -21,11 +21,12 @@ import (
 	"fmt"
 )
 
-// DeployKey represents a Gitea deploy key
+// DeployKey represents a Gitea deploy key (or deploy token)
 type DeployKey struct {
 	ID          int64  `json:"id"`
 	Title       string `json:"title"`
 	Key         string `json:"key"`
+	KeyType     string `json:"key_type,omitempty"` // "ssh" or "token"
 	URL         string `json:"url"`
 	Fingerprint string `json:"fingerprint"`
 	CreatedAt   string `json:"created_at"`

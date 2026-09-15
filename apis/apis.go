@@ -25,6 +25,7 @@ import (
 	adminuserv2 "github.com/rossigee/provider-gitea/apis/adminuser/v2"
 	branchprotectionv2 "github.com/rossigee/provider-gitea/apis/branchprotection/v2"
 	deploykeyv2 "github.com/rossigee/provider-gitea/apis/deploykey/v2"
+	deploytokenv2 "github.com/rossigee/provider-gitea/apis/deploytoken/v2"
 	githookv2 "github.com/rossigee/provider-gitea/apis/githook/v2"
 	issuev2 "github.com/rossigee/provider-gitea/apis/issue/v2"
 	labelv2 "github.com/rossigee/provider-gitea/apis/label/v2"
@@ -61,6 +62,7 @@ func init() {
 		userv2.SchemeBuilder.AddToScheme,
 		webhookv2.SchemeBuilder.AddToScheme,
 		deploykeyv2.SchemeBuilder.AddToScheme,
+		deploytokenv2.SchemeBuilder.AddToScheme,
 		teamv2.SchemeBuilder.AddToScheme,
 		labelv2.SchemeBuilder.AddToScheme,
 		repositorycollaboratorv2.SchemeBuilder.AddToScheme,
