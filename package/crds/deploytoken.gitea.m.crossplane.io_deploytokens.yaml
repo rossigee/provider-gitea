@@ -4,20 +4,20 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.22.0
-  name: repositories.repository.gitea.m.crossplane.io
+  name: deploytokens.deploytoken.gitea.m.crossplane.io
 spec:
-  group: repository.gitea.m.crossplane.io
+  group: deploytoken.gitea.m.crossplane.io
   names:
     categories:
     - crossplane
     - managed
     - gitea
-    kind: Repository
-    listKind: RepositoryList
-    plural: repositories
+    kind: DeployToken
+    listKind: DeployTokenList
+    plural: deploytokens
     shortNames:
-    - grepo
-    singular: repository
+    - dtok
+    singular: deploytoken
   scope: Namespaced
   versions:
   - additionalPrinterColumns:
@@ -47,22 +47,6 @@ spec:
             properties:
               forProvider:
                 properties:
-                  allowMergeCommits:
-                    type: boolean
-                  allowRebase:
-                    type: boolean
-                  allowRebaseExplicit:
-                    type: boolean
-                  allowRebaseUpdate:
-                    type: boolean
-                  allowSquashMerge:
-                    type: boolean
-                  archived:
-                    default: false
-                    type: boolean
-                  autoInit:
-                    default: false
-                    type: boolean
                   connectionRef:
                     properties:
                       name:
@@ -84,48 +68,8 @@ spec:
                     required:
                     - name
                     type: object
-                  defaultBranch:
-                    default: master
-                    type: string
-                  defaultDeleteBranchAfterMerge:
-                    type: boolean
-                  defaultMergeStyle:
-                    enum:
-                    - merge
-                    - rebase
-                    - squash
-                    - rebase-merge
-                    type: string
-                  description:
-                    type: string
-                  gitignores:
-                    type: string
-                  hasActions:
-                    type: boolean
-                  hasIssues:
-                    type: boolean
-                  hasPackages:
-                    type: boolean
-                  hasProjects:
-                    type: boolean
-                  hasPullRequests:
-                    type: boolean
-                  hasReleases:
-                    type: boolean
-                  hasWiki:
-                    type: boolean
-                  issueLabels:
-                    type: string
-                  license:
-                    type: string
-                  name:
-                    pattern: ^[a-zA-Z0-9]([a-zA-Z0-9._-]*[a-zA-Z0-9])?$
-                    type: string
                   owner:
                     type: string
-                  private:
-                    default: false
-                    type: boolean
                   providerConfigRef:
                     properties:
                       name:
@@ -147,27 +91,18 @@ spec:
                     required:
                     - name
                     type: object
-                  readme:
-                    type: string
-                  template:
-                    default: false
+                  readOnly:
+                    default: true
                     type: boolean
-                  topics:
-                    items:
-                      type: string
-                    type: array
-                  trustModel:
-                    default: default
-                    enum:
-                    - default
-                    - collaborator
-                    - committer
-                    - collaboratorcommitter
+                  repository:
                     type: string
-                  website:
+                  title:
+                    maxLength: 50
                     type: string
                 required:
-                - name
+                - owner
+                - repository
+                - title
                 type: object
               managementPolicies:
                 default:
@@ -209,33 +144,14 @@ spec:
             properties:
               atProvider:
                 properties:
-                  cloneUrl:
-                    type: string
                   createdAt:
-                    format: date-time
                     type: string
-                  forks:
-                    format: int64
-                    type: integer
-                  fullName:
-                    type: string
-                  htmlUrl:
+                  fingerprint:
                     type: string
                   id:
                     format: int64
                     type: integer
-                  language:
-                    type: string
-                  size:
-                    format: int64
-                    type: integer
-                  sshUrl:
-                    type: string
-                  stars:
-                    format: int64
-                    type: integer
-                  updatedAt:
-                    format: date-time
+                  url:
                     type: string
                 type: object
               conditions:

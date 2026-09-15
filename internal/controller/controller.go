@@ -23,6 +23,7 @@ import (
 	"github.com/rossigee/provider-gitea/internal/controller/adminuser"
 	"github.com/rossigee/provider-gitea/internal/controller/branchprotection"
 	"github.com/rossigee/provider-gitea/internal/controller/deploykey"
+	"github.com/rossigee/provider-gitea/internal/controller/deploytoken"
 	"github.com/rossigee/provider-gitea/internal/controller/githook"
 	"github.com/rossigee/provider-gitea/internal/controller/issue"
 	"github.com/rossigee/provider-gitea/internal/controller/label"
@@ -62,6 +63,7 @@ func Setup(mgr ctrl.Manager, o controller.Options) error {
 		webhook.Setup,
 		branchprotection.Setup,
 		deploykey.Setup,
+		deploytoken.Setup,
 		githook.Setup,
 		issue.Setup,
 		label.Setup,

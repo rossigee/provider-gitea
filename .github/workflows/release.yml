@@ -114,6 +114,12 @@ jobs:
           name: xpkg
           path: _output/xpkg/linux_amd64/provider-gitea-${{ steps.version.outputs.version }}.xpkg
 
+      - name: Upload Docker Image Artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: docker-image
+          path: /tmp/docker-images/provider-gitea-${{ steps.version.outputs.version }}.tar.gz
+
   publish:
     runs-on: ubuntu-24.04
     needs: release

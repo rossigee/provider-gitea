@@ -22,6 +22,7 @@ Manages Git repositories with comprehensive configuration options.
 | `forProvider.allowMergeCommits` | bool | no | Allow merge commits |
 | `forProvider.allowRebase` | bool | no | Allow rebase merging |
 | `forProvider.allowSquashMerge` | bool | no | Allow squash merging |
+| `forProvider.topics` | []string | no | List of topic tags for the repository |
 
 ## Example
 
@@ -40,6 +41,9 @@ spec:
     hasIssues: true
     hasWiki: true
     hasPullRequests: true
+    topics:
+      - example
+      - documentation
   providerConfigRef:
     name: default
 ```

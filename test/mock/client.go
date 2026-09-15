@@ -211,6 +211,28 @@ func (m *Client) DeleteDeployKey(ctx context.Context, owner, repo string, id int
 	return args.Error(0)
 }
 
+// Deploy Token operations
+func (m *Client) CreateDeployToken(ctx context.Context, owner, repo string, req *clients.CreateDeployTokenRequest) (*clients.DeployToken, error) {
+	args := m.Called(ctx, owner, repo, req)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*clients.DeployToken), args.Error(1)
+}
+
+func (m *Client) GetDeployToken(ctx context.Context, owner, repo string, id int64) (*clients.DeployToken, error) {
+	args := m.Called(ctx, owner, repo, id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*clients.DeployToken), args.Error(1)
+}
+
+func (m *Client) DeleteDeployToken(ctx context.Context, owner, repo string, id int64) error {
+	args := m.Called(ctx, owner, repo, id)
+	return args.Error(0)
+}
+
 // Organization Secret operations
 func (m *Client) GetOrganizationSecret(ctx context.Context, org, secretName string) (*clients.OrganizationSecret, error) {
 	args := m.Called(ctx, org, secretName)
@@ -780,5 +802,19 @@ func (m *Client) UpdateAdminUser(ctx context.Context, username string, req *clie
 
 func (m *Client) DeleteAdminUser(ctx context.Context, username string) error {
 	args := m.Called(ctx, username)
+	return args.Error(0)
+}
+
+// Repository Topics operations
+func (m *Client) GetRepositoryTopics(ctx context.Context, owner, name string) (*clients.RepositoryTopics, error) {
+	args := m.Called(ctx, owner, name)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*clients.RepositoryTopics), args.Error(1)
+}
+
+func (m *Client) UpdateRepositoryTopics(ctx context.Context, owner, name string, req *clients.UpdateRepositoryTopicsRequest) error {
+	args := m.Called(ctx, owner, name, req)
 	return args.Error(0)
 }

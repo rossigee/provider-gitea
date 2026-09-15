@@ -1,0 +1,17 @@
+apiVersion: deploytoken.gitea.m.crossplane.io/v2
+kind: DeployToken
+metadata:
+  name: example-deploy-token
+  annotations:
+    crossplane.io/external-name: "ci-deploy-token"
+spec:
+  forProvider:
+    repository: my-example-repo
+    owner: my-example-org
+    title: "CI/CD Deploy Token"
+    readOnly: true
+  writeConnectionSecretToRef:
+    name: example-deploy-token-secret
+    namespace: default
+  providerConfigRef:
+    name: default

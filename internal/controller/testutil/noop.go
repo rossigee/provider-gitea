@@ -104,6 +104,17 @@ func (NoopClient) DeleteDeployKey(ctx context.Context, owner, repo string, id in
 	return nil
 }
 
+// Deploy tokens
+func (NoopClient) CreateDeployToken(ctx context.Context, owner, repo string, req *clients.CreateDeployTokenRequest) (*clients.DeployToken, error) {
+	return nil, nil
+}
+func (NoopClient) GetDeployToken(ctx context.Context, owner, repo string, id int64) (*clients.DeployToken, error) {
+	return nil, nil
+}
+func (NoopClient) DeleteDeployToken(ctx context.Context, owner, repo string, id int64) error {
+	return nil
+}
+
 // Org secrets
 func (NoopClient) GetOrganizationSecret(ctx context.Context, org, secretName string) (*clients.OrganizationSecret, error) {
 	return nil, nil
@@ -348,6 +359,14 @@ func (NoopClient) UpdateRunner(ctx context.Context, scope, scopeValue string, ru
 	return nil, nil
 }
 func (NoopClient) DeleteRunner(ctx context.Context, scope, scopeValue string, runnerID int64) error {
+	return nil
+}
+
+// Repository Topics
+func (NoopClient) GetRepositoryTopics(ctx context.Context, owner, name string) (*clients.RepositoryTopics, error) {
+	return nil, nil
+}
+func (NoopClient) UpdateRepositoryTopics(ctx context.Context, owner, name string, req *clients.UpdateRepositoryTopicsRequest) error {
 	return nil
 }
 
