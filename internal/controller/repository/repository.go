@@ -181,6 +181,9 @@ func isRepositoryUpToDate(cr *v2.Repository, repo *clients.Repository, topics []
 	if cr.Spec.ForProvider.DefaultBranch != nil && repo.DefaultBranch != "" && *cr.Spec.ForProvider.DefaultBranch != repo.DefaultBranch {
 		return false
 	}
+	if cr.Spec.ForProvider.Website != nil && *cr.Spec.ForProvider.Website != repo.Website {
+		return false
+	}
 	if cr.Spec.ForProvider.Topics != nil {
 		want := append([]string(nil), cr.Spec.ForProvider.Topics...)
 		got := append([]string(nil), topics...)
@@ -327,6 +330,12 @@ func (e *externalClient) Update(ctx context.Context, mg resource.Managed) (manag
 	}
 	if cr.Spec.ForProvider.Template != nil {
 		updateReq.Template = cr.Spec.ForProvider.Template
+	}
+	if cr.Spec.ForProvider.Archived != nil {
+		updateReq.Archived = cr.Spec.ForProvider.Archived
+	}
+	if cr.Spec.ForProvider.Website != nil {
+		updateReq.Website = cr.Spec.ForProvider.Website
 	}
 	if cr.Spec.ForProvider.DefaultBranch != nil {
 		updateReq.DefaultBranch = cr.Spec.ForProvider.DefaultBranch

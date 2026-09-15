@@ -60,6 +60,9 @@ type RepositoryParameters struct {
 	// +kubebuilder:default="default"
 	TrustModel *string `json:"trustModel,omitempty"`
 
+	// Website is the repository website URL
+	Website *string `json:"website,omitempty"`
+
 	// Topics is a list of searchable tags/keywords associated with the repository
 	Topics []string `json:"topics,omitempty"`
 
