@@ -74,11 +74,33 @@ jobs:
 
           make build.all build.artifacts
 
+      - name: Tag and Save Docker Image
+        run: |
+          mkdir -p /tmp/docker-images
+          # Find the built image with BUILD_REGISTRY tag and re-tag it
+          BUILD_IMAGE=$(docker images --format "{{.Repository}}:{{.Tag}}" | grep "provider-gitea" | head -1)
+          if [ -z "$BUILD_IMAGE" ]; then
+            echo "Error: Could not find built provider-gitea image"
+            docker images | grep provider-gitea
+            exit 1
+          fi
+          echo "Found image: $BUILD_IMAGE"
+          # Re-tag with the final registry name
+          docker tag "$BUILD_IMAGE" "ghcr.io/rossigee/provider-gitea:${{ steps.version.outputs.version }}"
+          # Save the re-tagged image
+          docker save "ghcr.io/rossigee/provider-gitea:${{ steps.version.outputs.version }}" | gzip > /tmp/docker-images/provider-gitea-${{ steps.version.outputs.version }}.tar.gz
+
       - name: Upload XPKG Artifact
         uses: actions/upload-artifact@v7
         with:
           name: xpkg
           path: _output/xpkg/linux_amd64/provider-gitea-${{ steps.version.outputs.version }}.xpkg
+
+      - name: Upload Docker Image Artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: docker-image
+          path: /tmp/docker-images/provider-gitea-${{ steps.version.outputs.version }}.tar.gz
 
   publish:
     runs-on: ubuntu-24.04
@@ -114,6 +136,16 @@ jobs:
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
           echo "VERSION=${VERSION}" >> "$GITHUB_ENV"
           echo "Detected version: $VERSION"
+
+      - name: Download Docker Image Artifact
+        uses: actions/download-artifact@v7
+        with:
+          name: docker-image
+          path: /tmp/docker-images
+
+      - name: Load Docker Image
+        run: |
+          gunzip -c /tmp/docker-images/provider-gitea-${{ steps.version.outputs.version }}.tar.gz | docker load
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v4
