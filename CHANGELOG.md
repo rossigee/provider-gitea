@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.15.0] - 2026-09-15
+
+### ✨ **New Features**
+- **DeployToken Controller**: New `DeployToken` managed resource (deploytoken.gitea.m.crossplane.io/v2) for Gitea's repo-scoped HTTPS deploy tokens (Gitea 1.28+), writing the one-time plaintext token to a connection secret
+- **DeployKey**: Added `key_type` field to client DTO for forward-compatibility with Gitea 1.28's unified deploy-key/token API responses (client-layer only, no CRD surface change)
+- **Repository Topics**: Add support for managing repository topics via `spec.forProvider.topics`, with drift detection and full-replace sync to Gitea's topics endpoint
+
+### 🏗️ **Architecture**
+- **V2 API Expansion**: 16+ resource controllers migrated to v2 API, including comprehensive controller infrastructure for Repository, Organization, User, and team management resources
+- **Enhanced Client Layer**: Complete Gitea API v1 coverage with 60+ methods, robust error handling, and comprehensive validation
+
 ## [0.10.1] - 2026-08-07
 
 ### 🐛 **Bug Fixes**
