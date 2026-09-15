@@ -66,6 +66,51 @@ type RepositoryParameters struct {
 	// Topics is a list of searchable tags/keywords associated with the repository
 	Topics []string `json:"topics,omitempty"`
 
+	// Feature Toggles
+	// HasIssues enables the issue tracker
+	HasIssues *bool `json:"hasIssues,omitempty"`
+
+	// HasWiki enables the wiki
+	HasWiki *bool `json:"hasWiki,omitempty"`
+
+	// HasPullRequests enables pull requests
+	HasPullRequests *bool `json:"hasPullRequests,omitempty"`
+
+	// HasProjects enables projects
+	HasProjects *bool `json:"hasProjects,omitempty"`
+
+	// HasReleases enables releases
+	HasReleases *bool `json:"hasReleases,omitempty"`
+
+	// HasPackages enables packages
+	HasPackages *bool `json:"hasPackages,omitempty"`
+
+	// HasActions enables actions/CI
+	HasActions *bool `json:"hasActions,omitempty"`
+
+	// Merge Strategy Configuration
+	// AllowMergeCommits allows merge commits
+	AllowMergeCommits *bool `json:"allowMergeCommits,omitempty"`
+
+	// AllowRebase allows rebase merging
+	AllowRebase *bool `json:"allowRebase,omitempty"`
+
+	// AllowRebaseExplicit allows rebase with explicit merge commit
+	AllowRebaseExplicit *bool `json:"allowRebaseExplicit,omitempty"`
+
+	// AllowSquashMerge allows squash merging
+	AllowSquashMerge *bool `json:"allowSquashMerge,omitempty"`
+
+	// AllowRebaseUpdate allows rebase and update
+	AllowRebaseUpdate *bool `json:"allowRebaseUpdate,omitempty"`
+
+	// DefaultDeleteBranchAfterMerge enables auto-delete of branch after merge
+	DefaultDeleteBranchAfterMerge *bool `json:"defaultDeleteBranchAfterMerge,omitempty"`
+
+	// DefaultMergeStyle sets the default merge strategy
+	// +kubebuilder:validation:Enum=merge;rebase;rebase-merge;squash
+	DefaultMergeStyle *string `json:"defaultMergeStyle,omitempty"`
+
 	// V2 Enhancement: Connection reference for multi-tenant support
 	// ConnectionRef specifies the Gitea connection to use
 	ConnectionRef *xpv1.Reference `json:"connectionRef,omitempty"`

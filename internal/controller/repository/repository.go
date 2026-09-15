@@ -184,6 +184,53 @@ func isRepositoryUpToDate(cr *v2.Repository, repo *clients.Repository, topics []
 	if cr.Spec.ForProvider.Website != nil && *cr.Spec.ForProvider.Website != repo.Website {
 		return false
 	}
+
+	// Feature toggles
+	if cr.Spec.ForProvider.HasIssues != nil && *cr.Spec.ForProvider.HasIssues != repo.HasIssues {
+		return false
+	}
+	if cr.Spec.ForProvider.HasWiki != nil && *cr.Spec.ForProvider.HasWiki != repo.HasWiki {
+		return false
+	}
+	if cr.Spec.ForProvider.HasPullRequests != nil && *cr.Spec.ForProvider.HasPullRequests != repo.HasPullRequests {
+		return false
+	}
+	if cr.Spec.ForProvider.HasProjects != nil && *cr.Spec.ForProvider.HasProjects != repo.HasProjects {
+		return false
+	}
+	if cr.Spec.ForProvider.HasReleases != nil && *cr.Spec.ForProvider.HasReleases != repo.HasReleases {
+		return false
+	}
+	if cr.Spec.ForProvider.HasPackages != nil && *cr.Spec.ForProvider.HasPackages != repo.HasPackages {
+		return false
+	}
+	if cr.Spec.ForProvider.HasActions != nil && *cr.Spec.ForProvider.HasActions != repo.HasActions {
+		return false
+	}
+
+	// Merge strategy configuration
+	if cr.Spec.ForProvider.AllowMergeCommits != nil && *cr.Spec.ForProvider.AllowMergeCommits != repo.AllowMergeCommits {
+		return false
+	}
+	if cr.Spec.ForProvider.AllowRebase != nil && *cr.Spec.ForProvider.AllowRebase != repo.AllowRebase {
+		return false
+	}
+	if cr.Spec.ForProvider.AllowRebaseExplicit != nil && *cr.Spec.ForProvider.AllowRebaseExplicit != repo.AllowRebaseExplicit {
+		return false
+	}
+	if cr.Spec.ForProvider.AllowSquashMerge != nil && *cr.Spec.ForProvider.AllowSquashMerge != repo.AllowSquashMerge {
+		return false
+	}
+	if cr.Spec.ForProvider.AllowRebaseUpdate != nil && *cr.Spec.ForProvider.AllowRebaseUpdate != repo.AllowRebaseUpdate {
+		return false
+	}
+	if cr.Spec.ForProvider.DefaultDeleteBranchAfterMerge != nil && *cr.Spec.ForProvider.DefaultDeleteBranchAfterMerge != repo.DefaultDeleteBranchAfterMerge {
+		return false
+	}
+	if cr.Spec.ForProvider.DefaultMergeStyle != nil && *cr.Spec.ForProvider.DefaultMergeStyle != repo.DefaultMergeStyle {
+		return false
+	}
+
 	if cr.Spec.ForProvider.Topics != nil {
 		want := append([]string(nil), cr.Spec.ForProvider.Topics...)
 		got := append([]string(nil), topics...)
@@ -339,6 +386,52 @@ func (e *externalClient) Update(ctx context.Context, mg resource.Managed) (manag
 	}
 	if cr.Spec.ForProvider.DefaultBranch != nil {
 		updateReq.DefaultBranch = cr.Spec.ForProvider.DefaultBranch
+	}
+
+	// Feature toggles
+	if cr.Spec.ForProvider.HasIssues != nil {
+		updateReq.HasIssues = cr.Spec.ForProvider.HasIssues
+	}
+	if cr.Spec.ForProvider.HasWiki != nil {
+		updateReq.HasWiki = cr.Spec.ForProvider.HasWiki
+	}
+	if cr.Spec.ForProvider.HasPullRequests != nil {
+		updateReq.HasPullRequests = cr.Spec.ForProvider.HasPullRequests
+	}
+	if cr.Spec.ForProvider.HasProjects != nil {
+		updateReq.HasProjects = cr.Spec.ForProvider.HasProjects
+	}
+	if cr.Spec.ForProvider.HasReleases != nil {
+		updateReq.HasReleases = cr.Spec.ForProvider.HasReleases
+	}
+	if cr.Spec.ForProvider.HasPackages != nil {
+		updateReq.HasPackages = cr.Spec.ForProvider.HasPackages
+	}
+	if cr.Spec.ForProvider.HasActions != nil {
+		updateReq.HasActions = cr.Spec.ForProvider.HasActions
+	}
+
+	// Merge strategy configuration
+	if cr.Spec.ForProvider.AllowMergeCommits != nil {
+		updateReq.AllowMergeCommits = cr.Spec.ForProvider.AllowMergeCommits
+	}
+	if cr.Spec.ForProvider.AllowRebase != nil {
+		updateReq.AllowRebase = cr.Spec.ForProvider.AllowRebase
+	}
+	if cr.Spec.ForProvider.AllowRebaseExplicit != nil {
+		updateReq.AllowRebaseExplicit = cr.Spec.ForProvider.AllowRebaseExplicit
+	}
+	if cr.Spec.ForProvider.AllowSquashMerge != nil {
+		updateReq.AllowSquashMerge = cr.Spec.ForProvider.AllowSquashMerge
+	}
+	if cr.Spec.ForProvider.AllowRebaseUpdate != nil {
+		updateReq.AllowRebaseUpdate = cr.Spec.ForProvider.AllowRebaseUpdate
+	}
+	if cr.Spec.ForProvider.DefaultDeleteBranchAfterMerge != nil {
+		updateReq.DefaultDeleteBranchAfterMerge = cr.Spec.ForProvider.DefaultDeleteBranchAfterMerge
+	}
+	if cr.Spec.ForProvider.DefaultMergeStyle != nil {
+		updateReq.DefaultMergeStyle = cr.Spec.ForProvider.DefaultMergeStyle
 	}
 
 	_, err := e.client.UpdateRepository(ctx, owner, name, updateReq)

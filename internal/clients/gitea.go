@@ -264,6 +264,24 @@ type Repository struct {
 	CreatedAt     string `json:"created_at"`
 	UpdatedAt     string `json:"updated_at"`
 	Owner         *User  `json:"owner"`
+
+	// Feature toggles
+	HasIssues       bool `json:"has_issues"`
+	HasWiki         bool `json:"has_wiki"`
+	HasPullRequests bool `json:"has_pull_requests"`
+	HasProjects     bool `json:"has_projects"`
+	HasReleases     bool `json:"has_releases"`
+	HasPackages     bool `json:"has_packages"`
+	HasActions      bool `json:"has_actions"`
+
+	// Merge strategy configuration
+	AllowMergeCommits             bool   `json:"allow_merge_commits"`
+	AllowRebase                   bool   `json:"allow_rebase"`
+	AllowRebaseExplicit           bool   `json:"allow_rebase_explicit"`
+	AllowSquashMerge              bool   `json:"allow_squash_merge"`
+	AllowRebaseUpdate             bool   `json:"allow_rebase_update"`
+	DefaultDeleteBranchAfterMerge bool   `json:"default_delete_branch_after_merge"`
+	DefaultMergeStyle             string `json:"default_merge_style"`
 }
 
 // CreateRepositoryRequest represents the request body for creating a repository
