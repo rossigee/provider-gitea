@@ -290,6 +290,11 @@ func (in *RepositoryParameters) DeepCopyInto(out *RepositoryParameters) {
 		*out = new(string)
 		**out = **in
 	}
+	if in.Topics != nil {
+		in, out := &in.Topics, &out.Topics
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
 	if in.ConnectionRef != nil {
 		in, out := &in.ConnectionRef, &out.ConnectionRef
 		*out = new(corev2.Reference)
