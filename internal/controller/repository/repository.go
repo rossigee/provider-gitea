@@ -165,7 +165,7 @@ func isRepositoryUpToDate(cr *v2.Repository, repo *clients.Repository, topics []
 	if cr.Spec.ForProvider.Archived != nil && *cr.Spec.ForProvider.Archived != repo.Archived {
 		return false
 	}
-	if cr.Spec.ForProvider.DefaultBranch != nil && repo.DefaultBranch != "" && *cr.Spec.ForProvider.DefaultBranch != repo.DefaultBranch {
+	if cr.Spec.ForProvider.DefaultBranch != nil && *cr.Spec.ForProvider.DefaultBranch != repo.DefaultBranch {
 		return false
 	}
 	if cr.Spec.ForProvider.Website != nil && *cr.Spec.ForProvider.Website != repo.Website {
