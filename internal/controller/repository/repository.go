@@ -152,18 +152,6 @@ func (e *externalClient) Observe(ctx context.Context, mg resource.Managed) (mana
 	}, nil
 }
 
-func strSliceEqual(a, b []string) bool {
-	if len(a) != len(b) {
-		return false
-	}
-	for i := range a {
-		if a[i] != b[i] {
-			return false
-		}
-	}
-	return true
-}
-
 func isRepositoryUpToDate(cr *v2.Repository, repo *clients.Repository, topics []string) bool {
 	if cr.Spec.ForProvider.Description != nil && *cr.Spec.ForProvider.Description != repo.Description {
 		return false
