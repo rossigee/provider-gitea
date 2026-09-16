@@ -19,7 +19,6 @@ package repository
 import (
 	"context"
 	"fmt"
-	"sort"
 	"strings"
 
 	"github.com/crossplane/crossplane-runtime/v2/pkg/controller"

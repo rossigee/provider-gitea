@@ -118,6 +118,9 @@ type RepositoryParameters struct {
 	// +kubebuilder:validation:Enum=merge;rebase;squash;rebase-merge
 	DefaultMergeStyle *string `json:"defaultMergeStyle,omitempty"`
 
+	// Topics are the list of topics/tags assigned to the repository
+	Topics []string `json:"topics,omitempty"`
+
 	// V2 Enhancement: Connection reference for multi-tenant support
 	// ConnectionRef specifies the Gitea connection to use
 	ConnectionRef *xpv1.Reference `json:"connectionRef,omitempty"`
