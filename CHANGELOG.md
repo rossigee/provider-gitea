@@ -7,7 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.14.0] - 2026-09-14
+## [0.15.1] - 2026-09-16
+
+### 🐛 **Bug Fixes**
+- **Repository deepcopy**: Regenerate zz_generated.deepcopy.go after adding Topics field to RepositoryParameters (fixes CI check-diff failure)
+- **Repository defaultBranch**: Remove guard that skipped drift detection when observed default_branch is empty; now always applies CR-specified defaultBranch
 
 ### ✨ **New Features**
 - **Repository Field Parity**: Restore v1alpha1 API coverage in v2 with 19 new fields (hasIssues, hasWiki, hasPullRequests, hasProjects, hasReleases, hasPackages, hasActions, allowMergeCommits, allowRebase, allowRebaseExplicit, allowSquashMerge, allowRebaseUpdate, defaultDeleteBranchAfterMerge, defaultMergeStyle, gitignores, license, readme, issueLabels, website)
