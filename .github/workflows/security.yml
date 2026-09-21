@@ -148,7 +148,7 @@ jobs:
 
       - name: Check for secrets with TruffleHog
         if: github.event.inputs.scan_type == 'comprehensive' || github.event.inputs.scan_type == 'secrets' || github.event.inputs.scan_type == ''
-        uses: trufflesecurity/trufflehog@v3.97.4
+        uses: trufflesecurity/trufflehog@v3.97.5
         with:
           path: ./
           base: master
