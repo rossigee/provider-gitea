@@ -55,53 +55,44 @@ xpkg.release.publish.ghcr.io/rossigee.provider-gitea:
 # image is present in daemon.
 xpkg.build.provider-gitea: do.build.images
 
-# Ensure publish only happens on release branches
-publish.artifacts: $(CROSSPLANE_CLI)
-	@if ! echo "$(BRANCH_NAME)" | grep -qE "$(subst $(SPACE),|,main|master|release-.*)"; then \ 
-		$(ERR) Publishing is only allowed on branches matching: main|master|release-.* (current: $(BRANCH_NAME)); \ 
-		exit 1; \ 
-	fi
-	$(foreach r,$(XPKG_REG_ORGS), $(foreach x,$(XPKGS),@$(MAKE) xpkg.release.publish.$(subst /,_,$(r)).$(x)))
-	$(foreach r,$(REGISTRY_ORGS), $(foreach i,$(IMAGES),@$(MAKE) img.release.publish.$(subst /,_,$(r)).$(i)))
+# Publish artifacts for release
+#
+# NOTE: we do NOT also publish the plain runtime image (img.release.publish)
+# here. It shares the exact same registry/org/name/tag as the xpkg package
+# below (ghcr.io/rossigee/provider-gitea:$(VERSION)), and the controller
+# binary is already embedded into the xpkg via --embed-runtime-image (see
+# build/makelib/xpkg.mk). Publishing the plain image to that same ref would
+# overwrite the xpkg's package.yaml, breaking `crossplane xpkg` installs.
+publish.artifacts:
+	$(foreach r,$(XPKG_REG_ORGS), $(foreach x,$(XPKGS),@$(MAKE) xpkg.release.publish.$(r).$(x)))
 
 # Alias for publish.artifacts to match workflow expectations
 publish: publish.artifacts
 
-# ====================================================================================
-# XPKG Publishing Overrides - Fix for Crossplane v2 metadata preservation
-#
-# The build/makelib/xpkg.mk publish targets were losing metadata during OCI push.
-# This override ensures the xpkg files are properly verified and published with
-# full OCI layer metadata intact for Crossplane v2 compatibility.
+# Neutralize the plain runtime image push. imagelight.mk injects
+# img.release.publish.<reg>.<img> as a publish.artifacts prerequisite on
+# release branches, and cluster/images img.publish would fail because the
+# runtime image is never built/tagged locally. The runtime binary is already
+# embedded in the xpkg, so publishing this image would only overwrite the
+# xpkg's package.yaml.
+img.release.publish.ghcr.io/rossigee.provider-gitea:
+	@:
 
-# Override the problematic xpkg.release.publish target with improved version
-xpkg.release.publish.%:
-	@registry_org=$(word 1,$(subst ., ,$*)); \
-	xpkg_name=$(word 2,$(subst ., ,$*)); \
-	$(INFO) "Publishing xpkg $$registry_org/$$xpkg_name:$(VERSION)"; \
-	for platform in $(XPKG_LINUX_PLATFORMS); do \
-		xpkg_file=$(XPKG_OUTPUT_DIR)/$${platform}/$${xpkg_name}-$(VERSION).xpkg; \
-		if [ ! -f "$$xpkg_file" ]; then \
-			$(ERR) "XPKG file not found: $$xpkg_file"; \
-			exit 1; \
-		fi; \
-		echo "  Verifying $$platform: $$xpkg_file"; \
-		tar -tf "$$xpkg_file" manifest.json >/dev/null 2>&1 || { $(ERR) "Invalid OCI image format in $$xpkg_file"; exit 1; }; \
-		tar -xOf "$$xpkg_file" manifest.json | grep -q '"Config"' || { $(ERR) "Invalid OCI manifest in $$xpkg_file"; exit 1; }; \
-	done
-	@$(INFO) "All xpkg files validated. Pushing to registry..."
+# Force the .xpkg for every linux platform to be built before publish pushes
+# the package, then push as a multi-arch OCI image index. The rossigee/build
+# fork's stock xpkg.release.publish.<reg>.<pkg> pushes pre-built files for all
+# of XPKG_LINUX_PLATFORMS but does not depend on xpkg.build.<pkg>, so on a
+# single-arch (amd64) CI runner the linux_arm64 .xpkg would never exist and
+# `crossplane xpkg push` would fail with "--package-files: no such file".
+# The plain runtime image is deliberately NOT published to the same tag - it
+# would overwrite the xpkg's package.yaml, breaking `crossplane xpkg` installs.
+# Same fix as provider-btcpay.
+xpkg.release.publish.ghcr.io/rossigee.provider-gitea:
+	@$(foreach p,$(XPKG_LINUX_PLATFORMS),$(MAKE) xpkg.build.provider-gitea PLATFORM=$(p) || exit 1;)
 	@$(CROSSPLANE_CLI) xpkg push \
-		$(foreach p,$(XPKG_LINUX_PLATFORMS),--package-files $(XPKG_OUTPUT_DIR)/$(p)/$(xpkg_name)-$(VERSION).xpkg ) \
-		$(registry_org)/$(xpkg_name):$(VERSION) || $(FAIL)
-	@$(OK) "Published $$registry_org/$$xpkg_name:$(VERSION)"
-	@$(INFO) "IMPORTANT: Verifying published image contains metadata layers..."
-	@docker pull $(registry_org)/$(xpkg_name):$(VERSION) >/dev/null 2>&1 && \
-		image_layers=$$(docker inspect $(registry_org)/$(xpkg_name):$(VERSION) 2>/dev/null | grep -c '"digest"' || echo 0); \
-		if [ "$$image_layers" -gt 0 ]; then \
-			$(OK) "Published image has $$image_layers layer(s) - metadata should be present"; \
-		else \
-			$(WARN) "Warning: Published image appears to lack proper OCI layers"; \
-		fi
+		$(foreach p,$(XPKG_LINUX_PLATFORMS),--package-files $(XPKG_OUTPUT_DIR)/$(p)/provider-gitea-$(VERSION).xpkg ) \
+		ghcr.io/rossigee/provider-gitea:$(VERSION)
+	@$(OK) Pushed package ghcr.io/rossigee/provider-gitea:$(VERSION)
 
 # Setup Package Metadata
 export CROSSPLANE_VERSION := v2.3.3
