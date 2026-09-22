@@ -59,6 +59,15 @@ publish.artifacts: $(CROSSPLANE_CLI)
 # Alias for publish.artifacts to match workflow expectations
 publish: publish.artifacts
 
+# Neutralize the plain runtime image push. imagelight.mk injects
+# img.release.publish.<reg>.<img> as a publish.artifacts prerequisite on
+# release branches, and cluster/images img.publish would fail because the
+# runtime image is never built/tagged locally. The runtime binary is already
+# embedded in the xpkg, so publishing this image would only overwrite the
+# xpkg's package.yaml.
+img.release.publish.ghcr.io/rossigee.provider-gitea:
+	@:
+
 # Force the .xpkg for every linux platform to be built before publish pushes
 # the package, then push as a multi-arch OCI image index. The rossigee/build
 # fork's stock xpkg.release.publish.<reg>.<pkg> pushes pre-built files for all
