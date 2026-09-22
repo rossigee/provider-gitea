@@ -44,12 +44,11 @@ permissions:
   contents: read
   security-events: write
   actions: read
-  id-token: write
   attestations: write
   pull-requests: write
 
 env:
-  GO_VERSION: '1.27.1'
+  GO_VERSION: '1.26.6'
 
 jobs:
   detect-noop:
@@ -126,7 +125,7 @@ jobs:
 
       - name: Run Gosec Security Scanner
         if: github.event.inputs.scan_type == 'comprehensive' || github.event.inputs.scan_type == 'vulnerabilities' || github.event.inputs.scan_type == ''
-        uses: securego/gosec@v2.29.0
+        uses: securego/gosec@master
         with:
           args: '-no-fail -fmt sarif -out gosec-results.sarif ./...'
         continue-on-error: true
@@ -148,7 +147,7 @@ jobs:
 
       - name: Check for secrets with TruffleHog
         if: github.event.inputs.scan_type == 'comprehensive' || github.event.inputs.scan_type == 'secrets' || github.event.inputs.scan_type == ''
-        uses: trufflesecurity/trufflehog@v3.97.4
+        uses: trufflesecurity/trufflehog@main
         with:
           path: ./
           base: master
@@ -237,8 +236,8 @@ jobs:
 #    - Clear notifications when enabled
 #
 # 5. STANDARDIZED VERSION
-#    - Go 1.27.1
-#    - Actions: checkout@v4, setup-go@v6, codeql-action@v6
+#    - Go 1.26.5
+#    - Actions: checkout@v7, setup-go@v7, codeql-action@v4
 #    - Runners: ubuntu-24.04
 #
 # To apply this template:
