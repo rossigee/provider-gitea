@@ -56,6 +56,16 @@ publish.artifacts: $(CROSSPLANE_CLI)
 	fi
 	$(foreach r,$(XPKG_REG_ORGS), $(foreach x,$(XPKGS),@$(MAKE) xpkg.release.publish.$(r).$(x)))
 
+# Do not publish the plain runtime image. imagelight.mk injects
+# img.release.publish.<reg>.<img> as a publish.artifacts prerequisite on
+# release branches (see build/makelib/imagelight.mk), and cluster/images
+# img.publish would fail because the runtime image is never built/tagged
+# locally. The runtime binary is already embedded in the xpkg, so publishing
+# this image to the same tag is both pointless and harmful - it would
+# overwrite the xpkg's package.yaml. Neutralize the prerequisite.
+img.release.publish.ghcr.io/rossigee.provider-gitea:
+	@:
+
 # Alias for publish.artifacts to match workflow expectations
 publish: publish.artifacts
 
