@@ -48,12 +48,15 @@ XPKGS = provider-gitea
 # image is present in daemon.
 xpkg.build.provider-gitea: do.build.images
 
-# Ensure publish only happens on release branches
-publish.artifacts: $(CROSSPLANE_CLI)
-	@if ! echo "$(BRANCH_NAME)" | grep -qE "$(subst $(SPACE),|,main|master|release-.*)"; then \
-		$(ERR) Publishing is only allowed on branches matching: main|master|release-.* (current: $(BRANCH_NAME)); \
-		exit 1; \
-	fi
+# Publish artifacts for release
+#
+# NOTE: we do NOT also publish the plain runtime image (img.release.publish)
+# here. It shares the exact same registry/org/name/tag as the xpkg package
+# below (ghcr.io/rossigee/provider-gitea:$(VERSION)), and the controller
+# binary is already embedded into the xpkg via --embed-runtime-image (see
+# build/makelib/xpkg.mk). Publishing the plain image to that same ref would
+# overwrite the xpkg's package.yaml, breaking `crossplane xpkg` installs.
+publish.artifacts:
 	$(foreach r,$(XPKG_REG_ORGS), $(foreach x,$(XPKGS),@$(MAKE) xpkg.release.publish.$(r).$(x)))
 
 # Alias for publish.artifacts to match workflow expectations
