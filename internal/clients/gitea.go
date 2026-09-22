@@ -940,7 +940,7 @@ type BranchProtection struct {
 
 // CreateBranchProtectionRequest represents the request body for creating branch protection
 type CreateBranchProtectionRequest struct {
-	Branch                        string   `json:"branch"`
+	Branch                        string   `json:"branch_name"`
 	RuleName                      string   `json:"rule_name"`
 	EnablePush                    *bool    `json:"enable_push,omitempty"`
 	EnablePushWhitelist           *bool    `json:"enable_push_whitelist,omitempty"`
