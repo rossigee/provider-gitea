@@ -760,3 +760,109 @@ func TestOrganizationSecretOperations(t *testing.T) {
 		require.NoError(t, err)
 	})
 }
+
+func TestBranchProtectionOperations(t *testing.T) {
+	// Create test server
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch {
+		case r.Method == "GET" && r.URL.Path == "/api/v1/repos/testorg/testrepo/branch_protection/master":
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			_, _ = w.Write([]byte(`{
+				"branch_name": "master",
+				"rule_name": "master-protection",
+				"created_at": "2024-01-01T00:00:00Z",
+				"updated_at": "2024-01-02T00:00:00Z",
+				"enable_push": false,
+				"enable_status_check": true,
+				"required_approvals": 2
+			}`))
+		case r.Method == "POST" && r.URL.Path == "/api/v1/repos/testorg/testrepo/branch_protection":
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusCreated)
+			_, _ = w.Write([]byte(`{
+				"branch_name": "develop",
+				"rule_name": "develop-protection",
+				"created_at": "2024-01-01T00:00:00Z",
+				"updated_at": "2024-01-01T00:00:00Z",
+				"enable_push": true,
+				"enable_status_check": false,
+				"required_approvals": 1
+			}`))
+		case r.Method == "PATCH" && r.URL.Path == "/api/v1/repos/testorg/testrepo/branch_protection/master":
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			_, _ = w.Write([]byte(`{
+				"branch_name": "master",
+				"rule_name": "master-protection",
+				"created_at": "2024-01-01T00:00:00Z",
+				"updated_at": "2024-01-03T00:00:00Z",
+				"enable_push": false,
+				"enable_status_check": true,
+				"required_approvals": 3
+			}`))
+		case r.Method == "DELETE" && r.URL.Path == "/api/v1/repos/testorg/testrepo/branch_protection/master":
+			w.WriteHeader(http.StatusNoContent)
+		default:
+			w.WriteHeader(http.StatusNotFound)
+		}
+	}))
+	defer server.Close()
+
+	// Create test client
+	c := &giteaClient{
+		httpClient: &http.Client{},
+		baseURL:    server.URL + "/api/v1",
+		token:      "test-token",
+	}
+
+	ctx := context.Background()
+
+	t.Run("GetBranchProtection", func(t *testing.T) {
+		bp, err := c.GetBranchProtection(ctx, "testorg/testrepo", "master")
+		require.NoError(t, err)
+		assert.Equal(t, "master-protection", bp.RuleName)
+		assert.False(t, bp.EnablePush)
+		assert.True(t, bp.EnableStatusCheck)
+		assert.Equal(t, 2, bp.RequiredApprovals)
+	})
+
+	t.Run("CreateBranchProtection", func(t *testing.T) {
+		req := &CreateBranchProtectionRequest{
+			Branch:             "develop",
+			RuleName:           "develop-protection",
+			EnablePush:         boolPtr(true),
+			EnableStatusCheck:  boolPtr(false),
+			RequiredApprovals:  intPtr(1),
+		}
+		bp, err := c.CreateBranchProtection(ctx, "testorg/testrepo", "develop", req)
+		require.NoError(t, err)
+		assert.Equal(t, "develop-protection", bp.RuleName)
+		assert.True(t, bp.EnablePush)
+		assert.False(t, bp.EnableStatusCheck)
+		assert.Equal(t, 1, bp.RequiredApprovals)
+	})
+
+	t.Run("UpdateBranchProtection", func(t *testing.T) {
+		req := &UpdateBranchProtectionRequest{
+			EnableStatusCheck: boolPtr(true),
+			RequiredApprovals: intPtr(3),
+		}
+		bp, err := c.UpdateBranchProtection(ctx, "testorg/testrepo", "master", req)
+		require.NoError(t, err)
+		assert.Equal(t, 3, bp.RequiredApprovals)
+	})
+
+	t.Run("DeleteBranchProtection", func(t *testing.T) {
+		err := c.DeleteBranchProtection(ctx, "testorg/testrepo", "master")
+		require.NoError(t, err)
+	})
+}
+
+func boolPtr(b bool) *bool {
+	return &b
+}
+
+func intPtr(i int) *int {
+	return &i
+}

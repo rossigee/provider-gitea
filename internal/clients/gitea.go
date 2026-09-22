@@ -1541,7 +1541,7 @@ func (c *giteaClient) GetBranchProtection(ctx context.Context, repository, branc
 	}
 	owner, repo := parts[0], parts[1]
 
-	path := fmt.Sprintf("/repos/%s/%s/branch_protections/%s", owner, repo, branch)
+	path := fmt.Sprintf("/repos/%s/%s/branch_protection/%s", owner, repo, branch)
 	resp, err := c.doRequest(ctx, "GET", path, nil)
 	if err != nil {
 		return nil, err
@@ -1567,7 +1567,7 @@ func (c *giteaClient) CreateBranchProtection(ctx context.Context, repository, br
 	}
 	owner, repo := parts[0], parts[1]
 
-	path := fmt.Sprintf("/repos/%s/%s/branch_protections", owner, repo)
+	path := fmt.Sprintf("/repos/%s/%s/branch_protection", owner, repo)
 	req.Branch = branch
 	resp, err := c.doRequest(ctx, "POST", path, req)
 	if err != nil {
@@ -1590,7 +1590,7 @@ func (c *giteaClient) UpdateBranchProtection(ctx context.Context, repository, br
 	}
 	owner, repo := parts[0], parts[1]
 
-	path := fmt.Sprintf("/repos/%s/%s/branch_protections/%s", owner, repo, branch)
+	path := fmt.Sprintf("/repos/%s/%s/branch_protection/%s", owner, repo, branch)
 	resp, err := c.doRequest(ctx, "PATCH", path, req)
 	if err != nil {
 		return nil, err
@@ -1612,7 +1612,7 @@ func (c *giteaClient) DeleteBranchProtection(ctx context.Context, repository, br
 	}
 	owner, repo := parts[0], parts[1]
 
-	path := fmt.Sprintf("/repos/%s/%s/branch_protections/%s", owner, repo, branch)
+	path := fmt.Sprintf("/repos/%s/%s/branch_protection/%s", owner, repo, branch)
 	resp, err := c.doRequest(ctx, "DELETE", path, nil)
 	if err != nil {
 		return err
