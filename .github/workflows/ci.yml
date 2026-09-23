@@ -215,14 +215,12 @@ jobs:
           echo "Repository: ${{ github.repository }}"
           echo "Repository owner: ${{ github.repository_owner }}"
           
-          # Build binary
+          # Build binary; container image is built as part of make build
+          # (build.artifacts.platform → do.build.images). There is no
+          # standalone docker.build target in build/makelib.
           make build
-          echo "✅ Binary build successful"
-          
-          # Build Docker image locally (without push)
-          make docker.build
-          echo "✅ Docker image build successful"
-          
+          echo "✅ Build successful"
+
           # Build Crossplane package locally (without push)
           make xpkg.build
           echo "✅ Crossplane package build successful"
