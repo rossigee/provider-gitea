@@ -3,8 +3,8 @@ name: provider-gitea
 description: A Crossplane provider for managing Gitea with Kubernetes-native resources
 type: application
 
-version: 0.8.9
-appVersion: "0.8.9"
+version: 0.15.9
+appVersion: "0.15.9"
 
 # Chart metadata
 home: https://github.com/rossigee/provider-gitea

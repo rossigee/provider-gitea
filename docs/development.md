@@ -4,10 +4,11 @@ This guide covers how to develop and contribute to the enterprise-grade Gitea pr
 
 ## Prerequisites
 
-- Go 1.21 or later
+- Go 1.27.1 or later
 - Docker
 - kubectl
 - kind (for local testing)
+- Crossplane v2.5.0 or later
 - Crossplane CLI
 - Git with pre-commit hooks support
 
@@ -174,16 +175,14 @@ Before submitting a PR:
 
 ## Release Process
 
-1. Update version in relevant files
-2. Update CHANGELOG.md
-3. Create a git tag (e.g., `git tag v0.1.0`)
-4. Push the tag (`git push origin v0.1.0`)
-5. GitHub Actions will automatically:
-   - Build and push Docker images to GHCR
-   - Create GitHub release with artifacts
-   - Upload Crossplane packages to GHCR OCI registry
-
-Note: Currently using GitHub Container Registry (GHCR). Upbound registry integration is planned for future releases.
+1. Update version references in `VERSION`, `README.md`, and `CHANGELOG.md`
+2. Set `package/crossplane.yaml` to require Crossplane `>=v2.5.0`
+3. Create the exact release tag on the current `origin/master` commit:
+   ```bash
+   git tag v0.15.9
+   git push origin v0.15.9
+   ```
+4. The tag-only release workflow validates the tag, builds `linux_amd64` and `linux_arm64` xpkg files, publishes the version and `latest` tags, verifies equal digests and both architectures, and creates the GitHub Release.
 
 ## Debugging
 

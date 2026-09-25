@@ -5,7 +5,7 @@ A Helm chart for deploying provider-gitea - the Crossplane provider for Gitea.
 ## Prerequisites
 
 - Kubernetes 1.20+
-- Crossplane 2.2+
+- Crossplane 2.5.0+
 - Helm 3+
 
 ## Installation

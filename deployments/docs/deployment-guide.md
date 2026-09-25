@@ -34,7 +34,7 @@ storage: 500Gi (NVMe SSD)
 # Install required CLI tools
 kubectl >= 1.25
 helm >= 3.8
-crossplane >= 1.12
+crossplane >= 2.5.0
 
 # Verify installations
 kubectl version --client

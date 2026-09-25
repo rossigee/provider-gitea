@@ -3,7 +3,7 @@
 # Provider image configuration
 image:
   repository: ghcr.io/rossigee/provider-gitea
-  tag: v0.8.9
+  tag: v0.15.9
   pullPolicy: IfNotPresent
 
 # Namespace where provider will be deployed

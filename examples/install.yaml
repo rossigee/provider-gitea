@@ -3,4 +3,4 @@ kind: Provider
 metadata:
   name: provider-gitea
 spec:
-  package: ghcr.io/crossplane-contrib/provider-gitea:latest
+  package: ghcr.io/rossigee/provider-gitea:v0.15.9

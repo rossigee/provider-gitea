@@ -1,81 +1,24 @@
 # provider-gitea Installation Guide
 
-Three distribution and installation methods for provider-gitea supporting Crossplane v2.2+.
+Provider-gitea publishes its package to `ghcr.io/rossigee/provider-gitea` and supports Crossplane v2.5.0+.
 
-## Quick Start
-
-Choose your installation method:
-
-### 1. kubectl (Minimal Setup) - Recommended for Development
-
-Best for: Local development, testing, learning
+## Install
 
 ```bash
-# Clone the repository
-git clone https://github.com/rossigee/provider-gitea.git
-cd provider-gitea
-
-# Install
-kubectl apply -k deploy/kubectl/
-
-# Verify
-kubectl get provider provider-gitea
+kubectl crossplane install provider ghcr.io/rossigee/provider-gitea:v0.15.9
+kubectl wait --for=condition=Installed provider.pkg.crossplane.io/provider-gitea --timeout=120s
 ```
 
-**Details**: See [deploy/kubectl/README.md](deploy/kubectl/README.md)
-
----
-
-### 2. Helm Chart (Production Ready) - Recommended for Production
-
-Best for: Kubernetes-native deployments, version management, upgrades
-
-```bash
-# Add repository
-helm repo add rossigee https://charts.example.com
-helm repo update
-
-# Install
-helm install provider-gitea rossigee/provider-gitea \
-  --namespace crossplane-system \
-  --set gitea.baseURL=https://git.example.com \
-  --set gitea.token=YOUR_API_TOKEN
-
-# Verify
-helm list -n crossplane-system
-kubectl get provider provider-gitea
-```
-
-**Details**: See [deploy/helm/provider-gitea/README.md](deploy/helm/provider-gitea/README.md)
-
----
-
-### 3. Upbound `up` CLI - Enterprise/Cloud
-
-Best for: Upbound control planes, enterprise features, marketplace discovery
-
-```bash
-# Install up CLI: https://docs.upbound.io/getting-started/
-
-# Install provider
-up ctp provider install xpkg.upbound.io/rossigee/provider-gitea:v0.8.9
-
-# Or via kubectl
-kubectl apply -f - <<EOF
-apiVersion: pkg.crossplane.io/v1
-kind: Provider
-metadata:
-  name: provider-gitea
-spec:
-  package: xpkg.upbound.io/rossigee/provider-gitea:v0.8.9
-EOF
-```
-
-**Details**: See [deploy/upbound/README.md](deploy/upbound/README.md)
-
----
+The repository does not publish an Upbound or Harbor package. Use the GHCR package shown above.
 
 ## Configuration
+
+Create a v2 ProviderConfig and Secret using the examples in the repository. ProviderConfig is cluster-scoped and uses `gitea.m.crossplane.io/v1beta1`.
+
+## Release
+
+Publication is performed by the tag-only workflow after the release PR is merged. The workflow publishes the versioned xpkg and `latest` alias, verifies both Linux architectures and equal digests, and creates the GitHub Release.
+
 
 After installation, configure Gitea API access:
 

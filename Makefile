@@ -95,7 +95,7 @@ xpkg.release.publish.ghcr.io/rossigee.provider-gitea:
 	@$(OK) Pushed package ghcr.io/rossigee/provider-gitea:$(VERSION)
 
 # Setup Package Metadata
-export CROSSPLANE_VERSION := v2.3.3
+export CROSSPLANE_VERSION := 2.5.0
 -include build/makelib/local.xpkg.mk
 -include build/makelib/controlplane.mk
 

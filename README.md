@@ -13,7 +13,7 @@ A [Crossplane](https://crossplane.io/) provider for declarative Gitea repository
 
 ## Container Registry
 
-- **Primary**: `ghcr.io/rossigee/provider-gitea:v0.10.2`
+- **Primary**: `ghcr.io/rossigee/provider-gitea:v0.15.9`
 
 ## Features
 
@@ -33,7 +33,7 @@ A [Crossplane](https://crossplane.io/) provider for declarative Gitea repository
 ### Installation
 
 ```bash
-kubectl crossplane install provider ghcr.io/rossigee/provider-gitea:v0.10.2
+kubectl crossplane install provider ghcr.io/rossigee/provider-gitea:v0.15.9
 ```
 
 ### Configuration
