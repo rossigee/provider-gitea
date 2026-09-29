@@ -33,6 +33,7 @@ import (
 	"strings"
 
 	"github.com/rossigee/provider-gitea/internal/clients"
+	"github.com/rossigee/provider-gitea/internal/discovery"
 	"github.com/rossigee/provider-gitea/internal/tracing"
 	corev1 "k8s.io/api/core/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -91,6 +92,41 @@ func (c *connector) Connect(ctx context.Context, mg resource.Managed) (managed.E
 type externalClient struct {
 	kube   client.Client
 	client clients.Client
+}
+
+// Compile-time check that externalClient implements the discovery interface
+// consumed by Crossplane's resource-discovery controller (DiscoveryReport).
+var _ resource.ExternalLister = (*externalClient)(nil)
+
+// List enumerates external admin users for discovery (crossplane.io
+// ExternalLister). External names are usernames, sourced from the admin user
+// listing.
+func (e *externalClient) List(ctx context.Context, pc resource.ProviderConfig, pageToken string) (resource.ExternalListResult, error) {
+	conn, err := discovery.NewClient(ctx, e.kube, pc)
+	if err != nil {
+		return resource.ExternalListResult{}, err
+	}
+
+	page, err := discovery.ParsePageToken(pageToken)
+	if err != nil {
+		return resource.ExternalListResult{}, err
+	}
+
+	var names []string
+
+	count, err := discovery.ForEachUser(ctx, conn, page, func(username string) error {
+		names = append(names, username)
+		return nil
+	})
+	if err != nil {
+		return resource.ExternalListResult{}, err
+	}
+
+	return resource.ExternalListResult{
+		ExternalNames: names,
+		NextPageToken: discovery.NextPageToken(count, page),
+	}, nil
+
 }
 
 // readPassword returns the password from the referenced secret.

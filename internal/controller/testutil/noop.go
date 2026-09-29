@@ -150,6 +150,10 @@ func (NoopClient) DeleteOrganizationSecret(ctx context.Context, org, secretName 
 	return nil
 }
 
+func (NoopClient) ListOrganizationSecrets(ctx context.Context, org string) ([]clients.OrganizationSecret, error) {
+	return nil, nil
+}
+
 // Teams
 func (NoopClient) GetTeam(ctx context.Context, teamID int64) (*clients.Team, error) { return nil, nil }
 func (NoopClient) CreateTeam(ctx context.Context, org string, req *clients.CreateTeamRequest) (*clients.Team, error) {
@@ -263,6 +267,10 @@ func (NoopClient) DeleteAccessToken(ctx context.Context, username string, tokenI
 	return nil
 }
 
+func (NoopClient) ListUserTokens(ctx context.Context, username string) ([]clients.AccessToken, error) {
+	return nil, nil
+}
+
 // Repo secrets
 func (NoopClient) GetRepositorySecret(ctx context.Context, repository, secretName string) (*clients.RepositorySecret, error) {
 	return nil, nil
@@ -292,6 +300,9 @@ func (NoopClient) UpdateUserKey(ctx context.Context, username string, keyID int6
 	return nil, nil
 }
 func (NoopClient) DeleteUserKey(ctx context.Context, username string, keyID int64) error { return nil }
+func (NoopClient) ListUserKeys(ctx context.Context, username string) ([]clients.UserKey, error) {
+	return nil, nil
+}
 
 // Issues / PRs
 func (NoopClient) GetIssue(ctx context.Context, owner, repo string, number int64) (*clients.Issue, error) {
@@ -366,6 +377,10 @@ func (NoopClient) UpdateOrganizationMember(ctx context.Context, org, username st
 }
 func (NoopClient) RemoveOrganizationMember(ctx context.Context, org, username string) error {
 	return nil
+}
+
+func (NoopClient) ListOrganizationMembers(ctx context.Context, org string) ([]clients.OrganizationMember, error) {
+	return nil, nil
 }
 
 // Actions

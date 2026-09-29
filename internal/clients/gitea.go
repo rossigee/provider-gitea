@@ -97,6 +97,7 @@ type Client interface {
 	CreateOrganizationSecret(ctx context.Context, org, secretName string, req *CreateOrganizationSecretRequest) error
 	UpdateOrganizationSecret(ctx context.Context, org, secretName string, req *CreateOrganizationSecretRequest) error
 	DeleteOrganizationSecret(ctx context.Context, org, secretName string) error
+	ListOrganizationSecrets(ctx context.Context, org string) ([]OrganizationSecret, error)
 
 	// Team operations
 	GetTeam(ctx context.Context, teamID int64) (*Team, error)
@@ -147,6 +148,7 @@ type Client interface {
 	CreateAccessToken(ctx context.Context, username string, req *CreateAccessTokenRequest) (*AccessToken, error)
 	UpdateAccessToken(ctx context.Context, username string, tokenID int64, req *UpdateAccessTokenRequest) (*AccessToken, error)
 	DeleteAccessToken(ctx context.Context, username string, tokenID int64) error
+	ListUserTokens(ctx context.Context, username string) ([]AccessToken, error)
 
 	// Repository Secret operations
 	GetRepositorySecret(ctx context.Context, repository, secretName string) (*RepositorySecret, error)
@@ -160,6 +162,7 @@ type Client interface {
 	CreateUserKey(ctx context.Context, username string, req *CreateUserKeyRequest) (*UserKey, error)
 	UpdateUserKey(ctx context.Context, username string, keyID int64, req *UpdateUserKeyRequest) (*UserKey, error)
 	DeleteUserKey(ctx context.Context, username string, keyID int64) error
+	ListUserKeys(ctx context.Context, username string) ([]UserKey, error)
 
 	// Issue operations
 	GetIssue(ctx context.Context, owner, repo string, number int64) (*Issue, error)
@@ -191,6 +194,7 @@ type Client interface {
 	AddOrganizationMember(ctx context.Context, org, username string, req *AddOrganizationMemberRequest) (*OrganizationMember, error)
 	UpdateOrganizationMember(ctx context.Context, org, username string, req *UpdateOrganizationMemberRequest) (*OrganizationMember, error)
 	RemoveOrganizationMember(ctx context.Context, org, username string) error
+	ListOrganizationMembers(ctx context.Context, org string) ([]OrganizationMember, error)
 
 	// Action operations
 	GetAction(ctx context.Context, repository, workflowName string) (*Action, error)

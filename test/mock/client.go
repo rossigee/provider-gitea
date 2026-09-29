@@ -305,6 +305,14 @@ func (m *Client) DeleteOrganizationSecret(ctx context.Context, org, secretName s
 	return args.Error(0)
 }
 
+func (m *Client) ListOrganizationSecrets(ctx context.Context, org string) ([]clients.OrganizationSecret, error) {
+	args := m.Called(ctx, org)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]clients.OrganizationSecret), args.Error(1)
+}
+
 // Team operations
 func (m *Client) GetTeam(ctx context.Context, teamID int64) (*clients.Team, error) {
 	args := m.Called(ctx, teamID)
@@ -558,6 +566,14 @@ func (m *Client) DeleteAccessToken(ctx context.Context, username string, tokenID
 	return args.Error(0)
 }
 
+func (m *Client) ListUserTokens(ctx context.Context, username string) ([]clients.AccessToken, error) {
+	args := m.Called(ctx, username)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]clients.AccessToken), args.Error(1)
+}
+
 // Repository Secret operations
 func (m *Client) GetRepositorySecret(ctx context.Context, repository, secretName string) (*clients.RepositorySecret, error) {
 	args := m.Called(ctx, repository, secretName)
@@ -618,6 +634,14 @@ func (m *Client) UpdateUserKey(ctx context.Context, username string, keyID int64
 func (m *Client) DeleteUserKey(ctx context.Context, username string, keyID int64) error {
 	args := m.Called(ctx, username, keyID)
 	return args.Error(0)
+}
+
+func (m *Client) ListUserKeys(ctx context.Context, username string) ([]clients.UserKey, error) {
+	args := m.Called(ctx, username)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]clients.UserKey), args.Error(1)
 }
 
 // Issue operations
@@ -791,6 +815,14 @@ func (m *Client) UpdateOrganizationMember(ctx context.Context, org, username str
 func (m *Client) RemoveOrganizationMember(ctx context.Context, org, username string) error {
 	args := m.Called(ctx, org, username)
 	return args.Error(0)
+}
+
+func (m *Client) ListOrganizationMembers(ctx context.Context, org string) ([]clients.OrganizationMember, error) {
+	args := m.Called(ctx, org)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]clients.OrganizationMember), args.Error(1)
 }
 
 // Action operations

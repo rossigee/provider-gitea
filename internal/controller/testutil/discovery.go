@@ -141,3 +141,111 @@ func DiscoveryKube(t *testing.T, baseURL string) (client.Client, *v1beta1.Provid
 
 	return fake.NewClientBuilder().WithScheme(scheme).WithRuntimeObjects(secret).Build(), pc
 }
+
+// pagedNames serves a JSON array slice with page/limit pagination.
+func pagedNames(w http.ResponseWriter, names []string, r *http.Request, item func(string) string) {
+	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
+	limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
+
+	if page < 1 {
+		page = 1
+	}
+
+	start := (page - 1) * limit
+	if start > len(names) {
+		start = len(names)
+	}
+
+	end := start + limit
+	if end > len(names) {
+		end = len(names)
+	}
+
+	_, _ = fmt.Fprint(w, "[")
+
+	for i, n := range names[start:end] {
+		if i > 0 {
+			_, _ = fmt.Fprint(w, ",")
+		}
+
+		_, _ = fmt.Fprint(w, item(n))
+	}
+
+	_, _ = fmt.Fprint(w, "]")
+}
+
+// OrgDiscoveryServer emulates GET /api/v1/user/orgs (paginated usernames)
+// plus per-organization item endpoints dispatched to itemHandler.
+func OrgDiscoveryServer(t *testing.T, orgs []string, itemHandler func(w http.ResponseWriter, r *http.Request, org string) bool) *httptest.Server {
+	t.Helper()
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.Equal(t, "token test-token", r.Header.Get("Authorization"))
+		w.Header().Set("Content-Type", "application/json")
+
+		if r.URL.Path == "/api/v1/user/orgs" {
+			pagedNames(w, orgs, r, func(n string) string {
+				return fmt.Sprintf(`{"username":%q}`, n)
+			})
+
+			return
+		}
+
+		rest, ok := strings.CutPrefix(r.URL.Path, "/api/v1/orgs/")
+		if !ok {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+
+		parts := strings.SplitN(rest, "/", 2)
+		if len(parts) != 2 {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+
+		if !itemHandler(w, r, parts[0]) {
+			w.WriteHeader(http.StatusNotFound)
+		}
+	}))
+	t.Cleanup(srv.Close)
+
+	return srv
+}
+
+// UserDiscoveryServer emulates GET /api/v1/admin/users (paginated usernames)
+// plus per-user item endpoints dispatched to itemHandler.
+func UserDiscoveryServer(t *testing.T, users []string, itemHandler func(w http.ResponseWriter, r *http.Request, username string) bool) *httptest.Server {
+	t.Helper()
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.Equal(t, "token test-token", r.Header.Get("Authorization"))
+		w.Header().Set("Content-Type", "application/json")
+
+		if r.URL.Path == "/api/v1/admin/users" {
+			pagedNames(w, users, r, func(n string) string {
+				return fmt.Sprintf(`{"username":%q}`, n)
+			})
+
+			return
+		}
+
+		rest, ok := strings.CutPrefix(r.URL.Path, "/api/v1/users/")
+		if !ok {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+
+		parts := strings.SplitN(rest, "/", 2)
+		if len(parts) != 2 {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+
+		if !itemHandler(w, r, parts[0]) {
+			w.WriteHeader(http.StatusNotFound)
+		}
+	}))
+	t.Cleanup(srv.Close)
+
+	return srv
+}

@@ -225,3 +225,71 @@ func (c *giteaClient) ListOrganizationRunners(ctx context.Context, org string) (
 func (c *giteaClient) ListSystemRunners(ctx context.Context) ([]Runner, error) {
 	return listRunners(ctx, c, "/admin/actions/runners")
 }
+
+// ListOrganizationMembers lists members of an organization.
+func (c *giteaClient) ListOrganizationMembers(ctx context.Context, org string) ([]OrganizationMember, error) {
+	path := fmt.Sprintf("/orgs/%s/members", org)
+
+	resp, err := c.doRequest(ctx, "GET", path, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var members []OrganizationMember
+	if err := handleResponse(resp, &members); err != nil {
+		return nil, err
+	}
+
+	return members, nil
+}
+
+// ListOrganizationSecrets lists action secrets of an organization.
+func (c *giteaClient) ListOrganizationSecrets(ctx context.Context, org string) ([]OrganizationSecret, error) {
+	path := fmt.Sprintf("/orgs/%s/actions/secrets", org)
+
+	resp, err := c.doRequest(ctx, "GET", path, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var secrets []OrganizationSecret
+	if err := handleResponse(resp, &secrets); err != nil {
+		return nil, err
+	}
+
+	return secrets, nil
+}
+
+// ListUserTokens lists access tokens of a user (admin only).
+func (c *giteaClient) ListUserTokens(ctx context.Context, username string) ([]AccessToken, error) {
+	path := fmt.Sprintf("/users/%s/tokens", username)
+
+	resp, err := c.doRequest(ctx, "GET", path, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var tokens []AccessToken
+	if err := handleResponse(resp, &tokens); err != nil {
+		return nil, err
+	}
+
+	return tokens, nil
+}
+
+// ListUserKeys lists public keys of a user.
+func (c *giteaClient) ListUserKeys(ctx context.Context, username string) ([]UserKey, error) {
+	path := fmt.Sprintf("/users/%s/keys", username)
+
+	resp, err := c.doRequest(ctx, "GET", path, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var keys []UserKey
+	if err := handleResponse(resp, &keys); err != nil {
+		return nil, err
+	}
+
+	return keys, nil
+}
