@@ -42,6 +42,9 @@ func (NoopClient) UpdateRepository(ctx context.Context, owner, name string, req 
 	return nil, nil
 }
 func (NoopClient) DeleteRepository(ctx context.Context, owner, name string) error { return nil }
+func (NoopClient) ListRepositories(ctx context.Context, page, limit int) ([]clients.Repository, error) {
+	return nil, nil
+}
 
 // Organization
 func (NoopClient) GetOrganization(ctx context.Context, name string) (*clients.Organization, error) {

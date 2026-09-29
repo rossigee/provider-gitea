@@ -19,15 +19,22 @@ package repository
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"net/http/httptest"
+	"strconv"
 	"testing"
 
 	"github.com/crossplane/crossplane-runtime/v2/pkg/meta"
+	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
 	v2 "github.com/rossigee/provider-gitea/apis/repository/v2"
+	v1beta1 "github.com/rossigee/provider-gitea/apis/v1beta1"
 	"github.com/rossigee/provider-gitea/internal/clients"
 	"github.com/rossigee/provider-gitea/internal/controller/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
@@ -456,5 +463,200 @@ func TestConnector(t *testing.T) {
 		_, err := c.Connect(context.Background(), &v2.Repository{})
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "providerConfigRef is required")
+	})
+}
+
+// listTestServer returns an httptest server emulating GET /api/v1/user/repos
+// with page/limit pagination over the given full names, plus the requests seen.
+func listTestServer(t *testing.T, names []string, status int) (*httptest.Server, *[][]string) {
+	t.Helper()
+
+	var seen [][]string
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		t.Helper()
+
+		assert.Equal(t, "/api/v1/user/repos", r.URL.Path)
+		assert.Equal(t, "token test-token", r.Header.Get("Authorization"))
+
+		page, _ := strconv.Atoi(r.URL.Query().Get("page"))
+		limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
+		seen = append(seen, []string{r.URL.Query().Get("page"), r.URL.Query().Get("limit")})
+
+		if status != http.StatusOK {
+			w.WriteHeader(status)
+			return
+		}
+
+		if page < 1 {
+			page = 1
+		}
+
+		start := (page - 1) * limit
+		if start > len(names) {
+			start = len(names)
+		}
+
+		end := start + limit
+		if end > len(names) {
+			end = len(names)
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = fmt.Fprint(w, "[")
+
+		for i, n := range names[start:end] {
+			if i > 0 {
+				_, _ = fmt.Fprint(w, ",")
+			}
+
+			_, _ = fmt.Fprintf(w, `{"full_name":%q}`, n)
+		}
+
+		_, _ = fmt.Fprint(w, "]")
+	}))
+
+	t.Cleanup(srv.Close)
+
+	return srv, &seen
+}
+
+func listTestProviderConfig(baseURL string) (*v1beta1.ProviderConfig, *corev1.Secret) {
+	secret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{Namespace: "default", Name: "gitea-creds"},
+		Data:       map[string][]byte{"token": []byte("test-token")},
+	}
+
+	pc := &v1beta1.ProviderConfig{
+		ObjectMeta: metav1.ObjectMeta{Namespace: "default", Name: "test-pc"},
+		Spec: v1beta1.ProviderConfigSpec{
+			BaseURL: baseURL,
+			Credentials: v1beta1.ProviderCredentials{
+				Source: "Secret",
+				SecretRef: &v1beta1.SecretReference{
+					Namespace: "default",
+					Name:      "gitea-creds",
+					Key:       "token",
+				},
+			},
+		},
+	}
+
+	return pc, secret
+}
+
+func listTestKube(t *testing.T, objs ...runtime.Object) *fake.ClientBuilder {
+	t.Helper()
+
+	scheme := runtime.NewScheme()
+	require.NoError(t, corev1.AddToScheme(scheme))
+	require.NoError(t, v1beta1.AddToScheme(scheme))
+
+	return fake.NewClientBuilder().WithScheme(scheme).WithRuntimeObjects(objs...)
+}
+
+func repoNames(prefix string, n int) []string {
+	names := make([]string, 0, n)
+	for i := 1; i <= n; i++ {
+		names = append(names, fmt.Sprintf("%s/repo-%d", prefix, i))
+	}
+
+	return names
+}
+
+func TestList(t *testing.T) {
+	ctx := context.Background()
+
+	newExternal := func(t *testing.T, objs ...runtime.Object) *externalClient {
+		t.Helper()
+
+		return &externalClient{
+			client: &mockRepoClient{},
+			kube:   listTestKube(t, objs...).Build(),
+		}
+	}
+
+	t.Run("rejects non-Gitea ProviderConfig", func(t *testing.T) {
+		ec := newExternal(t)
+
+		var pc resource.ProviderConfig
+
+		_, err := ec.List(ctx, pc, "")
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "not a Gitea ProviderConfig")
+	})
+
+	t.Run("rejects invalid page tokens", func(t *testing.T) {
+		ec := newExternal(t)
+		pc := &v1beta1.ProviderConfig{}
+
+		for _, token := range []string{"abc", "0", "-2", "1.5"} {
+			_, err := ec.List(ctx, pc, token)
+			require.Error(t, err, "token %q", token)
+			assert.Contains(t, err.Error(), "invalid page token", "token %q", token)
+		}
+	})
+
+	t.Run("requires baseURL", func(t *testing.T) {
+		pc, secret := listTestProviderConfig("")
+		ec := newExternal(t, secret)
+
+		_, err := ec.List(ctx, pc, "")
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "baseURL")
+	})
+
+	t.Run("returns next token on full page", func(t *testing.T) {
+		names := repoNames("acme", 50)
+		srv, seen := listTestServer(t, names, http.StatusOK)
+
+		pc, secret := listTestProviderConfig(srv.URL)
+		ec := newExternal(t, secret)
+
+		result, err := ec.List(ctx, pc, "")
+		require.NoError(t, err)
+		assert.Equal(t, names, result.ExternalNames)
+		assert.Equal(t, "2", result.NextPageToken)
+		require.Len(t, *seen, 1)
+		assert.Equal(t, []string{"1", "50"}, (*seen)[0])
+	})
+
+	t.Run("omits next token on last page", func(t *testing.T) {
+		names := repoNames("acme", 2)
+		srv, _ := listTestServer(t, names, http.StatusOK)
+
+		pc, secret := listTestProviderConfig(srv.URL)
+		ec := newExternal(t, secret)
+
+		result, err := ec.List(ctx, pc, "3")
+		require.NoError(t, err)
+		assert.Empty(t, result.ExternalNames)
+		assert.Empty(t, result.NextPageToken)
+	})
+
+	t.Run("skips repositories without names", func(t *testing.T) {
+		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = fmt.Fprint(w, `[{"full_name":"acme/ok"},{"id":7}]`)
+		}))
+		t.Cleanup(srv.Close)
+
+		pc, secret := listTestProviderConfig(srv.URL)
+		ec := newExternal(t, secret)
+
+		result, err := ec.List(ctx, pc, "")
+		require.NoError(t, err)
+		assert.Equal(t, []string{"acme/ok"}, result.ExternalNames)
+	})
+
+	t.Run("returns API errors", func(t *testing.T) {
+		srv, _ := listTestServer(t, nil, http.StatusInternalServerError)
+
+		pc, secret := listTestProviderConfig(srv.URL)
+		ec := newExternal(t, secret)
+
+		_, err := ec.List(ctx, pc, "")
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "failed to list repositories")
 	})
 }

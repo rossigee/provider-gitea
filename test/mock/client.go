@@ -70,6 +70,14 @@ func (m *Client) DeleteRepository(ctx context.Context, owner, name string) error
 	return args.Error(0)
 }
 
+func (m *Client) ListRepositories(ctx context.Context, page, limit int) ([]clients.Repository, error) {
+	args := m.Called(ctx, page, limit)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]clients.Repository), args.Error(1)
+}
+
 // Organization operations
 func (m *Client) GetOrganization(ctx context.Context, name string) (*clients.Organization, error) {
 	args := m.Called(ctx, name)
