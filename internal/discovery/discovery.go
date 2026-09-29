@@ -123,6 +123,28 @@ func ForEachOrganization(ctx context.Context, conn clients.Client, page int, fn 
 	return len(orgs), nil
 }
 
+// ForEachUser pages the user list once (admin API) and invokes fn for every
+// user with a usable username. It returns the number of users on the page,
+// for NextPageToken computation.
+func ForEachUser(ctx context.Context, conn clients.Client, page int, fn func(username string) error) (int, error) {
+	users, err := conn.ListUsers(ctx, page, PageSize)
+	if err != nil {
+		return 0, errors.Wrap(err, "failed to list users")
+	}
+
+	for _, u := range users {
+		if u.Username == "" {
+			continue
+		}
+
+		if err := fn(u.Username); err != nil {
+			return 0, err
+		}
+	}
+
+	return len(users), nil
+}
+
 // Scope phases for multi-scope discovery (webhooks, runners).
 const (
 	ScopeRepos  = "repos"
