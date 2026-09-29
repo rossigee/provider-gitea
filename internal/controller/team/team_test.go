@@ -19,15 +19,24 @@ package team
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"net/http/httptest"
+	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/crossplane/crossplane-runtime/v2/pkg/meta"
+	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
 	v2 "github.com/rossigee/provider-gitea/apis/team/v2"
+	v1beta1 "github.com/rossigee/provider-gitea/apis/v1beta1"
 	"github.com/rossigee/provider-gitea/internal/clients"
 	"github.com/rossigee/provider-gitea/internal/controller/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
 type mockTeamClient struct {
@@ -162,5 +171,161 @@ func TestDelete(t *testing.T) {
 		_, err := ec.Delete(context.Background(), cr)
 		require.NoError(t, err)
 		assert.True(t, deleted)
+	})
+}
+
+// teamListTestServer emulates GET /api/v1/user/orgs (paginated) and
+// GET /api/v1/orgs/{org}/teams for the given orgs and their team IDs.
+func teamListTestServer(t *testing.T, orgs map[string][]int64, orgStatus int) *httptest.Server {
+	t.Helper()
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.Equal(t, "token test-token", r.Header.Get("Authorization"))
+		w.Header().Set("Content-Type", "application/json")
+
+		if r.URL.Path == "/api/v1/user/orgs" {
+			if orgStatus != http.StatusOK {
+				w.WriteHeader(orgStatus)
+				return
+			}
+
+			page, _ := strconv.Atoi(r.URL.Query().Get("page"))
+			limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
+
+			names := make([]string, 0, len(orgs))
+			for n := range orgs {
+				names = append(names, n)
+			}
+
+			if page < 1 {
+				page = 1
+			}
+
+			start := (page - 1) * limit
+			if start > len(names) {
+				start = len(names)
+			}
+
+			end := start + limit
+			if end > len(names) {
+				end = len(names)
+			}
+
+			_, _ = fmt.Fprint(w, "[")
+
+			for i, n := range names[start:end] {
+				if i > 0 {
+					_, _ = fmt.Fprint(w, ",")
+				}
+
+				_, _ = fmt.Fprintf(w, `{"username":%q}`, n)
+			}
+
+			_, _ = fmt.Fprint(w, "]")
+
+			return
+		}
+
+		var org string
+
+		if strings.HasPrefix(r.URL.Path, "/api/v1/orgs/") && strings.HasSuffix(r.URL.Path, "/teams") {
+			org = strings.TrimSuffix(strings.TrimPrefix(r.URL.Path, "/api/v1/orgs/"), "/teams")
+		}
+
+		ids, ok := orgs[org]
+		if org == "" || !ok {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+
+		_, _ = fmt.Fprint(w, "[")
+
+		for i, id := range ids {
+			if i > 0 {
+				_, _ = fmt.Fprint(w, ",")
+			}
+
+			_, _ = fmt.Fprintf(w, `{"id":%d,"name":"team-%d"}`, id, id)
+		}
+
+		_, _ = fmt.Fprint(w, "]")
+	}))
+	t.Cleanup(srv.Close)
+
+	return srv
+}
+
+func teamListTestSetup(t *testing.T, baseURL string) (*externalClient, *v1beta1.ProviderConfig) {
+	t.Helper()
+
+	secret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{Namespace: "default", Name: "gitea-creds"},
+		Data:       map[string][]byte{"token": []byte("test-token")},
+	}
+
+	pc := &v1beta1.ProviderConfig{
+		ObjectMeta: metav1.ObjectMeta{Namespace: "default", Name: "test-pc"},
+		Spec: v1beta1.ProviderConfigSpec{
+			BaseURL: baseURL,
+			Credentials: v1beta1.ProviderCredentials{
+				Source: "Secret",
+				SecretRef: &v1beta1.SecretReference{
+					Namespace: "default",
+					Name:      "gitea-creds",
+					Key:       "token",
+				},
+			},
+		},
+	}
+
+	scheme := runtime.NewScheme()
+	require.NoError(t, corev1.AddToScheme(scheme))
+	require.NoError(t, v1beta1.AddToScheme(scheme))
+
+	kube := fake.NewClientBuilder().WithScheme(scheme).WithRuntimeObjects(secret).Build()
+
+	return &externalClient{client: &mockTeamClient{}, kube: kube}, pc
+}
+
+func TestList(t *testing.T) {
+	ctx := context.Background()
+
+	t.Run("rejects non-Gitea ProviderConfig", func(t *testing.T) {
+		ec := &externalClient{client: &mockTeamClient{}}
+
+		var pc resource.ProviderConfig
+
+		_, err := ec.List(ctx, pc, "")
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "not a Gitea ProviderConfig")
+	})
+
+	t.Run("rejects invalid page tokens", func(t *testing.T) {
+		ec := &externalClient{client: &mockTeamClient{}}
+		pc := &v1beta1.ProviderConfig{}
+
+		for _, token := range []string{"abc", "0"} {
+			_, err := ec.List(ctx, pc, token)
+			require.Error(t, err, "token %q", token)
+		}
+	})
+
+	t.Run("lists teams across organizations", func(t *testing.T) {
+		srv := teamListTestServer(t, map[string][]int64{"acme": {7, 3}, "globex": {42}}, http.StatusOK)
+		ec, pc := teamListTestSetup(t, srv.URL)
+
+		result, err := ec.List(ctx, pc, "")
+		require.NoError(t, err)
+		assert.ElementsMatch(t, []string{"7", "3", "42"}, result.ExternalNames)
+		assert.Empty(t, result.NextPageToken)
+	})
+
+	t.Run("returns organization listing errors", func(t *testing.T) {
+		srv := teamListTestServer(t, nil, http.StatusForbidden)
+		ec, pc := teamListTestSetup(t, srv.URL)
+
+		_, err := ec.List(ctx, pc, "")
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "failed to list organizations")
 	})
 }
