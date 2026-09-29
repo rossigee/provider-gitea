@@ -72,6 +72,32 @@ func (c *giteaClient) UpdateOrganization(ctx context.Context, name string, req *
 	return &organization, nil
 }
 
+// ListOrganizations lists organizations visible to the authenticated user.
+// Page is 1-based; limit caps results per page (Gitea allows at most 50).
+func (c *giteaClient) ListOrganizations(ctx context.Context, page, limit int) ([]Organization, error) {
+	if page < 1 {
+		page = 1
+	}
+
+	if limit < 1 || limit > 50 {
+		limit = 50
+	}
+
+	path := fmt.Sprintf("/user/orgs?page=%d&limit=%d", page, limit)
+
+	resp, err := c.doRequest(ctx, "GET", path, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var organizations []Organization
+	if err := handleResponse(resp, &organizations); err != nil {
+		return nil, err
+	}
+
+	return organizations, nil
+}
+
 // DeleteOrganization deletes an organization
 func (c *giteaClient) DeleteOrganization(ctx context.Context, name string) error {
 	path := fmt.Sprintf("/orgs/%s", name)

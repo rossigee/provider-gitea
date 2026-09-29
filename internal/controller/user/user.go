@@ -18,6 +18,7 @@ package user
 
 import (
 	"context"
+	"strconv"
 	"strings"
 
 	"github.com/crossplane/crossplane-runtime/v2/pkg/controller"
@@ -75,11 +76,64 @@ func (c *connector) Connect(ctx context.Context, mg resource.Managed) (managed.E
 		return nil, err
 	}
 
-	return &externalClient{client: conn}, nil
+	return &externalClient{client: conn, kube: c.kube}, nil
 }
 
 type externalClient struct {
 	client clients.Client
+	kube   client.Client
+}
+
+// Compile-time check that externalClient implements the discovery interface
+// consumed by Crossplane's resource-discovery controller (DiscoveryReport).
+var _ resource.ExternalLister = (*externalClient)(nil)
+
+// List enumerates external users for discovery (crossplane.io
+// ExternalLister). External names are usernames. Requires admin privileges.
+func (e *externalClient) List(ctx context.Context, pc resource.ProviderConfig, pageToken string) (resource.ExternalListResult, error) {
+	cfg, ok := pc.(*v1beta1.ProviderConfig)
+	if !ok {
+		return resource.ExternalListResult{}, errors.New("provider config is not a Gitea ProviderConfig")
+	}
+
+	page := 1
+
+	if pageToken != "" {
+		p, err := strconv.Atoi(pageToken)
+		if err != nil || p < 1 {
+			return resource.ExternalListResult{}, errors.Errorf("invalid page token %q: must be a positive page number", pageToken)
+		}
+
+		page = p
+	}
+
+	conn, err := clients.NewClient(ctx, cfg, e.kube)
+	if err != nil {
+		return resource.ExternalListResult{}, errors.Wrap(err, "failed to create Gitea client for discovery")
+	}
+
+	const pageSize = 50
+
+	users, err := conn.ListUsers(ctx, page, pageSize)
+	if err != nil {
+		return resource.ExternalListResult{}, errors.Wrap(err, "failed to list users")
+	}
+
+	result := resource.ExternalListResult{}
+
+	for _, u := range users {
+		if u.Username == "" {
+			continue
+		}
+
+		result.ExternalNames = append(result.ExternalNames, u.Username)
+	}
+
+	if len(users) == pageSize {
+		result.NextPageToken = strconv.Itoa(page + 1)
+	}
+
+	return result, nil
 }
 
 func (e *externalClient) Observe(ctx context.Context, mg resource.Managed) (managed.ExternalObservation, error) {

@@ -18,6 +18,7 @@ package organization
 
 import (
 	"context"
+	"strconv"
 	"strings"
 
 	"github.com/crossplane/crossplane-runtime/v2/pkg/controller"
@@ -80,13 +81,66 @@ func (c *connector) Connect(ctx context.Context, mg resource.Managed) (managed.E
 		return nil, err
 	}
 
-	return &externalClient{client: conn}, nil
+	return &externalClient{client: conn, kube: c.kube}, nil
 }
 
 // An ExternalClient observes, then either creates, updates, or deletes an
 // external resource to ensure it matches the managed resource's desired state.
 type externalClient struct {
 	client clients.Client
+	kube   client.Client
+}
+
+// Compile-time check that externalClient implements the discovery interface
+// consumed by Crossplane's resource-discovery controller (DiscoveryReport).
+var _ resource.ExternalLister = (*externalClient)(nil)
+
+// List enumerates external organizations for discovery (crossplane.io
+// ExternalLister). External names are organization names.
+func (e *externalClient) List(ctx context.Context, pc resource.ProviderConfig, pageToken string) (resource.ExternalListResult, error) {
+	cfg, ok := pc.(*v1beta1.ProviderConfig)
+	if !ok {
+		return resource.ExternalListResult{}, errors.New("provider config is not a Gitea ProviderConfig")
+	}
+
+	page := 1
+
+	if pageToken != "" {
+		p, err := strconv.Atoi(pageToken)
+		if err != nil || p < 1 {
+			return resource.ExternalListResult{}, errors.Errorf("invalid page token %q: must be a positive page number", pageToken)
+		}
+
+		page = p
+	}
+
+	conn, err := clients.NewClient(ctx, cfg, e.kube)
+	if err != nil {
+		return resource.ExternalListResult{}, errors.Wrap(err, "failed to create Gitea client for discovery")
+	}
+
+	const pageSize = 50
+
+	orgs, err := conn.ListOrganizations(ctx, page, pageSize)
+	if err != nil {
+		return resource.ExternalListResult{}, errors.Wrap(err, "failed to list organizations")
+	}
+
+	result := resource.ExternalListResult{}
+
+	for _, o := range orgs {
+		if o.Username == "" {
+			continue
+		}
+
+		result.ExternalNames = append(result.ExternalNames, o.Username)
+	}
+
+	if len(orgs) == pageSize {
+		result.NextPageToken = strconv.Itoa(page + 1)
+	}
+
+	return result, nil
 }
 
 func (e *externalClient) Observe(ctx context.Context, mg resource.Managed) (managed.ExternalObservation, error) {

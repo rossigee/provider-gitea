@@ -57,6 +57,9 @@ func (NoopClient) UpdateOrganization(ctx context.Context, name string, req *clie
 	return nil, nil
 }
 func (NoopClient) DeleteOrganization(ctx context.Context, name string) error { return nil }
+func (NoopClient) ListOrganizations(ctx context.Context, page, limit int) ([]clients.Organization, error) {
+	return nil, nil
+}
 
 // User
 func (NoopClient) GetUser(ctx context.Context, username string) (*clients.User, error) {
@@ -69,6 +72,9 @@ func (NoopClient) UpdateUser(ctx context.Context, username string, req *clients.
 	return nil, nil
 }
 func (NoopClient) DeleteUser(ctx context.Context, username string) error { return nil }
+func (NoopClient) ListUsers(ctx context.Context, page, limit int) ([]clients.User, error) {
+	return nil, nil
+}
 
 // Webhooks
 func (NoopClient) GetRepositoryWebhook(ctx context.Context, owner, repo string, id int64) (*clients.Webhook, error) {

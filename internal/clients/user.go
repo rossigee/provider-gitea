@@ -72,6 +72,32 @@ func (c *giteaClient) UpdateUser(ctx context.Context, username string, req *Upda
 	return &user, nil
 }
 
+// ListUsers lists users (admin only).
+// Page is 1-based; limit caps results per page (Gitea allows at most 50).
+func (c *giteaClient) ListUsers(ctx context.Context, page, limit int) ([]User, error) {
+	if page < 1 {
+		page = 1
+	}
+
+	if limit < 1 || limit > 50 {
+		limit = 50
+	}
+
+	path := fmt.Sprintf("/admin/users?page=%d&limit=%d", page, limit)
+
+	resp, err := c.doRequest(ctx, "GET", path, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var users []User
+	if err := handleResponse(resp, &users); err != nil {
+		return nil, err
+	}
+
+	return users, nil
+}
+
 // DeleteUser deletes a user (admin only)
 func (c *giteaClient) DeleteUser(ctx context.Context, username string) error {
 	path := fmt.Sprintf("/admin/users/%s", username)
