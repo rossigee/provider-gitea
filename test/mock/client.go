@@ -235,6 +235,14 @@ func (m *Client) DeleteDeployKey(ctx context.Context, owner, repo string, id int
 	return args.Error(0)
 }
 
+func (m *Client) ListDeployKeys(ctx context.Context, owner, repo string) ([]clients.DeployKey, error) {
+	args := m.Called(ctx, owner, repo)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]clients.DeployKey), args.Error(1)
+}
+
 // Deploy Token operations
 func (m *Client) CreateDeployToken(ctx context.Context, owner, repo string, req *clients.CreateDeployTokenRequest) (*clients.DeployToken, error) {
 	args := m.Called(ctx, owner, repo, req)
@@ -466,6 +474,14 @@ func (m *Client) DeleteBranchProtection(ctx context.Context, repository, branch 
 	return args.Error(0)
 }
 
+func (m *Client) ListBranchProtections(ctx context.Context, owner, repo string) ([]clients.BranchProtection, error) {
+	args := m.Called(ctx, owner, repo)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]clients.BranchProtection), args.Error(1)
+}
+
 // Repository Key operations
 func (m *Client) GetRepositoryKey(ctx context.Context, repository string, keyID int64) (*clients.RepositoryKey, error) {
 	args := m.Called(ctx, repository, keyID)
@@ -550,6 +566,14 @@ func (m *Client) DeleteRepositorySecret(ctx context.Context, repository, secretN
 	return args.Error(0)
 }
 
+func (m *Client) ListRepositorySecrets(ctx context.Context, owner, repo string) ([]clients.RepositorySecret, error) {
+	args := m.Called(ctx, owner, repo)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]clients.RepositorySecret), args.Error(1)
+}
+
 // User Key operations
 func (m *Client) GetUserKey(ctx context.Context, username string, keyID int64) (*clients.UserKey, error) {
 	args := m.Called(ctx, username, keyID)
@@ -610,6 +634,14 @@ func (m *Client) DeleteIssue(ctx context.Context, owner, repo string, number int
 	return args.Error(0)
 }
 
+func (m *Client) ListIssues(ctx context.Context, owner, repo string, page, limit int) ([]clients.Issue, error) {
+	args := m.Called(ctx, owner, repo, page, limit)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]clients.Issue), args.Error(1)
+}
+
 // PullRequest operations
 func (m *Client) GetPullRequest(ctx context.Context, owner, repo string, number int64) (*clients.PullRequest, error) {
 	args := m.Called(ctx, owner, repo, number)
@@ -638,6 +670,14 @@ func (m *Client) UpdatePullRequest(ctx context.Context, owner, repo string, numb
 func (m *Client) DeletePullRequest(ctx context.Context, owner, repo string, number int64) error {
 	args := m.Called(ctx, owner, repo, number)
 	return args.Error(0)
+}
+
+func (m *Client) ListPullRequests(ctx context.Context, owner, repo string, page, limit int) ([]clients.PullRequest, error) {
+	args := m.Called(ctx, owner, repo, page, limit)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]clients.PullRequest), args.Error(1)
 }
 
 func (m *Client) MergePullRequest(ctx context.Context, owner, repo string, number int64, req *clients.MergePullRequestOptions) (*clients.PullRequest, error) {
@@ -684,6 +724,14 @@ func (m *Client) UpdateRelease(ctx context.Context, owner, repo string, id int64
 func (m *Client) DeleteRelease(ctx context.Context, owner, repo string, id int64) error {
 	args := m.Called(ctx, owner, repo, id)
 	return args.Error(0)
+}
+
+func (m *Client) ListReleases(ctx context.Context, owner, repo string, page, limit int) ([]clients.Release, error) {
+	args := m.Called(ctx, owner, repo, page, limit)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]clients.Release), args.Error(1)
 }
 
 func (m *Client) CreateReleaseAttachment(ctx context.Context, owner, repo string, releaseID int64, filename, contentType string, content []byte) (*clients.ReleaseAttachment, error) {

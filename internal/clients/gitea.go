@@ -83,6 +83,7 @@ type Client interface {
 	GetDeployKey(ctx context.Context, owner, repo string, id int64) (*DeployKey, error)
 	CreateDeployKey(ctx context.Context, owner, repo string, req *CreateDeployKeyRequest) (*DeployKey, error)
 	DeleteDeployKey(ctx context.Context, owner, repo string, id int64) error
+	ListDeployKeys(ctx context.Context, owner, repo string) ([]DeployKey, error)
 
 	// Deploy Token operations
 	CreateDeployToken(ctx context.Context, owner, repo string, req *CreateDeployTokenRequest) (*DeployToken, error)
@@ -131,6 +132,7 @@ type Client interface {
 	CreateBranchProtection(ctx context.Context, repository, branch string, req *CreateBranchProtectionRequest) (*BranchProtection, error)
 	UpdateBranchProtection(ctx context.Context, repository, branch string, req *UpdateBranchProtectionRequest) (*BranchProtection, error)
 	DeleteBranchProtection(ctx context.Context, repository, branch string) error
+	ListBranchProtections(ctx context.Context, owner, repo string) ([]BranchProtection, error)
 
 	// Repository Key operations
 	GetRepositoryKey(ctx context.Context, repository string, keyID int64) (*RepositoryKey, error)
@@ -148,6 +150,7 @@ type Client interface {
 	GetRepositorySecret(ctx context.Context, repository, secretName string) (*RepositorySecret, error)
 	CreateRepositorySecret(ctx context.Context, repository, secretName string, req *CreateRepositorySecretRequest) error
 	UpdateRepositorySecret(ctx context.Context, repository, secretName string, req *UpdateRepositorySecretRequest) error
+	ListRepositorySecrets(ctx context.Context, owner, repo string) ([]RepositorySecret, error)
 	DeleteRepositorySecret(ctx context.Context, repository, secretName string) error
 
 	// User Key operations
@@ -161,6 +164,7 @@ type Client interface {
 	CreateIssue(ctx context.Context, owner, repo string, req *CreateIssueOptions) (*Issue, error)
 	UpdateIssue(ctx context.Context, owner, repo string, number int64, req *UpdateIssueOptions) (*Issue, error)
 	DeleteIssue(ctx context.Context, owner, repo string, number int64) error
+	ListIssues(ctx context.Context, owner, repo string, page, limit int) ([]Issue, error)
 
 	// PullRequest operations
 	GetPullRequest(ctx context.Context, owner, repo string, number int64) (*PullRequest, error)
@@ -168,6 +172,7 @@ type Client interface {
 	UpdatePullRequest(ctx context.Context, owner, repo string, number int64, req *UpdatePullRequestOptions) (*PullRequest, error)
 	DeletePullRequest(ctx context.Context, owner, repo string, number int64) error
 	MergePullRequest(ctx context.Context, owner, repo string, number int64, req *MergePullRequestOptions) (*PullRequest, error)
+	ListPullRequests(ctx context.Context, owner, repo string, page, limit int) ([]PullRequest, error)
 
 	// Release operations
 	GetRelease(ctx context.Context, owner, repo string, id int64) (*Release, error)
@@ -175,6 +180,7 @@ type Client interface {
 	CreateRelease(ctx context.Context, owner, repo string, req *CreateReleaseOptions) (*Release, error)
 	UpdateRelease(ctx context.Context, owner, repo string, id int64, req *UpdateReleaseOptions) (*Release, error)
 	DeleteRelease(ctx context.Context, owner, repo string, id int64) error
+	ListReleases(ctx context.Context, owner, repo string, page, limit int) ([]Release, error)
 	CreateReleaseAttachment(ctx context.Context, owner, repo string, releaseID int64, filename, contentType string, content []byte) (*ReleaseAttachment, error)
 	DeleteReleaseAttachment(ctx context.Context, owner, repo string, releaseID, attachmentID int64) error
 
