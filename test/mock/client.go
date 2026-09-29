@@ -108,6 +108,14 @@ func (m *Client) DeleteOrganization(ctx context.Context, name string) error {
 	return args.Error(0)
 }
 
+func (m *Client) ListOrganizations(ctx context.Context, page, limit int) ([]clients.Organization, error) {
+	args := m.Called(ctx, page, limit)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]clients.Organization), args.Error(1)
+}
+
 // User operations
 func (m *Client) GetUser(ctx context.Context, username string) (*clients.User, error) {
 	args := m.Called(ctx, username)
@@ -136,6 +144,14 @@ func (m *Client) UpdateUser(ctx context.Context, username string, req *clients.U
 func (m *Client) DeleteUser(ctx context.Context, username string) error {
 	args := m.Called(ctx, username)
 	return args.Error(0)
+}
+
+func (m *Client) ListUsers(ctx context.Context, page, limit int) ([]clients.User, error) {
+	args := m.Called(ctx, page, limit)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]clients.User), args.Error(1)
 }
 
 // Webhook operations

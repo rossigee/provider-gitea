@@ -60,12 +60,14 @@ type Client interface {
 	CreateOrganization(ctx context.Context, req *CreateOrganizationRequest) (*Organization, error)
 	UpdateOrganization(ctx context.Context, name string, req *UpdateOrganizationRequest) (*Organization, error)
 	DeleteOrganization(ctx context.Context, name string) error
+	ListOrganizations(ctx context.Context, page, limit int) ([]Organization, error)
 
 	// User operations
 	GetUser(ctx context.Context, username string) (*User, error)
 	CreateUser(ctx context.Context, req *CreateUserRequest) (*User, error)
 	UpdateUser(ctx context.Context, username string, req *UpdateUserRequest) (*User, error)
 	DeleteUser(ctx context.Context, username string) error
+	ListUsers(ctx context.Context, page, limit int) ([]User, error)
 
 	// Webhook operations
 	GetRepositoryWebhook(ctx context.Context, owner, repo string, id int64) (*Webhook, error)
