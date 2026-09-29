@@ -140,3 +140,88 @@ func (c *giteaClient) ListRepositorySecrets(ctx context.Context, owner, repo str
 
 	return secrets, nil
 }
+
+// ListActionWorkflows lists action workflows of a repository.
+func (c *giteaClient) ListActionWorkflows(ctx context.Context, owner, repo string) ([]Action, error) {
+	path := fmt.Sprintf("/repos/%s/%s/actions/workflows", owner, repo)
+
+	resp, err := c.doRequest(ctx, "GET", path, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var workflows []Action
+	if err := handleResponse(resp, &workflows); err != nil {
+		return nil, err
+	}
+
+	return workflows, nil
+}
+
+// ListRepositoryWebhooks lists webhooks of a repository.
+func (c *giteaClient) ListRepositoryWebhooks(ctx context.Context, owner, repo string) ([]Webhook, error) {
+	path := fmt.Sprintf("/repos/%s/%s/hooks", owner, repo)
+
+	resp, err := c.doRequest(ctx, "GET", path, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var hooks []Webhook
+	if err := handleResponse(resp, &hooks); err != nil {
+		return nil, err
+	}
+
+	return hooks, nil
+}
+
+// ListOrganizationWebhooks lists webhooks of an organization.
+func (c *giteaClient) ListOrganizationWebhooks(ctx context.Context, org string) ([]Webhook, error) {
+	path := fmt.Sprintf("/orgs/%s/hooks", org)
+
+	resp, err := c.doRequest(ctx, "GET", path, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var hooks []Webhook
+	if err := handleResponse(resp, &hooks); err != nil {
+		return nil, err
+	}
+
+	return hooks, nil
+}
+
+// RunnerList is the paged wrapper Gitea uses for runner listings.
+type RunnerList struct {
+	Runners []Runner `json:"runners"`
+}
+
+func listRunners(ctx context.Context, c *giteaClient, path string) ([]Runner, error) {
+	resp, err := c.doRequest(ctx, "GET", path, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var list RunnerList
+	if err := handleResponse(resp, &list); err != nil {
+		return nil, err
+	}
+
+	return list.Runners, nil
+}
+
+// ListRepositoryRunners lists runners of a repository.
+func (c *giteaClient) ListRepositoryRunners(ctx context.Context, owner, repo string) ([]Runner, error) {
+	return listRunners(ctx, c, fmt.Sprintf("/repos/%s/%s/actions/runners", owner, repo))
+}
+
+// ListOrganizationRunners lists runners of an organization.
+func (c *giteaClient) ListOrganizationRunners(ctx context.Context, org string) ([]Runner, error) {
+	return listRunners(ctx, c, fmt.Sprintf("/orgs/%s/actions/runners", org))
+}
+
+// ListSystemRunners lists instance-wide runners (admin only).
+func (c *giteaClient) ListSystemRunners(ctx context.Context) ([]Runner, error) {
+	return listRunners(ctx, c, "/admin/actions/runners")
+}

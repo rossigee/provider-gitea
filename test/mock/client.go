@@ -184,6 +184,14 @@ func (m *Client) DeleteRepositoryWebhook(ctx context.Context, owner, repo string
 	return args.Error(0)
 }
 
+func (m *Client) ListRepositoryWebhooks(ctx context.Context, owner, repo string) ([]clients.Webhook, error) {
+	args := m.Called(ctx, owner, repo)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]clients.Webhook), args.Error(1)
+}
+
 func (m *Client) GetOrganizationWebhook(ctx context.Context, org string, id int64) (*clients.Webhook, error) {
 	args := m.Called(ctx, org, id)
 	if args.Get(0) == nil {
@@ -211,6 +219,14 @@ func (m *Client) UpdateOrganizationWebhook(ctx context.Context, org string, id i
 func (m *Client) DeleteOrganizationWebhook(ctx context.Context, org string, id int64) error {
 	args := m.Called(ctx, org, id)
 	return args.Error(0)
+}
+
+func (m *Client) ListOrganizationWebhooks(ctx context.Context, org string) ([]clients.Webhook, error) {
+	args := m.Called(ctx, org)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]clients.Webhook), args.Error(1)
 }
 
 // Deploy Key operations
@@ -807,6 +823,14 @@ func (m *Client) DeleteAction(ctx context.Context, repository, workflowName stri
 	return args.Error(0)
 }
 
+func (m *Client) ListActionWorkflows(ctx context.Context, owner, repo string) ([]clients.Action, error) {
+	args := m.Called(ctx, owner, repo)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]clients.Action), args.Error(1)
+}
+
 func (m *Client) EnableAction(ctx context.Context, repository, workflowName string) error {
 	args := m.Called(ctx, repository, workflowName)
 	return args.Error(0)
@@ -845,6 +869,30 @@ func (m *Client) UpdateRunner(ctx context.Context, scope, scopeValue string, run
 func (m *Client) DeleteRunner(ctx context.Context, scope, scopeValue string, runnerID int64) error {
 	args := m.Called(ctx, scope, scopeValue, runnerID)
 	return args.Error(0)
+}
+
+func (m *Client) ListRepositoryRunners(ctx context.Context, owner, repo string) ([]clients.Runner, error) {
+	args := m.Called(ctx, owner, repo)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]clients.Runner), args.Error(1)
+}
+
+func (m *Client) ListOrganizationRunners(ctx context.Context, org string) ([]clients.Runner, error) {
+	args := m.Called(ctx, org)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]clients.Runner), args.Error(1)
+}
+
+func (m *Client) ListSystemRunners(ctx context.Context) ([]clients.Runner, error) {
+	args := m.Called(ctx)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]clients.Runner), args.Error(1)
 }
 
 // Admin User operations
