@@ -19,10 +19,13 @@ package githook
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"testing"
 
 	"github.com/crossplane/crossplane-runtime/v2/pkg/meta"
+	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
 	v2 "github.com/rossigee/provider-gitea/apis/githook/v2"
+	v1beta1 "github.com/rossigee/provider-gitea/apis/v1beta1"
 	"github.com/rossigee/provider-gitea/internal/clients"
 	"github.com/rossigee/provider-gitea/internal/controller/testutil"
 	"github.com/stretchr/testify/assert"
@@ -164,5 +167,63 @@ func TestDelete(t *testing.T) {
 		_, err := ec.Delete(context.Background(), cr)
 		require.NoError(t, err)
 		assert.True(t, deleted)
+	})
+}
+
+func TestList(t *testing.T) {
+	ctx := context.Background()
+
+	t.Run("rejects non-Gitea ProviderConfig", func(t *testing.T) {
+		ec := &externalClient{client: &mockGitHookClient{}}
+
+		var pc resource.ProviderConfig
+
+		_, err := ec.List(ctx, pc, "")
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "not a Gitea ProviderConfig")
+	})
+
+	t.Run("rejects invalid page tokens", func(t *testing.T) {
+		ec := &externalClient{client: &mockGitHookClient{}}
+		pc := &v1beta1.ProviderConfig{}
+
+		for _, token := range []string{"abc", "0"} {
+			_, err := ec.List(ctx, pc, token)
+			require.Error(t, err, "token %q", token)
+		}
+	})
+
+	t.Run("discovers configured hooks skipping missing", func(t *testing.T) {
+		srv := testutil.DiscoveryServer(t, []string{"acme/r1"},
+			func(w http.ResponseWriter, r *http.Request, owner, repo string) bool {
+				if r.URL.Path != "/api/v1/repos/acme/r1/hooks/git/pre-receive" {
+					w.WriteHeader(http.StatusNotFound)
+					return true
+				}
+
+				_, _ = fmt.Fprint(w, `{"type":"pre-receive"}`)
+				return true
+			})
+		kube, pc := testutil.DiscoveryKube(t, srv.URL)
+		ec := &externalClient{client: &mockGitHookClient{}, kube: kube}
+
+		result, err := ec.List(ctx, pc, "")
+		require.NoError(t, err)
+		assert.Equal(t, []string{"acme/r1/pre-receive"}, result.ExternalNames)
+		assert.Empty(t, result.NextPageToken)
+	})
+
+	t.Run("propagates unexpected hook errors", func(t *testing.T) {
+		srv := testutil.DiscoveryServer(t, []string{"acme/r1"},
+			func(w http.ResponseWriter, r *http.Request, owner, repo string) bool {
+				w.WriteHeader(http.StatusInternalServerError)
+				return true
+			})
+		kube, pc := testutil.DiscoveryKube(t, srv.URL)
+		ec := &externalClient{client: &mockGitHookClient{}, kube: kube}
+
+		_, err := ec.List(ctx, pc, "")
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "failed to get git hook")
 	})
 }

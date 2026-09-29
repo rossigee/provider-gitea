@@ -1,4 +1,4 @@
-package runner
+package webhook
 
 import (
 	"context"
@@ -18,7 +18,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
-func runnerTestServer(t *testing.T) *httptest.Server {
+func webhookTestServer(t *testing.T) *httptest.Server {
 	t.Helper()
 
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -30,12 +30,10 @@ func runnerTestServer(t *testing.T) *httptest.Server {
 			_, _ = fmt.Fprint(w, `[{"full_name":"acme/r1"}]`)
 		case "/api/v1/user/orgs":
 			_, _ = fmt.Fprint(w, `[{"username":"acme"}]`)
-		case "/api/v1/repos/acme/r1/actions/runners":
-			_, _ = fmt.Fprint(w, `{"runners":[{"id":1}]}`)
-		case "/api/v1/orgs/acme/actions/runners":
-			_, _ = fmt.Fprint(w, `{"runners":[{"id":2}]}`)
-		case "/api/v1/admin/actions/runners":
-			_, _ = fmt.Fprint(w, `{"runners":[{"id":3}]}`)
+		case "/api/v1/repos/acme/r1/hooks":
+			_, _ = fmt.Fprint(w, `[{"id":9}]`)
+		case "/api/v1/orgs/acme/hooks":
+			_, _ = fmt.Fprint(w, `[{"id":4}]`)
 		default:
 			w.WriteHeader(http.StatusNotFound)
 		}
@@ -45,7 +43,7 @@ func runnerTestServer(t *testing.T) *httptest.Server {
 	return srv
 }
 
-func runnerTestSetup(t *testing.T, baseURL string) (*externalClient, *v1beta1.ProviderConfig) {
+func webhookTestSetup(t *testing.T, baseURL string) (*externalClient, *v1beta1.ProviderConfig) {
 	t.Helper()
 
 	secret := &corev1.Secret{
@@ -100,23 +98,18 @@ func TestList(t *testing.T) {
 		}
 	})
 
-	t.Run("drains repos, orgs, then system", func(t *testing.T) {
-		srv := runnerTestServer(t)
-		ec, pc := runnerTestSetup(t, srv.URL)
+	t.Run("drains repos then orgs", func(t *testing.T) {
+		srv := webhookTestServer(t)
+		ec, pc := webhookTestSetup(t, srv.URL)
 
 		first, err := ec.List(ctx, pc, "")
 		require.NoError(t, err)
-		assert.Equal(t, []string{"repository/acme/r1/1"}, first.ExternalNames)
+		assert.Equal(t, []string{"acme/r1/9"}, first.ExternalNames)
 		assert.Equal(t, "orgs:1", first.NextPageToken)
 
 		second, err := ec.List(ctx, pc, first.NextPageToken)
 		require.NoError(t, err)
-		assert.Equal(t, []string{"organization/acme/2"}, second.ExternalNames)
-		assert.Equal(t, "system:1", second.NextPageToken)
-
-		third, err := ec.List(ctx, pc, second.NextPageToken)
-		require.NoError(t, err)
-		assert.Equal(t, []string{"system/3"}, third.ExternalNames)
-		assert.Empty(t, third.NextPageToken)
+		assert.Equal(t, []string{"acme/4"}, second.ExternalNames)
+		assert.Empty(t, second.NextPageToken)
 	})
 }

@@ -74,10 +74,12 @@ type Client interface {
 	CreateRepositoryWebhook(ctx context.Context, owner, repo string, req *CreateWebhookRequest) (*Webhook, error)
 	UpdateRepositoryWebhook(ctx context.Context, owner, repo string, id int64, req *UpdateWebhookRequest) (*Webhook, error)
 	DeleteRepositoryWebhook(ctx context.Context, owner, repo string, id int64) error
+	ListRepositoryWebhooks(ctx context.Context, owner, repo string) ([]Webhook, error)
 	GetOrganizationWebhook(ctx context.Context, org string, id int64) (*Webhook, error)
 	CreateOrganizationWebhook(ctx context.Context, org string, req *CreateWebhookRequest) (*Webhook, error)
 	UpdateOrganizationWebhook(ctx context.Context, org string, id int64, req *UpdateWebhookRequest) (*Webhook, error)
 	DeleteOrganizationWebhook(ctx context.Context, org string, id int64) error
+	ListOrganizationWebhooks(ctx context.Context, org string) ([]Webhook, error)
 
 	// Deploy Key operations
 	GetDeployKey(ctx context.Context, owner, repo string, id int64) (*DeployKey, error)
@@ -195,6 +197,7 @@ type Client interface {
 	CreateAction(ctx context.Context, repository string, req *CreateActionRequest) (*Action, error)
 	UpdateAction(ctx context.Context, repository, workflowName string, req *UpdateActionRequest) (*Action, error)
 	DeleteAction(ctx context.Context, repository, workflowName string) error
+	ListActionWorkflows(ctx context.Context, owner, repo string) ([]Action, error)
 	EnableAction(ctx context.Context, repository, workflowName string) error
 	DisableAction(ctx context.Context, repository, workflowName string) error
 
@@ -203,6 +206,9 @@ type Client interface {
 	CreateRunner(ctx context.Context, scope, scopeValue string, req *CreateRunnerRequest) (*Runner, error)
 	UpdateRunner(ctx context.Context, scope, scopeValue string, runnerID int64, req *UpdateRunnerRequest) (*Runner, error)
 	DeleteRunner(ctx context.Context, scope, scopeValue string, runnerID int64) error
+	ListRepositoryRunners(ctx context.Context, owner, repo string) ([]Runner, error)
+	ListOrganizationRunners(ctx context.Context, org string) ([]Runner, error)
+	ListSystemRunners(ctx context.Context) ([]Runner, error)
 
 	// Admin User operations
 	GetAdminUser(ctx context.Context, username string) (*AdminUser, error)

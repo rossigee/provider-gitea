@@ -23,6 +23,7 @@ package discovery
 import (
 	"context"
 	"strconv"
+	"strings"
 
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
 	"github.com/pkg/errors"
@@ -98,6 +99,67 @@ func ForEachRepository(ctx context.Context, conn clients.Client, page int, fn fu
 	}
 
 	return len(repos), nil
+}
+
+// ForEachOrganization pages the organization list once and invokes fn for
+// every organization with a usable name. It returns the number of
+// organizations on the page, for NextPageToken computation.
+func ForEachOrganization(ctx context.Context, conn clients.Client, page int, fn func(org string) error) (int, error) {
+	orgs, err := conn.ListOrganizations(ctx, page, PageSize)
+	if err != nil {
+		return 0, errors.Wrap(err, "failed to list organizations")
+	}
+
+	for _, o := range orgs {
+		if o.Username == "" {
+			continue
+		}
+
+		if err := fn(o.Username); err != nil {
+			return 0, err
+		}
+	}
+
+	return len(orgs), nil
+}
+
+// Scope phases for multi-scope discovery (webhooks, runners).
+const (
+	ScopeRepos  = "repos"
+	ScopeOrgs   = "orgs"
+	ScopeSystem = "system"
+)
+
+// ParseScopeToken parses "phase:page" tokens. Empty means the first phase at
+// page 1; callers supply the phase order. A bare page number addresses the
+// first phase (backwards compatible with single-phase tokens).
+func ParseScopeToken(token, firstPhase string) (phase string, page int, err error) {
+	if token == "" {
+		return firstPhase, 1, nil
+	}
+
+	if !strings.Contains(token, ":") {
+		page, err = ParsePageToken(token)
+		if err != nil {
+			return "", 0, err
+		}
+
+		return firstPhase, page, nil
+	}
+
+	parts := strings.SplitN(token, ":", 2)
+	page, err = ParsePageToken(parts[1])
+
+	if err != nil {
+		return "", 0, err
+	}
+
+	return parts[0], page, nil
+}
+
+// ScopeToken builds the token for the given phase and page.
+func ScopeToken(phase string, page int) string {
+	return phase + ":" + strconv.Itoa(page)
 }
 
 func splitFullName(full string) []string {

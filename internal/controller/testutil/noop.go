@@ -89,6 +89,10 @@ func (NoopClient) UpdateRepositoryWebhook(ctx context.Context, owner, repo strin
 func (NoopClient) DeleteRepositoryWebhook(ctx context.Context, owner, repo string, id int64) error {
 	return nil
 }
+
+func (NoopClient) ListRepositoryWebhooks(ctx context.Context, owner, repo string) ([]clients.Webhook, error) {
+	return nil, nil
+}
 func (NoopClient) GetOrganizationWebhook(ctx context.Context, org string, id int64) (*clients.Webhook, error) {
 	return nil, nil
 }
@@ -100,6 +104,10 @@ func (NoopClient) UpdateOrganizationWebhook(ctx context.Context, org string, id 
 }
 func (NoopClient) DeleteOrganizationWebhook(ctx context.Context, org string, id int64) error {
 	return nil
+}
+
+func (NoopClient) ListOrganizationWebhooks(ctx context.Context, org string) ([]clients.Webhook, error) {
+	return nil, nil
 }
 
 // Deploy keys
@@ -373,6 +381,10 @@ func (NoopClient) UpdateAction(ctx context.Context, repository, workflowName str
 func (NoopClient) DeleteAction(ctx context.Context, repository, workflowName string) error {
 	return nil
 }
+
+func (NoopClient) ListActionWorkflows(ctx context.Context, owner, repo string) ([]clients.Action, error) {
+	return nil, nil
+}
 func (NoopClient) EnableAction(ctx context.Context, repository, workflowName string) error {
 	return nil
 }
@@ -392,6 +404,18 @@ func (NoopClient) UpdateRunner(ctx context.Context, scope, scopeValue string, ru
 }
 func (NoopClient) DeleteRunner(ctx context.Context, scope, scopeValue string, runnerID int64) error {
 	return nil
+}
+
+func (NoopClient) ListRepositoryRunners(ctx context.Context, owner, repo string) ([]clients.Runner, error) {
+	return nil, nil
+}
+
+func (NoopClient) ListOrganizationRunners(ctx context.Context, org string) ([]clients.Runner, error) {
+	return nil, nil
+}
+
+func (NoopClient) ListSystemRunners(ctx context.Context) ([]clients.Runner, error) {
+	return nil, nil
 }
 
 // Repository Topics

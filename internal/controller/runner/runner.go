@@ -33,6 +33,7 @@ import (
 	v1beta1 "github.com/rossigee/provider-gitea/apis/v1beta1"
 
 	"github.com/rossigee/provider-gitea/internal/clients"
+	"github.com/rossigee/provider-gitea/internal/discovery"
 	"github.com/rossigee/provider-gitea/internal/tracing"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -81,14 +82,19 @@ func (c *connector) Connect(ctx context.Context, mg resource.Managed) (managed.E
 		return nil, err
 	}
 
-	return &externalClient{client: conn}, nil
+	return &externalClient{client: conn, kube: c.kube}, nil
 }
 
 // An ExternalClient observes, then either creates, updates, or deletes an
 // external resource to ensure it matches the managed resource's desired state.
 type externalClient struct {
 	client clients.Client
+	kube   client.Client
 }
+
+// Compile-time check that externalClient implements the discovery interface
+// consumed by Crossplane's resource-discovery controller (DiscoveryReport).
+var _ resource.ExternalLister = (*externalClient)(nil)
 
 // scopeValue returns the scope value string (empty for system scope).
 func scopeValue(cr *v2.Runner) string {
@@ -314,4 +320,91 @@ func Setup(mgr ctrl.Manager, o controller.Options) error {
 		Named(name).
 		For(&v2.Runner{}).
 		Complete(r)
+}
+
+// List enumerates external runners for discovery (crossplane.io
+// ExternalLister) across repository, organization, and system scopes.
+// Repository runners use repository/owner/repo/id names, organization runners
+// organization/org/id, system runners system/id. The page token is
+// "<phase>:<page>" with phases repos, orgs, system drained in order.
+func (e *externalClient) List(ctx context.Context, pc resource.ProviderConfig, pageToken string) (resource.ExternalListResult, error) {
+	conn, err := discovery.NewClient(ctx, e.kube, pc)
+	if err != nil {
+		return resource.ExternalListResult{}, err
+	}
+
+	phase, page, err := discovery.ParseScopeToken(pageToken, discovery.ScopeRepos)
+	if err != nil {
+		return resource.ExternalListResult{}, err
+	}
+
+	var names []string
+
+	result := resource.ExternalListResult{}
+
+	switch phase {
+	case discovery.ScopeRepos:
+		count, err := discovery.ForEachRepository(ctx, conn, page, func(owner, repo string) error {
+			runners, err := conn.ListRepositoryRunners(ctx, owner, repo)
+			if err != nil {
+				return errors.Wrapf(err, "failed to list runners for repository %s/%s", owner, repo)
+			}
+
+			for _, r := range runners {
+				names = append(names, fmt.Sprintf("repository/%s/%s/%d", owner, repo, r.ID))
+			}
+
+			return nil
+		})
+		if err != nil {
+			return resource.ExternalListResult{}, err
+		}
+
+		result.ExternalNames = names
+
+		if count == discovery.PageSize {
+			result.NextPageToken = discovery.ScopeToken(discovery.ScopeRepos, page+1)
+		} else {
+			result.NextPageToken = discovery.ScopeToken(discovery.ScopeOrgs, 1)
+		}
+	case discovery.ScopeOrgs:
+		count, err := discovery.ForEachOrganization(ctx, conn, page, func(org string) error {
+			runners, err := conn.ListOrganizationRunners(ctx, org)
+			if err != nil {
+				return errors.Wrapf(err, "failed to list runners for organization %q", org)
+			}
+
+			for _, r := range runners {
+				names = append(names, fmt.Sprintf("organization/%s/%d", org, r.ID))
+			}
+
+			return nil
+		})
+		if err != nil {
+			return resource.ExternalListResult{}, err
+		}
+
+		result.ExternalNames = names
+
+		if count == discovery.PageSize {
+			result.NextPageToken = discovery.ScopeToken(discovery.ScopeOrgs, page+1)
+		} else {
+			result.NextPageToken = discovery.ScopeToken(discovery.ScopeSystem, 1)
+		}
+	case discovery.ScopeSystem:
+		runners, err := conn.ListSystemRunners(ctx)
+		if err != nil {
+			return resource.ExternalListResult{}, errors.Wrap(err, "failed to list system runners")
+		}
+
+		for _, r := range runners {
+			names = append(names, fmt.Sprintf("system/%d", r.ID))
+		}
+
+		result.ExternalNames = names
+	default:
+		return resource.ExternalListResult{}, errors.Errorf("invalid discovery phase %q", phase)
+	}
+
+	return result, nil
 }
