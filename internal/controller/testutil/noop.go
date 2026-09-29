@@ -113,6 +113,10 @@ func (NoopClient) DeleteDeployKey(ctx context.Context, owner, repo string, id in
 	return nil
 }
 
+func (NoopClient) ListDeployKeys(ctx context.Context, owner, repo string) ([]clients.DeployKey, error) {
+	return nil, nil
+}
+
 // Deploy tokens
 func (NoopClient) CreateDeployToken(ctx context.Context, owner, repo string, req *clients.CreateDeployTokenRequest) (*clients.DeployToken, error) {
 	return nil, nil
@@ -219,6 +223,10 @@ func (NoopClient) DeleteBranchProtection(ctx context.Context, repository, branch
 	return nil
 }
 
+func (NoopClient) ListBranchProtections(ctx context.Context, owner, repo string) ([]clients.BranchProtection, error) {
+	return nil, nil
+}
+
 // Repo keys
 func (NoopClient) GetRepositoryKey(ctx context.Context, repository string, keyID int64) (*clients.RepositoryKey, error) {
 	return nil, nil
@@ -261,6 +269,10 @@ func (NoopClient) DeleteRepositorySecret(ctx context.Context, repository, secret
 	return nil
 }
 
+func (NoopClient) ListRepositorySecrets(ctx context.Context, owner, repo string) ([]clients.RepositorySecret, error) {
+	return nil, nil
+}
+
 // User keys
 func (NoopClient) GetUserKey(ctx context.Context, username string, keyID int64) (*clients.UserKey, error) {
 	return nil, nil
@@ -286,6 +298,10 @@ func (NoopClient) UpdateIssue(ctx context.Context, owner, repo string, number in
 func (NoopClient) DeleteIssue(ctx context.Context, owner, repo string, number int64) error {
 	return nil
 }
+
+func (NoopClient) ListIssues(ctx context.Context, owner, repo string, page, limit int) ([]clients.Issue, error) {
+	return nil, nil
+}
 func (NoopClient) GetPullRequest(ctx context.Context, owner, repo string, number int64) (*clients.PullRequest, error) {
 	return nil, nil
 }
@@ -297,6 +313,10 @@ func (NoopClient) UpdatePullRequest(ctx context.Context, owner, repo string, num
 }
 func (NoopClient) DeletePullRequest(ctx context.Context, owner, repo string, number int64) error {
 	return nil
+}
+
+func (NoopClient) ListPullRequests(ctx context.Context, owner, repo string, page, limit int) ([]clients.PullRequest, error) {
+	return nil, nil
 }
 func (NoopClient) MergePullRequest(ctx context.Context, owner, repo string, number int64, req *clients.MergePullRequestOptions) (*clients.PullRequest, error) {
 	return nil, nil
@@ -316,6 +336,9 @@ func (NoopClient) UpdateRelease(ctx context.Context, owner, repo string, id int6
 	return nil, nil
 }
 func (NoopClient) DeleteRelease(ctx context.Context, owner, repo string, id int64) error { return nil }
+func (NoopClient) ListReleases(ctx context.Context, owner, repo string, page, limit int) ([]clients.Release, error) {
+	return nil, nil
+}
 func (NoopClient) CreateReleaseAttachment(ctx context.Context, owner, repo string, releaseID int64, filename, contentType string, content []byte) (*clients.ReleaseAttachment, error) {
 	return nil, nil
 }
