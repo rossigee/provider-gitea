@@ -51,6 +51,7 @@ type Client interface {
 	CreateOrganizationRepository(ctx context.Context, org string, req *CreateRepositoryRequest) (*Repository, error)
 	UpdateRepository(ctx context.Context, owner, name string, req *UpdateRepositoryRequest) (*Repository, error)
 	DeleteRepository(ctx context.Context, owner, name string) error
+	ListRepositories(ctx context.Context, page, limit int) ([]Repository, error)
 	GetRepositoryTopics(ctx context.Context, owner, name string) (*RepositoryTopics, error)
 	UpdateRepositoryTopics(ctx context.Context, owner, name string, req *UpdateRepositoryTopicsRequest) error
 
