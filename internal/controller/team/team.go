@@ -83,13 +83,80 @@ func (c *connector) Connect(ctx context.Context, mg resource.Managed) (managed.E
 		return nil, err
 	}
 
-	return &externalClient{client: conn}, nil
+	return &externalClient{client: conn, kube: c.kube}, nil
 }
 
 // An ExternalClient observes, then either creates, updates, or deletes an
 // external resource to ensure it matches the managed resource's desired state.
 type externalClient struct {
 	client clients.Client
+	kube   client.Client
+}
+
+// Compile-time check that externalClient implements the discovery interface
+// consumed by Crossplane's resource-discovery controller (DiscoveryReport).
+var _ resource.ExternalLister = (*externalClient)(nil)
+
+// List enumerates external teams for discovery (crossplane.io
+// ExternalLister). Teams are org-scoped, so discovery is two-phase: page
+// through organizations, then list teams per organization. External names are
+// numeric team IDs, matching the external-name used by Observe. The page token
+// addresses the organization page.
+func (e *externalClient) List(ctx context.Context, pc resource.ProviderConfig, pageToken string) (resource.ExternalListResult, error) {
+	cfg, ok := pc.(*v1beta1.ProviderConfig)
+	if !ok {
+		return resource.ExternalListResult{}, errors.New("provider config is not a Gitea ProviderConfig")
+	}
+
+	orgPage := 1
+
+	if pageToken != "" {
+		p, err := strconv.Atoi(pageToken)
+		if err != nil || p < 1 {
+			return resource.ExternalListResult{}, errors.Errorf("invalid page token %q: must be a positive page number", pageToken)
+		}
+
+		orgPage = p
+	}
+
+	conn, err := clients.NewClient(ctx, cfg, e.kube)
+	if err != nil {
+		return resource.ExternalListResult{}, errors.Wrap(err, "failed to create Gitea client for discovery")
+	}
+
+	const pageSize = 50
+
+	orgs, err := conn.ListOrganizations(ctx, orgPage, pageSize)
+	if err != nil {
+		return resource.ExternalListResult{}, errors.Wrap(err, "failed to list organizations")
+	}
+
+	result := resource.ExternalListResult{}
+
+	for _, o := range orgs {
+		if o.Username == "" {
+			continue
+		}
+
+		teams, err := conn.ListOrganizationTeams(ctx, o.Username)
+		if err != nil {
+			return resource.ExternalListResult{}, errors.Wrapf(err, "failed to list teams for organization %q", o.Username)
+		}
+
+		for _, t := range teams {
+			if t == nil {
+				continue
+			}
+
+			result.ExternalNames = append(result.ExternalNames, strconv.FormatInt(t.ID, 10))
+		}
+	}
+
+	if len(orgs) == pageSize {
+		result.NextPageToken = strconv.Itoa(orgPage + 1)
+	}
+
+	return result, nil
 }
 
 // parseExternalName parses a numeric team id external name.

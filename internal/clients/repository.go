@@ -89,6 +89,32 @@ func (c *giteaClient) UpdateRepository(ctx context.Context, owner, name string, 
 	return &repository, nil
 }
 
+// ListRepositories lists repositories visible to the authenticated user.
+// Page is 1-based; limit caps results per page (Gitea allows at most 50).
+func (c *giteaClient) ListRepositories(ctx context.Context, page, limit int) ([]Repository, error) {
+	if page < 1 {
+		page = 1
+	}
+
+	if limit < 1 || limit > 50 {
+		limit = 50
+	}
+
+	path := fmt.Sprintf("/user/repos?page=%d&limit=%d", page, limit)
+
+	resp, err := c.doRequest(ctx, "GET", path, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var repositories []Repository
+	if err := handleResponse(resp, &repositories); err != nil {
+		return nil, err
+	}
+
+	return repositories, nil
+}
+
 // DeleteRepository deletes a repository
 func (c *giteaClient) DeleteRepository(ctx context.Context, owner, name string) error {
 	path := fmt.Sprintf("/repos/%s/%s", owner, name)

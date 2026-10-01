@@ -31,6 +31,7 @@ import (
 	v2 "github.com/rossigee/provider-gitea/apis/repositorykey/v2"
 
 	"github.com/rossigee/provider-gitea/internal/clients"
+	"github.com/rossigee/provider-gitea/internal/discovery"
 	"github.com/rossigee/provider-gitea/internal/tracing"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -75,11 +76,55 @@ func (c *connector) Connect(ctx context.Context, mg resource.Managed) (managed.E
 		return nil, err
 	}
 
-	return &externalClient{client: conn}, nil
+	return &externalClient{client: conn, kube: c.kube}, nil
 }
 
 type externalClient struct {
 	client clients.Client
+	kube   client.Client
+}
+
+// Compile-time check that externalClient implements the discovery interface
+// consumed by Crossplane's resource-discovery controller (DiscoveryReport).
+var _ resource.ExternalLister = (*externalClient)(nil)
+
+// List enumerates external repository keys for discovery (crossplane.io
+// ExternalLister). Keys share the repository keys endpoint. External names
+// are bare numeric IDs scoped by the spec repository, matching Observe.
+func (e *externalClient) List(ctx context.Context, pc resource.ProviderConfig, pageToken string) (resource.ExternalListResult, error) {
+	conn, err := discovery.NewClient(ctx, e.kube, pc)
+	if err != nil {
+		return resource.ExternalListResult{}, err
+	}
+
+	page, err := discovery.ParsePageToken(pageToken)
+	if err != nil {
+		return resource.ExternalListResult{}, err
+	}
+
+	var names []string
+
+	count, err := discovery.ForEachRepository(ctx, conn, page, func(owner, repo string) error {
+		keys, err := conn.ListDeployKeys(ctx, owner, repo)
+		if err != nil {
+			return errors.Wrapf(err, "failed to list repository keys for repository %s/%s", owner, repo)
+		}
+
+		for _, k := range keys {
+			names = append(names, strconv.FormatInt(k.ID, 10))
+		}
+
+		return nil
+	})
+	if err != nil {
+		return resource.ExternalListResult{}, err
+	}
+
+	return resource.ExternalListResult{
+		ExternalNames: names,
+		NextPageToken: discovery.NextPageToken(count, page),
+	}, nil
+
 }
 
 func (e *externalClient) Observe(ctx context.Context, mg resource.Managed) (managed.ExternalObservation, error) {

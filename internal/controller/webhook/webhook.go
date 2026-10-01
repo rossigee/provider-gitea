@@ -32,6 +32,7 @@ import (
 	"github.com/pkg/errors"
 	v2 "github.com/rossigee/provider-gitea/apis/webhook/v2"
 	"github.com/rossigee/provider-gitea/internal/clients"
+	"github.com/rossigee/provider-gitea/internal/discovery"
 	"github.com/rossigee/provider-gitea/internal/tracing"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -82,14 +83,19 @@ func (c *connector) Connect(ctx context.Context, mg resource.Managed) (managed.E
 		return nil, err
 	}
 
-	return &externalClient{client: conn}, nil
+	return &externalClient{client: conn, kube: c.kube}, nil
 }
 
 // An ExternalClient observes, then either creates, updates, or deletes an
 // external resource to ensure it matches the managed resource's desired state.
 type externalClient struct {
 	client clients.Client
+	kube   client.Client
 }
+
+// Compile-time check that externalClient implements the discovery interface
+// consumed by Crossplane's resource-discovery controller (DiscoveryReport).
+var _ resource.ExternalLister = (*externalClient)(nil)
 
 func (e *externalClient) Observe(ctx context.Context, mg resource.Managed) (managed.ExternalObservation, error) {
 	_, span := tracing.StartSpan(ctx, "webhook.observe",
@@ -359,4 +365,79 @@ func Setup(mgr ctrl.Manager, o controller.Options) error {
 		Named(name).
 		For(&v2.Webhook{}).
 		Complete(r)
+}
+
+// List enumerates external webhooks for discovery (crossplane.io
+// ExternalLister) across repository and organization scopes. Repository
+// webhooks use owner/repo/id names, organization webhooks owner/id. The page
+// token is "repos:<page>" or "orgs:<page>"; repository pages drain first,
+// then organization pages.
+func (e *externalClient) List(ctx context.Context, pc resource.ProviderConfig, pageToken string) (resource.ExternalListResult, error) {
+	conn, err := discovery.NewClient(ctx, e.kube, pc)
+	if err != nil {
+		return resource.ExternalListResult{}, err
+	}
+
+	phase, page, err := discovery.ParseScopeToken(pageToken, discovery.ScopeRepos)
+	if err != nil {
+		return resource.ExternalListResult{}, err
+	}
+
+	var names []string
+
+	result := resource.ExternalListResult{}
+
+	switch phase {
+	case discovery.ScopeRepos:
+		count, err := discovery.ForEachRepository(ctx, conn, page, func(owner, repo string) error {
+			hooks, err := conn.ListRepositoryWebhooks(ctx, owner, repo)
+			if err != nil {
+				return errors.Wrapf(err, "failed to list webhooks for repository %s/%s", owner, repo)
+			}
+
+			for _, h := range hooks {
+				names = append(names, fmt.Sprintf("%s/%s/%d", owner, repo, h.ID))
+			}
+
+			return nil
+		})
+		if err != nil {
+			return resource.ExternalListResult{}, err
+		}
+
+		result.ExternalNames = names
+
+		if count == discovery.PageSize {
+			result.NextPageToken = discovery.ScopeToken(discovery.ScopeRepos, page+1)
+		} else {
+			result.NextPageToken = discovery.ScopeToken(discovery.ScopeOrgs, 1)
+		}
+	case discovery.ScopeOrgs:
+		count, err := discovery.ForEachOrganization(ctx, conn, page, func(org string) error {
+			hooks, err := conn.ListOrganizationWebhooks(ctx, org)
+			if err != nil {
+				return errors.Wrapf(err, "failed to list webhooks for organization %q", org)
+			}
+
+			for _, h := range hooks {
+				names = append(names, fmt.Sprintf("%s/%d", org, h.ID))
+			}
+
+			return nil
+		})
+		if err != nil {
+			return resource.ExternalListResult{}, err
+		}
+
+		result.ExternalNames = names
+		result.NextPageToken = discovery.NextPageToken(count, page)
+
+		if result.NextPageToken != "" {
+			result.NextPageToken = discovery.ScopeToken(discovery.ScopeOrgs, page+1)
+		}
+	default:
+		return resource.ExternalListResult{}, errors.Errorf("invalid discovery phase %q", phase)
+	}
+
+	return result, nil
 }
