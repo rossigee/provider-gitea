@@ -76,11 +76,12 @@ func (c *connector) Connect(ctx context.Context, mg resource.Managed) (managed.E
 		return nil, err
 	}
 
-	return &externalClient{client: conn}, nil
+	return &externalClient{client: conn, kube: c.kube}, nil
 }
 
 type externalClient struct {
 	client clients.Client
+	kube   client.Client
 }
 
 func (e *externalClient) Observe(ctx context.Context, mg resource.Managed) (managed.ExternalObservation, error) {
