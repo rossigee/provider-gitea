@@ -38,10 +38,9 @@ type UserParameters struct {
 	// +optional
 	PasswordSecretRef *xpv1.SecretKeySelector `json:"passwordSecretRef,omitempty"`
 
-	// Password is the user's password in plain text.
-	//
-	// Deprecated: the password is stored in the managed resource and in Git
-	// manifests. Use PasswordSecretRef. Used only when PasswordSecretRef is unset.
+	// Password is the user's password in plain text. Avoid it: the password is
+	// stored in the managed resource and in Git manifests. Use PasswordSecretRef
+	// instead. Used only when PasswordSecretRef is unset.
 	// +optional
 	Password string `json:"password,omitempty"`
 
