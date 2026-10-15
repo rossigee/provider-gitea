@@ -18,7 +18,7 @@ GO_LDFLAGS += -X $(GO_PROJECT)/internal/version.Version=$(VERSION)
 GO_SUBDIRS += cmd internal apis
 GO111MODULE = on
 # Override golangci-lint version for modern Go support
-GOLANGCILINT_VERSION ?= 2.13.2
+GOLANGCILINT_VERSION ?= 2.14.0
 -include build/makelib/golang.mk
 
 # Setup Kubernetes tools
