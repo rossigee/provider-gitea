@@ -42,6 +42,9 @@ func (NoopClient) UpdateRepository(ctx context.Context, owner, name string, req 
 	return nil, nil
 }
 func (NoopClient) DeleteRepository(ctx context.Context, owner, name string) error { return nil }
+func (NoopClient) ListRepositories(ctx context.Context, page, limit int) ([]clients.Repository, error) {
+	return nil, nil
+}
 
 // Organization
 func (NoopClient) GetOrganization(ctx context.Context, name string) (*clients.Organization, error) {
@@ -54,6 +57,9 @@ func (NoopClient) UpdateOrganization(ctx context.Context, name string, req *clie
 	return nil, nil
 }
 func (NoopClient) DeleteOrganization(ctx context.Context, name string) error { return nil }
+func (NoopClient) ListOrganizations(ctx context.Context, page, limit int) ([]clients.Organization, error) {
+	return nil, nil
+}
 
 // User
 func (NoopClient) GetUser(ctx context.Context, username string) (*clients.User, error) {
@@ -66,6 +72,9 @@ func (NoopClient) UpdateUser(ctx context.Context, username string, req *clients.
 	return nil, nil
 }
 func (NoopClient) DeleteUser(ctx context.Context, username string) error { return nil }
+func (NoopClient) ListUsers(ctx context.Context, page, limit int) ([]clients.User, error) {
+	return nil, nil
+}
 
 // Webhooks
 func (NoopClient) GetRepositoryWebhook(ctx context.Context, owner, repo string, id int64) (*clients.Webhook, error) {
@@ -80,6 +89,10 @@ func (NoopClient) UpdateRepositoryWebhook(ctx context.Context, owner, repo strin
 func (NoopClient) DeleteRepositoryWebhook(ctx context.Context, owner, repo string, id int64) error {
 	return nil
 }
+
+func (NoopClient) ListRepositoryWebhooks(ctx context.Context, owner, repo string) ([]clients.Webhook, error) {
+	return nil, nil
+}
 func (NoopClient) GetOrganizationWebhook(ctx context.Context, org string, id int64) (*clients.Webhook, error) {
 	return nil, nil
 }
@@ -93,6 +106,10 @@ func (NoopClient) DeleteOrganizationWebhook(ctx context.Context, org string, id 
 	return nil
 }
 
+func (NoopClient) ListOrganizationWebhooks(ctx context.Context, org string) ([]clients.Webhook, error) {
+	return nil, nil
+}
+
 // Deploy keys
 func (NoopClient) GetDeployKey(ctx context.Context, owner, repo string, id int64) (*clients.DeployKey, error) {
 	return nil, nil
@@ -102,6 +119,10 @@ func (NoopClient) CreateDeployKey(ctx context.Context, owner, repo string, req *
 }
 func (NoopClient) DeleteDeployKey(ctx context.Context, owner, repo string, id int64) error {
 	return nil
+}
+
+func (NoopClient) ListDeployKeys(ctx context.Context, owner, repo string) ([]clients.DeployKey, error) {
+	return nil, nil
 }
 
 // Deploy tokens
@@ -127,6 +148,10 @@ func (NoopClient) UpdateOrganizationSecret(ctx context.Context, org, secretName 
 }
 func (NoopClient) DeleteOrganizationSecret(ctx context.Context, org, secretName string) error {
 	return nil
+}
+
+func (NoopClient) ListOrganizationSecrets(ctx context.Context, org string) ([]clients.OrganizationSecret, error) {
+	return nil, nil
 }
 
 // Teams
@@ -210,6 +235,10 @@ func (NoopClient) DeleteBranchProtection(ctx context.Context, repository, branch
 	return nil
 }
 
+func (NoopClient) ListBranchProtections(ctx context.Context, owner, repo string) ([]clients.BranchProtection, error) {
+	return nil, nil
+}
+
 // Repo keys
 func (NoopClient) GetRepositoryKey(ctx context.Context, repository string, keyID int64) (*clients.RepositoryKey, error) {
 	return nil, nil
@@ -238,6 +267,10 @@ func (NoopClient) DeleteAccessToken(ctx context.Context, username string, tokenI
 	return nil
 }
 
+func (NoopClient) ListUserTokens(ctx context.Context, username string) ([]clients.AccessToken, error) {
+	return nil, nil
+}
+
 // Repo secrets
 func (NoopClient) GetRepositorySecret(ctx context.Context, repository, secretName string) (*clients.RepositorySecret, error) {
 	return nil, nil
@@ -252,6 +285,10 @@ func (NoopClient) DeleteRepositorySecret(ctx context.Context, repository, secret
 	return nil
 }
 
+func (NoopClient) ListRepositorySecrets(ctx context.Context, owner, repo string) ([]clients.RepositorySecret, error) {
+	return nil, nil
+}
+
 // User keys
 func (NoopClient) GetUserKey(ctx context.Context, username string, keyID int64) (*clients.UserKey, error) {
 	return nil, nil
@@ -263,6 +300,9 @@ func (NoopClient) UpdateUserKey(ctx context.Context, username string, keyID int6
 	return nil, nil
 }
 func (NoopClient) DeleteUserKey(ctx context.Context, username string, keyID int64) error { return nil }
+func (NoopClient) ListUserKeys(ctx context.Context, username string) ([]clients.UserKey, error) {
+	return nil, nil
+}
 
 // Issues / PRs
 func (NoopClient) GetIssue(ctx context.Context, owner, repo string, number int64) (*clients.Issue, error) {
@@ -277,6 +317,10 @@ func (NoopClient) UpdateIssue(ctx context.Context, owner, repo string, number in
 func (NoopClient) DeleteIssue(ctx context.Context, owner, repo string, number int64) error {
 	return nil
 }
+
+func (NoopClient) ListIssues(ctx context.Context, owner, repo string, page, limit int) ([]clients.Issue, error) {
+	return nil, nil
+}
 func (NoopClient) GetPullRequest(ctx context.Context, owner, repo string, number int64) (*clients.PullRequest, error) {
 	return nil, nil
 }
@@ -288,6 +332,10 @@ func (NoopClient) UpdatePullRequest(ctx context.Context, owner, repo string, num
 }
 func (NoopClient) DeletePullRequest(ctx context.Context, owner, repo string, number int64) error {
 	return nil
+}
+
+func (NoopClient) ListPullRequests(ctx context.Context, owner, repo string, page, limit int) ([]clients.PullRequest, error) {
+	return nil, nil
 }
 func (NoopClient) MergePullRequest(ctx context.Context, owner, repo string, number int64, req *clients.MergePullRequestOptions) (*clients.PullRequest, error) {
 	return nil, nil
@@ -307,6 +355,9 @@ func (NoopClient) UpdateRelease(ctx context.Context, owner, repo string, id int6
 	return nil, nil
 }
 func (NoopClient) DeleteRelease(ctx context.Context, owner, repo string, id int64) error { return nil }
+func (NoopClient) ListReleases(ctx context.Context, owner, repo string, page, limit int) ([]clients.Release, error) {
+	return nil, nil
+}
 func (NoopClient) CreateReleaseAttachment(ctx context.Context, owner, repo string, releaseID int64, filename, contentType string, content []byte) (*clients.ReleaseAttachment, error) {
 	return nil, nil
 }
@@ -328,6 +379,10 @@ func (NoopClient) RemoveOrganizationMember(ctx context.Context, org, username st
 	return nil
 }
 
+func (NoopClient) ListOrganizationMembers(ctx context.Context, org string) ([]clients.OrganizationMember, error) {
+	return nil, nil
+}
+
 // Actions
 func (NoopClient) GetAction(ctx context.Context, repository, workflowName string) (*clients.Action, error) {
 	return nil, nil
@@ -340,6 +395,10 @@ func (NoopClient) UpdateAction(ctx context.Context, repository, workflowName str
 }
 func (NoopClient) DeleteAction(ctx context.Context, repository, workflowName string) error {
 	return nil
+}
+
+func (NoopClient) ListActionWorkflows(ctx context.Context, owner, repo string) ([]clients.Action, error) {
+	return nil, nil
 }
 func (NoopClient) EnableAction(ctx context.Context, repository, workflowName string) error {
 	return nil
@@ -360,6 +419,18 @@ func (NoopClient) UpdateRunner(ctx context.Context, scope, scopeValue string, ru
 }
 func (NoopClient) DeleteRunner(ctx context.Context, scope, scopeValue string, runnerID int64) error {
 	return nil
+}
+
+func (NoopClient) ListRepositoryRunners(ctx context.Context, owner, repo string) ([]clients.Runner, error) {
+	return nil, nil
+}
+
+func (NoopClient) ListOrganizationRunners(ctx context.Context, org string) ([]clients.Runner, error) {
+	return nil, nil
+}
+
+func (NoopClient) ListSystemRunners(ctx context.Context) ([]clients.Runner, error) {
+	return nil, nil
 }
 
 // Repository Topics

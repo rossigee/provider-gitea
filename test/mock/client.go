@@ -70,6 +70,14 @@ func (m *Client) DeleteRepository(ctx context.Context, owner, name string) error
 	return args.Error(0)
 }
 
+func (m *Client) ListRepositories(ctx context.Context, page, limit int) ([]clients.Repository, error) {
+	args := m.Called(ctx, page, limit)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]clients.Repository), args.Error(1)
+}
+
 // Organization operations
 func (m *Client) GetOrganization(ctx context.Context, name string) (*clients.Organization, error) {
 	args := m.Called(ctx, name)
@@ -98,6 +106,14 @@ func (m *Client) UpdateOrganization(ctx context.Context, name string, req *clien
 func (m *Client) DeleteOrganization(ctx context.Context, name string) error {
 	args := m.Called(ctx, name)
 	return args.Error(0)
+}
+
+func (m *Client) ListOrganizations(ctx context.Context, page, limit int) ([]clients.Organization, error) {
+	args := m.Called(ctx, page, limit)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]clients.Organization), args.Error(1)
 }
 
 // User operations
@@ -130,6 +146,14 @@ func (m *Client) DeleteUser(ctx context.Context, username string) error {
 	return args.Error(0)
 }
 
+func (m *Client) ListUsers(ctx context.Context, page, limit int) ([]clients.User, error) {
+	args := m.Called(ctx, page, limit)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]clients.User), args.Error(1)
+}
+
 // Webhook operations
 func (m *Client) GetRepositoryWebhook(ctx context.Context, owner, repo string, id int64) (*clients.Webhook, error) {
 	args := m.Called(ctx, owner, repo, id)
@@ -158,6 +182,14 @@ func (m *Client) UpdateRepositoryWebhook(ctx context.Context, owner, repo string
 func (m *Client) DeleteRepositoryWebhook(ctx context.Context, owner, repo string, id int64) error {
 	args := m.Called(ctx, owner, repo, id)
 	return args.Error(0)
+}
+
+func (m *Client) ListRepositoryWebhooks(ctx context.Context, owner, repo string) ([]clients.Webhook, error) {
+	args := m.Called(ctx, owner, repo)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]clients.Webhook), args.Error(1)
 }
 
 func (m *Client) GetOrganizationWebhook(ctx context.Context, org string, id int64) (*clients.Webhook, error) {
@@ -189,6 +221,14 @@ func (m *Client) DeleteOrganizationWebhook(ctx context.Context, org string, id i
 	return args.Error(0)
 }
 
+func (m *Client) ListOrganizationWebhooks(ctx context.Context, org string) ([]clients.Webhook, error) {
+	args := m.Called(ctx, org)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]clients.Webhook), args.Error(1)
+}
+
 // Deploy Key operations
 func (m *Client) GetDeployKey(ctx context.Context, owner, repo string, id int64) (*clients.DeployKey, error) {
 	args := m.Called(ctx, owner, repo, id)
@@ -209,6 +249,14 @@ func (m *Client) CreateDeployKey(ctx context.Context, owner, repo string, req *c
 func (m *Client) DeleteDeployKey(ctx context.Context, owner, repo string, id int64) error {
 	args := m.Called(ctx, owner, repo, id)
 	return args.Error(0)
+}
+
+func (m *Client) ListDeployKeys(ctx context.Context, owner, repo string) ([]clients.DeployKey, error) {
+	args := m.Called(ctx, owner, repo)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]clients.DeployKey), args.Error(1)
 }
 
 // Deploy Token operations
@@ -255,6 +303,14 @@ func (m *Client) UpdateOrganizationSecret(ctx context.Context, org, secretName s
 func (m *Client) DeleteOrganizationSecret(ctx context.Context, org, secretName string) error {
 	args := m.Called(ctx, org, secretName)
 	return args.Error(0)
+}
+
+func (m *Client) ListOrganizationSecrets(ctx context.Context, org string) ([]clients.OrganizationSecret, error) {
+	args := m.Called(ctx, org)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]clients.OrganizationSecret), args.Error(1)
 }
 
 // Team operations
@@ -442,6 +498,14 @@ func (m *Client) DeleteBranchProtection(ctx context.Context, repository, branch 
 	return args.Error(0)
 }
 
+func (m *Client) ListBranchProtections(ctx context.Context, owner, repo string) ([]clients.BranchProtection, error) {
+	args := m.Called(ctx, owner, repo)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]clients.BranchProtection), args.Error(1)
+}
+
 // Repository Key operations
 func (m *Client) GetRepositoryKey(ctx context.Context, repository string, keyID int64) (*clients.RepositoryKey, error) {
 	args := m.Called(ctx, repository, keyID)
@@ -502,6 +566,14 @@ func (m *Client) DeleteAccessToken(ctx context.Context, username string, tokenID
 	return args.Error(0)
 }
 
+func (m *Client) ListUserTokens(ctx context.Context, username string) ([]clients.AccessToken, error) {
+	args := m.Called(ctx, username)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]clients.AccessToken), args.Error(1)
+}
+
 // Repository Secret operations
 func (m *Client) GetRepositorySecret(ctx context.Context, repository, secretName string) (*clients.RepositorySecret, error) {
 	args := m.Called(ctx, repository, secretName)
@@ -524,6 +596,14 @@ func (m *Client) UpdateRepositorySecret(ctx context.Context, repository, secretN
 func (m *Client) DeleteRepositorySecret(ctx context.Context, repository, secretName string) error {
 	args := m.Called(ctx, repository, secretName)
 	return args.Error(0)
+}
+
+func (m *Client) ListRepositorySecrets(ctx context.Context, owner, repo string) ([]clients.RepositorySecret, error) {
+	args := m.Called(ctx, owner, repo)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]clients.RepositorySecret), args.Error(1)
 }
 
 // User Key operations
@@ -556,6 +636,14 @@ func (m *Client) DeleteUserKey(ctx context.Context, username string, keyID int64
 	return args.Error(0)
 }
 
+func (m *Client) ListUserKeys(ctx context.Context, username string) ([]clients.UserKey, error) {
+	args := m.Called(ctx, username)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]clients.UserKey), args.Error(1)
+}
+
 // Issue operations
 func (m *Client) GetIssue(ctx context.Context, owner, repo string, number int64) (*clients.Issue, error) {
 	args := m.Called(ctx, owner, repo, number)
@@ -586,6 +674,14 @@ func (m *Client) DeleteIssue(ctx context.Context, owner, repo string, number int
 	return args.Error(0)
 }
 
+func (m *Client) ListIssues(ctx context.Context, owner, repo string, page, limit int) ([]clients.Issue, error) {
+	args := m.Called(ctx, owner, repo, page, limit)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]clients.Issue), args.Error(1)
+}
+
 // PullRequest operations
 func (m *Client) GetPullRequest(ctx context.Context, owner, repo string, number int64) (*clients.PullRequest, error) {
 	args := m.Called(ctx, owner, repo, number)
@@ -614,6 +710,14 @@ func (m *Client) UpdatePullRequest(ctx context.Context, owner, repo string, numb
 func (m *Client) DeletePullRequest(ctx context.Context, owner, repo string, number int64) error {
 	args := m.Called(ctx, owner, repo, number)
 	return args.Error(0)
+}
+
+func (m *Client) ListPullRequests(ctx context.Context, owner, repo string, page, limit int) ([]clients.PullRequest, error) {
+	args := m.Called(ctx, owner, repo, page, limit)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]clients.PullRequest), args.Error(1)
 }
 
 func (m *Client) MergePullRequest(ctx context.Context, owner, repo string, number int64, req *clients.MergePullRequestOptions) (*clients.PullRequest, error) {
@@ -662,6 +766,14 @@ func (m *Client) DeleteRelease(ctx context.Context, owner, repo string, id int64
 	return args.Error(0)
 }
 
+func (m *Client) ListReleases(ctx context.Context, owner, repo string, page, limit int) ([]clients.Release, error) {
+	args := m.Called(ctx, owner, repo, page, limit)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]clients.Release), args.Error(1)
+}
+
 func (m *Client) CreateReleaseAttachment(ctx context.Context, owner, repo string, releaseID int64, filename, contentType string, content []byte) (*clients.ReleaseAttachment, error) {
 	args := m.Called(ctx, owner, repo, releaseID, filename, contentType, content)
 	if args.Get(0) == nil {
@@ -705,6 +817,14 @@ func (m *Client) RemoveOrganizationMember(ctx context.Context, org, username str
 	return args.Error(0)
 }
 
+func (m *Client) ListOrganizationMembers(ctx context.Context, org string) ([]clients.OrganizationMember, error) {
+	args := m.Called(ctx, org)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]clients.OrganizationMember), args.Error(1)
+}
+
 // Action operations
 func (m *Client) GetAction(ctx context.Context, repository, workflowName string) (*clients.Action, error) {
 	args := m.Called(ctx, repository, workflowName)
@@ -733,6 +853,14 @@ func (m *Client) UpdateAction(ctx context.Context, repository, workflowName stri
 func (m *Client) DeleteAction(ctx context.Context, repository, workflowName string) error {
 	args := m.Called(ctx, repository, workflowName)
 	return args.Error(0)
+}
+
+func (m *Client) ListActionWorkflows(ctx context.Context, owner, repo string) ([]clients.Action, error) {
+	args := m.Called(ctx, owner, repo)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]clients.Action), args.Error(1)
 }
 
 func (m *Client) EnableAction(ctx context.Context, repository, workflowName string) error {
@@ -773,6 +901,30 @@ func (m *Client) UpdateRunner(ctx context.Context, scope, scopeValue string, run
 func (m *Client) DeleteRunner(ctx context.Context, scope, scopeValue string, runnerID int64) error {
 	args := m.Called(ctx, scope, scopeValue, runnerID)
 	return args.Error(0)
+}
+
+func (m *Client) ListRepositoryRunners(ctx context.Context, owner, repo string) ([]clients.Runner, error) {
+	args := m.Called(ctx, owner, repo)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]clients.Runner), args.Error(1)
+}
+
+func (m *Client) ListOrganizationRunners(ctx context.Context, org string) ([]clients.Runner, error) {
+	args := m.Called(ctx, org)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]clients.Runner), args.Error(1)
+}
+
+func (m *Client) ListSystemRunners(ctx context.Context) ([]clients.Runner, error) {
+	args := m.Called(ctx)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]clients.Runner), args.Error(1)
 }
 
 // Admin User operations

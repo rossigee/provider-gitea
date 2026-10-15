@@ -34,6 +34,7 @@ import (
 	v1beta1 "github.com/rossigee/provider-gitea/apis/v1beta1"
 
 	"github.com/rossigee/provider-gitea/internal/clients"
+	"github.com/rossigee/provider-gitea/internal/discovery"
 	"github.com/rossigee/provider-gitea/internal/tracing"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -82,13 +83,67 @@ func (c *connector) Connect(ctx context.Context, mg resource.Managed) (managed.E
 		return nil, err
 	}
 
-	return &externalClient{client: conn}, nil
+	return &externalClient{client: conn, kube: c.kube}, nil
 }
 
 // An ExternalClient observes, then either creates, updates, or deletes an
 // external resource to ensure it matches the managed resource's desired state.
 type externalClient struct {
 	client clients.Client
+	kube   client.Client
+}
+
+// Compile-time check that externalClient implements the discovery interface
+// consumed by Crossplane's resource-discovery controller (DiscoveryReport).
+var _ resource.ExternalLister = (*externalClient)(nil)
+
+// gitHookTypes are probed per repository; Gitea exposes no list endpoint.
+// List enumerates external git hooks for discovery (crossplane.io
+// ExternalLister). External names are owner/name/hooktype.
+var gitHookTypes = []string{"pre-receive", "update", "post-receive", "pre-push", "post-update"}
+
+// List enumerates external git hooks for discovery.
+func (e *externalClient) List(ctx context.Context, pc resource.ProviderConfig, pageToken string) (resource.ExternalListResult, error) {
+	conn, err := discovery.NewClient(ctx, e.kube, pc)
+	if err != nil {
+		return resource.ExternalListResult{}, err
+	}
+
+	// NOTE: doc above declares gitHookTypes; List follows.
+	page, err := discovery.ParsePageToken(pageToken)
+	if err != nil {
+		return resource.ExternalListResult{}, err
+	}
+
+	var names []string
+
+	count, err := discovery.ForEachRepository(ctx, conn, page, func(owner, repo string) error {
+		repoFull := fmt.Sprintf("%s/%s", owner, repo)
+
+		for _, hookType := range gitHookTypes {
+			_, err := conn.GetGitHook(ctx, repoFull, hookType)
+			if err != nil {
+				if strings.Contains(err.Error(), "not found") {
+					continue
+				}
+
+				return errors.Wrapf(err, "failed to get git hook %s for repository %s", hookType, repoFull)
+			}
+
+			names = append(names, fmt.Sprintf("%s/%s", repoFull, hookType))
+		}
+
+		return nil
+	})
+	if err != nil {
+		return resource.ExternalListResult{}, err
+	}
+
+	return resource.ExternalListResult{
+		ExternalNames: names,
+		NextPageToken: discovery.NextPageToken(count, page),
+	}, nil
+
 }
 
 // contentHash returns a stable hash of hook content for drift detection.

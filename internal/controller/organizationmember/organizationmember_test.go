@@ -19,10 +19,13 @@ package organizationmember
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"testing"
 
 	"github.com/crossplane/crossplane-runtime/v2/pkg/meta"
+	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
 	v2 "github.com/rossigee/provider-gitea/apis/organizationmember/v2"
+	v1beta1 "github.com/rossigee/provider-gitea/apis/v1beta1"
 	"github.com/rossigee/provider-gitea/internal/clients"
 	"github.com/rossigee/provider-gitea/internal/controller/testutil"
 	"github.com/stretchr/testify/assert"
@@ -166,4 +169,58 @@ func TestDelete(t *testing.T) {
 		require.NoError(t, err)
 		assert.True(t, removed)
 	})
+}
+
+func TestList(t *testing.T) {
+	ctx := context.Background()
+
+	t.Run("rejects non-Gitea ProviderConfig", func(t *testing.T) {
+		ec := &externalClient{client: &mockMemberClient{}}
+
+		var pc resource.ProviderConfig
+
+		_, err := ec.List(ctx, pc, "")
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "not a Gitea ProviderConfig")
+	})
+
+	t.Run("rejects invalid page tokens", func(t *testing.T) {
+		ec := &externalClient{client: &mockMemberClient{}}
+		pc := &v1beta1.ProviderConfig{}
+
+		for _, token := range []string{"abc", "0"} {
+			_, err := ec.List(ctx, pc, token)
+			require.Error(t, err, "token %q", token)
+		}
+	})
+
+	t.Run("discovers names across organizations", func(t *testing.T) {
+		srv := testutil.OrgDiscoveryServer(t, []string{"acme"},
+			func(w http.ResponseWriter, r *http.Request, org string) bool {
+				_, _ = fmt.Fprint(w, `[{"username":"alice"}]`)
+				return true
+			})
+		kube, pc := testutil.DiscoveryKube(t, srv.URL)
+		ec := &externalClient{client: &mockMemberClient{}, kube: kube}
+
+		result, err := ec.List(ctx, pc, "")
+		require.NoError(t, err)
+		assert.ElementsMatch(t, []string{"acme/alice"}, result.ExternalNames)
+		assert.Empty(t, result.NextPageToken)
+	})
+
+	t.Run("propagates item listing errors", func(t *testing.T) {
+		srv := testutil.OrgDiscoveryServer(t, []string{"acme"},
+			func(w http.ResponseWriter, r *http.Request, org string) bool {
+				w.WriteHeader(http.StatusInternalServerError)
+				return true
+			})
+		kube, pc := testutil.DiscoveryKube(t, srv.URL)
+		ec := &externalClient{client: &mockMemberClient{}, kube: kube}
+
+		_, err := ec.List(ctx, pc, "")
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "failed to list members")
+	})
+
 }

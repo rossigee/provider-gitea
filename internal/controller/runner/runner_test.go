@@ -1,174 +1,122 @@
-/*
-Copyright 2024 The Crossplane Authors.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
-
 package runner
 
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
-	"github.com/crossplane/crossplane-runtime/v2/pkg/meta"
-	v2 "github.com/rossigee/provider-gitea/apis/runner/v2"
-	"github.com/rossigee/provider-gitea/internal/clients"
+	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
+	v1beta1 "github.com/rossigee/provider-gitea/apis/v1beta1"
 	"github.com/rossigee/provider-gitea/internal/controller/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
-type mockRunnerClient struct {
-	testutil.NoopClient
-	getFn    func(ctx context.Context, scope, scopeValue string, id int64) (*clients.Runner, error)
-	createFn func(ctx context.Context, scope, scopeValue string, req *clients.CreateRunnerRequest) (*clients.Runner, error)
-	updateFn func(ctx context.Context, scope, scopeValue string, id int64, req *clients.UpdateRunnerRequest) (*clients.Runner, error)
-	deleteFn func(ctx context.Context, scope, scopeValue string, id int64) error
+func runnerTestServer(t *testing.T) *httptest.Server {
+	t.Helper()
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.Equal(t, "token test-token", r.Header.Get("Authorization"))
+		w.Header().Set("Content-Type", "application/json")
+
+		switch r.URL.Path {
+		case "/api/v1/user/repos":
+			_, _ = fmt.Fprint(w, `[{"full_name":"acme/r1"}]`)
+		case "/api/v1/user/orgs":
+			_, _ = fmt.Fprint(w, `[{"username":"acme"}]`)
+		case "/api/v1/repos/acme/r1/actions/runners":
+			_, _ = fmt.Fprint(w, `{"runners":[{"id":1}]}`)
+		case "/api/v1/orgs/acme/actions/runners":
+			_, _ = fmt.Fprint(w, `{"runners":[{"id":2}]}`)
+		case "/api/v1/admin/actions/runners":
+			_, _ = fmt.Fprint(w, `{"runners":[{"id":3}]}`)
+		default:
+			w.WriteHeader(http.StatusNotFound)
+		}
+	}))
+	t.Cleanup(srv.Close)
+
+	return srv
 }
 
-func (m *mockRunnerClient) GetRunner(ctx context.Context, scope, scopeValue string, id int64) (*clients.Runner, error) {
-	if m.getFn != nil {
-		return m.getFn(ctx, scope, scopeValue, id)
-	}
-	return nil, nil
-}
-func (m *mockRunnerClient) CreateRunner(ctx context.Context, scope, scopeValue string, req *clients.CreateRunnerRequest) (*clients.Runner, error) {
-	if m.createFn != nil {
-		return m.createFn(ctx, scope, scopeValue, req)
-	}
-	return nil, nil
-}
-func (m *mockRunnerClient) UpdateRunner(ctx context.Context, scope, scopeValue string, id int64, req *clients.UpdateRunnerRequest) (*clients.Runner, error) {
-	if m.updateFn != nil {
-		return m.updateFn(ctx, scope, scopeValue, id, req)
-	}
-	return nil, nil
-}
-func (m *mockRunnerClient) DeleteRunner(ctx context.Context, scope, scopeValue string, id int64) error {
-	if m.deleteFn != nil {
-		return m.deleteFn(ctx, scope, scopeValue, id)
-	}
-	return nil
-}
+func runnerTestSetup(t *testing.T, baseURL string) (*externalClient, *v1beta1.ProviderConfig) {
+	t.Helper()
 
-func TestObserve(t *testing.T) {
-	t.Run("no external name returns not exists", func(t *testing.T) {
-		ec := &externalClient{client: &mockRunnerClient{}}
-		cr := &v2.Runner{ObjectMeta: metav1.ObjectMeta{Namespace: "default", Name: "r"}}
-		obs, err := ec.Observe(context.Background(), cr)
-		require.NoError(t, err)
-		assert.False(t, obs.ResourceExists)
-	})
+	secret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{Namespace: "default", Name: "gitea-creds"},
+		Data:       map[string][]byte{"token": []byte("test-token")},
+	}
 
-	t.Run("404 returns not exists", func(t *testing.T) {
-		ec := &externalClient{client: &mockRunnerClient{
-			getFn: func(ctx context.Context, scope, scopeValue string, id int64) (*clients.Runner, error) {
-				return nil, fmt.Errorf("API request failed with status 404: not found")
+	pc := &v1beta1.ProviderConfig{
+		ObjectMeta: metav1.ObjectMeta{Namespace: "default", Name: "test-pc"},
+		Spec: v1beta1.ProviderConfigSpec{
+			BaseURL: baseURL,
+			Credentials: v1beta1.ProviderCredentials{
+				Source: "Secret",
+				SecretRef: &v1beta1.SecretReference{
+					Namespace: "default",
+					Name:      "gitea-creds",
+					Key:       "token",
+				},
 			},
-		}}
-		cr := &v2.Runner{ObjectMeta: metav1.ObjectMeta{Namespace: "default", Name: "r"}}
-		meta.SetExternalName(cr, "organization/acme/9")
-		obs, err := ec.Observe(context.Background(), cr)
-		require.NoError(t, err)
-		assert.False(t, obs.ResourceExists)
-	})
-
-	t.Run("matching runner is up to date", func(t *testing.T) {
-		ec := &externalClient{client: &mockRunnerClient{
-			getFn: func(ctx context.Context, scope, scopeValue string, id int64) (*clients.Runner, error) {
-				assert.Equal(t, "organization", scope)
-				assert.Equal(t, "acme", scopeValue)
-				assert.Equal(t, int64(9), id)
-				return &clients.Runner{ID: 9, Name: "builder", Labels: []string{"docker"}}, nil
-			},
-		}}
-		cr := &v2.Runner{ObjectMeta: metav1.ObjectMeta{Namespace: "default", Name: "r"}}
-		cr.Spec.ForProvider.Name = "builder"
-		cr.Spec.ForProvider.Labels = []string{"docker"}
-		meta.SetExternalName(cr, "organization/acme/9")
-		obs, err := ec.Observe(context.Background(), cr)
-		require.NoError(t, err)
-		assert.True(t, obs.ResourceExists)
-		assert.True(t, obs.ResourceUpToDate)
-	})
-
-	t.Run("label drift is not up to date", func(t *testing.T) {
-		ec := &externalClient{client: &mockRunnerClient{
-			getFn: func(ctx context.Context, scope, scopeValue string, id int64) (*clients.Runner, error) {
-				return &clients.Runner{ID: 9, Name: "builder", Labels: []string{"docker"}}, nil
-			},
-		}}
-		cr := &v2.Runner{ObjectMeta: metav1.ObjectMeta{Namespace: "default", Name: "r"}}
-		cr.Spec.ForProvider.Name = "builder"
-		cr.Spec.ForProvider.Labels = []string{"docker", "large"}
-		meta.SetExternalName(cr, "organization/acme/9")
-		obs, err := ec.Observe(context.Background(), cr)
-		require.NoError(t, err)
-		assert.True(t, obs.ResourceExists)
-		assert.False(t, obs.ResourceUpToDate)
-	})
-}
-
-func TestCreate(t *testing.T) {
-	sv := "acme"
-	ec := &externalClient{client: &mockRunnerClient{
-		createFn: func(ctx context.Context, scope, scopeValue string, req *clients.CreateRunnerRequest) (*clients.Runner, error) {
-			assert.Equal(t, "organization", scope)
-			assert.Equal(t, "acme", scopeValue)
-			assert.Equal(t, "builder", req.Name)
-			return &clients.Runner{ID: 9, Name: "builder"}, nil
 		},
-	}}
-	cr := &v2.Runner{ObjectMeta: metav1.ObjectMeta{Namespace: "default", Name: "r"}}
-	cr.Spec.ForProvider.Scope = "organization"
-	cr.Spec.ForProvider.ScopeValue = &sv
-	cr.Spec.ForProvider.Name = "builder"
-	cr.Spec.ForProvider.Labels = []string{"docker"}
-	_, err := ec.Create(context.Background(), cr)
-	require.NoError(t, err)
-	assert.Equal(t, "organization/acme/9", meta.GetExternalName(cr))
+	}
+
+	scheme := runtime.NewScheme()
+	require.NoError(t, corev1.AddToScheme(scheme))
+	require.NoError(t, v1beta1.AddToScheme(scheme))
+
+	kube := fake.NewClientBuilder().WithScheme(scheme).WithRuntimeObjects(secret).Build()
+
+	return &externalClient{client: testutil.NoopClient{}, kube: kube}, pc
 }
 
-func TestDelete(t *testing.T) {
-	t.Run("missing runner is success", func(t *testing.T) {
-		ec := &externalClient{client: &mockRunnerClient{
-			getFn: func(ctx context.Context, scope, scopeValue string, id int64) (*clients.Runner, error) {
-				return nil, fmt.Errorf("API request failed with status 404: not found")
-			},
-		}}
-		cr := &v2.Runner{ObjectMeta: metav1.ObjectMeta{Namespace: "default", Name: "r"}}
-		meta.SetExternalName(cr, "organization/acme/9")
-		_, err := ec.Delete(context.Background(), cr)
-		require.NoError(t, err)
+func TestList(t *testing.T) {
+	ctx := context.Background()
+
+	t.Run("rejects non-Gitea ProviderConfig", func(t *testing.T) {
+		ec := &externalClient{client: testutil.NoopClient{}}
+
+		var pc resource.ProviderConfig
+
+		_, err := ec.List(ctx, pc, "")
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "not a Gitea ProviderConfig")
 	})
 
-	t.Run("existing runner is deleted", func(t *testing.T) {
-		var deleted bool
-		ec := &externalClient{client: &mockRunnerClient{
-			getFn: func(ctx context.Context, scope, scopeValue string, id int64) (*clients.Runner, error) {
-				return &clients.Runner{ID: 9}, nil
-			},
-			deleteFn: func(ctx context.Context, scope, scopeValue string, id int64) error {
-				deleted = true
-				return nil
-			},
-		}}
-		cr := &v2.Runner{ObjectMeta: metav1.ObjectMeta{Namespace: "default", Name: "r"}}
-		meta.SetExternalName(cr, "organization/acme/9")
-		_, err := ec.Delete(context.Background(), cr)
+	t.Run("rejects invalid tokens and phases", func(t *testing.T) {
+		ec := &externalClient{client: testutil.NoopClient{}}
+		pc := &v1beta1.ProviderConfig{}
+
+		for _, token := range []string{"abc", "bogus:1"} {
+			_, err := ec.List(ctx, pc, token)
+			require.Error(t, err, "token %q", token)
+		}
+	})
+
+	t.Run("drains repos, orgs, then system", func(t *testing.T) {
+		srv := runnerTestServer(t)
+		ec, pc := runnerTestSetup(t, srv.URL)
+
+		first, err := ec.List(ctx, pc, "")
 		require.NoError(t, err)
-		assert.True(t, deleted)
+		assert.Equal(t, []string{"repository/acme/r1/1"}, first.ExternalNames)
+		assert.Equal(t, "orgs:1", first.NextPageToken)
+
+		second, err := ec.List(ctx, pc, first.NextPageToken)
+		require.NoError(t, err)
+		assert.Equal(t, []string{"organization/acme/2"}, second.ExternalNames)
+		assert.Equal(t, "system:1", second.NextPageToken)
+
+		third, err := ec.List(ctx, pc, second.NextPageToken)
+		require.NoError(t, err)
+		assert.Equal(t, []string{"system/3"}, third.ExternalNames)
+		assert.Empty(t, third.NextPageToken)
 	})
 }

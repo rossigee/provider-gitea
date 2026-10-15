@@ -51,6 +51,7 @@ type Client interface {
 	CreateOrganizationRepository(ctx context.Context, org string, req *CreateRepositoryRequest) (*Repository, error)
 	UpdateRepository(ctx context.Context, owner, name string, req *UpdateRepositoryRequest) (*Repository, error)
 	DeleteRepository(ctx context.Context, owner, name string) error
+	ListRepositories(ctx context.Context, page, limit int) ([]Repository, error)
 	GetRepositoryTopics(ctx context.Context, owner, name string) (*RepositoryTopics, error)
 	UpdateRepositoryTopics(ctx context.Context, owner, name string, req *UpdateRepositoryTopicsRequest) error
 
@@ -59,27 +60,32 @@ type Client interface {
 	CreateOrganization(ctx context.Context, req *CreateOrganizationRequest) (*Organization, error)
 	UpdateOrganization(ctx context.Context, name string, req *UpdateOrganizationRequest) (*Organization, error)
 	DeleteOrganization(ctx context.Context, name string) error
+	ListOrganizations(ctx context.Context, page, limit int) ([]Organization, error)
 
 	// User operations
 	GetUser(ctx context.Context, username string) (*User, error)
 	CreateUser(ctx context.Context, req *CreateUserRequest) (*User, error)
 	UpdateUser(ctx context.Context, username string, req *UpdateUserRequest) (*User, error)
 	DeleteUser(ctx context.Context, username string) error
+	ListUsers(ctx context.Context, page, limit int) ([]User, error)
 
 	// Webhook operations
 	GetRepositoryWebhook(ctx context.Context, owner, repo string, id int64) (*Webhook, error)
 	CreateRepositoryWebhook(ctx context.Context, owner, repo string, req *CreateWebhookRequest) (*Webhook, error)
 	UpdateRepositoryWebhook(ctx context.Context, owner, repo string, id int64, req *UpdateWebhookRequest) (*Webhook, error)
 	DeleteRepositoryWebhook(ctx context.Context, owner, repo string, id int64) error
+	ListRepositoryWebhooks(ctx context.Context, owner, repo string) ([]Webhook, error)
 	GetOrganizationWebhook(ctx context.Context, org string, id int64) (*Webhook, error)
 	CreateOrganizationWebhook(ctx context.Context, org string, req *CreateWebhookRequest) (*Webhook, error)
 	UpdateOrganizationWebhook(ctx context.Context, org string, id int64, req *UpdateWebhookRequest) (*Webhook, error)
 	DeleteOrganizationWebhook(ctx context.Context, org string, id int64) error
+	ListOrganizationWebhooks(ctx context.Context, org string) ([]Webhook, error)
 
 	// Deploy Key operations
 	GetDeployKey(ctx context.Context, owner, repo string, id int64) (*DeployKey, error)
 	CreateDeployKey(ctx context.Context, owner, repo string, req *CreateDeployKeyRequest) (*DeployKey, error)
 	DeleteDeployKey(ctx context.Context, owner, repo string, id int64) error
+	ListDeployKeys(ctx context.Context, owner, repo string) ([]DeployKey, error)
 
 	// Deploy Token operations
 	CreateDeployToken(ctx context.Context, owner, repo string, req *CreateDeployTokenRequest) (*DeployToken, error)
@@ -91,6 +97,7 @@ type Client interface {
 	CreateOrganizationSecret(ctx context.Context, org, secretName string, req *CreateOrganizationSecretRequest) error
 	UpdateOrganizationSecret(ctx context.Context, org, secretName string, req *CreateOrganizationSecretRequest) error
 	DeleteOrganizationSecret(ctx context.Context, org, secretName string) error
+	ListOrganizationSecrets(ctx context.Context, org string) ([]OrganizationSecret, error)
 
 	// Team operations
 	GetTeam(ctx context.Context, teamID int64) (*Team, error)
@@ -128,6 +135,7 @@ type Client interface {
 	CreateBranchProtection(ctx context.Context, repository, branch string, req *CreateBranchProtectionRequest) (*BranchProtection, error)
 	UpdateBranchProtection(ctx context.Context, repository, branch string, req *UpdateBranchProtectionRequest) (*BranchProtection, error)
 	DeleteBranchProtection(ctx context.Context, repository, branch string) error
+	ListBranchProtections(ctx context.Context, owner, repo string) ([]BranchProtection, error)
 
 	// Repository Key operations
 	GetRepositoryKey(ctx context.Context, repository string, keyID int64) (*RepositoryKey, error)
@@ -140,11 +148,13 @@ type Client interface {
 	CreateAccessToken(ctx context.Context, username string, req *CreateAccessTokenRequest) (*AccessToken, error)
 	UpdateAccessToken(ctx context.Context, username string, tokenID int64, req *UpdateAccessTokenRequest) (*AccessToken, error)
 	DeleteAccessToken(ctx context.Context, username string, tokenID int64) error
+	ListUserTokens(ctx context.Context, username string) ([]AccessToken, error)
 
 	// Repository Secret operations
 	GetRepositorySecret(ctx context.Context, repository, secretName string) (*RepositorySecret, error)
 	CreateRepositorySecret(ctx context.Context, repository, secretName string, req *CreateRepositorySecretRequest) error
 	UpdateRepositorySecret(ctx context.Context, repository, secretName string, req *UpdateRepositorySecretRequest) error
+	ListRepositorySecrets(ctx context.Context, owner, repo string) ([]RepositorySecret, error)
 	DeleteRepositorySecret(ctx context.Context, repository, secretName string) error
 
 	// User Key operations
@@ -152,12 +162,14 @@ type Client interface {
 	CreateUserKey(ctx context.Context, username string, req *CreateUserKeyRequest) (*UserKey, error)
 	UpdateUserKey(ctx context.Context, username string, keyID int64, req *UpdateUserKeyRequest) (*UserKey, error)
 	DeleteUserKey(ctx context.Context, username string, keyID int64) error
+	ListUserKeys(ctx context.Context, username string) ([]UserKey, error)
 
 	// Issue operations
 	GetIssue(ctx context.Context, owner, repo string, number int64) (*Issue, error)
 	CreateIssue(ctx context.Context, owner, repo string, req *CreateIssueOptions) (*Issue, error)
 	UpdateIssue(ctx context.Context, owner, repo string, number int64, req *UpdateIssueOptions) (*Issue, error)
 	DeleteIssue(ctx context.Context, owner, repo string, number int64) error
+	ListIssues(ctx context.Context, owner, repo string, page, limit int) ([]Issue, error)
 
 	// PullRequest operations
 	GetPullRequest(ctx context.Context, owner, repo string, number int64) (*PullRequest, error)
@@ -165,6 +177,7 @@ type Client interface {
 	UpdatePullRequest(ctx context.Context, owner, repo string, number int64, req *UpdatePullRequestOptions) (*PullRequest, error)
 	DeletePullRequest(ctx context.Context, owner, repo string, number int64) error
 	MergePullRequest(ctx context.Context, owner, repo string, number int64, req *MergePullRequestOptions) (*PullRequest, error)
+	ListPullRequests(ctx context.Context, owner, repo string, page, limit int) ([]PullRequest, error)
 
 	// Release operations
 	GetRelease(ctx context.Context, owner, repo string, id int64) (*Release, error)
@@ -172,6 +185,7 @@ type Client interface {
 	CreateRelease(ctx context.Context, owner, repo string, req *CreateReleaseOptions) (*Release, error)
 	UpdateRelease(ctx context.Context, owner, repo string, id int64, req *UpdateReleaseOptions) (*Release, error)
 	DeleteRelease(ctx context.Context, owner, repo string, id int64) error
+	ListReleases(ctx context.Context, owner, repo string, page, limit int) ([]Release, error)
 	CreateReleaseAttachment(ctx context.Context, owner, repo string, releaseID int64, filename, contentType string, content []byte) (*ReleaseAttachment, error)
 	DeleteReleaseAttachment(ctx context.Context, owner, repo string, releaseID, attachmentID int64) error
 
@@ -180,12 +194,14 @@ type Client interface {
 	AddOrganizationMember(ctx context.Context, org, username string, req *AddOrganizationMemberRequest) (*OrganizationMember, error)
 	UpdateOrganizationMember(ctx context.Context, org, username string, req *UpdateOrganizationMemberRequest) (*OrganizationMember, error)
 	RemoveOrganizationMember(ctx context.Context, org, username string) error
+	ListOrganizationMembers(ctx context.Context, org string) ([]OrganizationMember, error)
 
 	// Action operations
 	GetAction(ctx context.Context, repository, workflowName string) (*Action, error)
 	CreateAction(ctx context.Context, repository string, req *CreateActionRequest) (*Action, error)
 	UpdateAction(ctx context.Context, repository, workflowName string, req *UpdateActionRequest) (*Action, error)
 	DeleteAction(ctx context.Context, repository, workflowName string) error
+	ListActionWorkflows(ctx context.Context, owner, repo string) ([]Action, error)
 	EnableAction(ctx context.Context, repository, workflowName string) error
 	DisableAction(ctx context.Context, repository, workflowName string) error
 
@@ -194,6 +210,9 @@ type Client interface {
 	CreateRunner(ctx context.Context, scope, scopeValue string, req *CreateRunnerRequest) (*Runner, error)
 	UpdateRunner(ctx context.Context, scope, scopeValue string, runnerID int64, req *UpdateRunnerRequest) (*Runner, error)
 	DeleteRunner(ctx context.Context, scope, scopeValue string, runnerID int64) error
+	ListRepositoryRunners(ctx context.Context, owner, repo string) ([]Runner, error)
+	ListOrganizationRunners(ctx context.Context, org string) ([]Runner, error)
+	ListSystemRunners(ctx context.Context) ([]Runner, error)
 
 	// Admin User operations
 	GetAdminUser(ctx context.Context, username string) (*AdminUser, error)

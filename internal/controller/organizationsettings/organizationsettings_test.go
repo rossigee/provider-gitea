@@ -19,10 +19,13 @@ package organizationsettings
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"testing"
 
 	"github.com/crossplane/crossplane-runtime/v2/pkg/meta"
+	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
 	v2 "github.com/rossigee/provider-gitea/apis/organizationsettings/v2"
+	v1beta1 "github.com/rossigee/provider-gitea/apis/v1beta1"
 	"github.com/rossigee/provider-gitea/internal/clients"
 	"github.com/rossigee/provider-gitea/internal/controller/testutil"
 	"github.com/stretchr/testify/assert"
@@ -122,4 +125,43 @@ func TestDelete(t *testing.T) {
 	cr := &v2.OrganizationSettings{ObjectMeta: metav1.ObjectMeta{Namespace: "default", Name: "s"}}
 	_, err := ec.Delete(context.Background(), cr)
 	require.NoError(t, err)
+}
+
+func TestList(t *testing.T) {
+	ctx := context.Background()
+
+	t.Run("rejects non-Gitea ProviderConfig", func(t *testing.T) {
+		ec := &externalClient{client: &mockSettingsClient{}}
+
+		var pc resource.ProviderConfig
+
+		_, err := ec.List(ctx, pc, "")
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "not a Gitea ProviderConfig")
+	})
+
+	t.Run("rejects invalid page tokens", func(t *testing.T) {
+		ec := &externalClient{client: &mockSettingsClient{}}
+		pc := &v1beta1.ProviderConfig{}
+
+		for _, token := range []string{"abc", "0"} {
+			_, err := ec.List(ctx, pc, token)
+			require.Error(t, err, "token %q", token)
+		}
+	})
+
+	t.Run("emits one name per organization", func(t *testing.T) {
+		srv := testutil.OrgDiscoveryServer(t, []string{"acme", "globex"},
+			func(w http.ResponseWriter, r *http.Request, org string) bool {
+				return false
+			})
+		kube, pc := testutil.DiscoveryKube(t, srv.URL)
+		ec := &externalClient{client: &mockSettingsClient{}, kube: kube}
+
+		result, err := ec.List(ctx, pc, "")
+		require.NoError(t, err)
+		assert.ElementsMatch(t, []string{"acme", "globex"}, result.ExternalNames)
+		assert.Empty(t, result.NextPageToken)
+	})
+
 }
