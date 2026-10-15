@@ -32,8 +32,17 @@ type UserParameters struct {
 	// +kubebuilder:validation:Format="email"
 	Email string `json:"email"`
 
-	// Password is the user's password (required for creation)
-	Password string `json:"password"`
+	// PasswordSecretRef references a Kubernetes secret containing the user's
+	// password. Use this instead of Password so the password is never stored in
+	// the managed resource.
+	// +optional
+	PasswordSecretRef *xpv1.SecretKeySelector `json:"passwordSecretRef,omitempty"`
+
+	// Password is the user's password in plain text. Avoid it: the password is
+	// stored in the managed resource and in Git manifests. Use PasswordSecretRef
+	// instead. Used only when PasswordSecretRef is unset.
+	// +optional
+	Password string `json:"password,omitempty"`
 
 	// FullName is the user's full name
 	FullName *string `json:"fullName,omitempty"`

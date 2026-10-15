@@ -31,6 +31,7 @@ import (
 	v2 "github.com/rossigee/provider-gitea/apis/user/v2"
 	"github.com/rossigee/provider-gitea/internal/clients"
 	"github.com/rossigee/provider-gitea/internal/tracing"
+	corev1 "k8s.io/api/core/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -75,11 +76,12 @@ func (c *connector) Connect(ctx context.Context, mg resource.Managed) (managed.E
 		return nil, err
 	}
 
-	return &externalClient{client: conn}, nil
+	return &externalClient{client: conn, kube: c.kube}, nil
 }
 
 type externalClient struct {
 	client clients.Client
+	kube   client.Client
 }
 
 func (e *externalClient) Observe(ctx context.Context, mg resource.Managed) (managed.ExternalObservation, error) {
@@ -142,6 +144,32 @@ func isUserUpToDate(cr *v2.User, user *clients.User) bool {
 	return true
 }
 
+// readPassword returns the user's password. The secret reference is preferred;
+// the deprecated plain-text field is used only when no reference is set.
+func (e *externalClient) readPassword(ctx context.Context, cr *v2.User) (string, error) {
+	ref := cr.Spec.ForProvider.PasswordSecretRef
+	if ref == nil {
+		if cr.Spec.ForProvider.Password == "" {
+			return "", errors.New("one of passwordSecretRef or password must be set")
+		}
+		return cr.Spec.ForProvider.Password, nil
+	}
+
+	ns := cr.GetNamespace()
+	if ref.Namespace != "" {
+		ns = ref.Namespace
+	}
+	var secret corev1.Secret
+	if err := e.kube.Get(ctx, client.ObjectKey{Namespace: ns, Name: ref.Name}, &secret); err != nil {
+		return "", errors.Wrap(err, "cannot get password secret")
+	}
+	pw, ok := secret.Data[ref.Key]
+	if !ok {
+		return "", errors.New("password secret key not found")
+	}
+	return string(pw), nil
+}
+
 func (e *externalClient) Create(ctx context.Context, mg resource.Managed) (managed.ExternalCreation, error) {
 	_, span := tracing.StartSpan(ctx, "user.create",
 		tracing.SpanAttrs("user", tracing.ResourceName(mg), "create")...)
@@ -158,10 +186,15 @@ func (e *externalClient) Create(ctx context.Context, mg resource.Managed) (manag
 		meta.SetExternalName(cr, externalName)
 	}
 
+	password, err := e.readPassword(ctx, cr)
+	if err != nil {
+		return managed.ExternalCreation{}, err
+	}
+
 	req := &clients.CreateUserRequest{
 		Username: cr.Spec.ForProvider.Username,
 		Email:    cr.Spec.ForProvider.Email,
-		Password: cr.Spec.ForProvider.Password,
+		Password: password,
 	}
 	if cr.Spec.ForProvider.FullName != nil {
 		req.FullName = *cr.Spec.ForProvider.FullName
