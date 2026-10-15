@@ -5,7 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.16.0] - 2026-10-15
+
+### ✨ **New Features**
+- **ExternalLister**: Implement ExternalLister for resource discovery on all resources (PR #92)
+
+### 🔧 **Changes**
+- **Package version floor**: Declare Crossplane core version as >= v2.5.0 (PR #98)
+- **User password**: Read user password from a secret reference (PR #99)
+
 ## [Unreleased]
+
 
 ## [0.15.1] - 2026-09-16
 
