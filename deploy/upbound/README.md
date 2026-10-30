@@ -1,6 +1,6 @@
 # Upbound Package Distribution
 
-Installing provider-gitea via Upbound's `up` CLI and xpkg.upbound.io registry.
+Installing provider-gitea via Upbound's `up` CLI from the ghcr.io registry.
 
 ## Prerequisites
 
@@ -10,10 +10,10 @@ Installing provider-gitea via Upbound's `up` CLI and xpkg.upbound.io registry.
 
 ## Installation via `up` CLI
 
-### Install from xpkg.upbound.io
+### Install from ghcr.io
 
 ```bash
-up ctp provider install xpkg.upbound.io/rossigee/provider-gitea:v0.8.9
+up ctp provider install ghcr.io/rossigee/provider-gitea:v0.16.0
 ```
 
 ### Or via kubectl
@@ -27,7 +27,7 @@ kind: Provider
 metadata:
   name: provider-gitea
 spec:
-  package: xpkg.upbound.io/rossigee/provider-gitea:v0.8.9
+  package: ghcr.io/rossigee/provider-gitea:v0.16.0
   runtimeConfigRef:
     name: default
 EOF
@@ -93,7 +93,7 @@ Or use `up` CLI:
 
 ```bash
 up login
-up ctp provider install xpkg.upbound.io/rossigee/provider-gitea:v0.8.9 \
+up ctp provider install ghcr.io/rossigee/provider-gitea:v0.16.0 \
   --account YOUR_UPBOUND_ACCOUNT \
   --control-plane YOUR_CONTROL_PLANE
 ```
