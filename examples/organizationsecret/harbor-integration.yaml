@@ -9,7 +9,7 @@ spec:
   forProvider:
     organization: infrastructure
     secretName: HARBOR_REGISTRY_URL
-    data: "harbor.infra.golder.lan"
+    data: "harbor.infra.example.lan"
   providerConfigRef:
     name: default
 ---
