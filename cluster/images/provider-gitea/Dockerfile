@@ -13,8 +13,8 @@ LABEL org.opencontainers.image.documentation="https://github.com/rossigee/provid
 ARG TARGETOS
 ARG TARGETARCH
 
-ADD _output/bin/${TARGETOS}_${TARGETARCH}/provider /usr/local/bin/provider
+COPY _output/bin/${TARGETOS}_${TARGETARCH}/provider /usr/local/bin/provider
 
 EXPOSE 8080
 USER 65532
-ENTRYPOINT ["provider"]
+ENTRYPOINT ["/usr/local/bin/provider"]
