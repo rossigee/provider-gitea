@@ -58,7 +58,7 @@ Best for: Upbound control planes, enterprise features, marketplace discovery
 # Install up CLI: https://docs.upbound.io/getting-started/
 
 # Install provider
-up ctp provider install xpkg.upbound.io/rossigee/provider-gitea:v0.8.9
+up ctp provider install ghcr.io/rossigee/provider-gitea:v0.16.0
 
 # Or via kubectl
 kubectl apply -f - <<EOF
@@ -67,7 +67,7 @@ kind: Provider
 metadata:
   name: provider-gitea
 spec:
-  package: xpkg.upbound.io/rossigee/provider-gitea:v0.8.9
+  package: ghcr.io/rossigee/provider-gitea:v0.16.0
 EOF
 ```
 

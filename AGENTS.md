@@ -7,7 +7,7 @@
 - **Created**: 2024-01-17
 - **Status**: v2 Provider Framework - API definitions and client library complete
 - **Version**: v0.9.0 (v2-only clean slate)
-- **Registry**: `ghcr.io/rossigee/provider-gitea:v0.9.0`
+- **Registry**: `ghcr.io/rossigee/provider-gitea:v0.16.0`
 
 ## v0.9.0 Framework Status
 - ✅ **v2 API Definitions**: Complete 22 resource types with `.m.` API groups
@@ -93,7 +93,7 @@
 ## Quick Start - v2 Namespace Setup
 ```bash
 # Install v2-only provider
-kubectl crossplane install provider ghcr.io/rossigee/provider-gitea:v0.9.0
+kubectl crossplane install provider ghcr.io/rossigee/provider-gitea:v0.16.0
 
 # v2 namespaced configuration with multi-tenancy
 kubectl apply -f examples/v2/repository-namespaced.yaml
