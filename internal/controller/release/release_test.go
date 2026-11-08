@@ -178,24 +178,27 @@ func TestList(t *testing.T) {
 
 		var pc resource.ProviderConfig
 
-		_, err := ec.List(ctx, pc, "")
+		_, err := ec.List(ctx, pc, resource.ExternalListScope{"owner": "acme", "repository": "r1"}, "")
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "not a Gitea ProviderConfig")
 	})
 
-	t.Run("rejects invalid page tokens", func(t *testing.T) {
+	t.Run("requires a repository scope", func(t *testing.T) {
 		ec := &externalClient{client: &mockReleaseClient{}}
 		pc := &v1beta1.ProviderConfig{}
 
-		for _, token := range []string{"abc", "0"} {
-			_, err := ec.List(ctx, pc, token)
-			require.Error(t, err, "token %q", token)
-		}
+		_, err := ec.List(ctx, pc, resource.ExternalListScope{"owner": "acme"}, "")
+		require.ErrorIs(t, err, resource.ErrScopeRequired)
 	})
 
-	t.Run("discovers names across repositories", func(t *testing.T) {
+	t.Run("lists members of the scoped repository", func(t *testing.T) {
 		srv := testutil.DiscoveryServer(t, []string{"acme/r1", "acme/r2"},
 			func(w http.ResponseWriter, r *http.Request, owner, repo string) bool {
+				if owner != "acme" || repo != "r1" {
+					w.WriteHeader(http.StatusNotFound)
+					return true
+				}
+
 				if !strings.HasSuffix(r.URL.Path, "/releases") {
 					return false
 				}
@@ -206,10 +209,38 @@ func TestList(t *testing.T) {
 		kube, pc := testutil.DiscoveryKube(t, srv.URL)
 		ec := &externalClient{client: &mockReleaseClient{}, kube: kube}
 
-		result, err := ec.List(ctx, pc, "")
+		result, err := ec.List(ctx, pc, resource.ExternalListScope{"owner": "acme", "repository": "r1"}, "")
 		require.NoError(t, err)
-		assert.ElementsMatch(t, []string{"acme/r1/3", "acme/r2/3"}, result.ExternalNames)
+		require.Len(t, result.Items, 1)
+		assert.Equal(t, "acme/r1/3", result.Items[0].ExternalName)
+		assert.Equal(t, resource.ExternalListScope{"owner": "acme", "repository": "r1"}, result.Items[0].Scope)
+	})
+
+	t.Run("lists repositories as scopes", func(t *testing.T) {
+		srv := testutil.DiscoveryServer(t, []string{"acme/r1", "acme/r2"},
+			func(w http.ResponseWriter, r *http.Request, owner, repo string) bool {
+				return false
+			})
+		kube, pc := testutil.DiscoveryKube(t, srv.URL)
+		ec := &externalClient{client: &mockReleaseClient{}, kube: kube}
+
+		result, err := ec.ListScopes(ctx, pc, nil, "")
+		require.NoError(t, err)
+		assert.ElementsMatch(t, []resource.ExternalListScope{
+			{"owner": "acme", "repository": "r1"},
+			{"owner": "acme", "repository": "r2"},
+		}, result.Scopes)
 		assert.Empty(t, result.NextPageToken)
+	})
+
+	t.Run("rejects invalid page tokens when listing scopes", func(t *testing.T) {
+		ec := &externalClient{client: &mockReleaseClient{}}
+		pc := &v1beta1.ProviderConfig{}
+
+		for _, token := range []string{"abc", "0", "bogus:1"} {
+			_, err := ec.ListScopes(ctx, pc, nil, token)
+			require.Error(t, err, "token %q", token)
+		}
 	})
 
 	t.Run("propagates item listing errors", func(t *testing.T) {
@@ -221,7 +252,7 @@ func TestList(t *testing.T) {
 		kube, pc := testutil.DiscoveryKube(t, srv.URL)
 		ec := &externalClient{client: &mockReleaseClient{}, kube: kube}
 
-		_, err := ec.List(ctx, pc, "")
+		_, err := ec.List(ctx, pc, resource.ExternalListScope{"owner": "acme", "repository": "r1"}, "")
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "failed to list releases")
 	})

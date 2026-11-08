@@ -14,10 +14,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// Package discovery holds shared helpers for ExternalLister implementations
-// backing Crossplane resource discovery (DiscoveryReport). The page token
-// addresses the outer (repository or organization) page; inner per-parent
-// listings are unpaginated.
+// Package discovery holds shared helpers for ExternalLister and
+// ExternalScopeLister implementations backing Crossplane resource discovery
+// (DiscoveryReport). ListScopes pages the parent set (repositories,
+// organizations, users); List returns every member of one scope, unpaginated.
 package discovery
 
 import (
@@ -182,6 +182,166 @@ func ParseScopeToken(token, firstPhase string) (phase string, page int, err erro
 // ScopeToken builds the token for the given phase and page.
 func ScopeToken(phase string, page int) string {
 	return phase + ":" + strconv.Itoa(page)
+}
+
+// RepoShape selects how a kind's spec.forProvider names its repository.
+type RepoShape int
+
+const (
+	// RepoJoined kinds hold "owner/name" in spec.forProvider.repository.
+	RepoJoined RepoShape = iota
+
+	// RepoSplit kinds hold the owner in spec.forProvider.owner and the name in
+	// spec.forProvider.repository.
+	RepoSplit
+)
+
+// RepositoryScope returns the scope that identifies owner/repo for a kind of
+// the given shape.
+func RepositoryScope(shape RepoShape, owner, repo string) resource.ExternalListScope {
+	if shape == RepoSplit {
+		return resource.ExternalListScope{"owner": owner, "repository": repo}
+	}
+
+	return resource.ExternalListScope{"repository": owner + "/" + repo}
+}
+
+// RepositoryFromScope returns the owner and name identified by scope for a
+// kind of the given shape. It returns an error wrapping
+// resource.ErrScopeRequired when the scope does not name a repository.
+func RepositoryFromScope(shape RepoShape, scope resource.ExternalListScope) (string, string, error) {
+	if shape == RepoSplit {
+		owner, repo := scope["owner"], scope["repository"]
+		if owner == "" || repo == "" {
+			return "", "", errors.Wrap(resource.ErrScopeRequired, "owner and repository scope keys are required")
+		}
+
+		return owner, repo, nil
+	}
+
+	parts := splitFullName(scope["repository"])
+	if len(parts) != 2 || parts[0] == "" || parts[1] == "" {
+		return "", "", errors.Wrap(resource.ErrScopeRequired, "repository scope key in owner/name form is required")
+	}
+
+	return parts[0], parts[1], nil
+}
+
+// Unscoped returns names as items of a kind that is not scoped.
+func Unscoped(names []string) []resource.ExternalListItem {
+	items := make([]resource.ExternalListItem, 0, len(names))
+	for _, n := range names {
+		items = append(items, resource.ExternalListItem{ExternalName: n})
+	}
+
+	return items
+}
+
+// ValueFromScope returns the value of key in scope. It returns an error
+// wrapping resource.ErrScopeRequired when the key is absent or empty.
+func ValueFromScope(scope resource.ExternalListScope, key string) (string, error) {
+	v := scope[key]
+	if v == "" {
+		return "", errors.Wrapf(resource.ErrScopeRequired, "%s scope key is required", key)
+	}
+
+	return v, nil
+}
+
+// ListRepositoryScopes implements ExternalScopeLister for kinds scoped by
+// repository. Repositories are top-level scopes, so a non-empty parent has no
+// child scopes.
+func ListRepositoryScopes(ctx context.Context, kube client.Client, pc resource.ProviderConfig, shape RepoShape, parent resource.ExternalListScope, pageToken string) (resource.ExternalScopeListResult, error) {
+	if len(parent) > 0 {
+		return resource.ExternalScopeListResult{}, nil
+	}
+
+	conn, err := NewClient(ctx, kube, pc)
+	if err != nil {
+		return resource.ExternalScopeListResult{}, err
+	}
+
+	page, err := ParsePageToken(pageToken)
+	if err != nil {
+		return resource.ExternalScopeListResult{}, err
+	}
+
+	var scopes []resource.ExternalListScope
+
+	count, err := ForEachRepository(ctx, conn, page, func(owner, repo string) error {
+		scopes = append(scopes, RepositoryScope(shape, owner, repo))
+
+		return nil
+	})
+	if err != nil {
+		return resource.ExternalScopeListResult{}, err
+	}
+
+	return resource.ExternalScopeListResult{Scopes: scopes, NextPageToken: NextPageToken(count, page)}, nil
+}
+
+// ListOrganizationScopes implements ExternalScopeLister for kinds scoped by
+// organization, keyed by the given spec.forProvider field. Organizations are
+// top-level scopes, so a non-empty parent has no child scopes.
+func ListOrganizationScopes(ctx context.Context, kube client.Client, pc resource.ProviderConfig, key string, parent resource.ExternalListScope, pageToken string) (resource.ExternalScopeListResult, error) {
+	if len(parent) > 0 {
+		return resource.ExternalScopeListResult{}, nil
+	}
+
+	conn, err := NewClient(ctx, kube, pc)
+	if err != nil {
+		return resource.ExternalScopeListResult{}, err
+	}
+
+	page, err := ParsePageToken(pageToken)
+	if err != nil {
+		return resource.ExternalScopeListResult{}, err
+	}
+
+	var scopes []resource.ExternalListScope
+
+	count, err := ForEachOrganization(ctx, conn, page, func(org string) error {
+		scopes = append(scopes, resource.ExternalListScope{key: org})
+
+		return nil
+	})
+	if err != nil {
+		return resource.ExternalScopeListResult{}, err
+	}
+
+	return resource.ExternalScopeListResult{Scopes: scopes, NextPageToken: NextPageToken(count, page)}, nil
+}
+
+// ListUserScopes implements ExternalScopeLister for kinds scoped by user,
+// keyed by the given spec.forProvider field. Users are top-level scopes, so a
+// non-empty parent has no child scopes.
+func ListUserScopes(ctx context.Context, kube client.Client, pc resource.ProviderConfig, key string, parent resource.ExternalListScope, pageToken string) (resource.ExternalScopeListResult, error) {
+	if len(parent) > 0 {
+		return resource.ExternalScopeListResult{}, nil
+	}
+
+	conn, err := NewClient(ctx, kube, pc)
+	if err != nil {
+		return resource.ExternalScopeListResult{}, err
+	}
+
+	page, err := ParsePageToken(pageToken)
+	if err != nil {
+		return resource.ExternalScopeListResult{}, err
+	}
+
+	var scopes []resource.ExternalListScope
+
+	count, err := ForEachUser(ctx, conn, page, func(username string) error {
+		scopes = append(scopes, resource.ExternalListScope{key: username})
+
+		return nil
+	})
+	if err != nil {
+		return resource.ExternalScopeListResult{}, err
+	}
+
+	return resource.ExternalScopeListResult{Scopes: scopes, NextPageToken: NextPageToken(count, page)}, nil
 }
 
 func splitFullName(full string) []string {

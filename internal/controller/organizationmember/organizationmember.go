@@ -95,46 +95,45 @@ type externalClient struct {
 // Compile-time check that externalClient implements the discovery interface
 // consumed by Crossplane's resource-discovery controller (DiscoveryReport).
 var _ resource.ExternalLister = (*externalClient)(nil)
+var _ resource.ExternalScopeLister = (*externalClient)(nil)
 
 // List enumerates external organization members for discovery (crossplane.io
 // ExternalLister). External names are org/username.
-func (e *externalClient) List(ctx context.Context, pc resource.ProviderConfig, pageToken string) (resource.ExternalListResult, error) {
+func (e *externalClient) List(ctx context.Context, pc resource.ProviderConfig, scope resource.ExternalListScope, _ string) (resource.ExternalListResult, error) {
+	org, err := discovery.ValueFromScope(scope, "organization")
+	if err != nil {
+		return resource.ExternalListResult{}, err
+	}
+
 	conn, err := discovery.NewClient(ctx, e.kube, pc)
 	if err != nil {
 		return resource.ExternalListResult{}, err
 	}
 
-	page, err := discovery.ParsePageToken(pageToken)
+	members, err := conn.ListOrganizationMembers(ctx, org)
 	if err != nil {
-		return resource.ExternalListResult{}, err
+		return resource.ExternalListResult{}, errors.Wrapf(err, "failed to list members for organization %q", org)
 	}
 
-	var names []string
-
-	count, err := discovery.ForEachOrganization(ctx, conn, page, func(org string) error {
-		members, err := conn.ListOrganizationMembers(ctx, org)
-		if err != nil {
-			return errors.Wrapf(err, "failed to list members for organization %q", org)
+	items := make([]resource.ExternalListItem, 0, len(members))
+	for _, m := range members {
+		if m.Username == "" {
+			continue
 		}
 
-		for _, m := range members {
-			if m.Username == "" {
-				continue
-			}
-
-			names = append(names, fmt.Sprintf("%s/%s", org, m.Username))
-		}
-		return nil
-	})
-	if err != nil {
-		return resource.ExternalListResult{}, err
+		items = append(items, resource.ExternalListItem{
+			ExternalName: fmt.Sprintf("%s/%s", org, m.Username),
+			Scope:        resource.ExternalListScope{"organization": org},
+		})
 	}
 
-	return resource.ExternalListResult{
-		ExternalNames: names,
-		NextPageToken: discovery.NextPageToken(count, page),
-	}, nil
+	return resource.ExternalListResult{Items: items}, nil
+}
 
+// ListScopes enumerates organizations as the scopes of organizationmember discovery
+// (crossplane.io ExternalScopeLister).
+func (e *externalClient) ListScopes(ctx context.Context, pc resource.ProviderConfig, parent resource.ExternalListScope, pageToken string) (resource.ExternalScopeListResult, error) {
+	return discovery.ListOrganizationScopes(ctx, e.kube, pc, "organization", parent, pageToken)
 }
 
 // parseExternalName splits an "org/username" external name.

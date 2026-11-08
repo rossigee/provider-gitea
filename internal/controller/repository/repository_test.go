@@ -581,7 +581,7 @@ func TestList(t *testing.T) {
 
 		var pc resource.ProviderConfig
 
-		_, err := ec.List(ctx, pc, "")
+		_, err := ec.List(ctx, pc, nil, "")
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "not a Gitea ProviderConfig")
 	})
@@ -591,7 +591,7 @@ func TestList(t *testing.T) {
 		pc := &v1beta1.ProviderConfig{}
 
 		for _, token := range []string{"abc", "0", "-2", "1.5"} {
-			_, err := ec.List(ctx, pc, token)
+			_, err := ec.List(ctx, pc, nil, token)
 			require.Error(t, err, "token %q", token)
 			assert.Contains(t, err.Error(), "invalid page token", "token %q", token)
 		}
@@ -601,7 +601,7 @@ func TestList(t *testing.T) {
 		pc, secret := listTestProviderConfig("")
 		ec := newExternal(t, secret)
 
-		_, err := ec.List(ctx, pc, "")
+		_, err := ec.List(ctx, pc, nil, "")
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "baseURL")
 	})
@@ -613,9 +613,9 @@ func TestList(t *testing.T) {
 		pc, secret := listTestProviderConfig(srv.URL)
 		ec := newExternal(t, secret)
 
-		result, err := ec.List(ctx, pc, "")
+		result, err := ec.List(ctx, pc, nil, "")
 		require.NoError(t, err)
-		assert.Equal(t, names, result.ExternalNames)
+		assert.Equal(t, names, testutil.ItemNames(result.Items))
 		assert.Equal(t, "2", result.NextPageToken)
 		require.Len(t, *seen, 1)
 		assert.Equal(t, []string{"1", "50"}, (*seen)[0])
@@ -628,9 +628,9 @@ func TestList(t *testing.T) {
 		pc, secret := listTestProviderConfig(srv.URL)
 		ec := newExternal(t, secret)
 
-		result, err := ec.List(ctx, pc, "3")
+		result, err := ec.List(ctx, pc, nil, "3")
 		require.NoError(t, err)
-		assert.Empty(t, result.ExternalNames)
+		assert.Empty(t, testutil.ItemNames(result.Items))
 		assert.Empty(t, result.NextPageToken)
 	})
 
@@ -644,9 +644,9 @@ func TestList(t *testing.T) {
 		pc, secret := listTestProviderConfig(srv.URL)
 		ec := newExternal(t, secret)
 
-		result, err := ec.List(ctx, pc, "")
+		result, err := ec.List(ctx, pc, nil, "")
 		require.NoError(t, err)
-		assert.Equal(t, []string{"acme/ok"}, result.ExternalNames)
+		assert.Equal(t, []string{"acme/ok"}, testutil.ItemNames(result.Items))
 	})
 
 	t.Run("returns API errors", func(t *testing.T) {
@@ -655,7 +655,7 @@ func TestList(t *testing.T) {
 		pc, secret := listTestProviderConfig(srv.URL)
 		ec := newExternal(t, secret)
 
-		_, err := ec.List(ctx, pc, "")
+		_, err := ec.List(ctx, pc, nil, "")
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "failed to list repositories")
 	})

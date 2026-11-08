@@ -97,7 +97,7 @@ var _ resource.ExternalLister = (*externalClient)(nil)
 
 // List enumerates external organizations for discovery (crossplane.io
 // ExternalLister). External names are organization names.
-func (e *externalClient) List(ctx context.Context, pc resource.ProviderConfig, pageToken string) (resource.ExternalListResult, error) {
+func (e *externalClient) List(ctx context.Context, pc resource.ProviderConfig, _ resource.ExternalListScope, pageToken string) (resource.ExternalListResult, error) {
 	cfg, ok := pc.(*v1beta1.ProviderConfig)
 	if !ok {
 		return resource.ExternalListResult{}, errors.New("provider config is not a Gitea ProviderConfig")
@@ -133,7 +133,7 @@ func (e *externalClient) List(ctx context.Context, pc resource.ProviderConfig, p
 			continue
 		}
 
-		result.ExternalNames = append(result.ExternalNames, o.Username)
+		result.Items = append(result.Items, resource.ExternalListItem{ExternalName: o.Username})
 	}
 
 	if len(orgs) == pageSize {

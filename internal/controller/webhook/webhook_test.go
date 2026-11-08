@@ -83,33 +83,63 @@ func TestList(t *testing.T) {
 
 		var pc resource.ProviderConfig
 
-		_, err := ec.List(ctx, pc, "")
+		_, err := ec.List(ctx, pc, resource.ExternalListScope{"organization": "acme"}, "")
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "not a Gitea ProviderConfig")
 	})
 
-	t.Run("rejects invalid tokens and phases", func(t *testing.T) {
+	t.Run("requires a repository or organization scope", func(t *testing.T) {
+		ec := &externalClient{client: testutil.NoopClient{}}
+		pc := &v1beta1.ProviderConfig{}
+
+		_, err := ec.List(ctx, pc, nil, "")
+		require.ErrorIs(t, err, resource.ErrScopeRequired)
+	})
+
+	t.Run("lists repository webhooks", func(t *testing.T) {
+		srv := webhookTestServer(t)
+		ec, pc := webhookTestSetup(t, srv.URL)
+
+		result, err := ec.List(ctx, pc, resource.ExternalListScope{"owner": "acme", "repository": "r1"}, "")
+		require.NoError(t, err)
+		require.Len(t, result.Items, 1)
+		assert.Equal(t, "acme/r1/9", result.Items[0].ExternalName)
+		assert.Equal(t, resource.ExternalListScope{"owner": "acme", "repository": "r1"}, result.Items[0].Scope)
+	})
+
+	t.Run("lists organization webhooks", func(t *testing.T) {
+		srv := webhookTestServer(t)
+		ec, pc := webhookTestSetup(t, srv.URL)
+
+		result, err := ec.List(ctx, pc, resource.ExternalListScope{"organization": "acme"}, "")
+		require.NoError(t, err)
+		require.Len(t, result.Items, 1)
+		assert.Equal(t, "acme/4", result.Items[0].ExternalName)
+		assert.Equal(t, resource.ExternalListScope{"organization": "acme"}, result.Items[0].Scope)
+	})
+
+	t.Run("drains repository then organization scopes", func(t *testing.T) {
+		srv := webhookTestServer(t)
+		ec, pc := webhookTestSetup(t, srv.URL)
+
+		first, err := ec.ListScopes(ctx, pc, nil, "")
+		require.NoError(t, err)
+		assert.Equal(t, []resource.ExternalListScope{{"owner": "acme", "repository": "r1"}}, first.Scopes)
+		assert.Equal(t, "orgs:1", first.NextPageToken)
+
+		second, err := ec.ListScopes(ctx, pc, nil, first.NextPageToken)
+		require.NoError(t, err)
+		assert.Equal(t, []resource.ExternalListScope{{"organization": "acme"}}, second.Scopes)
+		assert.Empty(t, second.NextPageToken)
+	})
+
+	t.Run("rejects invalid tokens and phases when listing scopes", func(t *testing.T) {
 		ec := &externalClient{client: testutil.NoopClient{}}
 		pc := &v1beta1.ProviderConfig{}
 
 		for _, token := range []string{"abc", "bogus:1"} {
-			_, err := ec.List(ctx, pc, token)
+			_, err := ec.ListScopes(ctx, pc, nil, token)
 			require.Error(t, err, "token %q", token)
 		}
-	})
-
-	t.Run("drains repos then orgs", func(t *testing.T) {
-		srv := webhookTestServer(t)
-		ec, pc := webhookTestSetup(t, srv.URL)
-
-		first, err := ec.List(ctx, pc, "")
-		require.NoError(t, err)
-		assert.Equal(t, []string{"acme/r1/9"}, first.ExternalNames)
-		assert.Equal(t, "orgs:1", first.NextPageToken)
-
-		second, err := ec.List(ctx, pc, first.NextPageToken)
-		require.NoError(t, err)
-		assert.Equal(t, []string{"acme/4"}, second.ExternalNames)
-		assert.Empty(t, second.NextPageToken)
 	})
 }

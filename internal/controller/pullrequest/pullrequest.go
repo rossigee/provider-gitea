@@ -95,49 +95,48 @@ type externalClient struct {
 // Compile-time check that externalClient implements the discovery interface
 // consumed by Crossplane's resource-discovery controller (DiscoveryReport).
 var _ resource.ExternalLister = (*externalClient)(nil)
+var _ resource.ExternalScopeLister = (*externalClient)(nil)
 
 // List enumerates external pull requests (owner/repo/number) for discovery (crossplane.io
 // ExternalLister). Discovery pages repositories; the page token addresses
 // the repository page.
-func (e *externalClient) List(ctx context.Context, pc resource.ProviderConfig, pageToken string) (resource.ExternalListResult, error) {
+func (e *externalClient) List(ctx context.Context, pc resource.ProviderConfig, scope resource.ExternalListScope, _ string) (resource.ExternalListResult, error) {
+	owner, repo, err := discovery.RepositoryFromScope(discovery.RepoSplit, scope)
+	if err != nil {
+		return resource.ExternalListResult{}, err
+	}
+
 	conn, err := discovery.NewClient(ctx, e.kube, pc)
 	if err != nil {
 		return resource.ExternalListResult{}, err
 	}
 
-	page, err := discovery.ParsePageToken(pageToken)
-	if err != nil {
-		return resource.ExternalListResult{}, err
-	}
-
-	var names []string
-
-	count, err := discovery.ForEachRepository(ctx, conn, page, func(owner, repo string) error {
-		for innerPage := 1; ; innerPage++ {
-			items, err := conn.ListPullRequests(ctx, owner, repo, innerPage, discovery.PageSize)
-			if err != nil {
-				return errors.Wrapf(err, "failed to list pull requests for repository %s/%s", owner, repo)
-			}
-
-			for _, item := range items {
-				names = append(names, fmt.Sprintf("%s/%s/%d", owner, repo, item.Number))
-			}
-
-			if len(items) < discovery.PageSize {
-				break
-			}
+	var items []resource.ExternalListItem
+	for innerPage := 1; ; innerPage++ {
+		batch, err := conn.ListPullRequests(ctx, owner, repo, innerPage, discovery.PageSize)
+		if err != nil {
+			return resource.ExternalListResult{}, errors.Wrapf(err, "failed to list pull requests for repository %s/%s", owner, repo)
 		}
 
-		return nil
-	})
-	if err != nil {
-		return resource.ExternalListResult{}, err
+		for _, v := range batch {
+			items = append(items, resource.ExternalListItem{
+				ExternalName: fmt.Sprintf("%s/%s/%d", owner, repo, v.Number),
+				Scope:        discovery.RepositoryScope(discovery.RepoSplit, owner, repo),
+			})
+		}
+
+		if len(batch) < discovery.PageSize {
+			break
+		}
 	}
 
-	return resource.ExternalListResult{
-		ExternalNames: names,
-		NextPageToken: discovery.NextPageToken(count, page),
-	}, nil
+	return resource.ExternalListResult{Items: items}, nil
+}
+
+// ListScopes enumerates repositories as the scopes of pullrequest discovery
+// (crossplane.io ExternalScopeLister).
+func (e *externalClient) ListScopes(ctx context.Context, pc resource.ProviderConfig, parent resource.ExternalListScope, pageToken string) (resource.ExternalScopeListResult, error) {
+	return discovery.ListRepositoryScopes(ctx, e.kube, pc, discovery.RepoSplit, parent, pageToken)
 }
 
 // parseExternalName splits an "owner/repo/number" external name.
