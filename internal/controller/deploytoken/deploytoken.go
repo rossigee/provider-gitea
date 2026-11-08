@@ -94,44 +94,42 @@ type externalClient struct {
 // Compile-time check that externalClient implements the discovery interface
 // consumed by Crossplane's resource-discovery controller (DiscoveryReport).
 var _ resource.ExternalLister = (*externalClient)(nil)
+var _ resource.ExternalScopeLister = (*externalClient)(nil)
 
 // List enumerates external deploy tokens for discovery (crossplane.io
 // ExternalLister). Deploy tokens share the repository keys endpoint.
 // External names are owner/repo/id.
-func (e *externalClient) List(ctx context.Context, pc resource.ProviderConfig, pageToken string) (resource.ExternalListResult, error) {
+func (e *externalClient) List(ctx context.Context, pc resource.ProviderConfig, scope resource.ExternalListScope, _ string) (resource.ExternalListResult, error) {
+	owner, repo, err := discovery.RepositoryFromScope(discovery.RepoSplit, scope)
+	if err != nil {
+		return resource.ExternalListResult{}, err
+	}
+
 	conn, err := discovery.NewClient(ctx, e.kube, pc)
 	if err != nil {
 		return resource.ExternalListResult{}, err
 	}
 
-	page, err := discovery.ParsePageToken(pageToken)
+	list, err := conn.ListDeployKeys(ctx, owner, repo)
 	if err != nil {
-		return resource.ExternalListResult{}, err
+		return resource.ExternalListResult{}, errors.Wrapf(err, "failed to list deploy keys for repository %s/%s", owner, repo)
 	}
 
-	var names []string
-
-	count, err := discovery.ForEachRepository(ctx, conn, page, func(owner, repo string) error {
-		keys, err := conn.ListDeployKeys(ctx, owner, repo)
-		if err != nil {
-			return errors.Wrapf(err, "failed to list deploy keys for repository %s/%s", owner, repo)
-		}
-
-		for _, k := range keys {
-			names = append(names, fmt.Sprintf("%s/%s/%d", owner, repo, k.ID))
-		}
-
-		return nil
-	})
-	if err != nil {
-		return resource.ExternalListResult{}, err
+	items := make([]resource.ExternalListItem, 0, len(list))
+	for _, v := range list {
+		items = append(items, resource.ExternalListItem{
+			ExternalName: fmt.Sprintf("%s/%s/%d", owner, repo, v.ID),
+			Scope:        discovery.RepositoryScope(discovery.RepoSplit, owner, repo),
+		})
 	}
 
-	return resource.ExternalListResult{
-		ExternalNames: names,
-		NextPageToken: discovery.NextPageToken(count, page),
-	}, nil
+	return resource.ExternalListResult{Items: items}, nil
+}
 
+// ListScopes enumerates repositories as the scopes of deploytoken discovery
+// (crossplane.io ExternalScopeLister).
+func (e *externalClient) ListScopes(ctx context.Context, pc resource.ProviderConfig, parent resource.ExternalListScope, pageToken string) (resource.ExternalScopeListResult, error) {
+	return discovery.ListRepositoryScopes(ctx, e.kube, pc, discovery.RepoSplit, parent, pageToken)
 }
 
 // parseExternalName splits an "owner/repo/id" external name.

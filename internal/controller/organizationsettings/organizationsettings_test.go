@@ -135,7 +135,7 @@ func TestList(t *testing.T) {
 
 		var pc resource.ProviderConfig
 
-		_, err := ec.List(ctx, pc, "")
+		_, err := ec.List(ctx, pc, nil, "")
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "not a Gitea ProviderConfig")
 	})
@@ -145,7 +145,7 @@ func TestList(t *testing.T) {
 		pc := &v1beta1.ProviderConfig{}
 
 		for _, token := range []string{"abc", "0"} {
-			_, err := ec.List(ctx, pc, token)
+			_, err := ec.List(ctx, pc, nil, token)
 			require.Error(t, err, "token %q", token)
 		}
 	})
@@ -158,9 +158,9 @@ func TestList(t *testing.T) {
 		kube, pc := testutil.DiscoveryKube(t, srv.URL)
 		ec := &externalClient{client: &mockSettingsClient{}, kube: kube}
 
-		result, err := ec.List(ctx, pc, "")
+		result, err := ec.List(ctx, pc, nil, "")
 		require.NoError(t, err)
-		assert.ElementsMatch(t, []string{"acme", "globex"}, result.ExternalNames)
+		assert.ElementsMatch(t, []string{"acme", "globex"}, testutil.ItemNames(result.Items))
 		assert.Empty(t, result.NextPageToken)
 	})
 

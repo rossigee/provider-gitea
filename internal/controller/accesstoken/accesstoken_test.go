@@ -178,22 +178,20 @@ func TestList(t *testing.T) {
 
 		var pc resource.ProviderConfig
 
-		_, err := ec.List(ctx, pc, "")
+		_, err := ec.List(ctx, pc, resource.ExternalListScope{"username": "alice"}, "")
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "not a Gitea ProviderConfig")
 	})
 
-	t.Run("rejects invalid page tokens", func(t *testing.T) {
+	t.Run("requires a username scope", func(t *testing.T) {
 		ec := &externalClient{client: &mockTokenClient{}}
 		pc := &v1beta1.ProviderConfig{}
 
-		for _, token := range []string{"abc", "0"} {
-			_, err := ec.List(ctx, pc, token)
-			require.Error(t, err, "token %q", token)
-		}
+		_, err := ec.List(ctx, pc, nil, "")
+		require.ErrorIs(t, err, resource.ErrScopeRequired)
 	})
 
-	t.Run("discovers names across users", func(t *testing.T) {
+	t.Run("lists members of the scoped user", func(t *testing.T) {
 		srv := testutil.UserDiscoveryServer(t, []string{"alice"},
 			func(w http.ResponseWriter, r *http.Request, username string) bool {
 				_, _ = fmt.Fprint(w, `[{"id":7}]`)
@@ -202,10 +200,38 @@ func TestList(t *testing.T) {
 		kube, pc := testutil.DiscoveryKube(t, srv.URL)
 		ec := &externalClient{client: &mockTokenClient{}, kube: kube}
 
-		result, err := ec.List(ctx, pc, "")
+		result, err := ec.List(ctx, pc, resource.ExternalListScope{"username": "alice"}, "")
 		require.NoError(t, err)
-		assert.ElementsMatch(t, []string{"alice/7"}, result.ExternalNames)
+		require.Len(t, result.Items, 1)
+		assert.Equal(t, "alice/7", result.Items[0].ExternalName)
+		assert.Equal(t, resource.ExternalListScope{"username": "alice"}, result.Items[0].Scope)
+	})
+
+	t.Run("lists users as scopes", func(t *testing.T) {
+		srv := testutil.UserDiscoveryServer(t, []string{"alice", "bob"},
+			func(w http.ResponseWriter, r *http.Request, username string) bool {
+				return false
+			})
+		kube, pc := testutil.DiscoveryKube(t, srv.URL)
+		ec := &externalClient{client: &mockTokenClient{}, kube: kube}
+
+		result, err := ec.ListScopes(ctx, pc, nil, "")
+		require.NoError(t, err)
+		assert.ElementsMatch(t, []resource.ExternalListScope{
+			{"username": "alice"},
+			{"username": "bob"},
+		}, result.Scopes)
 		assert.Empty(t, result.NextPageToken)
+	})
+
+	t.Run("rejects invalid page tokens when listing scopes", func(t *testing.T) {
+		ec := &externalClient{client: &mockTokenClient{}}
+		pc := &v1beta1.ProviderConfig{}
+
+		for _, token := range []string{"abc", "0", "bogus:1"} {
+			_, err := ec.ListScopes(ctx, pc, nil, token)
+			require.Error(t, err, "token %q", token)
+		}
 	})
 
 	t.Run("propagates item listing errors", func(t *testing.T) {
@@ -217,9 +243,8 @@ func TestList(t *testing.T) {
 		kube, pc := testutil.DiscoveryKube(t, srv.URL)
 		ec := &externalClient{client: &mockTokenClient{}, kube: kube}
 
-		_, err := ec.List(ctx, pc, "")
+		_, err := ec.List(ctx, pc, resource.ExternalListScope{"username": "alice"}, "")
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "failed to list access tokens")
 	})
-
 }

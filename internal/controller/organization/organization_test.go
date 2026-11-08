@@ -553,7 +553,7 @@ func TestList(t *testing.T) {
 
 		var pc resource.ProviderConfig
 
-		_, err := ec.List(ctx, pc, "")
+		_, err := ec.List(ctx, pc, nil, "")
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "not a Gitea ProviderConfig")
 	})
@@ -563,7 +563,7 @@ func TestList(t *testing.T) {
 		pc := &v1beta1.ProviderConfig{}
 
 		for _, token := range []string{"abc", "0", "-1"} {
-			_, err := ec.List(ctx, pc, token)
+			_, err := ec.List(ctx, pc, nil, token)
 			require.Error(t, err, "token %q", token)
 		}
 	})
@@ -577,9 +577,9 @@ func TestList(t *testing.T) {
 		srv := orgListTestServer(t, names, http.StatusOK)
 		ec, pc := orgListTestSetup(t, srv.URL)
 
-		result, err := ec.List(ctx, pc, "")
+		result, err := ec.List(ctx, pc, nil, "")
 		require.NoError(t, err)
-		assert.Equal(t, names, result.ExternalNames)
+		assert.Equal(t, names, testutil.ItemNames(result.Items))
 		assert.Equal(t, "2", result.NextPageToken)
 	})
 
@@ -587,9 +587,9 @@ func TestList(t *testing.T) {
 		srv := orgListTestServer(t, []string{"org-a", "org-b"}, http.StatusOK)
 		ec, pc := orgListTestSetup(t, srv.URL)
 
-		result, err := ec.List(ctx, pc, "")
+		result, err := ec.List(ctx, pc, nil, "")
 		require.NoError(t, err)
-		assert.Equal(t, []string{"org-a", "org-b"}, result.ExternalNames)
+		assert.Equal(t, []string{"org-a", "org-b"}, testutil.ItemNames(result.Items))
 		assert.Empty(t, result.NextPageToken)
 	})
 
@@ -597,7 +597,7 @@ func TestList(t *testing.T) {
 		srv := orgListTestServer(t, nil, http.StatusForbidden)
 		ec, pc := orgListTestSetup(t, srv.URL)
 
-		_, err := ec.List(ctx, pc, "")
+		_, err := ec.List(ctx, pc, nil, "")
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "failed to list organizations")
 	})

@@ -35,6 +35,7 @@ import (
 	"strconv"
 
 	"github.com/rossigee/provider-gitea/internal/clients"
+	"github.com/rossigee/provider-gitea/internal/discovery"
 	"github.com/rossigee/provider-gitea/internal/tracing"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -96,67 +97,48 @@ type externalClient struct {
 // Compile-time check that externalClient implements the discovery interface
 // consumed by Crossplane's resource-discovery controller (DiscoveryReport).
 var _ resource.ExternalLister = (*externalClient)(nil)
+var _ resource.ExternalScopeLister = (*externalClient)(nil)
 
 // List enumerates external teams for discovery (crossplane.io
 // ExternalLister). Teams are org-scoped, so discovery is two-phase: page
 // through organizations, then list teams per organization. External names are
 // numeric team IDs, matching the external-name used by Observe. The page token
 // addresses the organization page.
-func (e *externalClient) List(ctx context.Context, pc resource.ProviderConfig, pageToken string) (resource.ExternalListResult, error) {
-	cfg, ok := pc.(*v1beta1.ProviderConfig)
-	if !ok {
-		return resource.ExternalListResult{}, errors.New("provider config is not a Gitea ProviderConfig")
-	}
-
-	orgPage := 1
-
-	if pageToken != "" {
-		p, err := strconv.Atoi(pageToken)
-		if err != nil || p < 1 {
-			return resource.ExternalListResult{}, errors.Errorf("invalid page token %q: must be a positive page number", pageToken)
-		}
-
-		orgPage = p
-	}
-
-	conn, err := clients.NewClient(ctx, cfg, e.kube)
+func (e *externalClient) List(ctx context.Context, pc resource.ProviderConfig, scope resource.ExternalListScope, _ string) (resource.ExternalListResult, error) {
+	org, err := discovery.ValueFromScope(scope, "organization")
 	if err != nil {
-		return resource.ExternalListResult{}, errors.Wrap(err, "failed to create Gitea client for discovery")
+		return resource.ExternalListResult{}, err
 	}
 
-	const pageSize = 50
-
-	orgs, err := conn.ListOrganizations(ctx, orgPage, pageSize)
+	conn, err := discovery.NewClient(ctx, e.kube, pc)
 	if err != nil {
-		return resource.ExternalListResult{}, errors.Wrap(err, "failed to list organizations")
+		return resource.ExternalListResult{}, err
 	}
 
-	result := resource.ExternalListResult{}
+	teams, err := conn.ListOrganizationTeams(ctx, org)
+	if err != nil {
+		return resource.ExternalListResult{}, errors.Wrapf(err, "failed to list teams for organization %q", org)
+	}
 
-	for _, o := range orgs {
-		if o.Username == "" {
+	items := make([]resource.ExternalListItem, 0, len(teams))
+	for _, t := range teams {
+		if t == nil {
 			continue
 		}
 
-		teams, err := conn.ListOrganizationTeams(ctx, o.Username)
-		if err != nil {
-			return resource.ExternalListResult{}, errors.Wrapf(err, "failed to list teams for organization %q", o.Username)
-		}
-
-		for _, t := range teams {
-			if t == nil {
-				continue
-			}
-
-			result.ExternalNames = append(result.ExternalNames, strconv.FormatInt(t.ID, 10))
-		}
+		items = append(items, resource.ExternalListItem{
+			ExternalName: strconv.FormatInt(t.ID, 10),
+			Scope:        resource.ExternalListScope{"organization": org},
+		})
 	}
 
-	if len(orgs) == pageSize {
-		result.NextPageToken = strconv.Itoa(orgPage + 1)
-	}
+	return resource.ExternalListResult{Items: items}, nil
+}
 
-	return result, nil
+// ListScopes enumerates organizations as the scopes of team discovery
+// (crossplane.io ExternalScopeLister).
+func (e *externalClient) ListScopes(ctx context.Context, pc resource.ProviderConfig, parent resource.ExternalListScope, pageToken string) (resource.ExternalScopeListResult, error) {
+	return discovery.ListOrganizationScopes(ctx, e.kube, pc, "organization", parent, pageToken)
 }
 
 // parseExternalName parses a numeric team id external name.

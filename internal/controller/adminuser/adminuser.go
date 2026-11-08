@@ -101,7 +101,7 @@ var _ resource.ExternalLister = (*externalClient)(nil)
 // List enumerates external admin users for discovery (crossplane.io
 // ExternalLister). External names are usernames, sourced from the admin user
 // listing.
-func (e *externalClient) List(ctx context.Context, pc resource.ProviderConfig, pageToken string) (resource.ExternalListResult, error) {
+func (e *externalClient) List(ctx context.Context, pc resource.ProviderConfig, _ resource.ExternalListScope, pageToken string) (resource.ExternalListResult, error) {
 	conn, err := discovery.NewClient(ctx, e.kube, pc)
 	if err != nil {
 		return resource.ExternalListResult{}, err
@@ -123,7 +123,7 @@ func (e *externalClient) List(ctx context.Context, pc resource.ProviderConfig, p
 	}
 
 	return resource.ExternalListResult{
-		ExternalNames: names,
+		Items:         discovery.Unscoped(names),
 		NextPageToken: discovery.NextPageToken(count, page),
 	}, nil
 

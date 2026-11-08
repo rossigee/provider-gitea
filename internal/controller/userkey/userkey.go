@@ -95,42 +95,41 @@ type externalClient struct {
 // Compile-time check that externalClient implements the discovery interface
 // consumed by Crossplane's resource-discovery controller (DiscoveryReport).
 var _ resource.ExternalLister = (*externalClient)(nil)
+var _ resource.ExternalScopeLister = (*externalClient)(nil)
 
 // List enumerates external user keys for discovery (crossplane.io
 // ExternalLister). Keys are user-scoped; external names are username/id.
-func (e *externalClient) List(ctx context.Context, pc resource.ProviderConfig, pageToken string) (resource.ExternalListResult, error) {
+func (e *externalClient) List(ctx context.Context, pc resource.ProviderConfig, scope resource.ExternalListScope, _ string) (resource.ExternalListResult, error) {
+	username, err := discovery.ValueFromScope(scope, "username")
+	if err != nil {
+		return resource.ExternalListResult{}, err
+	}
+
 	conn, err := discovery.NewClient(ctx, e.kube, pc)
 	if err != nil {
 		return resource.ExternalListResult{}, err
 	}
 
-	page, err := discovery.ParsePageToken(pageToken)
+	keys, err := conn.ListUserKeys(ctx, username)
 	if err != nil {
-		return resource.ExternalListResult{}, err
+		return resource.ExternalListResult{}, errors.Wrapf(err, "failed to list keys for user %q", username)
 	}
 
-	var names []string
-
-	count, err := discovery.ForEachUser(ctx, conn, page, func(username string) error {
-		keys, err := conn.ListUserKeys(ctx, username)
-		if err != nil {
-			return errors.Wrapf(err, "failed to list keys for user %q", username)
-		}
-
-		for _, k := range keys {
-			names = append(names, fmt.Sprintf("%s/%d", username, k.ID))
-		}
-		return nil
-	})
-	if err != nil {
-		return resource.ExternalListResult{}, err
+	items := make([]resource.ExternalListItem, 0, len(keys))
+	for _, k := range keys {
+		items = append(items, resource.ExternalListItem{
+			ExternalName: fmt.Sprintf("%s/%d", username, k.ID),
+			Scope:        resource.ExternalListScope{"username": username},
+		})
 	}
 
-	return resource.ExternalListResult{
-		ExternalNames: names,
-		NextPageToken: discovery.NextPageToken(count, page),
-	}, nil
+	return resource.ExternalListResult{Items: items}, nil
+}
 
+// ListScopes enumerates users as the scopes of userkey discovery
+// (crossplane.io ExternalScopeLister).
+func (e *externalClient) ListScopes(ctx context.Context, pc resource.ProviderConfig, parent resource.ExternalListScope, pageToken string) (resource.ExternalScopeListResult, error) {
+	return discovery.ListUserScopes(ctx, e.kube, pc, "username", parent, pageToken)
 }
 
 // parseExternalName splits a "username/id" external name.

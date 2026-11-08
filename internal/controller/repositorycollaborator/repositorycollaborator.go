@@ -95,46 +95,46 @@ type externalClient struct {
 // Compile-time check that externalClient implements the discovery interface
 // consumed by Crossplane's resource-discovery controller (DiscoveryReport).
 var _ resource.ExternalLister = (*externalClient)(nil)
+var _ resource.ExternalScopeLister = (*externalClient)(nil)
 
 // List enumerates external repository collaborators (owner/repo/username) for discovery (crossplane.io
 // ExternalLister). Discovery pages repositories; the page token addresses
 // the repository page.
-func (e *externalClient) List(ctx context.Context, pc resource.ProviderConfig, pageToken string) (resource.ExternalListResult, error) {
+func (e *externalClient) List(ctx context.Context, pc resource.ProviderConfig, scope resource.ExternalListScope, _ string) (resource.ExternalListResult, error) {
+	owner, repo, err := discovery.RepositoryFromScope(discovery.RepoJoined, scope)
+	if err != nil {
+		return resource.ExternalListResult{}, err
+	}
+
 	conn, err := discovery.NewClient(ctx, e.kube, pc)
 	if err != nil {
 		return resource.ExternalListResult{}, err
 	}
 
-	page, err := discovery.ParsePageToken(pageToken)
+	collabs, err := conn.ListRepositoryCollaborators(ctx, owner, repo)
 	if err != nil {
-		return resource.ExternalListResult{}, err
+		return resource.ExternalListResult{}, errors.Wrapf(err, "failed to list collaborators for repository %s/%s", owner, repo)
 	}
 
-	var names []string
-
-	count, err := discovery.ForEachRepository(ctx, conn, page, func(owner, repo string) error {
-		collabs, err := conn.ListRepositoryCollaborators(ctx, owner, repo)
-		if err != nil {
-			return errors.Wrapf(err, "failed to list collaborators for repository %s/%s", owner, repo)
+	items := make([]resource.ExternalListItem, 0, len(collabs))
+	for _, u := range collabs {
+		if u == nil || u.Username == "" {
+			continue
 		}
 
-		for _, u := range collabs {
-			if u == nil || u.Username == "" {
-				continue
-			}
-			names = append(names, fmt.Sprintf("%s/%s/%s", owner, repo, u.Username))
-		}
-
-		return nil
-	})
-	if err != nil {
-		return resource.ExternalListResult{}, err
+		items = append(items, resource.ExternalListItem{
+			ExternalName: fmt.Sprintf("%s/%s/%s", owner, repo, u.Username),
+			Scope:        discovery.RepositoryScope(discovery.RepoJoined, owner, repo),
+		})
 	}
 
-	return resource.ExternalListResult{
-		ExternalNames: names,
-		NextPageToken: discovery.NextPageToken(count, page),
-	}, nil
+	return resource.ExternalListResult{Items: items}, nil
+}
+
+// ListScopes enumerates repositories as the scopes of repository collaborator discovery
+// (crossplane.io ExternalScopeLister).
+func (e *externalClient) ListScopes(ctx context.Context, pc resource.ProviderConfig, parent resource.ExternalListScope, pageToken string) (resource.ExternalScopeListResult, error) {
+	return discovery.ListRepositoryScopes(ctx, e.kube, pc, discovery.RepoJoined, parent, pageToken)
 }
 
 // parseExternalName splits an "owner/repo/username" external name.

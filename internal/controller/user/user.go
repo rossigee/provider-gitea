@@ -91,7 +91,7 @@ var _ resource.ExternalLister = (*externalClient)(nil)
 
 // List enumerates external users for discovery (crossplane.io
 // ExternalLister). External names are usernames. Requires admin privileges.
-func (e *externalClient) List(ctx context.Context, pc resource.ProviderConfig, pageToken string) (resource.ExternalListResult, error) {
+func (e *externalClient) List(ctx context.Context, pc resource.ProviderConfig, _ resource.ExternalListScope, pageToken string) (resource.ExternalListResult, error) {
 	cfg, ok := pc.(*v1beta1.ProviderConfig)
 	if !ok {
 		return resource.ExternalListResult{}, errors.New("provider config is not a Gitea ProviderConfig")
@@ -127,7 +127,7 @@ func (e *externalClient) List(ctx context.Context, pc resource.ProviderConfig, p
 			continue
 		}
 
-		result.ExternalNames = append(result.ExternalNames, u.Username)
+		result.Items = append(result.Items, resource.ExternalListItem{ExternalName: u.Username})
 	}
 
 	if len(users) == pageSize {

@@ -95,6 +95,7 @@ type externalClient struct {
 // Compile-time check that externalClient implements the discovery interface
 // consumed by Crossplane's resource-discovery controller (DiscoveryReport).
 var _ resource.ExternalLister = (*externalClient)(nil)
+var _ resource.ExternalScopeLister = (*externalClient)(nil)
 
 // scopeValue returns the scope value string (empty for system scope).
 func scopeValue(cr *v2.Runner) string {
@@ -327,84 +328,153 @@ func Setup(mgr ctrl.Manager, o controller.Options) error {
 // Repository runners use repository/owner/repo/id names, organization runners
 // organization/org/id, system runners system/id. The page token is
 // "<phase>:<page>" with phases repos, orgs, system drained in order.
-func (e *externalClient) List(ctx context.Context, pc resource.ProviderConfig, pageToken string) (resource.ExternalListResult, error) {
+func (e *externalClient) List(ctx context.Context, pc resource.ProviderConfig, scope resource.ExternalListScope, _ string) (resource.ExternalListResult, error) {
+	if scope["scope"] == "" {
+		return resource.ExternalListResult{}, errors.Wrap(resource.ErrScopeRequired, "scope key is required")
+	}
+
 	conn, err := discovery.NewClient(ctx, e.kube, pc)
 	if err != nil {
 		return resource.ExternalListResult{}, err
 	}
 
-	phase, page, err := discovery.ParseScopeToken(pageToken, discovery.ScopeRepos)
-	if err != nil {
-		return resource.ExternalListResult{}, err
-	}
-
-	var names []string
-
-	result := resource.ExternalListResult{}
-
-	switch phase {
-	case discovery.ScopeRepos:
-		count, err := discovery.ForEachRepository(ctx, conn, page, func(owner, repo string) error {
-			runners, err := conn.ListRepositoryRunners(ctx, owner, repo)
-			if err != nil {
-				return errors.Wrapf(err, "failed to list runners for repository %s/%s", owner, repo)
-			}
-
-			for _, r := range runners {
-				names = append(names, fmt.Sprintf("repository/%s/%s/%d", owner, repo, r.ID))
-			}
-
-			return nil
-		})
+	switch scope["scope"] {
+	case runnerScopeRepository:
+		owner, repo, err := discovery.RepositoryFromScope(discovery.RepoJoined, resource.ExternalListScope{"repository": scope["scopeValue"]})
 		if err != nil {
 			return resource.ExternalListResult{}, err
 		}
 
-		result.ExternalNames = names
-
-		if count == discovery.PageSize {
-			result.NextPageToken = discovery.ScopeToken(discovery.ScopeRepos, page+1)
-		} else {
-			result.NextPageToken = discovery.ScopeToken(discovery.ScopeOrgs, 1)
+		runners, err := conn.ListRepositoryRunners(ctx, owner, repo)
+		if err != nil {
+			return resource.ExternalListResult{}, errors.Wrapf(err, "failed to list runners for repository %s/%s", owner, repo)
 		}
-	case discovery.ScopeOrgs:
-		count, err := discovery.ForEachOrganization(ctx, conn, page, func(org string) error {
-			runners, err := conn.ListOrganizationRunners(ctx, org)
-			if err != nil {
-				return errors.Wrapf(err, "failed to list runners for organization %q", org)
-			}
 
-			for _, r := range runners {
-				names = append(names, fmt.Sprintf("organization/%s/%d", org, r.ID))
-			}
+		items := make([]resource.ExternalListItem, 0, len(runners))
+		for _, r := range runners {
+			items = append(items, resource.ExternalListItem{
+				ExternalName: fmt.Sprintf("repository/%s/%s/%d", owner, repo, r.ID),
+				Scope:        repositoryRunnerScope(owner, repo),
+			})
+		}
 
-			return nil
-		})
+		return resource.ExternalListResult{Items: items}, nil
+
+	case runnerScopeOrganization:
+		org, err := discovery.ValueFromScope(scope, "scopeValue")
 		if err != nil {
 			return resource.ExternalListResult{}, err
 		}
 
-		result.ExternalNames = names
-
-		if count == discovery.PageSize {
-			result.NextPageToken = discovery.ScopeToken(discovery.ScopeOrgs, page+1)
-		} else {
-			result.NextPageToken = discovery.ScopeToken(discovery.ScopeSystem, 1)
+		runners, err := conn.ListOrganizationRunners(ctx, org)
+		if err != nil {
+			return resource.ExternalListResult{}, errors.Wrapf(err, "failed to list runners for organization %q", org)
 		}
-	case discovery.ScopeSystem:
+
+		items := make([]resource.ExternalListItem, 0, len(runners))
+		for _, r := range runners {
+			items = append(items, resource.ExternalListItem{
+				ExternalName: fmt.Sprintf("organization/%s/%d", org, r.ID),
+				Scope:        organizationRunnerScope(org),
+			})
+		}
+
+		return resource.ExternalListResult{Items: items}, nil
+
+	case runnerScopeSystem:
 		runners, err := conn.ListSystemRunners(ctx)
 		if err != nil {
 			return resource.ExternalListResult{}, errors.Wrap(err, "failed to list system runners")
 		}
 
+		items := make([]resource.ExternalListItem, 0, len(runners))
 		for _, r := range runners {
-			names = append(names, fmt.Sprintf("system/%d", r.ID))
+			items = append(items, resource.ExternalListItem{
+				ExternalName: fmt.Sprintf("system/%d", r.ID),
+				Scope:        resource.ExternalListScope{"scope": runnerScopeSystem},
+			})
 		}
 
-		result.ExternalNames = names
+		return resource.ExternalListResult{Items: items}, nil
+
 	default:
-		return resource.ExternalListResult{}, errors.Errorf("invalid discovery phase %q", phase)
+		return resource.ExternalListResult{}, errors.Errorf("invalid runner scope %q", scope["scope"])
+	}
+}
+
+// ListScopes enumerates repositories, then organizations, then the system, as
+// the scopes of runner discovery (crossplane.io ExternalScopeLister). The page
+// token is a phase and page number, see discovery.ParseScopeToken.
+func (e *externalClient) ListScopes(ctx context.Context, pc resource.ProviderConfig, parent resource.ExternalListScope, pageToken string) (resource.ExternalScopeListResult, error) {
+	if len(parent) > 0 {
+		return resource.ExternalScopeListResult{}, nil
 	}
 
-	return result, nil
+	conn, err := discovery.NewClient(ctx, e.kube, pc)
+	if err != nil {
+		return resource.ExternalScopeListResult{}, err
+	}
+
+	phase, page, err := discovery.ParseScopeToken(pageToken, discovery.ScopeRepos)
+	if err != nil {
+		return resource.ExternalScopeListResult{}, err
+	}
+
+	var scopes []resource.ExternalListScope
+
+	switch phase {
+	case discovery.ScopeRepos:
+		count, err := discovery.ForEachRepository(ctx, conn, page, func(owner, repo string) error {
+			scopes = append(scopes, repositoryRunnerScope(owner, repo))
+
+			return nil
+		})
+		if err != nil {
+			return resource.ExternalScopeListResult{}, err
+		}
+
+		next := discovery.ScopeToken(discovery.ScopeOrgs, 1)
+		if count == discovery.PageSize {
+			next = discovery.ScopeToken(discovery.ScopeRepos, page+1)
+		}
+
+		return resource.ExternalScopeListResult{Scopes: scopes, NextPageToken: next}, nil
+	case discovery.ScopeOrgs:
+		count, err := discovery.ForEachOrganization(ctx, conn, page, func(org string) error {
+			scopes = append(scopes, organizationRunnerScope(org))
+
+			return nil
+		})
+		if err != nil {
+			return resource.ExternalScopeListResult{}, err
+		}
+
+		next := discovery.ScopeToken(discovery.ScopeSystem, 1)
+		if count == discovery.PageSize {
+			next = discovery.ScopeToken(discovery.ScopeOrgs, page+1)
+		}
+
+		return resource.ExternalScopeListResult{Scopes: scopes, NextPageToken: next}, nil
+	case discovery.ScopeSystem:
+		return resource.ExternalScopeListResult{
+			Scopes: []resource.ExternalListScope{{"scope": runnerScopeSystem}},
+		}, nil
+	default:
+		return resource.ExternalScopeListResult{}, errors.Errorf("invalid discovery phase %q", phase)
+	}
+}
+
+// Runner scope kinds, the values of spec.forProvider.scope.
+const (
+	runnerScopeRepository   = "repository"
+	runnerScopeOrganization = "organization"
+	runnerScopeSystem       = "system"
+)
+
+func repositoryRunnerScope(owner, repo string) resource.ExternalListScope {
+	return resource.ExternalListScope{"scope": runnerScopeRepository, "scopeValue": owner + "/" + repo}
+}
+
+func organizationRunnerScope(org string) resource.ExternalListScope {
+	return resource.ExternalListScope{"scope": runnerScopeOrganization, "scopeValue": org}
 }

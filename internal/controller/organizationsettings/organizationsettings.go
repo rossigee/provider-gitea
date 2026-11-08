@@ -98,7 +98,7 @@ var _ resource.ExternalLister = (*externalClient)(nil)
 // List enumerates external organization settings for discovery (crossplane.io
 // ExternalLister). Settings are singletons: one external name (the org name)
 // per organization.
-func (e *externalClient) List(ctx context.Context, pc resource.ProviderConfig, pageToken string) (resource.ExternalListResult, error) {
+func (e *externalClient) List(ctx context.Context, pc resource.ProviderConfig, _ resource.ExternalListScope, pageToken string) (resource.ExternalListResult, error) {
 	conn, err := discovery.NewClient(ctx, e.kube, pc)
 	if err != nil {
 		return resource.ExternalListResult{}, err
@@ -120,7 +120,7 @@ func (e *externalClient) List(ctx context.Context, pc resource.ProviderConfig, p
 	}
 
 	return resource.ExternalListResult{
-		ExternalNames: names,
+		Items:         discovery.Unscoped(names),
 		NextPageToken: discovery.NextPageToken(count, page),
 	}, nil
 

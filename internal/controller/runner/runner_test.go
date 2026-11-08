@@ -85,38 +85,66 @@ func TestList(t *testing.T) {
 
 		var pc resource.ProviderConfig
 
-		_, err := ec.List(ctx, pc, "")
+		_, err := ec.List(ctx, pc, resource.ExternalListScope{"scope": "system"}, "")
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "not a Gitea ProviderConfig")
 	})
 
-	t.Run("rejects invalid tokens and phases", func(t *testing.T) {
+	t.Run("requires a scope", func(t *testing.T) {
+		ec := &externalClient{client: testutil.NoopClient{}}
+		pc := &v1beta1.ProviderConfig{}
+
+		_, err := ec.List(ctx, pc, nil, "")
+		require.ErrorIs(t, err, resource.ErrScopeRequired)
+	})
+
+	t.Run("lists runners of each scope", func(t *testing.T) {
+		srv := runnerTestServer(t)
+		ec, pc := runnerTestSetup(t, srv.URL)
+
+		repo, err := ec.List(ctx, pc, resource.ExternalListScope{"scope": "repository", "scopeValue": "acme/r1"}, "")
+		require.NoError(t, err)
+		assert.Equal(t, []string{"repository/acme/r1/1"}, testutil.ItemNames(repo.Items))
+		assert.Equal(t, resource.ExternalListScope{"scope": "repository", "scopeValue": "acme/r1"}, repo.Items[0].Scope)
+
+		org, err := ec.List(ctx, pc, resource.ExternalListScope{"scope": "organization", "scopeValue": "acme"}, "")
+		require.NoError(t, err)
+		assert.Equal(t, []string{"organization/acme/2"}, testutil.ItemNames(org.Items))
+		assert.Equal(t, resource.ExternalListScope{"scope": "organization", "scopeValue": "acme"}, org.Items[0].Scope)
+
+		system, err := ec.List(ctx, pc, resource.ExternalListScope{"scope": "system"}, "")
+		require.NoError(t, err)
+		assert.Equal(t, []string{"system/3"}, testutil.ItemNames(system.Items))
+		assert.Equal(t, resource.ExternalListScope{"scope": "system"}, system.Items[0].Scope)
+	})
+
+	t.Run("drains repository, organization, then system scopes", func(t *testing.T) {
+		srv := runnerTestServer(t)
+		ec, pc := runnerTestSetup(t, srv.URL)
+
+		first, err := ec.ListScopes(ctx, pc, nil, "")
+		require.NoError(t, err)
+		assert.Equal(t, []resource.ExternalListScope{{"scope": "repository", "scopeValue": "acme/r1"}}, first.Scopes)
+		assert.Equal(t, "orgs:1", first.NextPageToken)
+
+		second, err := ec.ListScopes(ctx, pc, nil, first.NextPageToken)
+		require.NoError(t, err)
+		assert.Equal(t, []resource.ExternalListScope{{"scope": "organization", "scopeValue": "acme"}}, second.Scopes)
+		assert.Equal(t, "system:1", second.NextPageToken)
+
+		third, err := ec.ListScopes(ctx, pc, nil, second.NextPageToken)
+		require.NoError(t, err)
+		assert.Equal(t, []resource.ExternalListScope{{"scope": "system"}}, third.Scopes)
+		assert.Empty(t, third.NextPageToken)
+	})
+
+	t.Run("rejects invalid tokens and phases when listing scopes", func(t *testing.T) {
 		ec := &externalClient{client: testutil.NoopClient{}}
 		pc := &v1beta1.ProviderConfig{}
 
 		for _, token := range []string{"abc", "bogus:1"} {
-			_, err := ec.List(ctx, pc, token)
+			_, err := ec.ListScopes(ctx, pc, nil, token)
 			require.Error(t, err, "token %q", token)
 		}
-	})
-
-	t.Run("drains repos, orgs, then system", func(t *testing.T) {
-		srv := runnerTestServer(t)
-		ec, pc := runnerTestSetup(t, srv.URL)
-
-		first, err := ec.List(ctx, pc, "")
-		require.NoError(t, err)
-		assert.Equal(t, []string{"repository/acme/r1/1"}, first.ExternalNames)
-		assert.Equal(t, "orgs:1", first.NextPageToken)
-
-		second, err := ec.List(ctx, pc, first.NextPageToken)
-		require.NoError(t, err)
-		assert.Equal(t, []string{"organization/acme/2"}, second.ExternalNames)
-		assert.Equal(t, "system:1", second.NextPageToken)
-
-		third, err := ec.List(ctx, pc, second.NextPageToken)
-		require.NoError(t, err)
-		assert.Equal(t, []string{"system/3"}, third.ExternalNames)
-		assert.Empty(t, third.NextPageToken)
 	})
 }
