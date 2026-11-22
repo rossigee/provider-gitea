@@ -199,7 +199,7 @@ func (e *externalClient) Observe(ctx context.Context, mg resource.Managed) (mana
 
 	secret, err := e.client.GetOrganizationSecret(ctx, org, secretName)
 	if err != nil {
-		if strings.Contains(err.Error(), "404") {
+		if clients.IsNotFound(err) || strings.Contains(err.Error(), "not found") {
 			return managed.ExternalObservation{ResourceExists: false}, nil
 		}
 		return managed.ExternalObservation{}, errors.Wrap(err, errGetOrganizationSecret)

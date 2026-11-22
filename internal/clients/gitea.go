@@ -670,7 +670,7 @@ func (c *giteaClient) GetOrganizationSecret(ctx context.Context, org, secretName
 	}
 
 	if resp.StatusCode == http.StatusNotFound {
-		return nil, errors.New("organization secret not found")
+		return nil, NewNotFoundError("organization secret", secretName)
 	}
 
 	var secret OrganizationSecret
@@ -1804,7 +1804,7 @@ func (c *giteaClient) GetRepositorySecret(ctx context.Context, repository, secre
 	}
 
 	if resp.StatusCode == http.StatusNotFound {
-		return nil, errors.New("repository secret not found")
+		return nil, NewNotFoundError("repository secret", secretName)
 	}
 
 	var secret RepositorySecret

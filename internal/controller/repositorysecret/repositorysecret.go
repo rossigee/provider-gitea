@@ -29,12 +29,15 @@ import (
 	"github.com/pkg/errors"
 	v2 "github.com/rossigee/provider-gitea/apis/repositorysecret/v2"
 
+	corev1 "k8s.io/api/core/v1"
+
 	"github.com/rossigee/provider-gitea/internal/clients"
 	"github.com/rossigee/provider-gitea/internal/discovery"
 	"github.com/rossigee/provider-gitea/internal/tracing"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	xpv1 "github.com/crossplane/crossplane/apis/v2/core/v2"
 	v1beta1 "github.com/rossigee/provider-gitea/apis/v1beta1"
 )
 
@@ -45,6 +48,7 @@ const (
 	errUpdateRepositorySecret = "failed to update repositorysecret"
 	errDeleteRepositorySecret = "failed to delete repositorysecret"
 	errGetProviderConfig      = "failed to get provider config"
+	errResolveSecret          = "failed to resolve secret value"
 )
 
 type connector struct {
@@ -81,6 +85,32 @@ func (c *connector) Connect(ctx context.Context, mg resource.Managed) (managed.E
 type externalClient struct {
 	client clients.Client
 	kube   client.Client
+}
+
+// resolveSecretValue reads the plaintext secret value referenced by
+// spec.forProvider.valueSecretRef.
+func (e *externalClient) resolveSecretValue(ctx context.Context, cr *v2.RepositorySecret) (string, error) {
+	ref := cr.Spec.ForProvider.ValueSecretRef
+	if ref.Name == "" || ref.Key == "" {
+		return "", errors.New(errResolveSecret + ": valueSecretRef requires name and key")
+	}
+
+	ns := ref.Namespace
+	if ns == "" {
+		ns = cr.GetNamespace()
+	}
+
+	var secret corev1.Secret
+	if err := e.kube.Get(ctx, client.ObjectKey{Namespace: ns, Name: ref.Name}, &secret); err != nil {
+		return "", errors.Wrap(err, errResolveSecret)
+	}
+
+	val, ok := secret.Data[ref.Key]
+	if !ok {
+		return "", errors.New(errResolveSecret + ": key not found in secret")
+	}
+
+	return string(val), nil
 }
 
 // Compile-time check that externalClient implements the discovery interface
@@ -148,14 +178,22 @@ func (e *externalClient) Observe(ctx context.Context, mg resource.Managed) (mana
 		return managed.ExternalObservation{}, errors.New("invalid repository format")
 	}
 
-	_, err := e.client.GetRepositorySecret(ctx, cr.Spec.ForProvider.Repository, externalID)
+	secret, err := e.client.GetRepositorySecret(ctx, cr.Spec.ForProvider.Repository, externalID)
 	if err != nil {
-		if strings.Contains(err.Error(), "404") {
+		if clients.IsNotFound(err) || strings.Contains(err.Error(), "not found") {
 			return managed.ExternalObservation{ResourceExists: false}, nil
 		}
 		return managed.ExternalObservation{}, errors.Wrap(err, errGetRepositorySecret)
 	}
 
+	cr.Status.AtProvider = v2.RepositorySecretObservation{
+		SecretName: &secret.Name,
+		CreatedAt:  &secret.CreatedAt,
+	}
+	cr.SetConditions(xpv1.Available())
+
+	// Secret values are write-only in Gitea; existence implies up-to-date.
+	// Value drift is corrected on update by always writing the desired value.
 	return managed.ExternalObservation{ResourceExists: true, ResourceUpToDate: true}, nil
 }
 
@@ -169,11 +207,16 @@ func (e *externalClient) Create(ctx context.Context, mg resource.Managed) (manag
 		return managed.ExternalCreation{}, errors.New(errNotRepositorySecret)
 	}
 
-	createReq := &clients.CreateRepositorySecretRequest{
-		Data: "",
+	value, err := e.resolveSecretValue(ctx, cr)
+	if err != nil {
+		return managed.ExternalCreation{}, err
 	}
 
-	err := e.client.CreateRepositorySecret(ctx, cr.Spec.ForProvider.Repository, cr.Spec.ForProvider.SecretName, createReq)
+	createReq := &clients.CreateRepositorySecretRequest{
+		Data: value,
+	}
+
+	err = e.client.CreateRepositorySecret(ctx, cr.Spec.ForProvider.Repository, cr.Spec.ForProvider.SecretName, createReq)
 	if err != nil {
 		return managed.ExternalCreation{}, errors.Wrap(err, errCreateRepositorySecret)
 	}
@@ -192,9 +235,14 @@ func (e *externalClient) Update(ctx context.Context, mg resource.Managed) (manag
 		return managed.ExternalUpdate{}, errors.New(errNotRepositorySecret)
 	}
 
-	updateReq := &clients.UpdateRepositorySecretRequest{}
+	value, err := e.resolveSecretValue(ctx, cr)
+	if err != nil {
+		return managed.ExternalUpdate{}, err
+	}
 
-	err := e.client.UpdateRepositorySecret(ctx, cr.Spec.ForProvider.Repository, cr.Spec.ForProvider.SecretName, updateReq)
+	updateReq := &clients.UpdateRepositorySecretRequest{Data: value}
+
+	err = e.client.UpdateRepositorySecret(ctx, cr.Spec.ForProvider.Repository, cr.Spec.ForProvider.SecretName, updateReq)
 	if err != nil {
 		return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateRepositorySecret)
 	}
