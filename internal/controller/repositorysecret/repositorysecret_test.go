@@ -304,6 +304,22 @@ func TestObserve(t *testing.T) {
 		require.NotNil(t, obj.Status.AtProvider.ValueFingerprint)
 	})
 
+	t.Run("deleted resource is not blocked by a missing source secret", func(t *testing.T) {
+		srv := newServer(t, http.StatusOK, `{"name":"TOKEN","created_at":"2026-11-22T00:00:00Z"}`, nil)
+		kube, pc := newKube(t, srv.URL)
+		conn, err := clients.NewClient(ctx, pc, kube)
+		require.NoError(t, err)
+
+		ec := &externalClient{client: conn, kube: kube}
+		obj := newCR()
+		now := metav1.Now()
+		obj.SetDeletionTimestamp(&now)
+
+		obs, err := ec.Observe(ctx, obj)
+		require.NoError(t, err)
+		assert.True(t, obs.ResourceExists)
+	})
+
 	t.Run("secret reference in another namespace is rejected", func(t *testing.T) {
 		srv := newServer(t, http.StatusOK, `{}`, nil)
 		other := appSecret.DeepCopy()

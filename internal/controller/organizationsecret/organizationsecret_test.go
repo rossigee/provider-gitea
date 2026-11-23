@@ -149,6 +149,35 @@ func TestObserve(t *testing.T) {
 		assert.True(t, obs.ResourceExists)
 		assert.False(t, obs.ResourceUpToDate)
 	})
+
+	t.Run("deleted resource is not blocked by a missing source secret", func(t *testing.T) {
+		ec := testExternal()
+		existingSecret(ec)
+		cr := &v2.OrganizationSecret{ObjectMeta: metav1.ObjectMeta{Namespace: "default", Name: "s"}}
+		cr.Spec.ForProvider.DataFrom = &v2.DataFromSource{
+			SecretKeyRef: &v2.SecretKeySelector{Name: "missing", Key: "token"},
+		}
+		meta.SetExternalName(cr, "acme/TOKEN")
+		now := metav1.Now()
+		cr.SetDeletionTimestamp(&now)
+
+		obs, err := ec.Observe(context.Background(), cr)
+		require.NoError(t, err)
+		assert.True(t, obs.ResourceExists)
+	})
+}
+
+func TestResolveSecretValueNamespace(t *testing.T) {
+	t.Run("secret reference in another namespace is rejected", func(t *testing.T) {
+		ec := testExternal()
+		cr := &v2.OrganizationSecret{ObjectMeta: metav1.ObjectMeta{Namespace: "default", Name: "s"}}
+		cr.Spec.ForProvider.DataFrom = &v2.DataFromSource{
+			SecretKeyRef: &v2.SecretKeySelector{Name: "app-secrets", Namespace: "tenant-b", Key: "token"},
+		}
+		_, _, err := ec.resolveSecretValue(context.Background(), cr)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "must match the resource namespace")
+	})
 }
 
 func TestCreate(t *testing.T) {

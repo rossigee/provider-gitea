@@ -218,6 +218,12 @@ func (e *externalClient) Observe(ctx context.Context, mg resource.Managed) (mana
 		return managed.ExternalObservation{}, errors.Wrap(err, errGetOrganizationSecret)
 	}
 
+	// A resource being deleted must not depend on its source value: if that
+	// Secret is gone, Observe would fail and the finalizer could never run.
+	if meta.WasDeleted(cr) {
+		return managed.ExternalObservation{ResourceExists: true, ResourceUpToDate: true}, nil
+	}
+
 	// Gitea never returns secret values, so compare the fingerprint of the
 	// desired value with the one recorded when the value was last written.
 	_, fingerprint, err := e.resolveSecretValue(ctx, cr)
