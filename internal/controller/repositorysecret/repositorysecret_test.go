@@ -113,8 +113,6 @@ func TestList(t *testing.T) {
 	})
 }
 
-type staticHandler struct{}
-
 func TestObserve(t *testing.T) {
 	ctx := context.Background()
 
@@ -205,9 +203,14 @@ func TestObserve(t *testing.T) {
 		assert.False(t, obs.ResourceExists)
 	})
 
-	t.Run("existing secret is observed", func(t *testing.T) {
+	appSecret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{Namespace: "default", Name: "app-secrets"},
+		Data:       map[string][]byte{"token": []byte("s3cr3t")},
+	}
+
+	t.Run("existing secret without a recorded fingerprint is not up to date", func(t *testing.T) {
 		srv := newServer(t, http.StatusOK, `{"name":"TOKEN","created_at":"2026-11-22T00:00:00Z"}`, nil)
-		kube, pc := newKube(t, srv.URL)
+		kube, pc := newKube(t, srv.URL, appSecret.DeepCopy())
 		conn, err := clients.NewClient(ctx, pc, kube)
 		require.NoError(t, err)
 
@@ -216,19 +219,64 @@ func TestObserve(t *testing.T) {
 		obs, err := ec.Observe(ctx, obj)
 		require.NoError(t, err)
 		assert.True(t, obs.ResourceExists)
-		assert.True(t, obs.ResourceUpToDate)
+		assert.False(t, obs.ResourceUpToDate)
 		require.NotNil(t, obj.Status.AtProvider.SecretName)
 		assert.Equal(t, "TOKEN", *obj.Status.AtProvider.SecretName)
 	})
 
-	t.Run("create resolves the value from valueSecretRef", func(t *testing.T) {
-		var captured map[string]string = map[string]string{}
+	t.Run("matching fingerprint is up to date and keeps the recorded fingerprint", func(t *testing.T) {
+		srv := newServer(t, http.StatusOK, `{"name":"TOKEN","created_at":"2026-11-22T00:00:00Z"}`, nil)
+		kube, pc := newKube(t, srv.URL, appSecret.DeepCopy())
+		conn, err := clients.NewClient(ctx, pc, kube)
+		require.NoError(t, err)
+
+		ec := &externalClient{client: conn, kube: kube}
+		obj := newCR()
+		_, fingerprint, err := ec.resolveSecretValue(ctx, obj)
+		require.NoError(t, err)
+		obj.Status.AtProvider.ValueFingerprint = &fingerprint
+
+		obs, err := ec.Observe(ctx, obj)
+		require.NoError(t, err)
+		assert.True(t, obs.ResourceExists)
+		assert.True(t, obs.ResourceUpToDate)
+		require.NotNil(t, obj.Status.AtProvider.ValueFingerprint)
+		assert.Equal(t, fingerprint, *obj.Status.AtProvider.ValueFingerprint)
+	})
+
+	t.Run("changed source secret makes the resource out of date", func(t *testing.T) {
+		srv := newServer(t, http.StatusOK, `{"name":"TOKEN","created_at":"2026-11-22T00:00:00Z"}`, nil)
+		kube, pc := newKube(t, srv.URL, appSecret.DeepCopy())
+		conn, err := clients.NewClient(ctx, pc, kube)
+		require.NoError(t, err)
+
+		ec := &externalClient{client: conn, kube: kube}
+		obj := newCR()
+		stale := "default/app-secrets/token@stale-version"
+		obj.Status.AtProvider.ValueFingerprint = &stale
+
+		obs, err := ec.Observe(ctx, obj)
+		require.NoError(t, err)
+		assert.True(t, obs.ResourceExists)
+		assert.False(t, obs.ResourceUpToDate)
+	})
+
+	t.Run("non-404 error mentioning not found is not treated as missing", func(t *testing.T) {
+		srv := newServer(t, http.StatusInternalServerError, `repository not found on backend`, nil)
+		kube, pc := newKube(t, srv.URL, appSecret.DeepCopy())
+		conn, err := clients.NewClient(ctx, pc, kube)
+		require.NoError(t, err)
+
+		ec := &externalClient{client: conn, kube: kube}
+		obs, err := ec.Observe(ctx, newCR())
+		require.Error(t, err)
+		assert.False(t, obs.ResourceExists)
+	})
+
+	t.Run("create resolves the value from valueSecretRef and records its fingerprint", func(t *testing.T) {
+		captured := map[string]string{}
 		srv := newServer(t, http.StatusOK, `{}`, &captured)
-		secret := &corev1.Secret{
-			ObjectMeta: metav1.ObjectMeta{Namespace: "default", Name: "app-secrets"},
-			Data:       map[string][]byte{"token": []byte("s3cr3t")},
-		}
-		kube, pc := newKube(t, srv.URL, secret)
+		kube, pc := newKube(t, srv.URL, appSecret.DeepCopy())
 		conn, err := clients.NewClient(ctx, pc, kube)
 		require.NoError(t, err)
 
@@ -237,6 +285,39 @@ func TestObserve(t *testing.T) {
 		_, err = ec.Create(ctx, obj)
 		require.NoError(t, err)
 		assert.Equal(t, `{"data":"s3cr3t"}`, captured["body"])
+		require.NotNil(t, obj.Status.AtProvider.ValueFingerprint)
+		assert.True(t, strings.HasPrefix(*obj.Status.AtProvider.ValueFingerprint, "default/app-secrets/token@"))
+	})
+
+	t.Run("update records the fingerprint of the value written", func(t *testing.T) {
+		captured := map[string]string{}
+		srv := newServer(t, http.StatusOK, `{}`, &captured)
+		kube, pc := newKube(t, srv.URL, appSecret.DeepCopy())
+		conn, err := clients.NewClient(ctx, pc, kube)
+		require.NoError(t, err)
+
+		ec := &externalClient{client: conn, kube: kube}
+		obj := newCR()
+		_, err = ec.Update(ctx, obj)
+		require.NoError(t, err)
+		assert.Equal(t, `{"data":"s3cr3t"}`, captured["body"])
+		require.NotNil(t, obj.Status.AtProvider.ValueFingerprint)
+	})
+
+	t.Run("secret reference in another namespace is rejected", func(t *testing.T) {
+		srv := newServer(t, http.StatusOK, `{}`, nil)
+		other := appSecret.DeepCopy()
+		other.Namespace = "tenant-b"
+		kube, pc := newKube(t, srv.URL, other)
+		conn, err := clients.NewClient(ctx, pc, kube)
+		require.NoError(t, err)
+
+		ec := &externalClient{client: conn, kube: kube}
+		obj := newCR()
+		obj.Spec.ForProvider.ValueSecretRef.Namespace = "tenant-b"
+		_, err = ec.Create(ctx, obj)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "must match the resource namespace")
 	})
 
 	t.Run("create fails without the referenced secret", func(t *testing.T) {

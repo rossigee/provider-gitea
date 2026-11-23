@@ -18,6 +18,8 @@ package organizationsecret
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"strings"
 
@@ -138,34 +140,45 @@ func (e *externalClient) ListScopes(ctx context.Context, pc resource.ProviderCon
 	return discovery.ListOrganizationScopes(ctx, e.kube, pc, "organization", parent, pageToken)
 }
 
-// resolveSecretValue returns the plaintext secret value from Data or DataFrom.
-func (e *externalClient) resolveSecretValue(ctx context.Context, cr *v2.OrganizationSecret) (string, error) {
+// resolveSecretValue returns the plaintext secret value from Data or DataFrom,
+// together with the fingerprint of that source. The fingerprint is recorded in
+// status so Observe can detect value drift (see the API field documentation).
+func (e *externalClient) resolveSecretValue(ctx context.Context, cr *v2.OrganizationSecret) (value string, fingerprint string, err error) {
 	fp := cr.Spec.ForProvider
 	if fp.Data != nil {
-		return *fp.Data, nil
+		return *fp.Data, digest(*fp.Data), nil
 	}
 	if fp.DataFrom != nil {
 		if fp.DataFrom.Value != nil {
-			return *fp.DataFrom.Value, nil
+			return *fp.DataFrom.Value, digest(*fp.DataFrom.Value), nil
 		}
 		if fp.DataFrom.SecretKeyRef != nil {
 			ref := fp.DataFrom.SecretKeyRef
-			ns := cr.GetNamespace()
-			if ref.Namespace != "" {
-				ns = ref.Namespace
+			// Only Secrets in the resource's own namespace may be referenced, so an
+			// OrganizationSecret cannot read another tenant's Kubernetes Secret.
+			if ref.Namespace != "" && ref.Namespace != cr.GetNamespace() {
+				return "", "", errors.New(errResolveSecret + ": secretKeyRef.namespace must match the resource namespace")
 			}
 			var secret corev1.Secret
-			if err := e.kube.Get(ctx, client.ObjectKey{Namespace: ns, Name: ref.Name}, &secret); err != nil {
-				return "", errors.Wrap(err, errResolveSecret)
+			if err := e.kube.Get(ctx, client.ObjectKey{Namespace: cr.GetNamespace(), Name: ref.Name}, &secret); err != nil {
+				return "", "", errors.Wrap(err, errResolveSecret)
 			}
 			val, ok := secret.Data[ref.Key]
 			if !ok {
-				return "", errors.New(errResolveSecret + ": key not found in secret")
+				return "", "", errors.New(errResolveSecret + ": key not found in secret")
 			}
-			return string(val), nil
+			fingerprint = fmt.Sprintf("%s/%s/%s@%s", cr.GetNamespace(), ref.Name, ref.Key, secret.ResourceVersion)
+			return string(val), fingerprint, nil
 		}
 	}
-	return "", errors.New(errResolveSecret + ": specify Data or DataFrom")
+	return "", "", errors.New(errResolveSecret + ": specify Data or DataFrom")
+}
+
+// digest returns the hex SHA-256 of an inline value. Inline values are already
+// stored in the spec, so the digest discloses nothing new.
+func digest(value string) string {
+	sum := sha256.Sum256([]byte(value))
+	return hex.EncodeToString(sum[:])
 }
 
 // parseExternalName splits an "org/secretname" external name.
@@ -199,27 +212,30 @@ func (e *externalClient) Observe(ctx context.Context, mg resource.Managed) (mana
 
 	secret, err := e.client.GetOrganizationSecret(ctx, org, secretName)
 	if err != nil {
-		if clients.IsNotFound(err) || strings.Contains(err.Error(), "not found") {
+		if clients.IsNotFound(err) {
 			return managed.ExternalObservation{ResourceExists: false}, nil
 		}
 		return managed.ExternalObservation{}, errors.Wrap(err, errGetOrganizationSecret)
 	}
 
-	// Update observed state
-	cr.Status.AtProvider = v2.OrganizationSecretObservation{
-		CreatedAt: &secret.CreatedAt,
-		UpdatedAt: &secret.UpdatedAt,
+	// Gitea never returns secret values, so compare the fingerprint of the
+	// desired value with the one recorded when the value was last written.
+	_, fingerprint, err := e.resolveSecretValue(ctx, cr)
+	if err != nil {
+		return managed.ExternalObservation{}, err
 	}
 
-	// Secret values are write-only in Gitea; existence implies up-to-date.
-	// Value drift is detected on update by always writing the desired value.
+	// Update observed state. Set fields individually so ValueFingerprint is kept.
+	cr.Status.AtProvider.CreatedAt = &secret.CreatedAt
+	cr.Status.AtProvider.UpdatedAt = &secret.UpdatedAt
 
 	// Only set Available() - Crossplane runtime handles Synced condition automatically
 	cr.SetConditions(xpv1.Available())
 
+	upToDate := cr.Status.AtProvider.ValueFingerprint != nil && *cr.Status.AtProvider.ValueFingerprint == fingerprint
 	return managed.ExternalObservation{
 		ResourceExists:   true,
-		ResourceUpToDate: true,
+		ResourceUpToDate: upToDate,
 	}, nil
 }
 
@@ -233,7 +249,7 @@ func (e *externalClient) Create(ctx context.Context, mg resource.Managed) (manag
 		return managed.ExternalCreation{}, errors.New(errNotOrganizationSecret)
 	}
 
-	value, err := e.resolveSecretValue(ctx, cr)
+	value, fingerprint, err := e.resolveSecretValue(ctx, cr)
 	if err != nil {
 		return managed.ExternalCreation{}, err
 	}
@@ -247,6 +263,7 @@ func (e *externalClient) Create(ctx context.Context, mg resource.Managed) (manag
 
 	// Set external name to org/secretname format for future lookups
 	meta.SetExternalName(cr, fmt.Sprintf("%s/%s", fp.Organization, fp.SecretName))
+	cr.Status.AtProvider.ValueFingerprint = &fingerprint
 
 	return managed.ExternalCreation{}, nil
 }
@@ -266,7 +283,7 @@ func (e *externalClient) Update(ctx context.Context, mg resource.Managed) (manag
 		return managed.ExternalUpdate{}, err
 	}
 
-	value, err := e.resolveSecretValue(ctx, cr)
+	value, fingerprint, err := e.resolveSecretValue(ctx, cr)
 	if err != nil {
 		return managed.ExternalUpdate{}, err
 	}
@@ -277,6 +294,7 @@ func (e *externalClient) Update(ctx context.Context, mg resource.Managed) (manag
 		return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateOrganizationSecret)
 	}
 
+	cr.Status.AtProvider.ValueFingerprint = &fingerprint
 	return managed.ExternalUpdate{}, nil
 }
 

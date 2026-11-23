@@ -18,6 +18,7 @@ package repositorysecret
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/crossplane/crossplane-runtime/v2/pkg/controller"
@@ -88,29 +89,32 @@ type externalClient struct {
 }
 
 // resolveSecretValue reads the plaintext secret value referenced by
-// spec.forProvider.valueSecretRef.
-func (e *externalClient) resolveSecretValue(ctx context.Context, cr *v2.RepositorySecret) (string, error) {
+// spec.forProvider.valueSecretRef. It also returns the fingerprint of that
+// source, which is recorded in status so Observe can detect value drift.
+func (e *externalClient) resolveSecretValue(ctx context.Context, cr *v2.RepositorySecret) (value string, fingerprint string, err error) {
 	ref := cr.Spec.ForProvider.ValueSecretRef
 	if ref.Name == "" || ref.Key == "" {
-		return "", errors.New(errResolveSecret + ": valueSecretRef requires name and key")
+		return "", "", errors.New(errResolveSecret + ": valueSecretRef requires name and key")
 	}
 
-	ns := ref.Namespace
-	if ns == "" {
-		ns = cr.GetNamespace()
+	// Only Secrets in the resource's own namespace may be referenced, so a
+	// RepositorySecret cannot read another tenant's Kubernetes Secret.
+	if ref.Namespace != "" && ref.Namespace != cr.GetNamespace() {
+		return "", "", errors.New(errResolveSecret + ": valueSecretRef.namespace must match the resource namespace")
 	}
 
 	var secret corev1.Secret
-	if err := e.kube.Get(ctx, client.ObjectKey{Namespace: ns, Name: ref.Name}, &secret); err != nil {
-		return "", errors.Wrap(err, errResolveSecret)
+	if err := e.kube.Get(ctx, client.ObjectKey{Namespace: cr.GetNamespace(), Name: ref.Name}, &secret); err != nil {
+		return "", "", errors.Wrap(err, errResolveSecret)
 	}
 
 	val, ok := secret.Data[ref.Key]
 	if !ok {
-		return "", errors.New(errResolveSecret + ": key not found in secret")
+		return "", "", errors.New(errResolveSecret + ": key not found in secret")
 	}
 
-	return string(val), nil
+	fingerprint = fmt.Sprintf("%s/%s/%s@%s", cr.GetNamespace(), ref.Name, ref.Key, secret.ResourceVersion)
+	return string(val), fingerprint, nil
 }
 
 // Compile-time check that externalClient implements the discovery interface
@@ -180,21 +184,26 @@ func (e *externalClient) Observe(ctx context.Context, mg resource.Managed) (mana
 
 	secret, err := e.client.GetRepositorySecret(ctx, cr.Spec.ForProvider.Repository, externalID)
 	if err != nil {
-		if clients.IsNotFound(err) || strings.Contains(err.Error(), "not found") {
+		if clients.IsNotFound(err) {
 			return managed.ExternalObservation{ResourceExists: false}, nil
 		}
 		return managed.ExternalObservation{}, errors.Wrap(err, errGetRepositorySecret)
 	}
 
-	cr.Status.AtProvider = v2.RepositorySecretObservation{
-		SecretName: &secret.Name,
-		CreatedAt:  &secret.CreatedAt,
+	// Gitea never returns secret values, so compare the fingerprint of the
+	// desired value with the one recorded when the value was last written.
+	_, fingerprint, err := e.resolveSecretValue(ctx, cr)
+	if err != nil {
+		return managed.ExternalObservation{}, err
 	}
+
+	// Set fields individually so ValueFingerprint recorded by Create/Update is kept.
+	cr.Status.AtProvider.SecretName = &secret.Name
+	cr.Status.AtProvider.CreatedAt = &secret.CreatedAt
 	cr.SetConditions(xpv1.Available())
 
-	// Secret values are write-only in Gitea; existence implies up-to-date.
-	// Value drift is corrected on update by always writing the desired value.
-	return managed.ExternalObservation{ResourceExists: true, ResourceUpToDate: true}, nil
+	upToDate := cr.Status.AtProvider.ValueFingerprint != nil && *cr.Status.AtProvider.ValueFingerprint == fingerprint
+	return managed.ExternalObservation{ResourceExists: true, ResourceUpToDate: upToDate}, nil
 }
 
 func (e *externalClient) Create(ctx context.Context, mg resource.Managed) (managed.ExternalCreation, error) {
@@ -207,7 +216,7 @@ func (e *externalClient) Create(ctx context.Context, mg resource.Managed) (manag
 		return managed.ExternalCreation{}, errors.New(errNotRepositorySecret)
 	}
 
-	value, err := e.resolveSecretValue(ctx, cr)
+	value, fingerprint, err := e.resolveSecretValue(ctx, cr)
 	if err != nil {
 		return managed.ExternalCreation{}, err
 	}
@@ -222,6 +231,7 @@ func (e *externalClient) Create(ctx context.Context, mg resource.Managed) (manag
 	}
 
 	meta.SetExternalName(cr, cr.Spec.ForProvider.SecretName)
+	cr.Status.AtProvider.ValueFingerprint = &fingerprint
 	return managed.ExternalCreation{}, nil
 }
 
@@ -235,7 +245,7 @@ func (e *externalClient) Update(ctx context.Context, mg resource.Managed) (manag
 		return managed.ExternalUpdate{}, errors.New(errNotRepositorySecret)
 	}
 
-	value, err := e.resolveSecretValue(ctx, cr)
+	value, fingerprint, err := e.resolveSecretValue(ctx, cr)
 	if err != nil {
 		return managed.ExternalUpdate{}, err
 	}
@@ -247,6 +257,7 @@ func (e *externalClient) Update(ctx context.Context, mg resource.Managed) (manag
 		return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateRepositorySecret)
 	}
 
+	cr.Status.AtProvider.ValueFingerprint = &fingerprint
 	return managed.ExternalUpdate{}, nil
 }
 

@@ -21,6 +21,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### 🐛 **Fixes**
+- **Secrets**: RepositorySecret and OrganizationSecret now write the referenced value on create and update, map Gitea 404 responses to "does not exist" without masking other errors, and detect value drift by recording a fingerprint of the value last written in `status.atProvider.valueFingerprint`.
+- **Secrets**: `valueSecretRef` / `secretKeyRef` must reference a Kubernetes Secret in the resource's own namespace.
+
 
 ## [0.15.1] - 2026-09-16
 
