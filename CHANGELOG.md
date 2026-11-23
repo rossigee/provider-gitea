@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.16.3] - 2026-11-23
+
+### 🐛 **Fixes**
+- **Secrets**: RepositorySecret and OrganizationSecret now write the referenced value on create and update, map Gitea 404 responses to "does not exist" without masking other errors, and detect value drift by recording a fingerprint of the value last written in `status.atProvider.valueFingerprint` (PR #123).
+- **Secrets**: `valueSecretRef` / `secretKeyRef` must reference a Kubernetes Secret in the resource's own namespace (PR #123).
+- **Secrets**: Deleting a RepositorySecret or OrganizationSecret no longer blocks when its referenced Kubernetes Secret has already been removed (PR #123).
+
+### Changed
+- Go module dependencies updated (PR #125). `k8s.io/kube-openapi` is held at its previous version until `k8s.io/apimachinery` supports `structured-merge-diff/v7`.
+
 ## [0.16.1] - 2026-11-12
 
 ### Changed
@@ -20,13 +30,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **User password**: Read user password from a secret reference (PR #99)
 
 ## [Unreleased]
-
-## [0.16.2] - 2026-11-23
-
-### 🐛 **Fixes**
-- **Secrets**: RepositorySecret and OrganizationSecret now write the referenced value on create and update, map Gitea 404 responses to "does not exist" without masking other errors, and detect value drift by recording a fingerprint of the value last written in `status.atProvider.valueFingerprint` (PR #123).
-- **Secrets**: `valueSecretRef` / `secretKeyRef` must reference a Kubernetes Secret in the resource's own namespace (PR #123).
-- **Secrets**: Deleting a RepositorySecret or OrganizationSecret no longer blocks when its referenced Kubernetes Secret has already been removed (PR #123).
 
 
 ## [0.15.1] - 2026-09-16
