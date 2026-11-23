@@ -82,6 +82,13 @@ type OrganizationSecretObservation struct {
 	// UpdatedAt is the secret last update timestamp
 	UpdatedAt *string `json:"updatedAt,omitempty"`
 
+	// ValueFingerprint identifies the value last written to Gitea. Gitea never
+	// returns secret values, so drift is detected by comparing this against the
+	// fingerprint of the desired value. For a Kubernetes Secret reference it is
+	// "<namespace>/<name>/<key>@<resourceVersion>"; for an inline value it is the
+	// SHA-256 of the value, which is already stored in the spec.
+	ValueFingerprint *string `json:"valueFingerprint,omitempty"`
+
 	// V2 Enhancement: Enhanced observability
 	// Additional fields can be added here for better monitoring
 }

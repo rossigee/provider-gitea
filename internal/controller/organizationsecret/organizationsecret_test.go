@@ -94,8 +94,7 @@ func TestObserve(t *testing.T) {
 		assert.False(t, obs.ResourceExists)
 	})
 
-	t.Run("existing secret exists and is up to date", func(t *testing.T) {
-		ec := testExternal()
+	existingSecret := func(ec *externalClient) {
 		ec.client = &mockOrgSecretClient{
 			getFn: func(ctx context.Context, org, name string) (*clients.OrganizationSecret, error) {
 				assert.Equal(t, "acme", org)
@@ -103,12 +102,81 @@ func TestObserve(t *testing.T) {
 				return &clients.OrganizationSecret{Name: "TOKEN"}, nil
 			},
 		}
+	}
+	newCR := func(value string) *v2.OrganizationSecret {
 		cr := &v2.OrganizationSecret{ObjectMeta: metav1.ObjectMeta{Namespace: "default", Name: "s"}}
+		cr.Spec.ForProvider.Data = &value
 		meta.SetExternalName(cr, "acme/TOKEN")
+		return cr
+	}
+
+	t.Run("existing secret without a recorded fingerprint is not up to date", func(t *testing.T) {
+		ec := testExternal()
+		existingSecret(ec)
+		obs, err := ec.Observe(context.Background(), newCR("s3cr3t"))
+		require.NoError(t, err)
+		assert.True(t, obs.ResourceExists)
+		assert.False(t, obs.ResourceUpToDate)
+	})
+
+	t.Run("matching fingerprint is up to date", func(t *testing.T) {
+		ec := testExternal()
+		existingSecret(ec)
+		cr := newCR("s3cr3t")
+		_, fingerprint, err := ec.resolveSecretValue(context.Background(), cr)
+		require.NoError(t, err)
+		cr.Status.AtProvider.ValueFingerprint = &fingerprint
+
 		obs, err := ec.Observe(context.Background(), cr)
 		require.NoError(t, err)
 		assert.True(t, obs.ResourceExists)
 		assert.True(t, obs.ResourceUpToDate)
+		require.NotNil(t, cr.Status.AtProvider.ValueFingerprint)
+		assert.Equal(t, fingerprint, *cr.Status.AtProvider.ValueFingerprint)
+	})
+
+	t.Run("changed inline value is out of date", func(t *testing.T) {
+		ec := testExternal()
+		existingSecret(ec)
+		old := newCR("old-value")
+		_, fingerprint, err := ec.resolveSecretValue(context.Background(), old)
+		require.NoError(t, err)
+
+		cr := newCR("new-value")
+		cr.Status.AtProvider.ValueFingerprint = &fingerprint
+		obs, err := ec.Observe(context.Background(), cr)
+		require.NoError(t, err)
+		assert.True(t, obs.ResourceExists)
+		assert.False(t, obs.ResourceUpToDate)
+	})
+
+	t.Run("deleted resource is not blocked by a missing source secret", func(t *testing.T) {
+		ec := testExternal()
+		existingSecret(ec)
+		cr := &v2.OrganizationSecret{ObjectMeta: metav1.ObjectMeta{Namespace: "default", Name: "s"}}
+		cr.Spec.ForProvider.DataFrom = &v2.DataFromSource{
+			SecretKeyRef: &v2.SecretKeySelector{Name: "missing", Key: "token"},
+		}
+		meta.SetExternalName(cr, "acme/TOKEN")
+		now := metav1.Now()
+		cr.SetDeletionTimestamp(&now)
+
+		obs, err := ec.Observe(context.Background(), cr)
+		require.NoError(t, err)
+		assert.True(t, obs.ResourceExists)
+	})
+}
+
+func TestResolveSecretValueNamespace(t *testing.T) {
+	t.Run("secret reference in another namespace is rejected", func(t *testing.T) {
+		ec := testExternal()
+		cr := &v2.OrganizationSecret{ObjectMeta: metav1.ObjectMeta{Namespace: "default", Name: "s"}}
+		cr.Spec.ForProvider.DataFrom = &v2.DataFromSource{
+			SecretKeyRef: &v2.SecretKeySelector{Name: "app-secrets", Namespace: "tenant-b", Key: "token"},
+		}
+		_, _, err := ec.resolveSecretValue(context.Background(), cr)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "must match the resource namespace")
 	})
 }
 

@@ -60,6 +60,12 @@ type RepositorySecretObservation struct {
 	// Repository is the repository information
 	Repository *string `json:"repository,omitempty"`
 
+	// ValueFingerprint identifies the value last written to Gitea. Gitea never
+	// returns secret values, so drift is detected by comparing this against the
+	// fingerprint of the desired value. It is the "<namespace>/<name>/<key>@<resourceVersion>"
+	// of the referenced Kubernetes Secret, which contains no secret material.
+	ValueFingerprint *string `json:"valueFingerprint,omitempty"`
+
 	// V2 Enhancement: Enhanced observability
 	// Additional fields can be added here for better monitoring
 }

@@ -18,6 +18,7 @@ package repositorysecret
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/crossplane/crossplane-runtime/v2/pkg/controller"
@@ -29,12 +30,15 @@ import (
 	"github.com/pkg/errors"
 	v2 "github.com/rossigee/provider-gitea/apis/repositorysecret/v2"
 
+	corev1 "k8s.io/api/core/v1"
+
 	"github.com/rossigee/provider-gitea/internal/clients"
 	"github.com/rossigee/provider-gitea/internal/discovery"
 	"github.com/rossigee/provider-gitea/internal/tracing"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	xpv1 "github.com/crossplane/crossplane/apis/v2/core/v2"
 	v1beta1 "github.com/rossigee/provider-gitea/apis/v1beta1"
 )
 
@@ -45,6 +49,7 @@ const (
 	errUpdateRepositorySecret = "failed to update repositorysecret"
 	errDeleteRepositorySecret = "failed to delete repositorysecret"
 	errGetProviderConfig      = "failed to get provider config"
+	errResolveSecret          = "failed to resolve secret value"
 )
 
 type connector struct {
@@ -81,6 +86,35 @@ func (c *connector) Connect(ctx context.Context, mg resource.Managed) (managed.E
 type externalClient struct {
 	client clients.Client
 	kube   client.Client
+}
+
+// resolveSecretValue reads the plaintext secret value referenced by
+// spec.forProvider.valueSecretRef. It also returns the fingerprint of that
+// source, which is recorded in status so Observe can detect value drift.
+func (e *externalClient) resolveSecretValue(ctx context.Context, cr *v2.RepositorySecret) (value string, fingerprint string, err error) {
+	ref := cr.Spec.ForProvider.ValueSecretRef
+	if ref.Name == "" || ref.Key == "" {
+		return "", "", errors.New(errResolveSecret + ": valueSecretRef requires name and key")
+	}
+
+	// Only Secrets in the resource's own namespace may be referenced, so a
+	// RepositorySecret cannot read another tenant's Kubernetes Secret.
+	if ref.Namespace != "" && ref.Namespace != cr.GetNamespace() {
+		return "", "", errors.New(errResolveSecret + ": valueSecretRef.namespace must match the resource namespace")
+	}
+
+	var secret corev1.Secret
+	if err := e.kube.Get(ctx, client.ObjectKey{Namespace: cr.GetNamespace(), Name: ref.Name}, &secret); err != nil {
+		return "", "", errors.Wrap(err, errResolveSecret)
+	}
+
+	val, ok := secret.Data[ref.Key]
+	if !ok {
+		return "", "", errors.New(errResolveSecret + ": key not found in secret")
+	}
+
+	fingerprint = fmt.Sprintf("%s/%s/%s@%s", cr.GetNamespace(), ref.Name, ref.Key, secret.ResourceVersion)
+	return string(val), fingerprint, nil
 }
 
 // Compile-time check that externalClient implements the discovery interface
@@ -148,15 +182,34 @@ func (e *externalClient) Observe(ctx context.Context, mg resource.Managed) (mana
 		return managed.ExternalObservation{}, errors.New("invalid repository format")
 	}
 
-	_, err := e.client.GetRepositorySecret(ctx, cr.Spec.ForProvider.Repository, externalID)
+	secret, err := e.client.GetRepositorySecret(ctx, cr.Spec.ForProvider.Repository, externalID)
 	if err != nil {
-		if strings.Contains(err.Error(), "404") {
+		if clients.IsNotFound(err) {
 			return managed.ExternalObservation{ResourceExists: false}, nil
 		}
 		return managed.ExternalObservation{}, errors.Wrap(err, errGetRepositorySecret)
 	}
 
-	return managed.ExternalObservation{ResourceExists: true, ResourceUpToDate: true}, nil
+	// A resource being deleted must not depend on its source Secret: if that
+	// Secret is gone, Observe would fail and the finalizer could never run.
+	if meta.WasDeleted(cr) {
+		return managed.ExternalObservation{ResourceExists: true, ResourceUpToDate: true}, nil
+	}
+
+	// Gitea never returns secret values, so compare the fingerprint of the
+	// desired value with the one recorded when the value was last written.
+	_, fingerprint, err := e.resolveSecretValue(ctx, cr)
+	if err != nil {
+		return managed.ExternalObservation{}, err
+	}
+
+	// Set fields individually so ValueFingerprint recorded by Create/Update is kept.
+	cr.Status.AtProvider.SecretName = &secret.Name
+	cr.Status.AtProvider.CreatedAt = &secret.CreatedAt
+	cr.SetConditions(xpv1.Available())
+
+	upToDate := cr.Status.AtProvider.ValueFingerprint != nil && *cr.Status.AtProvider.ValueFingerprint == fingerprint
+	return managed.ExternalObservation{ResourceExists: true, ResourceUpToDate: upToDate}, nil
 }
 
 func (e *externalClient) Create(ctx context.Context, mg resource.Managed) (managed.ExternalCreation, error) {
@@ -169,16 +222,22 @@ func (e *externalClient) Create(ctx context.Context, mg resource.Managed) (manag
 		return managed.ExternalCreation{}, errors.New(errNotRepositorySecret)
 	}
 
-	createReq := &clients.CreateRepositorySecretRequest{
-		Data: "",
+	value, fingerprint, err := e.resolveSecretValue(ctx, cr)
+	if err != nil {
+		return managed.ExternalCreation{}, err
 	}
 
-	err := e.client.CreateRepositorySecret(ctx, cr.Spec.ForProvider.Repository, cr.Spec.ForProvider.SecretName, createReq)
+	createReq := &clients.CreateRepositorySecretRequest{
+		Data: value,
+	}
+
+	err = e.client.CreateRepositorySecret(ctx, cr.Spec.ForProvider.Repository, cr.Spec.ForProvider.SecretName, createReq)
 	if err != nil {
 		return managed.ExternalCreation{}, errors.Wrap(err, errCreateRepositorySecret)
 	}
 
 	meta.SetExternalName(cr, cr.Spec.ForProvider.SecretName)
+	cr.Status.AtProvider.ValueFingerprint = &fingerprint
 	return managed.ExternalCreation{}, nil
 }
 
@@ -192,13 +251,19 @@ func (e *externalClient) Update(ctx context.Context, mg resource.Managed) (manag
 		return managed.ExternalUpdate{}, errors.New(errNotRepositorySecret)
 	}
 
-	updateReq := &clients.UpdateRepositorySecretRequest{}
+	value, fingerprint, err := e.resolveSecretValue(ctx, cr)
+	if err != nil {
+		return managed.ExternalUpdate{}, err
+	}
 
-	err := e.client.UpdateRepositorySecret(ctx, cr.Spec.ForProvider.Repository, cr.Spec.ForProvider.SecretName, updateReq)
+	updateReq := &clients.UpdateRepositorySecretRequest{Data: value}
+
+	err = e.client.UpdateRepositorySecret(ctx, cr.Spec.ForProvider.Repository, cr.Spec.ForProvider.SecretName, updateReq)
 	if err != nil {
 		return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateRepositorySecret)
 	}
 
+	cr.Status.AtProvider.ValueFingerprint = &fingerprint
 	return managed.ExternalUpdate{}, nil
 }
 
