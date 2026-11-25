@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.16.6] - 2026-11-25
+
+### 🐛 **Fixes**
+- **Multi-arch release**: Build runtime images with the target OCI platform. The embedded binary was correct in v0.16.5, but both package files were still labelled `linux/amd64`, so the published index contained two amd64 manifests.
+- **Release verification**: Propagate manifest-check failures out of the verification function. The v0.16.5 release printed the missing-platform error but still succeeded because the failing check was followed by a successful `echo`.
+
 ## [0.16.5] - 2026-11-25
 
 ### 🐛 **Fixes**

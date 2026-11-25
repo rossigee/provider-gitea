@@ -3,6 +3,7 @@
 # Build arguments. The parent build passes PLATFORM for each target architecture;
 # deriving both values here stops the runtime image from always embedding amd64.
 PLATFORM ?= linux_amd64
+IMAGE_PLATFORM := $(subst _,/,$(PLATFORM))
 TARGETOS := $(word 1, $(subst _, ,$(PLATFORM)))
 TARGETARCH := $(word 2, $(subst _, ,$(PLATFORM)))
 
@@ -11,8 +12,10 @@ IMAGE ?= provider-gitea:latest
 
 # Default target
 img.build:
-	@echo Building $(IMAGE)
-	@docker build \
+	@echo Building $(IMAGE) for $(IMAGE_PLATFORM)
+	@docker buildx build \
+		--platform $(IMAGE_PLATFORM) \
+		--load \
 		--build-arg TARGETOS=$(TARGETOS) \
 		--build-arg TARGETARCH=$(TARGETARCH) \
 		-t $(IMAGE) \
