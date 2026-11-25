@@ -110,10 +110,17 @@ jobs:
           verify_manifest() {
             local ref="$1"
             local digest
+            local manifest
             digest="$(docker buildx imagetools inspect "$ref" --format '{{.Manifest.Digest}}')"
-            docker buildx imagetools inspect "$ref" --raw | python3 -c '
+            if [[ -z "$digest" ]]; then
+              echo "Could not resolve digest for $ref" >&2
+              exit 1
+            fi
+            manifest="$(docker buildx imagetools inspect "$ref" --raw)"
+            printf '%s' "$manifest" | python3 -c '
           import json
           import sys
+          from collections import Counter
           manifest = json.load(sys.stdin)
           media_type = manifest.get("mediaType")
           allowed_media_types = {
@@ -122,13 +129,19 @@ jobs:
           }
           if media_type not in allowed_media_types:
               raise SystemExit(f"unsupported manifest media type: {media_type}")
-          platforms = set()
-          for entry in manifest.get("manifests", []):
-              platform = entry.get("platform") or {}
-              platforms.add((platform.get("os"), platform.get("architecture")))
+          entries = manifest.get("manifests", [])
+          platforms = Counter(
+              ((entry.get("platform") or {}).get("os"),
+               (entry.get("platform") or {}).get("architecture"))
+              for entry in entries
+          )
           required = {("linux", "amd64"), ("linux", "arm64")}
-          if not required.issubset(platforms):
-              raise SystemExit(f"missing required platforms: {sorted(required - platforms)}")
+          missing = sorted(required - set(platforms))
+          if missing:
+              raise SystemExit(f"missing required platforms: {missing}")
+          for platform in sorted(required):
+              if platforms[platform] != 1:
+                  raise SystemExit(f"duplicate platform entry: {platform}")
           '
             echo "$ref $digest"
           }

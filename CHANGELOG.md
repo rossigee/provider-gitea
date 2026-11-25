@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.16.5] - 2026-11-25
+
+### 🐛 **Fixes**
+- **Multi-arch release**: Build the embedded runtime binary for the target architecture. The `linux_arm64` package previously embedded the amd64 binary and produced an OCI index with duplicate amd64 manifests.
+- **Release verification**: Fail publication when an OCI index lacks a required platform, contains duplicate platform entries, or when the digest lookup fails.
+
 ## [0.16.4] - 2026-11-25
 
 ### 🐛 **Fixes**

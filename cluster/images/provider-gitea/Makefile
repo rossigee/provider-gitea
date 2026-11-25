@@ -1,8 +1,10 @@
 # Image Makefile for provider-gitea
 
-# Build arguments
-TARGETOS ?= linux
-TARGETARCH ?= amd64
+# Build arguments. The parent build passes PLATFORM for each target architecture;
+# deriving both values here stops the runtime image from always embedding amd64.
+PLATFORM ?= linux_amd64
+TARGETOS := $(word 1, $(subst _, ,$(PLATFORM)))
+TARGETARCH := $(word 2, $(subst _, ,$(PLATFORM)))
 
 # The registry and image name (will be set by parent makefile)
 IMAGE ?= provider-gitea:latest
