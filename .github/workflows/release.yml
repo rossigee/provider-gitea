@@ -142,7 +142,7 @@ jobs:
           for platform in sorted(required):
               if platforms[platform] != 1:
                   raise SystemExit(f"duplicate platform entry: {platform}")
-          '
+          ' || return 1
             echo "$ref $digest"
           }
           version_digest="$(verify_manifest "${registry_path}:${VERSION}" | cut -d' ' -f2)"
