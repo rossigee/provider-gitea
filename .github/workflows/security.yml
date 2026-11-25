@@ -58,11 +58,9 @@ jobs:
     steps:
       - name: Detect No-op Changes
         id: noop
-        uses: fkirc/skip-duplicate-actions@b974a9395958c231af965b70070979a577efa578 # v5
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          paths_ignore: '["**.md", "**.png", "**.jpg"]'
-          do_not_skip: '["workflow_dispatch", "schedule", "push"]'
+        # skip-duplicate-actions cannot resolve PR head commits in Gitea Actions
+        # ("Could not find the tree hash"), so always run the checks here.
+        run: echo "should_skip=false" >> "$GITHUB_OUTPUT"
 
   security-analysis:
     name: Security Analysis
