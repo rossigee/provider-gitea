@@ -1797,22 +1797,20 @@ func (c *giteaClient) GetRepositorySecret(ctx context.Context, repository, secre
 	}
 	owner, repo := parts[0], parts[1]
 
-	path := fmt.Sprintf("/repos/%s/%s/actions/secrets/%s", owner, repo, secretName)
-	resp, err := c.doRequest(ctx, "GET", path, nil)
+	// Gitea 28 removed GET /repos/{owner}/{repo}/actions/secrets/{name} and
+	// returns 405 for it. Discover the secret through the list endpoint, which
+	// still works and is what Gitea exposes for secret enumeration.
+	secrets, err := c.ListRepositorySecrets(ctx, owner, repo)
 	if err != nil {
 		return nil, err
 	}
-
-	if resp.StatusCode == http.StatusNotFound {
-		return nil, NewNotFoundError("repository secret", secretName)
+	for _, secret := range secrets {
+		if secret.Name == secretName {
+			return &secret, nil
+		}
 	}
 
-	var secret RepositorySecret
-	if err := handleResponse(resp, &secret); err != nil {
-		return nil, err
-	}
-
-	return &secret, nil
+	return nil, NewNotFoundError("repository secret", secretName)
 }
 
 func (c *giteaClient) CreateRepositorySecret(ctx context.Context, repository, secretName string, req *CreateRepositorySecretRequest) error {

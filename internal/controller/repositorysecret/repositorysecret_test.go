@@ -173,14 +173,25 @@ func TestObserve(t *testing.T) {
 		t.Helper()
 		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Content-Type", "application/json")
-			if r.Method == http.MethodPut && captured != nil {
-				b, _ := io.ReadAll(r.Body)
-				(*captured)["body"] = string(b)
+			if r.Method == http.MethodPut {
+				if captured != nil {
+					b, _ := io.ReadAll(r.Body)
+					(*captured)["body"] = string(b)
+				}
 				w.WriteHeader(http.StatusCreated)
 				_, _ = w.Write([]byte(`{}`))
 				return
 			}
-			if r.URL.Path != "/api/v1/repos/acme/r1/actions/secrets/TOKEN" {
+			if r.Method == http.MethodDelete {
+				w.WriteHeader(http.StatusNoContent)
+				return
+			}
+			// Gitea 28 no longer supports GET on an individual secret path.
+			if r.URL.Path == "/api/v1/repos/acme/r1/actions/secrets/TOKEN" {
+				w.WriteHeader(http.StatusMethodNotAllowed)
+				return
+			}
+			if r.URL.Path != "/api/v1/repos/acme/r1/actions/secrets" {
 				w.WriteHeader(http.StatusNotFound)
 				return
 			}
@@ -209,7 +220,7 @@ func TestObserve(t *testing.T) {
 	}
 
 	t.Run("existing secret without a recorded fingerprint is not up to date", func(t *testing.T) {
-		srv := newServer(t, http.StatusOK, `{"name":"TOKEN","created_at":"2026-11-22T00:00:00Z"}`, nil)
+		srv := newServer(t, http.StatusOK, `[{"name":"TOKEN","created_at":"2026-11-22T00:00:00Z"}]`, nil)
 		kube, pc := newKube(t, srv.URL, appSecret.DeepCopy())
 		conn, err := clients.NewClient(ctx, pc, kube)
 		require.NoError(t, err)
@@ -225,7 +236,7 @@ func TestObserve(t *testing.T) {
 	})
 
 	t.Run("matching fingerprint is up to date and keeps the recorded fingerprint", func(t *testing.T) {
-		srv := newServer(t, http.StatusOK, `{"name":"TOKEN","created_at":"2026-11-22T00:00:00Z"}`, nil)
+		srv := newServer(t, http.StatusOK, `[{"name":"TOKEN","created_at":"2026-11-22T00:00:00Z"}]`, nil)
 		kube, pc := newKube(t, srv.URL, appSecret.DeepCopy())
 		conn, err := clients.NewClient(ctx, pc, kube)
 		require.NoError(t, err)
@@ -245,7 +256,7 @@ func TestObserve(t *testing.T) {
 	})
 
 	t.Run("changed source secret makes the resource out of date", func(t *testing.T) {
-		srv := newServer(t, http.StatusOK, `{"name":"TOKEN","created_at":"2026-11-22T00:00:00Z"}`, nil)
+		srv := newServer(t, http.StatusOK, `[{"name":"TOKEN","created_at":"2026-11-22T00:00:00Z"}]`, nil)
 		kube, pc := newKube(t, srv.URL, appSecret.DeepCopy())
 		conn, err := clients.NewClient(ctx, pc, kube)
 		require.NoError(t, err)
@@ -305,7 +316,7 @@ func TestObserve(t *testing.T) {
 	})
 
 	t.Run("deleted resource is not blocked by a missing source secret", func(t *testing.T) {
-		srv := newServer(t, http.StatusOK, `{"name":"TOKEN","created_at":"2026-11-22T00:00:00Z"}`, nil)
+		srv := newServer(t, http.StatusOK, `[{"name":"TOKEN","created_at":"2026-11-22T00:00:00Z"}]`, nil)
 		kube, pc := newKube(t, srv.URL)
 		conn, err := clients.NewClient(ctx, pc, kube)
 		require.NoError(t, err)
