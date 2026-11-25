@@ -24,6 +24,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"sync/atomic"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -758,5 +759,65 @@ func TestOrganizationSecretOperations(t *testing.T) {
 	t.Run("DeleteOrganizationSecret", func(t *testing.T) {
 		err := c.DeleteOrganizationSecret(ctx, "testorg", "testsecret")
 		require.NoError(t, err)
+	})
+}
+
+func TestGetRepositorySecret(t *testing.T) {
+	ctx := context.Background()
+
+	newClient := func(t *testing.T, status int, body string, individualGETs *atomic.Int32) *giteaClient {
+		t.Helper()
+		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			switch {
+			case r.Method == http.MethodGet && r.URL.Path == "/api/v1/repos/acme/r1/actions/secrets":
+				w.WriteHeader(status)
+				_, _ = w.Write([]byte(body))
+			case r.Method == http.MethodGet && r.URL.Path == "/api/v1/repos/acme/r1/actions/secrets/TOKEN":
+				if individualGETs != nil {
+					individualGETs.Add(1)
+				}
+				w.WriteHeader(http.StatusMethodNotAllowed)
+			default:
+				w.WriteHeader(http.StatusNotFound)
+			}
+		}))
+		t.Cleanup(srv.Close)
+		return &giteaClient{
+			httpClient: &http.Client{},
+			baseURL:    srv.URL + "/api/v1",
+			token:      "test-token",
+		}
+	}
+
+	t.Run("matches by name via the list endpoint", func(t *testing.T) {
+		var individualGETs atomic.Int32
+		c := newClient(t, http.StatusOK, `[{"name":"other","created_at":"2026-11-24T00:00:00Z"},{"name":"TOKEN","created_at":"2026-11-25T00:00:00Z"}]`, &individualGETs)
+
+		secret, err := c.GetRepositorySecret(ctx, "acme/r1", "TOKEN")
+		require.NoError(t, err)
+		require.NotNil(t, secret)
+		assert.Equal(t, "TOKEN", secret.Name)
+		assert.Equal(t, "2026-11-25T00:00:00Z", secret.CreatedAt)
+		assert.Zero(t, individualGETs.Load(), "the removed single-secret GET endpoint must not be used")
+	})
+
+	t.Run("absent secret is not found", func(t *testing.T) {
+		c := newClient(t, http.StatusOK, `[{"name":"other"}]`, nil)
+
+		secret, err := c.GetRepositorySecret(ctx, "acme/r1", "TOKEN")
+		assert.Nil(t, secret)
+		require.Error(t, err)
+		assert.True(t, IsNotFound(err))
+	})
+
+	t.Run("list failure is propagated", func(t *testing.T) {
+		c := newClient(t, http.StatusInternalServerError, `backend unavailable`, nil)
+
+		secret, err := c.GetRepositorySecret(ctx, "acme/r1", "TOKEN")
+		assert.Nil(t, secret)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "status 500")
+		assert.False(t, IsNotFound(err))
 	})
 }
