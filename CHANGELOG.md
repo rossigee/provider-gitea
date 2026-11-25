@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.16.4] - 2026-11-25
+
+### 🐛 **Fixes**
+- **RepositorySecret**: Observe repository secrets through the supported list endpoint and match by name instead of using the single-secret GET endpoint that Gitea 28 answers with HTTP 405 (PR #127).
+
 ## [0.16.3] - 2026-11-23
 
 ### 🐛 **Fixes**
