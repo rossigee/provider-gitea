@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - **CI**: Gitea Actions no longer fails in no-op detection and skips GitHub-only security steps (PR #127).
+- Go module dependencies updated (PR #129). `k8s.io/kube-openapi` remains pinned until `k8s.io/apimachinery` supports `structured-merge-diff/v7`.
 
 ## [0.16.3] - 2026-11-23
 
