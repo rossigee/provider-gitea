@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### 🐛 **Fixes**
 - **RepositorySecret**: Observe repository secrets through the supported list endpoint and match by name instead of using the single-secret GET endpoint that Gitea 28 answers with HTTP 405 (PR #127).
 
+### Changed
+- **CI**: Gitea Actions no longer fails in no-op detection and skips GitHub-only security steps (PR #127).
+
 ## [0.16.3] - 2026-11-23
 
 ### 🐛 **Fixes**
